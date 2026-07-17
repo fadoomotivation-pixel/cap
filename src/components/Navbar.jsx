@@ -3,10 +3,10 @@ import { Phone, Menu, X } from 'lucide-react';
 import { site } from '../data/site';
 
 const links = [
+  { href: '#partnership', label: 'Mirrikh Partnership' },
   { href: '#why-dholera', label: 'Why Dholera' },
   { href: '#projects', label: 'Projects' },
   { href: '#connectivity', label: 'Location' },
-  { href: '#process', label: 'How It Works' },
   { href: '#faq', label: 'FAQ' },
 ];
 

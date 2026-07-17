@@ -199,6 +199,45 @@ h3 { font-size: 1.25rem; }
 .card h3 { margin-bottom: 0.6rem; }
 .card p { color: var(--text-dim); font-size: 0.94rem; }
 
+/* ── partnership ─────────────────────────── */
+.partnership__banner {
+  position: relative; text-align: center;
+  max-width: 860px; margin: 0 auto 3rem;
+  padding: 3rem 2.5rem 2.6rem;
+  border: 1px solid var(--line); border-radius: calc(var(--radius) + 6px);
+  background:
+    radial-gradient(70% 100% at 50% 0%, rgba(201, 163, 92, 0.1), transparent 70%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  box-shadow: var(--shadow);
+}
+.partnership__seal {
+  display: grid; place-items: center;
+  width: 64px; height: 64px; margin: 0 auto 1.2rem;
+  border-radius: 50%;
+  background: var(--gold-grad); color: #191204;
+  box-shadow: 0 12px 32px rgba(201, 163, 92, 0.45);
+}
+.partnership__intro { color: var(--text-dim); margin-top: 1.1rem; max-width: 640px; margin-inline: auto; }
+
+/* ── project filter tabs ─────────────────── */
+.filter {
+  display: flex; justify-content: center; flex-wrap: wrap;
+  gap: 0.6rem; margin-bottom: 2.4rem;
+}
+.filter__btn {
+  padding: 0.55rem 1.3rem; border-radius: 999px;
+  border: 1px solid var(--line-soft); color: var(--text-dim);
+  font-size: 0.88rem; font-weight: 600;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.25s ease;
+}
+.filter__btn:hover { border-color: var(--line); color: var(--text); }
+.filter__btn.is-active {
+  background: var(--gold-grad); color: #191204;
+  border-color: transparent;
+  box-shadow: 0 8px 24px rgba(201, 163, 92, 0.3);
+}
+
 /* ── projects ────────────────────────────── */
 .project { perspective: 900px; }
 .project__tilt {
@@ -212,6 +251,8 @@ h3 { font-size: 1.25rem; }
   will-change: transform;
 }
 .project__tilt:hover { box-shadow: var(--shadow); border-color: var(--line); }
+.project__tilt--done { opacity: 0.85; }
+.project__tilt--done .project__status { background: #2f3b4d; color: #cdd8e6; }
 .project__top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .project__status {
   font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
