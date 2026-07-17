@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Ruler, BadgeCheck, ArrowUpRight } from 'lucide-react';
 import { projects, projectFilters, site } from '../data/site';
@@ -24,8 +25,10 @@ function ProjectCard({ p }) {
     `Hi Capital Brix! I'm interested in ${p.name} (${p.type}) by Mirrikh Infratech in Dholera. Please share the plot layout, pricing and payment plan.`
   )}`;
 
+  const id = p.name.toLowerCase().replace(/\s+/g, '-');
+
   return (
-    <motion.article
+    <motion.div
       layout
       className="project"
       style={{ '--accent': p.accent }}
@@ -34,7 +37,9 @@ function ProjectCard({ p }) {
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.45 }}
     >
-      <div
+      <Link
+        to={`/projects/${id}`}
+        style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}
         className={`project__tilt ${delivered ? 'project__tilt--done' : ''}`}
         ref={ref}
         onMouseMove={onMove}
@@ -68,23 +73,12 @@ function ProjectCard({ p }) {
         </ul>
 
         <div className="project__actions">
-          {delivered ? (
-            <a className="btn btn--ghost" href="#contact">
-              See Similar Upcoming Plots
-            </a>
-          ) : (
-            <>
-              <a className="btn btn--gold" href={wa} target="_blank" rel="noreferrer">
-                Get Price List <ArrowUpRight size={16} />
-              </a>
-              <a className="btn btn--ghost" href="#contact">
-                Enquire
-              </a>
-            </>
-          )}
+          <span className="btn btn--ghost" style={{ width: '100%', justifyContent: 'center' }}>
+            View Full Details <ArrowUpRight size={16} />
+          </span>
         </div>
-      </div>
-    </motion.article>
+      </Link>
+    </motion.div>
   );
 }
 

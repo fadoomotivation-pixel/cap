@@ -7,6 +7,7 @@ import WhatsAppFloat from './components/WhatsAppFloat';
 import Home from './pages/Home';
 import About from './pages/About';
 import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetail from './pages/ProjectDetail';
 import Dholera from './pages/Dholera';
 import Contact from './pages/Contact';
 
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/dholera" element={<Dholera />} />
         <Route path="/contact" element={<Contact />} />
       </Routes>
