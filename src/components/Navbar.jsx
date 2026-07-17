@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Phone, Menu, X } from 'lucide-react';
 import { site } from '../data/site';
 
 const links = [
-  { href: '#partnership', label: 'Mirrikh Partnership' },
-  { href: '#why-dholera', label: 'Why Dholera' },
-  { href: '#projects', label: 'Projects' },
-  { href: '#connectivity', label: 'Location' },
-  { href: '#faq', label: 'FAQ' },
+  { href: '/about', label: 'About Us' },
+  { href: '/dholera', label: 'Dholera SIR' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -24,23 +25,28 @@ export default function Navbar() {
   return (
     <header className={`nav ${scrolled ? 'nav--scrolled' : ''}`}>
       <div className="container nav__inner">
-        <a href="#top" className="nav__brand" aria-label={site.name}>
-          <img src="/logo.png" alt="Capital Brix Logo" style={{ height: '42px', width: 'auto', borderRadius: '50%', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)' }} />
-          <span className="nav__name">
+        <Link to="/" className="nav__brand" style={{ display: 'flex', alignItems: 'center', gap: '1rem', textDecoration: 'none' }}>
+          <img src="/logo.png" alt="Capital Brix Logo" style={{ height: '50px', width: 'auto', borderRadius: '50%', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)' }} />
+          <div className="nav__name">
             Capital <em>Brix</em>
-            <small>{site.tagline}</small>
-          </span>
-        </a>
+            <small>A Global Expert</small>
+          </div>
+        </Link>
 
         <nav className={`nav__links ${open ? 'is-open' : ''}`}>
           {links.map(l => (
-            <a key={l.href} href={l.href} onClick={() => setOpen(false)}>
+            <Link 
+              key={l.href} 
+              to={l.href} 
+              onClick={() => setOpen(false)}
+              style={{ color: location.pathname === l.href ? 'var(--gold-2)' : '' }}
+            >
               {l.label}
-            </a>
+            </Link>
           ))}
-          <a href="#contact" className="btn btn--gold nav__cta" onClick={() => setOpen(false)}>
+          <Link to="/contact" className="btn btn--gold nav__cta" onClick={() => setOpen(false)}>
             <Phone size={16} /> Enquire Now
-          </a>
+          </Link>
         </nav>
 
         <button
