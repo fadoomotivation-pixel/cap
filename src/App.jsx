@@ -1,26 +1,33 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
+import Hero from './components/Hero';
+import WhyDholera from './components/WhyDholera';
+import Projects from './components/Projects';
+import Connectivity from './components/Connectivity';
+import Process from './components/Process';
+import Testimonials from './components/Testimonials';
+import FAQ from './components/FAQ';
+import ContactForm from './components/ContactForm';
+import Footer from './components/Footer';
+import WhatsAppFloat from './components/WhatsAppFloat';
 import './index.css';
-import HeroScene from './components/canvas/HeroScene';
 
-function App() {
+export default function App() {
   return (
-    <Router>
-      <div className="canvas-container">
-        <HeroScene />
-      </div>
-      <div style={{ position: 'relative', zIndex: 10 }}>
-        <Navbar />
-        <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    <>
+      <Navbar />
+      <main>
+        <Hero />
+        <WhyDholera />
+        <Projects />
+        <Connectivity />
+        <Process />
+        <Testimonials />
+        <FAQ />
+        <ContactForm />
+      </main>
+      <Footer />
+      <WhatsAppFloat />
+    </>
   );
 }
-
-export default App;
