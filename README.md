@@ -1,6 +1,9 @@
 # Capital Brix — Dholera Smart City Website
 
-Premium 3D landing website for **Capital Brix** — Dholera SIR plot investments.
+Premium 3D landing website for **Capital Brix LLP — exclusive channel partner of
+Mirrikh Infratech** — Dholera SIR plot investments with the real Mirrikh "Mayur"
+project portfolio (Greenz II, Evana, Enclave 5, Signature, Swastik, Industrial
+Park + delivered projects).
 Built with React 19 + Vite, three.js (react-three-fiber) 3D hero, framer-motion
 animations, and full SEO for "Dholera" searches (meta tags, JSON-LD
 RealEstateAgent + FAQPage schema, robots.txt, sitemap.xml).
@@ -9,8 +12,8 @@ RealEstateAgent + FAQPage schema, robots.txt, sitemap.xml).
 
 Saara content ek file me hai — **`src/data/site.js`**:
 
-- 📞 **Phone/WhatsApp number** — `site.phone` (abhi placeholder `919999999999` hai, apna number daalo)
-- 📧 **Lead email** — `site.email` (form submissions yahan aati hain)
+- 📞 **Phone/WhatsApp** — `site.phone` (abhi `+91 70489 17300` — Capital Brix ka public number)
+- 📧 **Lead email** — `site.leadEmail` (form submissions yahan aati hain); `site.email` public display ke liye
 - 🏗️ Projects, prices, FAQs, testimonials — sab isi file me
 
 ## Lead capture kaise kaam karta hai
@@ -24,9 +27,9 @@ Saara content ek file me hai — **`src/data/site.js`**:
 
 ## Google se leads (SEO) ke liye deploy ke baad
 
-1. Site ko domain par deploy karo (Vercel/Netlify — `npm run build`, output `dist/`)
-2. `index.html`, `public/robots.txt`, `public/sitemap.xml` me `capitalbrix.in`
-   ki jagah apna real domain daalo
+1. Site capitalbrix.com par point karo (Vercel me domain add karo)
+2. `index.html`, `public/robots.txt`, `public/sitemap.xml` me `capitalbrix.com` set hai —
+   (ab real domain set hai) verify karo
 3. [Google Search Console](https://search.google.com/search-console) me site
    add karke sitemap submit karo
 4. Google Business Profile banao — "Dholera plots" local searches ke liye

@@ -27,7 +27,7 @@ export default function Hero() {
 
       <div className="container hero__content">
         <motion.p className="hero__eyebrow" variants={fadeUp} initial="hidden" animate="show" custom={0}>
-          <MapPin size={14} /> Dholera SIR · Gujarat · India&rsquo;s First Greenfield Smart City
+          <MapPin size={14} /> Exclusive Channel Partner · Mirrikh Infratech · Dholera SIR
         </motion.p>
 
         <motion.h1 variants={fadeUp} initial="hidden" animate="show" custom={1}>
@@ -37,9 +37,9 @@ export default function Hero() {
         </motion.h1>
 
         <motion.p className="hero__sub" variants={fadeUp} initial="hidden" animate="show" custom={2}>
-          Premium NA-approved, title-clear residential &amp; industrial plots inside the
-          Dholera Smart City growth corridor — next to the ₹91,000 Cr semiconductor fab,
-          the international airport and the Ahmedabad–Dholera Expressway.
+          Book NA-approved, title-clear Mirrikh Infratech plots at direct developer
+          pricing — next to the ₹91,000 Cr semiconductor fab, the international airport
+          and the Ahmedabad–Dholera Expressway. 8+ projects delivered since 2012.
         </motion.p>
 
         <motion.div className="hero__actions" variants={fadeUp} initial="hidden" animate="show" custom={3}>

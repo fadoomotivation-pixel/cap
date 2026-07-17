@@ -13,8 +13,8 @@ export default function ContactForm() {
     setStatus('sending');
     try {
       // FormSubmit: pehli baar submit par activation email aayega
-      // (site.email inbox check karo) — uske baad leads seedha inbox me.
-      const res = await fetch(`https://formsubmit.co/ajax/${site.email}`, {
+      // (site.leadEmail inbox check karo) — uske baad leads seedha inbox me.
+      const res = await fetch(`https://formsubmit.co/ajax/${site.leadEmail}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({

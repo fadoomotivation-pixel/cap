@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://capitalbrix.in/sitemap.xml
+Sitemap: https://capitalbrix.com/sitemap.xml

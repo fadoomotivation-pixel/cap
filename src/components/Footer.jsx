@@ -15,15 +15,17 @@ export default function Footer() {
             </span>
           </a>
           <p className="footer__about">
-            Capital Brix helps investors across India &amp; NRIs own NA-approved,
-            title-clear residential and industrial plots in the Dholera SIR growth
-            corridor — with guided site visits and full documentation support.
+            Capital Brix LLP is the exclusive channel partner of Mirrikh Infratech —
+            helping investors across India &amp; NRIs own NA-approved, title-clear
+            residential and industrial plots in Dholera SIR at direct developer pricing,
+            with guided site visits and full documentation support.
           </p>
         </div>
 
         <div>
           <h4>Explore</h4>
           <ul>
+            <li><a href="#partnership">Mirrikh Partnership</a></li>
             <li><a href="#why-dholera">Why Dholera</a></li>
             <li><a href="#projects">Projects</a></li>
             <li><a href="#connectivity">Location Advantage</a></li>
@@ -44,10 +46,11 @@ export default function Footer() {
 
       <div className="container footer__seo">
         <p>
-          Dholera Smart City plots · Residential plots in Dholera SIR · Industrial plots
-          Dholera · Dholera plot price 2026 · Investment in Dholera Special Investment
-          Region · Plots near Dholera International Airport · Ahmedabad–Dholera Expressway
-          projects
+          Dholera Smart City plots · Mirrikh Infratech projects · Mayur Greenz II · Mayur
+          Evana Kasindra · Mayur Enclave 5 · Mayur Signature Rojka · Residential plots in
+          Dholera SIR · Industrial plots Dholera · Dholera plot price 2026 · Investment in
+          Dholera Special Investment Region · Plots near Dholera International Airport ·
+          Ahmedabad–Dholera Expressway projects
         </p>
       </div>
 

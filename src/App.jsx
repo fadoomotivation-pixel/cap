@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import Partnership from './components/Partnership';
 import WhyDholera from './components/WhyDholera';
 import Projects from './components/Projects';
 import Connectivity from './components/Connectivity';
@@ -18,6 +19,7 @@ export default function App() {
       <Navbar />
       <main>
         <Hero />
+        <Partnership />
         <WhyDholera />
         <Projects />
         <Connectivity />

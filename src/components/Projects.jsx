@@ -1,10 +1,11 @@
-import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Ruler, BadgeCheck, ArrowUpRight } from 'lucide-react';
-import { projects, site } from '../data/site';
+import { projects, projectFilters, site } from '../data/site';
 
-function ProjectCard({ p, i }) {
+function ProjectCard({ p }) {
   const ref = useRef(null);
+  const delivered = p.category === 'Delivered';
 
   // 3D tilt on pointer move
   const onMove = e => {
@@ -20,19 +21,25 @@ function ProjectCard({ p, i }) {
   };
 
   const wa = `https://wa.me/${site.phone}?text=${encodeURIComponent(
-    `Hi Capital Brix! I'm interested in ${p.name} (${p.type}) in Dholera. Please share the plot layout, pricing and payment plan.`
+    `Hi Capital Brix! I'm interested in ${p.name} (${p.type}) by Mirrikh Infratech in Dholera. Please share the plot layout, pricing and payment plan.`
   )}`;
 
   return (
     <motion.article
+      layout
       className="project"
       style={{ '--accent': p.accent }}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.6, delay: (i % 2) * 0.12 }}
+      initial={{ opacity: 0, y: 32 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.45 }}
     >
-      <div className="project__tilt" ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}>
+      <div
+        className={`project__tilt ${delivered ? 'project__tilt--done' : ''}`}
+        ref={ref}
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
+      >
         <div className="project__top">
           <span className="project__status">{p.status}</span>
           <span className="project__type">{p.type}</span>
@@ -49,7 +56,7 @@ function ProjectCard({ p, i }) {
         </div>
 
         <p className="project__size">
-          <Ruler size={15} /> Plot sizes: {p.size}
+          <Ruler size={15} /> {p.size}
         </p>
 
         <ul className="project__points">
@@ -61,12 +68,20 @@ function ProjectCard({ p, i }) {
         </ul>
 
         <div className="project__actions">
-          <a className="btn btn--gold" href={wa} target="_blank" rel="noreferrer">
-            Get Price List <ArrowUpRight size={16} />
-          </a>
-          <a className="btn btn--ghost" href="#contact">
-            Enquire
-          </a>
+          {delivered ? (
+            <a className="btn btn--ghost" href="#contact">
+              See Similar Upcoming Plots
+            </a>
+          ) : (
+            <>
+              <a className="btn btn--gold" href={wa} target="_blank" rel="noreferrer">
+                Get Price List <ArrowUpRight size={16} />
+              </a>
+              <a className="btn btn--ghost" href="#contact">
+                Enquire
+              </a>
+            </>
+          )}
         </div>
       </div>
     </motion.article>
@@ -74,6 +89,9 @@ function ProjectCard({ p, i }) {
 }
 
 export default function Projects() {
+  const [filter, setFilter] = useState('All');
+  const visible = projects.filter(p => filter === 'All' || p.category === filter);
+
   return (
     <section className="section section--alt" id="projects">
       <div className="container">
@@ -84,21 +102,37 @@ export default function Projects() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6 }}
         >
-          <p className="section__eyebrow">Our Projects</p>
+          <p className="section__eyebrow">Mirrikh Infratech Portfolio</p>
           <h2>
-            Handpicked Plots in the <span className="text-gold">Dholera Growth Corridor</span>
+            Real Projects. Real Delivery. <span className="text-gold">Real Dholera.</span>
           </h2>
           <p className="section__sub">
-            Every project is NA-approved, NOC cleared, title clear and plan passed — sold
-            with a registered sale deed. No exceptions.
+            Live inventory from Mirrikh Infratech — 8+ projects delivered in Dholera since
+            2012. Every plot NA-approved, NOC cleared, title clear and plan passed.
           </p>
         </motion.div>
 
-        <div className="grid grid--2">
-          {projects.map((p, i) => (
-            <ProjectCard key={p.name} p={p} i={i} />
+        <div className="filter" role="tablist" aria-label="Filter projects">
+          {projectFilters.map(f => (
+            <button
+              key={f}
+              role="tab"
+              aria-selected={filter === f}
+              className={`filter__btn ${filter === f ? 'is-active' : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f}
+            </button>
           ))}
         </div>
+
+        <motion.div layout className="grid grid--2">
+          <AnimatePresence mode="popLayout">
+            {visible.map(p => (
+              <ProjectCard key={p.name} p={p} />
+            ))}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </section>
   );
