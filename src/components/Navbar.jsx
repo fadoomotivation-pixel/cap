@@ -25,7 +25,7 @@ export default function Navbar() {
     <header className={`nav ${scrolled ? 'nav--scrolled' : ''}`}>
       <div className="container nav__inner">
         <a href="#top" className="nav__brand" aria-label={site.name}>
-          <span className="nav__logo">CB</span>
+          <img src="/logo.png" alt="Capital Brix Logo" style={{ height: '42px', width: 'auto', borderRadius: '50%', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)' }} />
           <span className="nav__name">
             Capital <em>Brix</em>
             <small>{site.tagline}</small>
