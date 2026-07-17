@@ -21,8 +21,9 @@ export default function Home() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: "easeOut" }}
-          style={{ maxWidth: '800px', pointerEvents: 'none' }}
+          style={{ maxWidth: '800px', pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
+          <img src="/logo.png" alt="Capital Brix" style={{ height: '120px', marginBottom: '2rem', filter: 'drop-shadow(0px 0px 20px rgba(212, 175, 55, 0.3))' }} />
           <h2 style={{ 
             color: 'var(--accent-primary)',
             fontSize: '1.25rem',

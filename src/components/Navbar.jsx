@@ -15,14 +15,18 @@ export default function Navbar() {
       zIndex: 100
     }}>
       <div className="logo" style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
         fontFamily: 'var(--font-heading)',
         fontSize: '1.5rem',
         fontWeight: '700',
         letterSpacing: '2px',
         textTransform: 'uppercase'
       }}>
-        <Link to="/">
-          <span className="gradient-text">Capital</span> Brix
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <img src="/logo.png" alt="Capital Brix Logo" style={{ height: '40px', width: 'auto', borderRadius: '50%' }} />
+          <span><span className="gradient-text">Capital</span> Brix</span>
         </Link>
       </div>
 

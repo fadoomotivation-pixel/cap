@@ -4,30 +4,38 @@ import { motion, AnimatePresence } from 'framer-motion';
 const projects = [
   {
     id: 1,
-    name: 'Mayur Greenz Series',
-    type: 'Luxury Villa Plots',
-    features: ['Mini Golf Course', 'Roman Architecture', 'Mammoth Clubhouse'],
-    price: '₹47.88 Lakhs - ₹1.62 Crores',
-    description: 'Experience unparalleled luxury with world-class amenities including Dholera\'s first mini golf practice course. Located strategically on the Dholera–Dhandhuka State Highway.'
+    name: 'Mayur NOVA',
+    type: 'Premium Residential',
+    features: ['Strategic Location', 'Modern Amenities', 'High ROI'],
+    price: 'Inquire for Pricing',
+    description: 'A cutting-edge residential development in Dholera Smart City offering astute planning and contemporary infrastructure.'
   },
   {
     id: 2,
-    name: 'Mayur Forest Villa',
-    type: 'Premium Smart Villas',
-    features: ['Forest Theme', 'Peacock Boulevard', 'Smart Home Automation'],
-    price: 'Starting ~₹7.75 Lakhs',
-    description: 'A tranquil, eco-friendly oasis blending nature with advanced smart home technology. Located just minutes from the upcoming international airport.'
+    name: 'Mayur Aerocity II',
+    type: 'Future-Ready Development',
+    features: ['Airport Corridor', 'Excellent Connectivity', 'Smart Infrastructure'],
+    price: 'Inquire for Pricing',
+    description: 'Positioned strategically near the Dholera International Airport, blending nature with modern innovation for professionals and families.'
   },
   {
     id: 3,
-    name: 'Mayur Aerocity',
-    type: 'Future-Ready Residential',
-    features: ['Airport Corridor', 'Modern Families', 'Strategic Connectivity'],
-    price: 'Flexible Plans',
-    description: 'Positioned strategically near the Dholera International Airport, this project perfectly blends nature with modern innovation for professionals and families.'
+    name: 'Mayur Forest Villa',
+    type: 'Premium Smart Villas',
+    features: ['Forest Theme', 'Peacock Boulevard', 'Smart Home Automation'],
+    price: 'Inquire for Pricing',
+    description: 'A tranquil, eco-friendly oasis blending nature with advanced smart home technology. Located just minutes from the upcoming international airport.'
   },
   {
     id: 4,
+    name: 'Mayur Greenz Courtyard',
+    type: 'Luxury Villa Plots',
+    features: ['Mini Golf Course', 'Roman Architecture', 'Mammoth Clubhouse'],
+    price: 'Inquire for Pricing',
+    description: 'Experience unparalleled luxury with world-class amenities including Dholera\'s first mini golf practice course.'
+  },
+  {
+    id: 5,
     name: 'Mayur Industrial Landmark',
     type: 'Commercial / Industrial',
     features: ['Plug-and-play', 'Logistics Hub', 'DMIC Integration'],
