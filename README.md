@@ -1,16 +1,42 @@
-# React + Vite
+# Capital Brix — Dholera Smart City Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Premium 3D landing website for **Capital Brix** — Dholera SIR plot investments.
+Built with React 19 + Vite, three.js (react-three-fiber) 3D hero, framer-motion
+animations, and full SEO for "Dholera" searches (meta tags, JSON-LD
+RealEstateAgent + FAQPage schema, robots.txt, sitemap.xml).
 
-Currently, two official plugins are available:
+## Content edit karna ho?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Saara content ek file me hai — **`src/data/site.js`**:
 
-## React Compiler
+- 📞 **Phone/WhatsApp number** — `site.phone` (abhi placeholder `919999999999` hai, apna number daalo)
+- 📧 **Lead email** — `site.email` (form submissions yahan aati hain)
+- 🏗️ Projects, prices, FAQs, testimonials — sab isi file me
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Lead capture kaise kaam karta hai
 
-## Expanding the Oxlint configuration
+1. **Enquiry form** → [FormSubmit](https://formsubmit.co) ke through `site.email`
+   par aata hai. **Pehli submission par activation email aayega — usse confirm
+   karna zaroori hai**, uske baad saari leads seedha inbox me.
+2. **WhatsApp** — floating button + har project card ka "Get Price List" button
+   pre-filled message ke saath WhatsApp kholta hai.
+3. **Call** — click-to-call links.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Google se leads (SEO) ke liye deploy ke baad
+
+1. Site ko domain par deploy karo (Vercel/Netlify — `npm run build`, output `dist/`)
+2. `index.html`, `public/robots.txt`, `public/sitemap.xml` me `capitalbrix.in`
+   ki jagah apna real domain daalo
+3. [Google Search Console](https://search.google.com/search-console) me site
+   add karke sitemap submit karo
+4. Google Business Profile banao — "Dholera plots" local searches ke liye
+
+## Commands
+
+```bash
+npm install     # dependencies
+npm run dev     # local dev server
+npm run build   # production build → dist/
+npm run preview # built site preview
+npm run lint    # oxlint
+```
