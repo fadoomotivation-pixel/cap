@@ -38,9 +38,21 @@ const soldOut = [
 
 const navLinks = [
   { name: 'Home', path: '/' },
-  { name: 'Dholera SIR', path: '/dholera' },
+  { 
+    name: 'Dholera SIR', 
+    path: '#',
+    hasDropdown: true,
+    dropdownType: 'simple',
+    dropdownItems: [
+      { name: 'About Dholera SIR', path: '/dholera/about' },
+      { name: 'Overview', path: '/dholera/overview' },
+      { name: 'City Highlights', path: '/dholera/city-highlights' },
+      { name: 'Dholera International Airport', path: '/dholera/airport' },
+      { name: 'Dholera Renew Power', path: '/dholera/renew-power' },
+    ]
+  },
   { name: 'About Us', path: '/about' },
-  { name: 'Our Projects', path: '/projects', hasDropdown: true },
+  { name: 'Our Projects', path: '/projects', hasDropdown: true, dropdownType: 'mega' },
   { name: 'Events', path: '/events' },
   { name: 'Our Blog', path: '/blog' },
   { name: 'Contact', path: '/contact' },
@@ -94,50 +106,73 @@ export default function Navbar() {
                   {link.hasDropdown && <span className="text-[10px]">▾</span>}
                 </Link>
 
-                {/* Desktop Mega Dropdown — 2 columns */}
+                {/* Dropdowns */}
                 {link.hasDropdown && activeDropdown === link.name && (
-                  <div
-                    className="absolute top-full left-0 bg-white shadow-2xl border border-gray-100 rounded-sm z-50 flex overflow-hidden"
-                    style={{ minWidth: '520px' }}
-                  >
-                    {/* Left: Current */}
-                    <div className="w-[240px] py-2 border-r border-gray-100">
-                      <p className="px-4 py-2 text-[9px] font-black text-[#10243E] uppercase tracking-[0.2em] border-b border-gray-100 mb-1">
-                        Current Projects
-                      </p>
-                      {ongoing.map((item) => (
-                        <Link
-                          key={item.name}
-                          to={item.path}
-                          onClick={() => setActiveDropdown(null)}
-                          className="block px-4 py-2 text-sm text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 transition-colors"
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                      <div className="px-4 pt-2 mt-1 border-t border-gray-100">
-                        <Link to="/projects" onClick={() => setActiveDropdown(null)} className="text-[#f26522] text-xs font-bold hover:underline">
-                          View All Projects →
-                        </Link>
+                  <>
+                    {/* Mega Dropdown for Projects */}
+                    {link.dropdownType === 'mega' && (
+                      <div
+                        className="absolute top-full left-0 bg-white shadow-2xl border border-gray-100 rounded-sm z-50 flex overflow-hidden"
+                        style={{ minWidth: '520px' }}
+                      >
+                        {/* Left: Current */}
+                        <div className="w-[240px] py-2 border-r border-gray-100">
+                          <p className="px-4 py-2 text-[9px] font-black text-[#10243E] uppercase tracking-[0.2em] border-b border-gray-100 mb-1">
+                            Current Projects
+                          </p>
+                          {ongoing.map((item) => (
+                            <Link
+                              key={item.name}
+                              to={item.path}
+                              onClick={() => setActiveDropdown(null)}
+                              className="block px-4 py-2 text-sm text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 transition-colors"
+                            >
+                              {item.name}
+                            </Link>
+                          ))}
+                          <div className="px-4 pt-2 mt-1 border-t border-gray-100">
+                            <Link to="/projects" onClick={() => setActiveDropdown(null)} className="text-[#f26522] text-xs font-bold hover:underline">
+                              View All Projects →
+                            </Link>
+                          </div>
+                        </div>
+                        {/* Right: Sold Out */}
+                        <div className="w-[280px] py-2 bg-gray-50">
+                          <p className="px-4 py-2 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100 mb-1">
+                            Sold Out Projects
+                          </p>
+                          {soldOut.map((item) => (
+                            <Link
+                              key={item.name}
+                              to={item.path}
+                              onClick={() => setActiveDropdown(null)}
+                              className="block px-4 py-1.5 text-sm text-gray-500 hover:text-[#f26522] hover:bg-orange-50 transition-colors"
+                            >
+                              {item.name}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    {/* Right: Sold Out */}
-                    <div className="w-[280px] py-2 bg-gray-50">
-                      <p className="px-4 py-2 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100 mb-1">
-                        Sold Out Projects
-                      </p>
-                      {soldOut.map((item) => (
-                        <Link
-                          key={item.name}
-                          to={item.path}
-                          onClick={() => setActiveDropdown(null)}
-                          className="block px-4 py-1.5 text-sm text-gray-500 hover:text-[#f26522] hover:bg-orange-50 transition-colors"
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
+                    )}
+
+                    {/* Simple Dropdown for Dholera */}
+                    {link.dropdownType === 'simple' && (
+                      <div
+                        className="absolute top-full left-0 bg-white shadow-2xl border border-gray-100 rounded-sm z-50 py-2 w-64"
+                      >
+                        {link.dropdownItems.map((item) => (
+                          <Link
+                            key={item.name}
+                            to={item.path}
+                            onClick={() => setActiveDropdown(null)}
+                            className="block px-4 py-2.5 text-sm font-medium text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 transition-colors border-b border-gray-50 last:border-0"
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             );
@@ -154,36 +189,30 @@ export default function Navbar() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={s.label}
-                className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white hover:bg-[#d65116] transition-colors"
+                className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white hover:bg-orange-600 transition-colors hover:-translate-y-0.5 duration-300"
               >
                 {s.icon}
               </a>
             ))}
           </div>
-          <button aria-label="Search" className="w-8 h-8 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors">
-            <Search size={18} />
+          <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors ml-2">
+            <Search size={18} strokeWidth={2.5} />
           </button>
-          <button className="bg-[#f26522] text-white px-6 py-2 rounded-sm hover:bg-[#d65116] transition-colors font-bold text-sm">
+          <button className="px-6 py-2.5 bg-[#f26522] text-white font-bold text-sm hover:bg-[#10243E] transition-colors duration-300 rounded shadow-md ml-2 uppercase tracking-wide">
             Login
           </button>
         </div>
 
-        {/* ── Mobile: Search icon visible + Burger ── */}
-        <div className="lg:hidden flex items-center gap-2">
-          <button aria-label="Search" className="w-9 h-9 flex items-center justify-center text-[#10243E]">
-            <Search size={20} />
-          </button>
-          <button
-            className="w-9 h-9 flex items-center justify-center text-[#10243E]"
-            onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle menu"
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
+        {/* ── Mobile Hamburger ── */}
+        <button
+          className="lg:hidden text-[#10243E] p-2 -mr-2"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
       </div>
 
-      {/* ── Mobile Menu ── */}
+      {/* ── Mobile Menu overlay ── */}
       {isOpen && (
         <div className="lg:hidden bg-white border-t border-gray-100 shadow-xl overflow-y-auto" style={{ maxHeight: 'calc(100vh - 60px)' }}>
 
@@ -191,13 +220,13 @@ export default function Navbar() {
           {navLinks.map((link) => (
             <div key={link.name}>
               {link.hasDropdown ? (
-                /* Projects: toggle accordion */
+                /* Toggle accordion */
                 <button
-                  onClick={() => setMobileProjectsOpen(!mobileProjectsOpen)}
+                  onClick={() => setMobileProjectsOpen(mobileProjectsOpen === link.name ? null : link.name)}
                   className="w-full flex items-center justify-between px-5 py-3.5 font-semibold text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 border-b border-gray-100 transition-colors text-left text-base"
                 >
                   <span>{link.name}</span>
-                  {mobileProjectsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {mobileProjectsOpen === link.name ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
               ) : (
                 <Link
@@ -209,44 +238,58 @@ export default function Navbar() {
                 </Link>
               )}
 
-              {/* Mobile Projects Accordion */}
-              {link.hasDropdown && mobileProjectsOpen && (
+              {/* Accordion Content */}
+              {link.hasDropdown && mobileProjectsOpen === link.name && (
                 <div className="bg-gray-50 border-b border-gray-100">
-                  {/* Current */}
-                  <p className="px-5 py-2 text-[10px] font-black text-[#10243E] uppercase tracking-wider bg-orange-50">
-                    Current Projects
-                  </p>
-                  {ongoing.map((item) => (
+                  {link.dropdownType === 'mega' && (
+                    <>
+                      {/* Current */}
+                      <p className="px-5 py-2 text-[10px] font-black text-[#10243E] uppercase tracking-wider bg-orange-50">
+                        Current Projects
+                      </p>
+                      {ongoing.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.path}
+                          onClick={closeAll}
+                          className="block px-8 py-2.5 text-sm text-[#10243E] hover:text-[#f26522] border-b border-gray-100 transition-colors"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                      {/* Sold Out */}
+                      <p className="px-5 py-2 text-[10px] font-black text-gray-400 uppercase tracking-wider bg-gray-100 mt-1">
+                        Sold Out Projects
+                      </p>
+                      {soldOut.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.path}
+                          onClick={closeAll}
+                          className="block px-8 py-2 text-sm text-gray-500 hover:text-[#f26522] border-b border-gray-100 transition-colors"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                      <Link
+                        to="/projects"
+                        onClick={closeAll}
+                        className="block px-5 py-3 text-sm font-bold text-[#f26522] hover:underline"
+                      >
+                        View All Projects →
+                      </Link>
+                    </>
+                  )}
+                  {link.dropdownType === 'simple' && link.dropdownItems.map((item) => (
                     <Link
                       key={item.name}
                       to={item.path}
                       onClick={closeAll}
-                      className="block px-8 py-2.5 text-sm text-[#10243E] hover:text-[#f26522] border-b border-gray-100 transition-colors"
+                      className="block px-8 py-3 text-sm font-medium text-[#10243E] hover:text-[#f26522] border-b border-gray-100 transition-colors"
                     >
                       {item.name}
                     </Link>
                   ))}
-                  {/* Sold Out */}
-                  <p className="px-5 py-2 text-[10px] font-black text-gray-400 uppercase tracking-wider bg-gray-100 mt-1">
-                    Sold Out Projects
-                  </p>
-                  {soldOut.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.path}
-                      onClick={closeAll}
-                      className="block px-8 py-2 text-sm text-gray-500 hover:text-[#f26522] border-b border-gray-100 transition-colors"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                  <Link
-                    to="/projects"
-                    onClick={closeAll}
-                    className="block px-5 py-3 text-sm font-bold text-[#f26522] hover:underline"
-                  >
-                    View All Projects →
-                  </Link>
                 </div>
               )}
             </div>
