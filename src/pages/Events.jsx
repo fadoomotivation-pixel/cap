@@ -1,40 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-
-const events = [
-  {
-    title: 'Success Celebrations SPARK 2024',
-    location: 'Delhi',
-    date: '29 Dec 2024',
-    img: 'https://mirrikh.com/wp-content/uploads/2025/01/SPARK-2024-thumbnail.jpg',
-  },
-  {
-    title: 'Achiever\'s Celebration',
-    location: 'Delhi',
-    date: '17 Sept 2023',
-    img: 'https://mirrikh.com/wp-content/uploads/2025/01/banner-event-17-Sept-2023-1.jpg',
-  },
-  {
-    title: 'Dholera Awareness Program',
-    location: 'Gurgaon',
-    date: '30 Apr 2023',
-    img: 'https://mirrikh.com/wp-content/uploads/2025/01/dholera-awareness-program.jpg',
-  },
-  {
-    title: 'Holi Milan Samaroh',
-    location: 'Surat',
-    date: '04 Mar 2023',
-    img: 'https://mirrikh.com/wp-content/uploads/2025/01/Holi-Milan-Samaroh-3.jpg',
-  },
-  {
-    title: 'Riyadh Real Estate Exhibition',
-    location: 'Saudi Arabia',
-    date: '02 Feb 2023',
-    img: 'https://mirrikh.com/wp-content/uploads/2025/01/mirrikh-events-exhibition-4.jpg',
-  },
-];
+import { events } from '../data/events';
 
 export default function Events() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const eventsPerPage = 9;
+  
+  const totalPages = Math.ceil(events.length / eventsPerPage);
+  
+  const indexOfLastEvent = currentPage * eventsPerPage;
+  const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
+  const currentEvents = events.slice(indexOfFirstEvent, indexOfLastEvent);
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="pt-24 pb-16 min-h-screen bg-gray-50 font-outfit">
       {/* Header */}
@@ -49,9 +31,9 @@ export default function Events() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {events.map((event, i) => (
+          {currentEvents.map((event, i) => (
             <motion.div 
-              key={i}
+              key={`${currentPage}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
@@ -81,22 +63,72 @@ export default function Events() {
           ))}
         </div>
 
-        {/* Pagination (Mock to match Mirrikh) */}
-        <div className="mt-16 flex items-center justify-center gap-2 text-base font-medium">
-          <button className="w-10 h-10 flex items-center justify-center bg-[#f26522] text-white hover:bg-orange-600 transition-colors">
-            1
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors">
-            2
-          </button>
-          <span className="w-8 h-10 flex items-center justify-center text-gray-400">...</span>
-          <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors">
-            12
-          </button>
-          <button className="px-2 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors ml-2">
-            Next →
-          </button>
-        </div>
+        {/* Dynamic Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-16 flex items-center justify-center gap-2 text-base font-medium flex-wrap">
+            {/* Show first few pages */}
+            {[1, 2].map((number) => (
+              number <= totalPages && (
+                <button
+                  key={number}
+                  onClick={() => paginate(number)}
+                  className={`w-10 h-10 flex items-center justify-center transition-colors rounded ${
+                    currentPage === number
+                      ? 'bg-[#f26522] text-white hover:bg-orange-600'
+                      : 'text-[#10243E] hover:text-[#f26522] hover:bg-gray-100'
+                  }`}
+                >
+                  {number}
+                </button>
+              )
+            ))}
+
+            {/* Ellipsis if current page is far from ends */}
+            {currentPage > 3 && currentPage < totalPages - 1 && (
+              <span className="w-8 h-10 flex items-center justify-center text-gray-400">...</span>
+            )}
+
+            {/* Show current page if it's in the middle */}
+            {currentPage > 2 && currentPage < totalPages && (
+               <button
+                 key={currentPage}
+                 className="w-10 h-10 flex items-center justify-center bg-[#f26522] text-white rounded"
+               >
+                 {currentPage}
+               </button>
+            )}
+
+            {/* Ellipsis */}
+            {totalPages > 3 && currentPage < totalPages - 1 && (
+              <span className="w-8 h-10 flex items-center justify-center text-gray-400">...</span>
+            )}
+
+            {/* Last Page */}
+            {totalPages > 2 && (
+              <button
+                key={totalPages}
+                onClick={() => paginate(totalPages)}
+                className={`w-10 h-10 flex items-center justify-center transition-colors rounded ${
+                  currentPage === totalPages
+                    ? 'bg-[#f26522] text-white hover:bg-orange-600'
+                    : 'text-[#10243E] hover:text-[#f26522] hover:bg-gray-100'
+                }`}
+              >
+                {totalPages}
+              </button>
+            )}
+            
+            {/* Next Button */}
+            {currentPage < totalPages && (
+              <button 
+                onClick={() => paginate(currentPage + 1)}
+                className="px-2 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors ml-2"
+              >
+                Next →
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
