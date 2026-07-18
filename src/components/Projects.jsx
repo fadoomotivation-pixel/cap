@@ -5,6 +5,16 @@ import { projects } from '../data/site';
 
 // Project image mapping using Mirrikh CDN or fallback colors
 const projectMeta = {
+  // Ongoing Projects (Logos)
+  'Mayur NOVA':                 { logo: 'https://mirrikh.com/wp-content/uploads/2026/07/Mayur-NOVA-Logo1-1024x542.png', tag: 'Residential', hot: true },
+  'Mayur Aerocity II':          { logo: 'https://mirrikh.com/wp-content/uploads/2026/07/Mayur-Aerocity-II-Logo1-scaled.png', tag: 'Residential', hot: true },
+  'Mayur Ananta II':            { logo: 'https://mirrikh.com/wp-content/uploads/2026/02/Mayur-Ananta-logo2.png', tag: 'Residential', hot: false },
+  'Mayur Forest Villa':         { logo: 'https://mirrikh.com/wp-content/uploads/2026/05/Mayur-Forest-Villa-Dholera-logo1.jpg', tag: 'Residential', hot: true },
+  'Mayur Greenz Courtyard':     { logo: 'https://mirrikh.com/wp-content/uploads/2026/04/Mayur-Greenz-Courtyard-logo.svg', tag: 'Residential', hot: true },
+  'Mayur Industrial Landmark':  { logo: 'https://mirrikh.com/wp-content/uploads/2026/01/Mayur-Industrial-Landmark-logo.png', tag: 'Industrial', hot: true },
+  'Mayur Park III':             { logo: 'https://mirrikh.com/wp-content/uploads/2025/11/Mayur-Park-3-Logo.png', tag: 'Residential', hot: false }, // Fallback if missing
+  
+  // Sold Out Projects (Featured Images as fallbacks if needed)
   'Mayur Greenz II':      { img: 'https://mirrikh.com/wp-content/uploads/2023/10/1-3-1.jpg',   tag: 'Residential', hot: true },
   'Mayur Evana':          { img: 'https://mirrikh.com/wp-content/uploads/2023/10/1-6-1.jpg',   tag: 'Residential', hot: true },
   'Mayur Enclave 5':      { img: 'https://mirrikh.com/wp-content/uploads/2023/10/1-9-1.jpg',   tag: 'Residential', hot: false },
@@ -30,9 +40,16 @@ function ProjectCard({ p }) {
       transition={{ duration: 0.4 }}
       className="bg-white rounded-sm overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-shadow flex flex-col group"
     >
-      {/* Card Image */}
-      <div className="relative h-48 bg-[#10243E] overflow-hidden">
-        {meta.img ? (
+      {/* Card Image / Logo Area */}
+      <div className="relative h-48 bg-[#10243E] overflow-hidden flex items-center justify-center">
+        {meta.logo ? (
+          <img
+            src={meta.logo}
+            alt={`${p.name} Logo`}
+            className="w-3/4 h-3/4 object-contain group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        ) : meta.img ? (
           <img
             src={meta.img}
             alt={p.name}
