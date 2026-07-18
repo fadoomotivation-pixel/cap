@@ -1,83 +1,59 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Ruler, BadgeCheck, ArrowUpRight } from 'lucide-react';
-import { projects, projectFilters, site } from '../data/site';
+import { MapPin, Ruler, BadgeCheck, ArrowRight } from 'lucide-react';
+import { projects, projectFilters } from '../data/site';
 
 function ProjectCard({ p }) {
-  const ref = useRef(null);
-  const delivered = p.category === 'Delivered';
-
-  // 3D tilt on pointer move
-  const onMove = e => {
-    const el = ref.current;
-    if (!el || window.matchMedia('(hover: none)').matches) return;
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = `perspective(900px) rotateY(${px * 8}deg) rotateX(${py * -8}deg) translateY(-4px)`;
-  };
-  const onLeave = () => {
-    if (ref.current) ref.current.style.transform = '';
-  };
-
-  const wa = `https://wa.me/${site.phone}?text=${encodeURIComponent(
-    `Hi Capital Brix! I'm interested in ${p.name} (${p.type}) by Mirrikh Infratech in Dholera. Please share the plot layout, pricing and payment plan.`
-  )}`;
-
   const id = p.name.toLowerCase().replace(/\s+/g, '-');
 
   return (
     <motion.div
       layout
-      className="project"
-      style={{ '--accent': p.accent }}
       initial={{ opacity: 0, y: 32 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.45 }}
+      className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow border border-gray-100 overflow-hidden flex flex-col"
     >
-      <Link
-        to={`/projects/${id}`}
-        style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}
-        className={`project__tilt ${delivered ? 'project__tilt--done' : ''}`}
-        ref={ref}
-        onMouseMove={onMove}
-        onMouseLeave={onLeave}
-      >
-        <div className="project__top">
-          <span className="project__status">{p.status}</span>
-          <span className="project__type">{p.type}</span>
+      <div className="p-6 flex flex-col flex-grow">
+        <div className="flex justify-between items-start mb-4">
+          <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${p.category === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+            {p.status}
+          </span>
+          <span className="text-sm font-semibold text-gray-500">{p.type}</span>
         </div>
 
-        <h3 className="project__name">{p.name}</h3>
-        <p className="project__loc">
-          <MapPin size={15} /> {p.location}
+        <h3 className="text-xl font-heading font-bold text-brand-blue mb-2">{p.name}</h3>
+        
+        <p className="flex items-center gap-2 text-gray-600 mb-4 text-sm">
+          <MapPin size={16} className="text-brand-orange" /> {p.location}
         </p>
 
-        <div className="project__price">
-          <strong>{p.price}</strong>
-          <span>{p.priceUnit}</span>
+        <div className="mb-4">
+          <span className="text-2xl font-bold text-brand-blue">{p.price}</span>
+          <span className="text-gray-500 ml-1 text-sm">{p.priceUnit}</span>
         </div>
 
-        <p className="project__size">
-          <Ruler size={15} /> {p.size}
+        <p className="flex items-center gap-2 text-gray-600 mb-6 text-sm">
+          <Ruler size={16} className="text-brand-orange" /> {p.size}
         </p>
 
-        <ul className="project__points">
+        <ul className="space-y-2 mb-8 flex-grow">
           {p.highlights.map(h => (
-            <li key={h}>
-              <BadgeCheck size={15} /> {h}
+            <li key={h} className="flex items-start gap-2 text-sm text-gray-600">
+              <BadgeCheck size={16} className="text-brand-orange mt-0.5 flex-shrink-0" /> 
+              <span>{h}</span>
             </li>
           ))}
         </ul>
 
-        <div className="project__actions">
-          <span className="btn btn--ghost" style={{ width: '100%', justifyContent: 'center' }}>
-            View Full Details <ArrowUpRight size={16} />
-          </span>
+        <div className="mt-auto">
+          <Link to={`/projects/${id}`} className="w-full flex justify-center items-center gap-2 border-2 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white transition-colors py-2 rounded font-semibold">
+            View Details <ArrowRight size={16} />
+          </Link>
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }
@@ -87,32 +63,24 @@ export default function Projects() {
   const visible = projects.filter(p => filter === 'All' || p.category === filter);
 
   return (
-    <section className="section section--alt" id="projects">
-      <div className="container">
-        <motion.div
-          className="section__head"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6 }}
-        >
-          <p className="section__eyebrow">Mirrikh Infratech Portfolio</p>
-          <h2>
-            Real Projects. Real Delivery. <span className="text-gold">Real Dholera.</span>
+    <section className="section-padding bg-brand-gray" id="projects">
+      <div className="container mx-auto max-w-7xl px-4">
+        <div className="text-center mb-12">
+          <p className="text-brand-orange font-bold uppercase tracking-wider text-sm mb-2">Mirrikh Infratech Portfolio</p>
+          <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-brand-blue mb-4">
+            Real Projects. Real Delivery. Real Dholera.
           </h2>
-          <p className="section__sub">
+          <p className="text-gray-600 max-w-2xl mx-auto">
             Live inventory from Mirrikh Infratech — 8+ projects delivered in Dholera since
             2012. Every plot NA-approved, NOC cleared, title clear and plan passed.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="filter" role="tablist" aria-label="Filter projects">
+        <div className="flex flex-wrap justify-center gap-2 mb-12">
           {projectFilters.map(f => (
             <button
               key={f}
-              role="tab"
-              aria-selected={filter === f}
-              className={`filter__btn ${filter === f ? 'is-active' : ''}`}
+              className={`px-6 py-2 rounded-full font-semibold transition-colors ${filter === f ? 'bg-brand-blue text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
               onClick={() => setFilter(f)}
             >
               {f}
@@ -120,7 +88,7 @@ export default function Projects() {
           ))}
         </div>
 
-        <motion.div layout className="grid grid--2">
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence mode="popLayout">
             {visible.map(p => (
               <ProjectCard key={p.name} p={p} />

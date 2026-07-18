@@ -12,32 +12,23 @@ const icons = {
 
 export default function Partnership() {
   return (
-    <section className="section" id="partnership" style={{ position: 'relative', zIndex: 5, marginTop: '-60px' }}>
-      <div className="container">
+    <section className="section-padding bg-white" id="partnership">
+      <div className="container mx-auto max-w-7xl px-4">
         <motion.div
-          className="partnership-box"
+          className="bg-brand-gray p-8 md:p-12 rounded-lg border border-gray-200 shadow-sm text-center"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: 0.7 }}
-          style={{
-            background: 'rgba(18, 26, 38, 0.65)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid var(--line)',
-            borderRadius: 'var(--radius)',
-            padding: '4rem 3rem',
-            textAlign: 'center',
-            boxShadow: 'var(--shadow)'
-          }}
         >
-          <h2 style={{ marginBottom: '1.5rem' }}>
-            <span className="text-gold">{partnership.heading}</span>
+          <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-brand-blue mb-4">
+            {partnership.heading}
           </h2>
-          <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem', maxWidth: '800px', margin: '0 auto 3.5rem' }}>
+          <p className="text-gray-600 text-lg max-w-3xl mx-auto mb-12">
             {partnership.intro}
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem', textAlign: 'left' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
             {partnership.points.map((point, i) => {
               const Icon = icons[point.icon];
               return (
@@ -47,25 +38,13 @@ export default function Partnership() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  style={{
-                    background: 'rgba(10, 14, 20, 0.4)',
-                    padding: '2rem',
-                    borderRadius: '12px',
-                    border: '1px solid var(--line-soft)'
-                  }}
+                  className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div style={{ 
-                    width: '50px', height: '50px', 
-                    borderRadius: '50%', 
-                    background: 'rgba(201, 163, 92, 0.1)', 
-                    display: 'grid', placeItems: 'center',
-                    color: 'var(--gold-2)',
-                    marginBottom: '1.25rem'
-                  }}>
-                    <Icon size={24} />
+                  <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-brand-orange mb-6">
+                    <Icon size={28} />
                   </div>
-                  <h3 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.75rem' }}>{point.title}</h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', lineHeight: 1.6 }}>{point.text}</p>
+                  <h3 className="text-xl font-bold text-brand-blue mb-3">{point.title}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">{point.text}</p>
                 </motion.div>
               );
             })}
