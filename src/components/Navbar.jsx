@@ -1,81 +1,119 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { site } from '../data/site';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Search, Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
 
-  useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  const isProjectsActive = location.pathname.includes('/projects');
+
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'Dholera SIR', path: '/dholera' },
+    { name: 'About Us', path: '/about' },
+    { name: 'Our Projects', path: '/projects', hasDropdown: true },
+    { name: 'Events', path: '#' },
+    { name: 'Our Blog', path: '#' },
+    { name: 'Contact', path: '/contact' }
+  ];
+
+  const projectsDropdown = [
+    'Mayur NOVA',
+    'Mayur Aerocity II',
+    'Mayur Park III',
+    'Mayur Forest Villa',
+    'Mayur Greenz Courtyard',
+    'Mayur Ananta II',
+    'Mayur Industrial Landmark',
+    'Sold Out Projects'
+  ];
 
   return (
-    <header className="fixed w-full top-0 z-50 transition-all duration-300 shadow-md">
-      {/* Top Bar - Mirrikh Blue */}
-      <div className={`bg-brand-blue text-white py-2 transition-all duration-300 ${isScrolled ? 'hidden' : 'block'}`}>
-        <div className="container mx-auto max-w-7xl px-4 flex justify-between items-center text-sm">
-          <div className="flex items-center gap-6">
-            <a href="mailto:info@mirrikh.com" className="flex items-center gap-2 hover:text-brand-orange transition-colors">
-              <Mail size={14} /> info@mirrikh.com
-            </a>
-            <a href={`tel:${site.phone}`} className="flex items-center gap-2 hover:text-brand-orange transition-colors">
-              <Phone size={14} /> +91 70489 17300
-            </a>
-          </div>
-          <div className="hidden md:flex items-center gap-4">
-            {/* Social icons removed temporarily */}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Navbar - White */}
-      <nav className="bg-white py-4 transition-all duration-300">
-        <div className="container mx-auto max-w-7xl px-4 flex justify-between items-center">
-          
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Mirrikh Infratech" className="h-12 object-contain" onError={(e) => {
+    <header className="fixed w-full top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
+        
+        {/* Logo */}
+        <Link to="/" className="flex-shrink-0">
+          <img 
+            src="https://mirrikh.com/wp-content/uploads/2023/10/Group-1355.svg" 
+            alt="Mirrikh Group" 
+            className="h-12 md:h-14 object-contain"
+            onError={(e) => {
               e.target.onerror = null;
-              e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%2316315c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 22h20'/%3E%3Cpath d='M4 22V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v18'/%3E%3Cpath d='M10 12h4'/%3E%3C/svg%3E";
-            }} />
-            <div className="flex flex-col">
-              <span className="font-heading font-bold text-xl text-brand-blue leading-none">Capital Brix</span>
-              <span className="text-[10px] uppercase text-brand-orange font-bold tracking-widest mt-1">Exclusive Partner</span>
+              e.target.src = "/logo.png";
+            }}
+          />
+        </Link>
+
+        {/* Desktop Links */}
+        <nav className="hidden lg:flex items-center gap-8 text-[15px] font-medium text-[#10243E]">
+          {navLinks.map((link) => (
+            <div key={link.name} className="relative group py-4">
+              <Link 
+                to={link.path} 
+                className={`hover:text-[#f15b22] transition-colors ${
+                  (link.name === 'Our Projects' && isProjectsActive) || location.pathname === link.path 
+                    ? 'text-[#f15b22]' 
+                    : ''
+                }`}
+              >
+                {link.name}
+              </Link>
+              
+              {/* Dropdown for Our Projects */}
+              {link.hasDropdown && (
+                <div className="absolute top-[100%] left-1/2 -translate-x-1/2 w-64 bg-white shadow-xl border border-gray-100 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 py-2">
+                  {projectsDropdown.map((proj) => (
+                    <Link 
+                      key={proj} 
+                      to={`/projects/${proj.toLowerCase().replace(/\s+/g, '-')}`}
+                      className="block px-6 py-2.5 text-sm hover:text-[#f15b22] hover:bg-gray-50 transition-colors whitespace-nowrap"
+                    >
+                      {proj}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-          </Link>
+          ))}
+        </nav>
 
-          {/* Desktop Links */}
-          <div className="hidden lg:flex items-center gap-8 font-medium text-brand-blue">
-            <Link to="/" className="hover:text-brand-orange transition-colors">Home</Link>
-            <Link to="/about" className="hover:text-brand-orange transition-colors">About Us</Link>
-            <Link to="/projects" className="hover:text-brand-orange transition-colors">Projects</Link>
-            <Link to="/dholera" className="hover:text-brand-orange transition-colors">Dholera SIR</Link>
-            <Link to="/contact" className="hover:text-brand-orange transition-colors">Contact Us</Link>
-            <a href={`https://wa.me/${site.phone}`} target="_blank" rel="noreferrer" className="btn-orange text-sm px-5 py-2">
-              Book Plot
-            </a>
+        {/* Right Side Icons & Login */}
+        <div className="hidden lg:flex items-center gap-3">
+          <div className="flex items-center gap-2 mr-4">
+            <a href="#" className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white hover:bg-[#d65116] transition-colors text-xs font-bold">Y</a>
+            <a href="#" className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white hover:bg-[#d65116] transition-colors text-xs font-bold">In</a>
+            <a href="#" className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white hover:bg-[#d65116] transition-colors text-xs font-bold">L</a>
+            <a href="#" className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white hover:bg-[#d65116] transition-colors text-xs font-bold">X</a>
+            <a href="#" className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white hover:bg-[#d65116] transition-colors text-xs font-bold">f</a>
           </div>
-
-          {/* Mobile Toggle */}
-          <button className="lg:hidden text-brand-blue" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
+          
+          <button className="text-[#10243E] hover:text-[#f26522] transition-colors mr-2">
+            <Search size={20} />
+          </button>
+          
+          <button className="bg-[#f26522] text-white px-8 py-2.5 rounded hover:bg-[#d65116] transition-colors font-medium">
+            Login
           </button>
         </div>
 
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="lg:hidden absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-xl py-4 px-4 flex flex-col gap-4 font-medium text-brand-blue">
-            <Link to="/" onClick={() => setIsOpen(false)}>Home</Link>
-            <Link to="/about" onClick={() => setIsOpen(false)}>About Us</Link>
-            <Link to="/projects" onClick={() => setIsOpen(false)}>Projects</Link>
-            <Link to="/dholera" onClick={() => setIsOpen(false)}>Dholera SIR</Link>
-            <Link to="/contact" onClick={() => setIsOpen(false)}>Contact Us</Link>
-          </div>
-        )}
-      </nav>
+        {/* Mobile Toggle */}
+        <button className="lg:hidden text-[#10243E]" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="lg:hidden bg-white border-t border-gray-100 shadow-xl py-4 px-4 flex flex-col gap-4 font-medium text-[#10243E]">
+          {navLinks.map((link) => (
+            <Link key={link.name} to={link.path} onClick={() => setIsOpen(false)} className="hover:text-[#f26522]">
+              {link.name}
+            </Link>
+          ))}
+        </div>
+      )}
     </header>
   );
 }
