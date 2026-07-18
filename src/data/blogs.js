@@ -1,254 +1,1514 @@
 export const blogs = [
   {
-    "title": "Jobs in Dholera SIR 2026: Growth, Sectors & Salary",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-Jobs-in-Dholera-SIR-2026-1-1024x401.jpg",
+    "title": "Community Living in Dholera Smart City: Benefits and Challenges",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Community-Living-in-Dholera-Smart-City-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "Dholera SIR is no longer just a real estate story—it&#8217;s becoming an employment story. As the Dholera Special Invest...",
-    "pageIndex": 0
+    "excerpt": "Dholera, which is in Gujarat, is India's first greenfield smart city and is part of the Delhi-Mumbai Industrial Corridor..."
   },
   {
-    "title": "FD vs Land Investment: Which Offers Better Returns?",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-FD-vs-land-investment-1-1024x401.jpg",
+    "title": "Dholera Smart City Urban Development: A new standard",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Dholera-Smart-City-Urban-Development-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "Saving money is one thing. Making that money grow is another. If you&#8217;re planning your next financial move, chances...",
-    "pageIndex": 0
+    "excerpt": "Dholera Smart City Urban Development is becoming India's first greenfield smart city, thanks to careful planning under t..."
   },
   {
-    "title": "Waste Management in Dholera: Smart City Guide",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-Waste-Management-in-Dholera-Smart-City-Guide-1-1024x401.jpg",
+    "title": "What Are the Key Infrastructure Projects in Dholera Smart City?",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Infrastructure-Projects-in-Dholera-Smart-City-1-1024x401.avif",
     "date": "2025",
-    "excerpt": "Waste management is one of the most critical challenges facing rapidly growing urban centers across India. As cities exp...",
-    "pageIndex": 0
+    "excerpt": "The Infrastructure Projects in Dholera Smart City show how this big project is turning the Dholera taluka of Ahmedabad d..."
   },
   {
-    "title": "Water Management in Dholera Smart City | DSIR Infra Guide",
-    "img": "https://mirrikh.com/wp-content/uploads/2024/06/banner-TWater-Management-in-Dholera-Smart-City-1-1024x401.jpg",
+    "title": "The Economic Impact of Dholera Smart City on Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Economic-Impact-of-Dholera-Smart-City-1-1024x401.avif",
     "date": "2025",
-    "excerpt": "India&#8217;s rapid urbanisation has made water management in Dholera one of the most closely watched smart city models ...",
-    "pageIndex": 0
+    "excerpt": "The Economic Impact of Dholera Smart City is one of the most significant transformations in India’s urban development st..."
   },
   {
-    "title": "Tata Semiconductor Plant in Dholera: Chip Manufacturing",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-Tata-semiconductor-plant-in-Dholera-1-1024x401.jpg",
+    "title": "Visionary Project in Special Investment Region – Dholera SIR",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Visionary-Project-in-Special-Investment-Region-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "India&#8217;s chip manufacturing journey is no longer a distant ambition — it is steel, concrete, and cleanrooms rising ...",
-    "pageIndex": 0
+    "excerpt": "With the implementation of the Visionary Project in Special Investment Region—Dholera Smart City—India has made a signif..."
   },
   {
-    "title": "Dholera climate change Solutions for a Sustainable Future",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-Dholera-climate-change-1-1024x401.jpg",
+    "title": "Opportunities for Developers in Dholera SIR | Guide",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Opportunities-for-Developers-in-Dholera-SIR-1-2-1024x401.jpg",
     "date": "2025",
-    "excerpt": "Urban centers across the globe grapple with shifting climates. From unpredictable flooding to soaring summer temperature...",
-    "pageIndex": 0
+    "excerpt": "Dholera Special Investment Region (SIR), which is a component of India's ambitious urban development project, is rapidly..."
   },
   {
-    "title": "Dholera housing schemes | Affordable Smart City Living",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-Dholera-housing-schemes-1-1024x401.jpg",
+    "title": "Dholera Smart City: A Model for Future Urban City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Future-Urban-City-in-India-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "The development of Dholera Smart City is reshaping urban living in Gujarat. Under the ambitious Dholera Sir (DSIR) proje...",
-    "pageIndex": 0
+    "excerpt": "Urbanization in Indian cities is accelerating at an unprecedented pace. As urban areas expand, they face challenges like..."
   },
   {
-    "title": "Dholera PPP Model and Smart City Development",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-Dholera-PPP-model-1-1024x401.jpg",
+    "title": "Green Belt in Dholera Smart City Development Plans",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Green-Belt-in-Dholera-Smart-City-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "The Dholera PPP model is becoming an important framework in India’s urban growth and economic expansion strategy. As the...",
-    "pageIndex": 0
+    "excerpt": "The Delhi-Mumbai Industrial Corridor (DMIC) has its main project in Gujarat: Dholera Smart City. It is 920 square kilome..."
   },
   {
-    "title": "Living in Dholera Smart City: Benefits & Future",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-Living-in-Dholera-Smart-City-1-1024x401.jpg",
+    "title": "Real Estate Trends in Dholera Smart City 2025",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Real-Estate-Trends-in-Dholera-Smart-City-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "If you are observing the shifting dynamics of urban property markets in India, you have likely noticed a massive wave...",
-    "pageIndex": 0
+    "excerpt": "Dholera, a city in Gujarat, India, has gotten a lot of attention because it is a Dholera Special Investment Region..."
   },
   {
-    "title": "Buy Plot in Dholera SIR: Inside vs Outside Comparison",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-buy-plot-in-Dholera-SIR-1-1024x401.jpg",
+    "title": "Why Renewable Energy in India: Role of Dholera Solar Park",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Why-Renewable-Energy-in-India-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "When you decide to invest in real estate, the biggest choice you face here is whether to stick inside the [&hellip;]...",
-    "pageIndex": 1
+    "excerpt": "India is at a critical juncture in its energy landscape, where the power demand is rising rapidly, and the need [&hellip..."
   },
   {
-    "title": "Dholera Industrial Corridors | Infrastructure & Growth Hub",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-Dholera-industrial-corridors-1-1024x401.jpg",
+    "title": "Dholera Smart City Sets Standards for Smart Urban Planning",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-smart-urban-planning-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "India is transforming its economic landscape through modern connectivity and integrated logistics, with the Dholera indu...",
-    "pageIndex": 1
+    "excerpt": "Smart cities have boldly taken the leap for 21st-century urban planning. Amongst such ambitious projects, Dholera Smart ..."
   },
   {
-    "title": "ROI on Dholera Smart City Plots & Investment Returns",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/06/banner-ROl-on-Dholera-Smart-City-Plots-1-1024x401.jpg",
+    "title": "Dholera Solar Park: India’s Largest Solar Power Project",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-dholera-solar-park-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "Dholera SIR is becoming one of the most discussed real estate regions in Gujarat. Over the last few years, visible...",
-    "pageIndex": 1
+    "excerpt": "India is making remarkable strides in sustainable power, setting bold targets to expand its green energy capacity. At th..."
   },
   {
-    "title": "Guide to repatriate funds India NRI Exits in Dholera",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-repatriate-funds-India-NRI-1-1024x401.jpg",
+    "title": "Why Dholera is Ideal for Real Estate Investment in Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-real-estate-investment-in-gujarat-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "Investing in the rapidly emerging smart city of Dholera presents a monumental opportunity for global investors looking t...",
-    "pageIndex": 1
+    "excerpt": "Real estate investment in Gujarat has undergone an incredible transformation with the advent of Dholera Smart City, Indi..."
   },
   {
-    "title": "Real Estate Investment for Retirement in India",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-Real-Estate-Investment-for-Retirement-in-India-1-1024x401.jpg",
+    "title": "How the ABCD Building Drives Dholera SIR Infra Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-abcd-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "India&#8217;s joint family system once acted as a natural retirement safety net, but changing lifestyles, urbanisation, ...",
-    "pageIndex": 1
+    "excerpt": "Dholera SIR Infra Development is transforming Gujarat into a world-class smart city and special investment region. At it..."
   },
   {
-    "title": "Buy Plot in Dholera | Complete Investment Guide",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-Buy-Plot-in-Dholera-1-1024x401.jpg",
+    "title": "Dholera Smart City Project Update 2025: Key Developments",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-smart-city-project-update-2025-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "Investing in a dholera smart city is a notable consideration for real estate portfolios. When individuals explore how to...",
-    "pageIndex": 1
+    "excerpt": "Mirrikh Infratech offers an overview of Dholera Smart City project update 2025, providing potential investors, residents..."
   },
   {
-    "title": "Safe Investment Options in India: Low Risk Guide (2026)",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-Safe-Investment-Options-in-India-1-1024x401.jpg",
+    "title": "Dholera Smart City in Gujarat – Future of Urban Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner1-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "Securing your financial future starts with identifying the most reliable safe investment options in India. Whether you a...",
-    "pageIndex": 1
+    "excerpt": "Dholera Smart City in Gujarat is one of India’s most ambitious and visionary urban development projects. It is the first..."
   },
   {
-    "title": "Apartment vs Plot in Dholera: Best 2026 Investment ROI",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-apartment-vs-plot-in-Dholera-1-1024x401.jpg",
+    "title": "Invest Wisely: Dholera Smart City Before Investing",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "When considering an apartment vs plot in Dholera, the modern investor faces an exciting choice, evaluating the massive p...",
-    "pageIndex": 1
+    "excerpt": "Dholera Smart City Before Investing Future, India’s inaugural planned urban center and a flagship project under the Delh..."
   },
   {
-    "title": "Best Retirement Cities in India for NRIs: 2026 Guide",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-best-retirement-cities-in-India-1-1024x401.jpg",
+    "title": "Dholera Smart City India Future: A Vision for Tomorrow",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-smart-city-india-future-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "For many members of the global diaspora, the idea of returning to their roots is becoming a reality. In recent...",
-    "pageIndex": 1
+    "excerpt": "Dholera Smart City, India’s inaugural planned Urban Innovation Hub and a flagship project under the Delhi-Mumbai Industr..."
   },
   {
-    "title": "Hospitality Industry in Dholera | Future Business Hub",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-hospitality-industry-in-Dholera-1-1024x401.jpg",
+    "title": "Dholera SIR: The Future of Industrial Smart City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-industrial-smart-city-in-india-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "The city’s hospitality sector plays an important role in supporting various industries. The hospitality industry in Dhol...",
-    "pageIndex": 2
+    "excerpt": "Dholera Special Investment Region (SIR), India’s first industrial smart city and India’s largest planned smart city, rep..."
   },
   {
-    "title": "₹466 Cr Dholera railway project Approved for Dholera SIR",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-Dholera-railway-project-1-1024x401.jpg",
+    "title": "Dholera International Airport Project: A Catalyst for Growth",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-international-airport-project-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "The Indian government has approved a significant initiative to enhance western India&#8217;s economy. With a budget of 4...",
-    "pageIndex": 2
+    "excerpt": "Dholera SIR (Special Investment Region) in Gujarat, India, is a major urban development project strategically located ne..."
   },
   {
-    "title": "Dholera Artificial River | Smart Water Infrastructure",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-Dholera-Artificial-River-1-1024x401.jpg",
+    "title": "Dholera Solar Park: Leading India's Renewable Energy Future",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholerasolarplant-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "Dholera SIR is gaining attention for its future-ready development model focused on sustainability, connectivity, and adv...",
-    "pageIndex": 2
+    "excerpt": "India’s push toward renewable energy has garnered global recognition, and the Dholera Solar Park in Gujarat stands out a..."
   },
   {
-    "title": "Polycab Dholera Expansion in Smart City | Industry Growth",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-Polycab-Dholera-Expansion-1-1024x401.jpg",
+    "title": "Dholera: A New Era of Sustainable City Living in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-Dholera-SIR-A-New-Era-of-Sustainable-City-Living-in-India-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "The growing discussion around Polycab Dholera reflects the rapid transformation happening inside one of the most ambitio...",
-    "pageIndex": 2
+    "excerpt": "As urbanization spreads throughout India, sustainable and smart city planning has become the top priority of government ..."
   },
   {
-    "title": "Bulk Land in Dholera SIR | Investment Opportunities",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-bulk-land-in-Dholera-1-1024x401.jpg",
+    "title": "Dholera SIR: 21st Century Smart City Project in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Dholera-SIR-Building-a-21st-1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "India’s smart city expansion is transforming the future of real estate investment, and bulk land in Dholera is becoming ...",
-    "pageIndex": 2
+    "excerpt": "Dholera Special Investment Region (SIR), India’s pioneering Smart City project and a key part of the Delhi-Mumbai Indust..."
   },
   {
-    "title": "Linde Dholera Plant Talks Signal Industrial Growth",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-Linde-Dholera-plant-1-1024x401.jpg",
+    "title": "Dholera SIR: Most Futuristic City in India for Smart Living",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/What-Makes-Dholera-Smart1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "India&#8217;s technology and energy sectors are expanding rapidly as global companies explore future-ready development z...",
-    "pageIndex": 2
+    "excerpt": "Dholera Smart City stands as a shining example of India’s effort to build sustainable, technologically advanced urban ar..."
   },
   {
-    "title": "Dholera DMIC Project | Strategic Industrial Hub India",
-    "img": "https://mirrikh.com/wp-content/uploads/2024/04/banner-Dholera-DMIC-Project-1-1024x401.jpg",
+    "title": "Top Things to Do in Dholera – Best Attractions & Places",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/things-do-around-dholera-1024x401.jpg",
     "date": "2025",
-    "excerpt": "The Dholera DMIC project is emerging as a transformative initiative under the Delhi Mumbai Industrial Corridor, position...",
-    "pageIndex": 2
+    "excerpt": "Dholera Smart City, Gujarat’s first greenfield smart city, is an emerging destination offering history, nature, and mode..."
   },
   {
-    "title": "Dholera SIR Legal Framework | Laws, Governance & Policies",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-Dholera-SIR-Legal-Framework-1-1024x401.jpg",
+    "title": "Enhancing Quality of Life in India: The Role of Smart Cities",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/How-Dholera-Smart-City1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "The Dholera SIR legal framework plays a key role in shaping Dholera Smart City under the Delhi Mumbai Industrial Corrido...",
-    "pageIndex": 2
+    "excerpt": "India’s rapid urbanization brings challenges like overcrowding, infrastructure strain, and environmental concerns in urb..."
   },
   {
-    "title": "Future of Agriculture in Dholera | Smart Farming Growth",
-    "img": "https://mirrikh.com/wp-content/uploads/2024/04/banner-Future-of-Agriculture-in-Dholera-1-1024x401.jpg",
+    "title": "5 Upcoming Developments in Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Top-5-Upcoming-Developments1-1024x401.jpg",
     "date": "2025",
-    "excerpt": "The future of agriculture in Dholera is rapidly transforming as part of the Dholera Special Investment Region (DSIR). Kn...",
-    "pageIndex": 2
+    "excerpt": "India’s first planned greenfield urban hub has drawn significant interest from investors, developers, and prospective re..."
   },
   {
-    "title": "Tata semiconductor plant in Dholera | India’s First Chip Fab",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-Tata-semiconductor-plant-in-Dholera-1-1024x401.jpg",
+    "title": "The Cultural Landscape of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/culture1-1024x768.png",
     "date": "2025",
-    "excerpt": "The Tata semiconductor plant in Dholera is transforming India’s position in advanced electronics manufacturing. Develope...",
-    "pageIndex": 3
+    "excerpt": "Embarking on a journey through the cultural landscape of Dholera is like walking through a living museum of history, tra..."
   },
   {
-    "title": "Dholera Security Systems and Smart Surveillance Overview",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/05/banner-Dholera-Security-Systems-1-1024x401.jpg",
+    "title": "Dholera's Global Appeal to Investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-3-1024x768.png",
     "date": "2025",
-    "excerpt": "Dholera security systems are designed to create a highly efficient and secure environment within Dholera Smart City, loc...",
-    "pageIndex": 3
+    "excerpt": "Dholera: A Beacon of Global Investment Opportunities In the heart of India's dynamic growth trajectory lies Dholera, a c..."
   },
   {
-    "title": "High Return Investment Options in India 2026 Guide",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-High-Return-Investment-Options-in-India-2026-Guide-1-1024x401.jpg",
+    "title": "Healthcare Innovations in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/healthcare-1-1024x768.png",
     "date": "2025",
-    "excerpt": "High return investment options in India are evolving rapidly as investors move beyond traditional savings plans and expl...",
-    "pageIndex": 3
+    "excerpt": "Dholera, an Indian city with aspirations as high as its vision, is located in the heart of Gujarat. Dholera, is..."
   },
   {
-    "title": "Land vs pension investment | Which is Better?",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-Land-vs-pension-investment-1-1024x401.jpg",
+    "title": "Education and Research Facilities in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/education-nd-research.jpeg",
     "date": "2025",
-    "excerpt": "The debate around Land vs Pension Investment has become more relevant as investors in India rethink traditional retireme...",
-    "pageIndex": 3
+    "excerpt": "Dholera, which is intended to be India's first smart city, is more than just an urban development project; it's a..."
   },
   {
-    "title": "Best Plots in Dholera | Top Residential Locations 2026",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-I-best-plots-in-Dholera-1-1024x401.jpg",
+    "title": "Dholera's Transportation Network: A Future Outlook",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/future-new-1024x768.png",
     "date": "2025",
-    "excerpt": "The vision of a futuristic smart city is rapidly becoming reality in Gujarat. Backed by the Government of India and...",
-    "pageIndex": 3
+    "excerpt": "The ambitious Delhi-Mumbai Industrial Corridor (DMIC) has designated the rapidly growing city of Dholera in Gujarat, Ind..."
   },
   {
-    "title": "Dholera Dhandhuka Road plots: Safe Investment Guide 2026",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-Dholera-Dhandhuka-Road-plots-1-1024x401.jpg",
+    "title": "Dholera's Commercial Real Estate Potential",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/inves-1024x768.png",
     "date": "2025",
-    "excerpt": "Investment activity around this corridor is increasing as India’s special investment region model evolves. The area conn...",
-    "pageIndex": 3
+    "excerpt": "Dholera, Gujarat's ambitious smart city project, is quickly becoming a popular destination for commercial real estate in..."
   },
   {
-    "title": "Dholera Semiconductor Investment & Major EV Growth in India",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-TDholera-semiconductor-investment-1-1024x401.jpg",
+    "title": "Residential Life in Dholera: What to Expect",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/Mirrikh-Blog-Images-1024x1024.jpg",
     "date": "2025",
-    "excerpt": "Dholera semiconductor investment is transforming Dholera Smart City into a powerful industrial destination. Known as Ind...",
-    "pageIndex": 3
+    "excerpt": "Dholera, the first planned smart city of India, is a beacon of the country's urban future. With its state-of-the-art inf..."
   },
   {
-    "title": "Tokyo Electron Dholera Office | India&#8217;s Semiconductor Hub",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-Tokyo-Electron-Dholera-Office-1-1024x401.jpg",
+    "title": "Dholera's Contribution to India's &#8216;Make in India' Initiative",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-1-1024x768.png",
     "date": "2025",
-    "excerpt": "The world of technology is moving quickly. The special investment region stays ahead in this change. A top equipment mak...",
-    "pageIndex": 3
+    "excerpt": "The government's &#8216;Make in India' policy has been a crucial step in the process of turning India into a worldwide..."
   },
   {
-    "title": "Unlock Dholera Smart City Incentives for Manufacturers",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/04/banner-Dholera-Smart-City-incentives-1-1024x401.jpg",
+    "title": "The Architectural Marvels of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/architecture-image-1024x768.png",
     "date": "2025",
-    "excerpt": "Dholera&#8217;s industrial growth strategy prioritizes these areas, offeringAre you a manufacturer looking for the next ...",
-    "pageIndex": 3
+    "excerpt": "Dholera is a city that exists outside of time and space and is tucked away in Gujarat, one of India's..."
+  },
+  {
+    "title": "The Vision of Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/Mirrikh-Blog-img-1-1-1024x1024.png",
+    "date": "2025",
+    "excerpt": "Dholera Smart City embodies a vision that harmonizes technology advancement with sustainable development, marking a dari..."
+  },
+  {
+    "title": "PM Modi announces the acquisition of the 91,000 crore rupees TATA semiconductor facility in Dholera.",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/PM-Modi-announces-the-acquisition2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "PM Modi establishes the Dholera Tata Semiconductor Plant's foundation. According to the most recent Dholera smart city n..."
+  },
+  {
+    "title": "Grew Energy to infuse Rs 6,000 cr in solar capacity expansion",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news03.jpg",
+    "date": "2025",
+    "excerpt": "The company had earlier set a target to invest Rs 5,400 crore for 4-GW of solar module manufacturing capacity with..."
+  },
+  {
+    "title": "CM invites over 1,500 industrialists, investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news02.jpg",
+    "date": "2025",
+    "excerpt": "Bhupendra Patel Underscores State’s Investor-Friendly Policies, Highlights Key Projects Like GIFT And Dholera SIR Which ..."
+  },
+  {
+    "title": "बिटकॉइन Vs धोलेरा स्मार्ट सिटी इन्वेस्टमेंट",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/article2.jpg",
+    "date": "2025",
+    "excerpt": "आज इक्कीसवी सदीमें जब आम लोगों के पास बहुतायत में पैसे आते हैं, ऐसेमें लोग तरह तरह के इन्वेस्टमेंट के..."
+  },
+  {
+    "title": "State taking Centre’s help in bringing Tesla to Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news01.jpg",
+    "date": "2025",
+    "excerpt": "Ahmedabad: Ahead of Vibrant Gujarat Global Summit (VGGS) 2024, the state government is working hard to bring electric ca..."
+  },
+  {
+    "title": "Gujarat’s world-class infrastructure to lead the vision of ‘Viksit Bharat’",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/news03.jpg",
+    "date": "2025",
+    "excerpt": "Balvantsinh Rajput: Cabinet Minister Industries, Micro, Small and Medium Industries, Cottage, Khadi and Rural Industries..."
+  },
+  {
+    "title": "Community Living in Dholera Smart City: Benefits and Challenges",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Community-Living-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, which is in Gujarat, is India's first greenfield smart city and is part of the Delhi-Mumbai Industrial Corridor..."
+  },
+  {
+    "title": "Dholera Smart City Urban Development: A new standard",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Dholera-Smart-City-Urban-Development-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Urban Development is becoming India's first greenfield smart city, thanks to careful planning under t..."
+  },
+  {
+    "title": "What Are the Key Infrastructure Projects in Dholera Smart City?",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Infrastructure-Projects-in-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Infrastructure Projects in Dholera Smart City show how this big project is turning the Dholera taluka of Ahmedabad d..."
+  },
+  {
+    "title": "The Economic Impact of Dholera Smart City on Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Economic-Impact-of-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Economic Impact of Dholera Smart City is one of the most significant transformations in India’s urban development st..."
+  },
+  {
+    "title": "Visionary Project in Special Investment Region – Dholera SIR",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Visionary-Project-in-Special-Investment-Region-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "With the implementation of the Visionary Project in Special Investment Region—Dholera Smart City—India has made a signif..."
+  },
+  {
+    "title": "Opportunities for Developers in Dholera SIR | Guide",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Opportunities-for-Developers-in-Dholera-SIR-1-2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), which is a component of India's ambitious urban development project, is rapidly..."
+  },
+  {
+    "title": "Dholera Smart City: A Model for Future Urban City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Future-Urban-City-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Urbanization in Indian cities is accelerating at an unprecedented pace. As urban areas expand, they face challenges like..."
+  },
+  {
+    "title": "Green Belt in Dholera Smart City Development Plans",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Green-Belt-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "The Delhi-Mumbai Industrial Corridor (DMIC) has its main project in Gujarat: Dholera Smart City. It is 920 square kilome..."
+  },
+  {
+    "title": "Real Estate Trends in Dholera Smart City 2025",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Real-Estate-Trends-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, a city in Gujarat, India, has gotten a lot of attention because it is a Dholera Special Investment Region..."
+  },
+  {
+    "title": "Why Renewable Energy in India: Role of Dholera Solar Park",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Why-Renewable-Energy-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is at a critical juncture in its energy landscape, where the power demand is rising rapidly, and the need [&hellip..."
+  },
+  {
+    "title": "Dholera Smart City Sets Standards for Smart Urban Planning",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-smart-urban-planning-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Smart cities have boldly taken the leap for 21st-century urban planning. Amongst such ambitious projects, Dholera Smart ..."
+  },
+  {
+    "title": "Dholera Solar Park: India’s Largest Solar Power Project",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-dholera-solar-park-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is making remarkable strides in sustainable power, setting bold targets to expand its green energy capacity. At th..."
+  },
+  {
+    "title": "Why Dholera is Ideal for Real Estate Investment in Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-real-estate-investment-in-gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Real estate investment in Gujarat has undergone an incredible transformation with the advent of Dholera Smart City, Indi..."
+  },
+  {
+    "title": "How the ABCD Building Drives Dholera SIR Infra Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-abcd-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR Infra Development is transforming Gujarat into a world-class smart city and special investment region. At it..."
+  },
+  {
+    "title": "Dholera Smart City Project Update 2025: Key Developments",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-smart-city-project-update-2025-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Mirrikh Infratech offers an overview of Dholera Smart City project update 2025, providing potential investors, residents..."
+  },
+  {
+    "title": "Dholera Smart City in Gujarat – Future of Urban Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner1-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City in Gujarat is one of India’s most ambitious and visionary urban development projects. It is the first..."
+  },
+  {
+    "title": "Invest Wisely: Dholera Smart City Before Investing",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Before Investing Future, India’s inaugural planned urban center and a flagship project under the Delh..."
+  },
+  {
+    "title": "Dholera Smart City India Future: A Vision for Tomorrow",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-smart-city-india-future-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, India’s inaugural planned Urban Innovation Hub and a flagship project under the Delhi-Mumbai Industr..."
+  },
+  {
+    "title": "Dholera SIR: The Future of Industrial Smart City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-industrial-smart-city-in-india-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s first industrial smart city and India’s largest planned smart city, rep..."
+  },
+  {
+    "title": "Dholera International Airport Project: A Catalyst for Growth",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-international-airport-project-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR (Special Investment Region) in Gujarat, India, is a major urban development project strategically located ne..."
+  },
+  {
+    "title": "Dholera Solar Park: Leading India's Renewable Energy Future",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholerasolarplant-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s push toward renewable energy has garnered global recognition, and the Dholera Solar Park in Gujarat stands out a..."
+  },
+  {
+    "title": "Dholera: A New Era of Sustainable City Living in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-Dholera-SIR-A-New-Era-of-Sustainable-City-Living-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "As urbanization spreads throughout India, sustainable and smart city planning has become the top priority of government ..."
+  },
+  {
+    "title": "Dholera SIR: 21st Century Smart City Project in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Dholera-SIR-Building-a-21st-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s pioneering Smart City project and a key part of the Delhi-Mumbai Indust..."
+  },
+  {
+    "title": "Dholera SIR: Most Futuristic City in India for Smart Living",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/What-Makes-Dholera-Smart1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City stands as a shining example of India’s effort to build sustainable, technologically advanced urban ar..."
+  },
+  {
+    "title": "Top Things to Do in Dholera – Best Attractions & Places",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/things-do-around-dholera-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, Gujarat’s first greenfield smart city, is an emerging destination offering history, nature, and mode..."
+  },
+  {
+    "title": "Enhancing Quality of Life in India: The Role of Smart Cities",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/How-Dholera-Smart-City1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s rapid urbanization brings challenges like overcrowding, infrastructure strain, and environmental concerns in urb..."
+  },
+  {
+    "title": "5 Upcoming Developments in Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Top-5-Upcoming-Developments1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s first planned greenfield urban hub has drawn significant interest from investors, developers, and prospective re..."
+  },
+  {
+    "title": "The Cultural Landscape of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/culture1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Embarking on a journey through the cultural landscape of Dholera is like walking through a living museum of history, tra..."
+  },
+  {
+    "title": "Dholera's Global Appeal to Investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-3-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera: A Beacon of Global Investment Opportunities In the heart of India's dynamic growth trajectory lies Dholera, a c..."
+  },
+  {
+    "title": "Healthcare Innovations in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/healthcare-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, an Indian city with aspirations as high as its vision, is located in the heart of Gujarat. Dholera, is..."
+  },
+  {
+    "title": "Education and Research Facilities in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/education-nd-research.jpeg",
+    "date": "2025",
+    "excerpt": "Dholera, which is intended to be India's first smart city, is more than just an urban development project; it's a..."
+  },
+  {
+    "title": "Dholera's Transportation Network: A Future Outlook",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/future-new-1024x768.png",
+    "date": "2025",
+    "excerpt": "The ambitious Delhi-Mumbai Industrial Corridor (DMIC) has designated the rapidly growing city of Dholera in Gujarat, Ind..."
+  },
+  {
+    "title": "Dholera's Commercial Real Estate Potential",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/inves-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, Gujarat's ambitious smart city project, is quickly becoming a popular destination for commercial real estate in..."
+  },
+  {
+    "title": "Residential Life in Dholera: What to Expect",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/Mirrikh-Blog-Images-1024x1024.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, the first planned smart city of India, is a beacon of the country's urban future. With its state-of-the-art inf..."
+  },
+  {
+    "title": "Dholera's Contribution to India's &#8216;Make in India' Initiative",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "The government's &#8216;Make in India' policy has been a crucial step in the process of turning India into a worldwide..."
+  },
+  {
+    "title": "The Architectural Marvels of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/architecture-image-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera is a city that exists outside of time and space and is tucked away in Gujarat, one of India's..."
+  },
+  {
+    "title": "The Vision of Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/Mirrikh-Blog-img-1-1-1024x1024.png",
+    "date": "2025",
+    "excerpt": "Dholera Smart City embodies a vision that harmonizes technology advancement with sustainable development, marking a dari..."
+  },
+  {
+    "title": "PM Modi announces the acquisition of the 91,000 crore rupees TATA semiconductor facility in Dholera.",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/PM-Modi-announces-the-acquisition2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "PM Modi establishes the Dholera Tata Semiconductor Plant's foundation. According to the most recent Dholera smart city n..."
+  },
+  {
+    "title": "Grew Energy to infuse Rs 6,000 cr in solar capacity expansion",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news03.jpg",
+    "date": "2025",
+    "excerpt": "The company had earlier set a target to invest Rs 5,400 crore for 4-GW of solar module manufacturing capacity with..."
+  },
+  {
+    "title": "CM invites over 1,500 industrialists, investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news02.jpg",
+    "date": "2025",
+    "excerpt": "Bhupendra Patel Underscores State’s Investor-Friendly Policies, Highlights Key Projects Like GIFT And Dholera SIR Which ..."
+  },
+  {
+    "title": "बिटकॉइन Vs धोलेरा स्मार्ट सिटी इन्वेस्टमेंट",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/article2.jpg",
+    "date": "2025",
+    "excerpt": "आज इक्कीसवी सदीमें जब आम लोगों के पास बहुतायत में पैसे आते हैं, ऐसेमें लोग तरह तरह के इन्वेस्टमेंट के..."
+  },
+  {
+    "title": "State taking Centre’s help in bringing Tesla to Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news01.jpg",
+    "date": "2025",
+    "excerpt": "Ahmedabad: Ahead of Vibrant Gujarat Global Summit (VGGS) 2024, the state government is working hard to bring electric ca..."
+  },
+  {
+    "title": "Gujarat’s world-class infrastructure to lead the vision of ‘Viksit Bharat’",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/news03.jpg",
+    "date": "2025",
+    "excerpt": "Balvantsinh Rajput: Cabinet Minister Industries, Micro, Small and Medium Industries, Cottage, Khadi and Rural Industries..."
+  },
+  {
+    "title": "Community Living in Dholera Smart City: Benefits and Challenges",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Community-Living-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, which is in Gujarat, is India's first greenfield smart city and is part of the Delhi-Mumbai Industrial Corridor..."
+  },
+  {
+    "title": "Dholera Smart City Urban Development: A new standard",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Dholera-Smart-City-Urban-Development-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Urban Development is becoming India's first greenfield smart city, thanks to careful planning under t..."
+  },
+  {
+    "title": "What Are the Key Infrastructure Projects in Dholera Smart City?",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Infrastructure-Projects-in-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Infrastructure Projects in Dholera Smart City show how this big project is turning the Dholera taluka of Ahmedabad d..."
+  },
+  {
+    "title": "The Economic Impact of Dholera Smart City on Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Economic-Impact-of-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Economic Impact of Dholera Smart City is one of the most significant transformations in India’s urban development st..."
+  },
+  {
+    "title": "Visionary Project in Special Investment Region – Dholera SIR",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Visionary-Project-in-Special-Investment-Region-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "With the implementation of the Visionary Project in Special Investment Region—Dholera Smart City—India has made a signif..."
+  },
+  {
+    "title": "Opportunities for Developers in Dholera SIR | Guide",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Opportunities-for-Developers-in-Dholera-SIR-1-2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), which is a component of India's ambitious urban development project, is rapidly..."
+  },
+  {
+    "title": "Dholera Smart City: A Model for Future Urban City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Future-Urban-City-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Urbanization in Indian cities is accelerating at an unprecedented pace. As urban areas expand, they face challenges like..."
+  },
+  {
+    "title": "Green Belt in Dholera Smart City Development Plans",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Green-Belt-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "The Delhi-Mumbai Industrial Corridor (DMIC) has its main project in Gujarat: Dholera Smart City. It is 920 square kilome..."
+  },
+  {
+    "title": "Real Estate Trends in Dholera Smart City 2025",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Real-Estate-Trends-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, a city in Gujarat, India, has gotten a lot of attention because it is a Dholera Special Investment Region..."
+  },
+  {
+    "title": "Why Renewable Energy in India: Role of Dholera Solar Park",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Why-Renewable-Energy-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is at a critical juncture in its energy landscape, where the power demand is rising rapidly, and the need [&hellip..."
+  },
+  {
+    "title": "Dholera Smart City Sets Standards for Smart Urban Planning",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-smart-urban-planning-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Smart cities have boldly taken the leap for 21st-century urban planning. Amongst such ambitious projects, Dholera Smart ..."
+  },
+  {
+    "title": "Dholera Solar Park: India’s Largest Solar Power Project",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-dholera-solar-park-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is making remarkable strides in sustainable power, setting bold targets to expand its green energy capacity. At th..."
+  },
+  {
+    "title": "Why Dholera is Ideal for Real Estate Investment in Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-real-estate-investment-in-gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Real estate investment in Gujarat has undergone an incredible transformation with the advent of Dholera Smart City, Indi..."
+  },
+  {
+    "title": "How the ABCD Building Drives Dholera SIR Infra Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-abcd-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR Infra Development is transforming Gujarat into a world-class smart city and special investment region. At it..."
+  },
+  {
+    "title": "Dholera Smart City Project Update 2025: Key Developments",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-smart-city-project-update-2025-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Mirrikh Infratech offers an overview of Dholera Smart City project update 2025, providing potential investors, residents..."
+  },
+  {
+    "title": "Dholera Smart City in Gujarat – Future of Urban Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner1-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City in Gujarat is one of India’s most ambitious and visionary urban development projects. It is the first..."
+  },
+  {
+    "title": "Invest Wisely: Dholera Smart City Before Investing",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Before Investing Future, India’s inaugural planned urban center and a flagship project under the Delh..."
+  },
+  {
+    "title": "Dholera Smart City India Future: A Vision for Tomorrow",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-smart-city-india-future-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, India’s inaugural planned Urban Innovation Hub and a flagship project under the Delhi-Mumbai Industr..."
+  },
+  {
+    "title": "Dholera SIR: The Future of Industrial Smart City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-industrial-smart-city-in-india-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s first industrial smart city and India’s largest planned smart city, rep..."
+  },
+  {
+    "title": "Dholera International Airport Project: A Catalyst for Growth",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-international-airport-project-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR (Special Investment Region) in Gujarat, India, is a major urban development project strategically located ne..."
+  },
+  {
+    "title": "Dholera Solar Park: Leading India's Renewable Energy Future",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholerasolarplant-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s push toward renewable energy has garnered global recognition, and the Dholera Solar Park in Gujarat stands out a..."
+  },
+  {
+    "title": "Dholera: A New Era of Sustainable City Living in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-Dholera-SIR-A-New-Era-of-Sustainable-City-Living-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "As urbanization spreads throughout India, sustainable and smart city planning has become the top priority of government ..."
+  },
+  {
+    "title": "Dholera SIR: 21st Century Smart City Project in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Dholera-SIR-Building-a-21st-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s pioneering Smart City project and a key part of the Delhi-Mumbai Indust..."
+  },
+  {
+    "title": "Dholera SIR: Most Futuristic City in India for Smart Living",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/What-Makes-Dholera-Smart1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City stands as a shining example of India’s effort to build sustainable, technologically advanced urban ar..."
+  },
+  {
+    "title": "Top Things to Do in Dholera – Best Attractions & Places",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/things-do-around-dholera-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, Gujarat’s first greenfield smart city, is an emerging destination offering history, nature, and mode..."
+  },
+  {
+    "title": "Enhancing Quality of Life in India: The Role of Smart Cities",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/How-Dholera-Smart-City1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s rapid urbanization brings challenges like overcrowding, infrastructure strain, and environmental concerns in urb..."
+  },
+  {
+    "title": "5 Upcoming Developments in Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Top-5-Upcoming-Developments1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s first planned greenfield urban hub has drawn significant interest from investors, developers, and prospective re..."
+  },
+  {
+    "title": "The Cultural Landscape of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/culture1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Embarking on a journey through the cultural landscape of Dholera is like walking through a living museum of history, tra..."
+  },
+  {
+    "title": "Dholera's Global Appeal to Investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-3-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera: A Beacon of Global Investment Opportunities In the heart of India's dynamic growth trajectory lies Dholera, a c..."
+  },
+  {
+    "title": "Healthcare Innovations in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/healthcare-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, an Indian city with aspirations as high as its vision, is located in the heart of Gujarat. Dholera, is..."
+  },
+  {
+    "title": "Education and Research Facilities in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/education-nd-research.jpeg",
+    "date": "2025",
+    "excerpt": "Dholera, which is intended to be India's first smart city, is more than just an urban development project; it's a..."
+  },
+  {
+    "title": "Dholera's Transportation Network: A Future Outlook",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/future-new-1024x768.png",
+    "date": "2025",
+    "excerpt": "The ambitious Delhi-Mumbai Industrial Corridor (DMIC) has designated the rapidly growing city of Dholera in Gujarat, Ind..."
+  },
+  {
+    "title": "Dholera's Commercial Real Estate Potential",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/inves-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, Gujarat's ambitious smart city project, is quickly becoming a popular destination for commercial real estate in..."
+  },
+  {
+    "title": "Residential Life in Dholera: What to Expect",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/Mirrikh-Blog-Images-1024x1024.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, the first planned smart city of India, is a beacon of the country's urban future. With its state-of-the-art inf..."
+  },
+  {
+    "title": "Dholera's Contribution to India's &#8216;Make in India' Initiative",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "The government's &#8216;Make in India' policy has been a crucial step in the process of turning India into a worldwide..."
+  },
+  {
+    "title": "The Architectural Marvels of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/architecture-image-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera is a city that exists outside of time and space and is tucked away in Gujarat, one of India's..."
+  },
+  {
+    "title": "The Vision of Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/Mirrikh-Blog-img-1-1-1024x1024.png",
+    "date": "2025",
+    "excerpt": "Dholera Smart City embodies a vision that harmonizes technology advancement with sustainable development, marking a dari..."
+  },
+  {
+    "title": "PM Modi announces the acquisition of the 91,000 crore rupees TATA semiconductor facility in Dholera.",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/PM-Modi-announces-the-acquisition2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "PM Modi establishes the Dholera Tata Semiconductor Plant's foundation. According to the most recent Dholera smart city n..."
+  },
+  {
+    "title": "Grew Energy to infuse Rs 6,000 cr in solar capacity expansion",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news03.jpg",
+    "date": "2025",
+    "excerpt": "The company had earlier set a target to invest Rs 5,400 crore for 4-GW of solar module manufacturing capacity with..."
+  },
+  {
+    "title": "CM invites over 1,500 industrialists, investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news02.jpg",
+    "date": "2025",
+    "excerpt": "Bhupendra Patel Underscores State’s Investor-Friendly Policies, Highlights Key Projects Like GIFT And Dholera SIR Which ..."
+  },
+  {
+    "title": "बिटकॉइन Vs धोलेरा स्मार्ट सिटी इन्वेस्टमेंट",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/article2.jpg",
+    "date": "2025",
+    "excerpt": "आज इक्कीसवी सदीमें जब आम लोगों के पास बहुतायत में पैसे आते हैं, ऐसेमें लोग तरह तरह के इन्वेस्टमेंट के..."
+  },
+  {
+    "title": "State taking Centre’s help in bringing Tesla to Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news01.jpg",
+    "date": "2025",
+    "excerpt": "Ahmedabad: Ahead of Vibrant Gujarat Global Summit (VGGS) 2024, the state government is working hard to bring electric ca..."
+  },
+  {
+    "title": "Gujarat’s world-class infrastructure to lead the vision of ‘Viksit Bharat’",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/news03.jpg",
+    "date": "2025",
+    "excerpt": "Balvantsinh Rajput: Cabinet Minister Industries, Micro, Small and Medium Industries, Cottage, Khadi and Rural Industries..."
+  },
+  {
+    "title": "Community Living in Dholera Smart City: Benefits and Challenges",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Community-Living-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, which is in Gujarat, is India's first greenfield smart city and is part of the Delhi-Mumbai Industrial Corridor..."
+  },
+  {
+    "title": "Dholera Smart City Urban Development: A new standard",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Dholera-Smart-City-Urban-Development-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Urban Development is becoming India's first greenfield smart city, thanks to careful planning under t..."
+  },
+  {
+    "title": "What Are the Key Infrastructure Projects in Dholera Smart City?",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Infrastructure-Projects-in-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Infrastructure Projects in Dholera Smart City show how this big project is turning the Dholera taluka of Ahmedabad d..."
+  },
+  {
+    "title": "The Economic Impact of Dholera Smart City on Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Economic-Impact-of-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Economic Impact of Dholera Smart City is one of the most significant transformations in India’s urban development st..."
+  },
+  {
+    "title": "Visionary Project in Special Investment Region – Dholera SIR",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Visionary-Project-in-Special-Investment-Region-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "With the implementation of the Visionary Project in Special Investment Region—Dholera Smart City—India has made a signif..."
+  },
+  {
+    "title": "Opportunities for Developers in Dholera SIR | Guide",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Opportunities-for-Developers-in-Dholera-SIR-1-2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), which is a component of India's ambitious urban development project, is rapidly..."
+  },
+  {
+    "title": "Dholera Smart City: A Model for Future Urban City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Future-Urban-City-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Urbanization in Indian cities is accelerating at an unprecedented pace. As urban areas expand, they face challenges like..."
+  },
+  {
+    "title": "Green Belt in Dholera Smart City Development Plans",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Green-Belt-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "The Delhi-Mumbai Industrial Corridor (DMIC) has its main project in Gujarat: Dholera Smart City. It is 920 square kilome..."
+  },
+  {
+    "title": "Real Estate Trends in Dholera Smart City 2025",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Real-Estate-Trends-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, a city in Gujarat, India, has gotten a lot of attention because it is a Dholera Special Investment Region..."
+  },
+  {
+    "title": "Why Renewable Energy in India: Role of Dholera Solar Park",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Why-Renewable-Energy-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is at a critical juncture in its energy landscape, where the power demand is rising rapidly, and the need [&hellip..."
+  },
+  {
+    "title": "Dholera Smart City Sets Standards for Smart Urban Planning",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-smart-urban-planning-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Smart cities have boldly taken the leap for 21st-century urban planning. Amongst such ambitious projects, Dholera Smart ..."
+  },
+  {
+    "title": "Dholera Solar Park: India’s Largest Solar Power Project",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-dholera-solar-park-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is making remarkable strides in sustainable power, setting bold targets to expand its green energy capacity. At th..."
+  },
+  {
+    "title": "Why Dholera is Ideal for Real Estate Investment in Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-real-estate-investment-in-gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Real estate investment in Gujarat has undergone an incredible transformation with the advent of Dholera Smart City, Indi..."
+  },
+  {
+    "title": "How the ABCD Building Drives Dholera SIR Infra Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-abcd-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR Infra Development is transforming Gujarat into a world-class smart city and special investment region. At it..."
+  },
+  {
+    "title": "Dholera Smart City Project Update 2025: Key Developments",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-smart-city-project-update-2025-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Mirrikh Infratech offers an overview of Dholera Smart City project update 2025, providing potential investors, residents..."
+  },
+  {
+    "title": "Dholera Smart City in Gujarat – Future of Urban Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner1-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City in Gujarat is one of India’s most ambitious and visionary urban development projects. It is the first..."
+  },
+  {
+    "title": "Invest Wisely: Dholera Smart City Before Investing",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Before Investing Future, India’s inaugural planned urban center and a flagship project under the Delh..."
+  },
+  {
+    "title": "Dholera Smart City India Future: A Vision for Tomorrow",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-smart-city-india-future-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, India’s inaugural planned Urban Innovation Hub and a flagship project under the Delhi-Mumbai Industr..."
+  },
+  {
+    "title": "Dholera SIR: The Future of Industrial Smart City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-industrial-smart-city-in-india-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s first industrial smart city and India’s largest planned smart city, rep..."
+  },
+  {
+    "title": "Dholera International Airport Project: A Catalyst for Growth",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-international-airport-project-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR (Special Investment Region) in Gujarat, India, is a major urban development project strategically located ne..."
+  },
+  {
+    "title": "Dholera Solar Park: Leading India's Renewable Energy Future",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholerasolarplant-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s push toward renewable energy has garnered global recognition, and the Dholera Solar Park in Gujarat stands out a..."
+  },
+  {
+    "title": "Dholera: A New Era of Sustainable City Living in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-Dholera-SIR-A-New-Era-of-Sustainable-City-Living-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "As urbanization spreads throughout India, sustainable and smart city planning has become the top priority of government ..."
+  },
+  {
+    "title": "Dholera SIR: 21st Century Smart City Project in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Dholera-SIR-Building-a-21st-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s pioneering Smart City project and a key part of the Delhi-Mumbai Indust..."
+  },
+  {
+    "title": "Dholera SIR: Most Futuristic City in India for Smart Living",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/What-Makes-Dholera-Smart1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City stands as a shining example of India’s effort to build sustainable, technologically advanced urban ar..."
+  },
+  {
+    "title": "Top Things to Do in Dholera – Best Attractions & Places",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/things-do-around-dholera-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, Gujarat’s first greenfield smart city, is an emerging destination offering history, nature, and mode..."
+  },
+  {
+    "title": "Enhancing Quality of Life in India: The Role of Smart Cities",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/How-Dholera-Smart-City1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s rapid urbanization brings challenges like overcrowding, infrastructure strain, and environmental concerns in urb..."
+  },
+  {
+    "title": "5 Upcoming Developments in Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Top-5-Upcoming-Developments1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s first planned greenfield urban hub has drawn significant interest from investors, developers, and prospective re..."
+  },
+  {
+    "title": "The Cultural Landscape of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/culture1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Embarking on a journey through the cultural landscape of Dholera is like walking through a living museum of history, tra..."
+  },
+  {
+    "title": "Dholera's Global Appeal to Investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-3-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera: A Beacon of Global Investment Opportunities In the heart of India's dynamic growth trajectory lies Dholera, a c..."
+  },
+  {
+    "title": "Healthcare Innovations in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/healthcare-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, an Indian city with aspirations as high as its vision, is located in the heart of Gujarat. Dholera, is..."
+  },
+  {
+    "title": "Education and Research Facilities in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/education-nd-research.jpeg",
+    "date": "2025",
+    "excerpt": "Dholera, which is intended to be India's first smart city, is more than just an urban development project; it's a..."
+  },
+  {
+    "title": "Dholera's Transportation Network: A Future Outlook",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/future-new-1024x768.png",
+    "date": "2025",
+    "excerpt": "The ambitious Delhi-Mumbai Industrial Corridor (DMIC) has designated the rapidly growing city of Dholera in Gujarat, Ind..."
+  },
+  {
+    "title": "Dholera's Commercial Real Estate Potential",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/inves-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, Gujarat's ambitious smart city project, is quickly becoming a popular destination for commercial real estate in..."
+  },
+  {
+    "title": "Residential Life in Dholera: What to Expect",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/Mirrikh-Blog-Images-1024x1024.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, the first planned smart city of India, is a beacon of the country's urban future. With its state-of-the-art inf..."
+  },
+  {
+    "title": "Dholera's Contribution to India's &#8216;Make in India' Initiative",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "The government's &#8216;Make in India' policy has been a crucial step in the process of turning India into a worldwide..."
+  },
+  {
+    "title": "The Architectural Marvels of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/architecture-image-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera is a city that exists outside of time and space and is tucked away in Gujarat, one of India's..."
+  },
+  {
+    "title": "The Vision of Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/Mirrikh-Blog-img-1-1-1024x1024.png",
+    "date": "2025",
+    "excerpt": "Dholera Smart City embodies a vision that harmonizes technology advancement with sustainable development, marking a dari..."
+  },
+  {
+    "title": "PM Modi announces the acquisition of the 91,000 crore rupees TATA semiconductor facility in Dholera.",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/PM-Modi-announces-the-acquisition2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "PM Modi establishes the Dholera Tata Semiconductor Plant's foundation. According to the most recent Dholera smart city n..."
+  },
+  {
+    "title": "Grew Energy to infuse Rs 6,000 cr in solar capacity expansion",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news03.jpg",
+    "date": "2025",
+    "excerpt": "The company had earlier set a target to invest Rs 5,400 crore for 4-GW of solar module manufacturing capacity with..."
+  },
+  {
+    "title": "CM invites over 1,500 industrialists, investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news02.jpg",
+    "date": "2025",
+    "excerpt": "Bhupendra Patel Underscores State’s Investor-Friendly Policies, Highlights Key Projects Like GIFT And Dholera SIR Which ..."
+  },
+  {
+    "title": "बिटकॉइन Vs धोलेरा स्मार्ट सिटी इन्वेस्टमेंट",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/article2.jpg",
+    "date": "2025",
+    "excerpt": "आज इक्कीसवी सदीमें जब आम लोगों के पास बहुतायत में पैसे आते हैं, ऐसेमें लोग तरह तरह के इन्वेस्टमेंट के..."
+  },
+  {
+    "title": "State taking Centre’s help in bringing Tesla to Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news01.jpg",
+    "date": "2025",
+    "excerpt": "Ahmedabad: Ahead of Vibrant Gujarat Global Summit (VGGS) 2024, the state government is working hard to bring electric ca..."
+  },
+  {
+    "title": "Gujarat’s world-class infrastructure to lead the vision of ‘Viksit Bharat’",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/news03.jpg",
+    "date": "2025",
+    "excerpt": "Balvantsinh Rajput: Cabinet Minister Industries, Micro, Small and Medium Industries, Cottage, Khadi and Rural Industries..."
+  },
+  {
+    "title": "Community Living in Dholera Smart City: Benefits and Challenges",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Community-Living-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, which is in Gujarat, is India's first greenfield smart city and is part of the Delhi-Mumbai Industrial Corridor..."
+  },
+  {
+    "title": "Dholera Smart City Urban Development: A new standard",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Dholera-Smart-City-Urban-Development-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Urban Development is becoming India's first greenfield smart city, thanks to careful planning under t..."
+  },
+  {
+    "title": "What Are the Key Infrastructure Projects in Dholera Smart City?",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Infrastructure-Projects-in-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Infrastructure Projects in Dholera Smart City show how this big project is turning the Dholera taluka of Ahmedabad d..."
+  },
+  {
+    "title": "The Economic Impact of Dholera Smart City on Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Economic-Impact-of-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Economic Impact of Dholera Smart City is one of the most significant transformations in India’s urban development st..."
+  },
+  {
+    "title": "Visionary Project in Special Investment Region – Dholera SIR",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Visionary-Project-in-Special-Investment-Region-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "With the implementation of the Visionary Project in Special Investment Region—Dholera Smart City—India has made a signif..."
+  },
+  {
+    "title": "Opportunities for Developers in Dholera SIR | Guide",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Opportunities-for-Developers-in-Dholera-SIR-1-2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), which is a component of India's ambitious urban development project, is rapidly..."
+  },
+  {
+    "title": "Dholera Smart City: A Model for Future Urban City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Future-Urban-City-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Urbanization in Indian cities is accelerating at an unprecedented pace. As urban areas expand, they face challenges like..."
+  },
+  {
+    "title": "Green Belt in Dholera Smart City Development Plans",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Green-Belt-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "The Delhi-Mumbai Industrial Corridor (DMIC) has its main project in Gujarat: Dholera Smart City. It is 920 square kilome..."
+  },
+  {
+    "title": "Real Estate Trends in Dholera Smart City 2025",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Real-Estate-Trends-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, a city in Gujarat, India, has gotten a lot of attention because it is a Dholera Special Investment Region..."
+  },
+  {
+    "title": "Why Renewable Energy in India: Role of Dholera Solar Park",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Why-Renewable-Energy-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is at a critical juncture in its energy landscape, where the power demand is rising rapidly, and the need [&hellip..."
+  },
+  {
+    "title": "Dholera Smart City Sets Standards for Smart Urban Planning",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-smart-urban-planning-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Smart cities have boldly taken the leap for 21st-century urban planning. Amongst such ambitious projects, Dholera Smart ..."
+  },
+  {
+    "title": "Dholera Solar Park: India’s Largest Solar Power Project",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-dholera-solar-park-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is making remarkable strides in sustainable power, setting bold targets to expand its green energy capacity. At th..."
+  },
+  {
+    "title": "Why Dholera is Ideal for Real Estate Investment in Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-real-estate-investment-in-gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Real estate investment in Gujarat has undergone an incredible transformation with the advent of Dholera Smart City, Indi..."
+  },
+  {
+    "title": "How the ABCD Building Drives Dholera SIR Infra Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-abcd-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR Infra Development is transforming Gujarat into a world-class smart city and special investment region. At it..."
+  },
+  {
+    "title": "Dholera Smart City Project Update 2025: Key Developments",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-smart-city-project-update-2025-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Mirrikh Infratech offers an overview of Dholera Smart City project update 2025, providing potential investors, residents..."
+  },
+  {
+    "title": "Dholera Smart City in Gujarat – Future of Urban Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner1-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City in Gujarat is one of India’s most ambitious and visionary urban development projects. It is the first..."
+  },
+  {
+    "title": "Invest Wisely: Dholera Smart City Before Investing",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Before Investing Future, India’s inaugural planned urban center and a flagship project under the Delh..."
+  },
+  {
+    "title": "Dholera Smart City India Future: A Vision for Tomorrow",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-smart-city-india-future-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, India’s inaugural planned Urban Innovation Hub and a flagship project under the Delhi-Mumbai Industr..."
+  },
+  {
+    "title": "Dholera SIR: The Future of Industrial Smart City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-industrial-smart-city-in-india-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s first industrial smart city and India’s largest planned smart city, rep..."
+  },
+  {
+    "title": "Dholera International Airport Project: A Catalyst for Growth",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-international-airport-project-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR (Special Investment Region) in Gujarat, India, is a major urban development project strategically located ne..."
+  },
+  {
+    "title": "Dholera Solar Park: Leading India's Renewable Energy Future",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholerasolarplant-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s push toward renewable energy has garnered global recognition, and the Dholera Solar Park in Gujarat stands out a..."
+  },
+  {
+    "title": "Dholera: A New Era of Sustainable City Living in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-Dholera-SIR-A-New-Era-of-Sustainable-City-Living-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "As urbanization spreads throughout India, sustainable and smart city planning has become the top priority of government ..."
+  },
+  {
+    "title": "Dholera SIR: 21st Century Smart City Project in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Dholera-SIR-Building-a-21st-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s pioneering Smart City project and a key part of the Delhi-Mumbai Indust..."
+  },
+  {
+    "title": "Dholera SIR: Most Futuristic City in India for Smart Living",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/What-Makes-Dholera-Smart1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City stands as a shining example of India’s effort to build sustainable, technologically advanced urban ar..."
+  },
+  {
+    "title": "Top Things to Do in Dholera – Best Attractions & Places",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/things-do-around-dholera-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, Gujarat’s first greenfield smart city, is an emerging destination offering history, nature, and mode..."
+  },
+  {
+    "title": "Enhancing Quality of Life in India: The Role of Smart Cities",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/How-Dholera-Smart-City1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s rapid urbanization brings challenges like overcrowding, infrastructure strain, and environmental concerns in urb..."
+  },
+  {
+    "title": "5 Upcoming Developments in Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Top-5-Upcoming-Developments1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s first planned greenfield urban hub has drawn significant interest from investors, developers, and prospective re..."
+  },
+  {
+    "title": "The Cultural Landscape of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/culture1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Embarking on a journey through the cultural landscape of Dholera is like walking through a living museum of history, tra..."
+  },
+  {
+    "title": "Dholera's Global Appeal to Investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-3-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera: A Beacon of Global Investment Opportunities In the heart of India's dynamic growth trajectory lies Dholera, a c..."
+  },
+  {
+    "title": "Healthcare Innovations in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/healthcare-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, an Indian city with aspirations as high as its vision, is located in the heart of Gujarat. Dholera, is..."
+  },
+  {
+    "title": "Education and Research Facilities in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/education-nd-research.jpeg",
+    "date": "2025",
+    "excerpt": "Dholera, which is intended to be India's first smart city, is more than just an urban development project; it's a..."
+  },
+  {
+    "title": "Dholera's Transportation Network: A Future Outlook",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/future-new-1024x768.png",
+    "date": "2025",
+    "excerpt": "The ambitious Delhi-Mumbai Industrial Corridor (DMIC) has designated the rapidly growing city of Dholera in Gujarat, Ind..."
+  },
+  {
+    "title": "Dholera's Commercial Real Estate Potential",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/inves-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, Gujarat's ambitious smart city project, is quickly becoming a popular destination for commercial real estate in..."
+  },
+  {
+    "title": "Residential Life in Dholera: What to Expect",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/Mirrikh-Blog-Images-1024x1024.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, the first planned smart city of India, is a beacon of the country's urban future. With its state-of-the-art inf..."
+  },
+  {
+    "title": "Dholera's Contribution to India's &#8216;Make in India' Initiative",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "The government's &#8216;Make in India' policy has been a crucial step in the process of turning India into a worldwide..."
+  },
+  {
+    "title": "The Architectural Marvels of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/architecture-image-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera is a city that exists outside of time and space and is tucked away in Gujarat, one of India's..."
+  },
+  {
+    "title": "The Vision of Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/Mirrikh-Blog-img-1-1-1024x1024.png",
+    "date": "2025",
+    "excerpt": "Dholera Smart City embodies a vision that harmonizes technology advancement with sustainable development, marking a dari..."
+  },
+  {
+    "title": "PM Modi announces the acquisition of the 91,000 crore rupees TATA semiconductor facility in Dholera.",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/PM-Modi-announces-the-acquisition2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "PM Modi establishes the Dholera Tata Semiconductor Plant's foundation. According to the most recent Dholera smart city n..."
+  },
+  {
+    "title": "Grew Energy to infuse Rs 6,000 cr in solar capacity expansion",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news03.jpg",
+    "date": "2025",
+    "excerpt": "The company had earlier set a target to invest Rs 5,400 crore for 4-GW of solar module manufacturing capacity with..."
+  },
+  {
+    "title": "CM invites over 1,500 industrialists, investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news02.jpg",
+    "date": "2025",
+    "excerpt": "Bhupendra Patel Underscores State’s Investor-Friendly Policies, Highlights Key Projects Like GIFT And Dholera SIR Which ..."
+  },
+  {
+    "title": "बिटकॉइन Vs धोलेरा स्मार्ट सिटी इन्वेस्टमेंट",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/article2.jpg",
+    "date": "2025",
+    "excerpt": "आज इक्कीसवी सदीमें जब आम लोगों के पास बहुतायत में पैसे आते हैं, ऐसेमें लोग तरह तरह के इन्वेस्टमेंट के..."
+  },
+  {
+    "title": "State taking Centre’s help in bringing Tesla to Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/11/news01.jpg",
+    "date": "2025",
+    "excerpt": "Ahmedabad: Ahead of Vibrant Gujarat Global Summit (VGGS) 2024, the state government is working hard to bring electric ca..."
+  },
+  {
+    "title": "Gujarat’s world-class infrastructure to lead the vision of ‘Viksit Bharat’",
+    "img": "https://mirrikh.com/wp-content/uploads/2023/10/news03.jpg",
+    "date": "2025",
+    "excerpt": "Balvantsinh Rajput: Cabinet Minister Industries, Micro, Small and Medium Industries, Cottage, Khadi and Rural Industries..."
+  },
+  {
+    "title": "Community Living in Dholera Smart City: Benefits and Challenges",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Community-Living-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, which is in Gujarat, is India's first greenfield smart city and is part of the Delhi-Mumbai Industrial Corridor..."
+  },
+  {
+    "title": "Dholera Smart City Urban Development: A new standard",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Dholera-Smart-City-Urban-Development-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Urban Development is becoming India's first greenfield smart city, thanks to careful planning under t..."
+  },
+  {
+    "title": "What Are the Key Infrastructure Projects in Dholera Smart City?",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Infrastructure-Projects-in-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Infrastructure Projects in Dholera Smart City show how this big project is turning the Dholera taluka of Ahmedabad d..."
+  },
+  {
+    "title": "The Economic Impact of Dholera Smart City on Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Economic-Impact-of-Dholera-Smart-City-1-1024x401.avif",
+    "date": "2025",
+    "excerpt": "The Economic Impact of Dholera Smart City is one of the most significant transformations in India’s urban development st..."
+  },
+  {
+    "title": "Visionary Project in Special Investment Region – Dholera SIR",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Visionary-Project-in-Special-Investment-Region-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "With the implementation of the Visionary Project in Special Investment Region—Dholera Smart City—India has made a signif..."
+  },
+  {
+    "title": "Opportunities for Developers in Dholera SIR | Guide",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/08/banner-Opportunities-for-Developers-in-Dholera-SIR-1-2-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), which is a component of India's ambitious urban development project, is rapidly..."
+  },
+  {
+    "title": "Dholera Smart City: A Model for Future Urban City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Future-Urban-City-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Urbanization in Indian cities is accelerating at an unprecedented pace. As urban areas expand, they face challenges like..."
+  },
+  {
+    "title": "Green Belt in Dholera Smart City Development Plans",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Green-Belt-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "The Delhi-Mumbai Industrial Corridor (DMIC) has its main project in Gujarat: Dholera Smart City. It is 920 square kilome..."
+  },
+  {
+    "title": "Real Estate Trends in Dholera Smart City 2025",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/07/banner-Real-Estate-Trends-in-Dholera-Smart-City-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, a city in Gujarat, India, has gotten a lot of attention because it is a Dholera Special Investment Region..."
+  },
+  {
+    "title": "Why Renewable Energy in India: Role of Dholera Solar Park",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Why-Renewable-Energy-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is at a critical juncture in its energy landscape, where the power demand is rising rapidly, and the need [&hellip..."
+  },
+  {
+    "title": "Dholera Smart City Sets Standards for Smart Urban Planning",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-smart-urban-planning-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Smart cities have boldly taken the leap for 21st-century urban planning. Amongst such ambitious projects, Dholera Smart ..."
+  },
+  {
+    "title": "Dholera Solar Park: India’s Largest Solar Power Project",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-dholera-solar-park-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India is making remarkable strides in sustainable power, setting bold targets to expand its green energy capacity. At th..."
+  },
+  {
+    "title": "Why Dholera is Ideal for Real Estate Investment in Gujarat",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-real-estate-investment-in-gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Real estate investment in Gujarat has undergone an incredible transformation with the advent of Dholera Smart City, Indi..."
+  },
+  {
+    "title": "How the ABCD Building Drives Dholera SIR Infra Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-abcd-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR Infra Development is transforming Gujarat into a world-class smart city and special investment region. At it..."
+  },
+  {
+    "title": "Dholera Smart City Project Update 2025: Key Developments",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-smart-city-project-update-2025-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Mirrikh Infratech offers an overview of Dholera Smart City project update 2025, providing potential investors, residents..."
+  },
+  {
+    "title": "Dholera Smart City in Gujarat – Future of Urban Development",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner1-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City in Gujarat is one of India’s most ambitious and visionary urban development projects. It is the first..."
+  },
+  {
+    "title": "Invest Wisely: Dholera Smart City Before Investing",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/10/banner-Dholera-Smart-City-in-Gujarat-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City Before Investing Future, India’s inaugural planned urban center and a flagship project under the Delh..."
+  },
+  {
+    "title": "Dholera Smart City India Future: A Vision for Tomorrow",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-smart-city-india-future-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, India’s inaugural planned Urban Innovation Hub and a flagship project under the Delhi-Mumbai Industr..."
+  },
+  {
+    "title": "Dholera SIR: The Future of Industrial Smart City in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-industrial-smart-city-in-india-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s first industrial smart city and India’s largest planned smart city, rep..."
+  },
+  {
+    "title": "Dholera International Airport Project: A Catalyst for Growth",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholera-international-airport-project-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera SIR (Special Investment Region) in Gujarat, India, is a major urban development project strategically located ne..."
+  },
+  {
+    "title": "Dholera Solar Park: Leading India's Renewable Energy Future",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-dholerasolarplant-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s push toward renewable energy has garnered global recognition, and the Dholera Solar Park in Gujarat stands out a..."
+  },
+  {
+    "title": "Dholera: A New Era of Sustainable City Living in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/banner-Dholera-SIR-A-New-Era-of-Sustainable-City-Living-in-India-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "As urbanization spreads throughout India, sustainable and smart city planning has become the top priority of government ..."
+  },
+  {
+    "title": "Dholera SIR: 21st Century Smart City Project in India",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Dholera-SIR-Building-a-21st-1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Special Investment Region (SIR), India’s pioneering Smart City project and a key part of the Delhi-Mumbai Indust..."
+  },
+  {
+    "title": "Dholera SIR: Most Futuristic City in India for Smart Living",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/What-Makes-Dholera-Smart1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City stands as a shining example of India’s effort to build sustainable, technologically advanced urban ar..."
+  },
+  {
+    "title": "Top Things to Do in Dholera – Best Attractions & Places",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/things-do-around-dholera-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "Dholera Smart City, Gujarat’s first greenfield smart city, is an emerging destination offering history, nature, and mode..."
+  },
+  {
+    "title": "Enhancing Quality of Life in India: The Role of Smart Cities",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/How-Dholera-Smart-City1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s rapid urbanization brings challenges like overcrowding, infrastructure strain, and environmental concerns in urb..."
+  },
+  {
+    "title": "5 Upcoming Developments in Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/11/Top-5-Upcoming-Developments1-1024x401.jpg",
+    "date": "2025",
+    "excerpt": "India’s first planned greenfield urban hub has drawn significant interest from investors, developers, and prospective re..."
+  },
+  {
+    "title": "The Cultural Landscape of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/culture1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Embarking on a journey through the cultural landscape of Dholera is like walking through a living museum of history, tra..."
+  },
+  {
+    "title": "Dholera's Global Appeal to Investors",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-3-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera: A Beacon of Global Investment Opportunities In the heart of India's dynamic growth trajectory lies Dholera, a c..."
+  },
+  {
+    "title": "Healthcare Innovations in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/healthcare-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, an Indian city with aspirations as high as its vision, is located in the heart of Gujarat. Dholera, is..."
+  },
+  {
+    "title": "Education and Research Facilities in Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/education-nd-research.jpeg",
+    "date": "2025",
+    "excerpt": "Dholera, which is intended to be India's first smart city, is more than just an urban development project; it's a..."
+  },
+  {
+    "title": "Dholera's Transportation Network: A Future Outlook",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/future-new-1024x768.png",
+    "date": "2025",
+    "excerpt": "The ambitious Delhi-Mumbai Industrial Corridor (DMIC) has designated the rapidly growing city of Dholera in Gujarat, Ind..."
+  },
+  {
+    "title": "Dholera's Commercial Real Estate Potential",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/inves-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera, Gujarat's ambitious smart city project, is quickly becoming a popular destination for commercial real estate in..."
+  },
+  {
+    "title": "Residential Life in Dholera: What to Expect",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/Mirrikh-Blog-Images-1024x1024.jpg",
+    "date": "2025",
+    "excerpt": "Dholera, the first planned smart city of India, is a beacon of the country's urban future. With its state-of-the-art inf..."
+  },
+  {
+    "title": "Dholera's Contribution to India's &#8216;Make in India' Initiative",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/imgpsh_fullsize_anim-1-1024x768.png",
+    "date": "2025",
+    "excerpt": "The government's &#8216;Make in India' policy has been a crucial step in the process of turning India into a worldwide..."
+  },
+  {
+    "title": "The Architectural Marvels of Dholera",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/04/architecture-image-1024x768.png",
+    "date": "2025",
+    "excerpt": "Dholera is a city that exists outside of time and space and is tucked away in Gujarat, one of India's..."
+  },
+  {
+    "title": "The Vision of Dholera Smart City",
+    "img": "https://mirrikh.com/wp-content/uploads/2024/03/Mirrikh-Blog-img-1-1-1024x1024.png",
+    "date": "2025",
+    "excerpt": "Dholera Smart City embodies a vision that harmonizes technology advancement with sustainable development, marking a dari..."
   }
 ];

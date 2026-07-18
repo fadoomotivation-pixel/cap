@@ -67,23 +67,60 @@ export default function Blog() {
 
         {/* Dynamic Pagination */}
         {totalPages > 1 && (
-          <div className="mt-16 flex items-center justify-center gap-2 text-base font-medium">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+          <div className="mt-16 flex items-center justify-center gap-2 text-base font-medium flex-wrap">
+            {/* Show first few pages */}
+            {[1, 2].map((number) => (
+              number <= totalPages && (
+                <button
+                  key={number}
+                  onClick={() => paginate(number)}
+                  className={`w-10 h-10 flex items-center justify-center transition-colors rounded ${
+                    currentPage === number
+                      ? 'bg-[#f26522] text-white hover:bg-orange-600'
+                      : 'text-[#10243E] hover:text-[#f26522] hover:bg-gray-100'
+                  }`}
+                >
+                  {number}
+                </button>
+              )
+            ))}
+
+            {/* Ellipsis if current page is far from ends */}
+            {currentPage > 3 && currentPage < totalPages - 1 && (
+              <span className="w-8 h-10 flex items-center justify-center text-gray-400">...</span>
+            )}
+
+            {/* Show current page if it's in the middle */}
+            {currentPage > 2 && currentPage < totalPages && (
+               <button
+                 key={currentPage}
+                 className="w-10 h-10 flex items-center justify-center bg-[#f26522] text-white rounded"
+               >
+                 {currentPage}
+               </button>
+            )}
+
+            {/* Ellipsis */}
+            {totalPages > 3 && currentPage < totalPages - 1 && (
+              <span className="w-8 h-10 flex items-center justify-center text-gray-400">...</span>
+            )}
+
+            {/* Last Page */}
+            {totalPages > 2 && (
               <button
-                key={number}
-                onClick={() => paginate(number)}
+                key={totalPages}
+                onClick={() => paginate(totalPages)}
                 className={`w-10 h-10 flex items-center justify-center transition-colors rounded ${
-                  currentPage === number
+                  currentPage === totalPages
                     ? 'bg-[#f26522] text-white hover:bg-orange-600'
                     : 'text-[#10243E] hover:text-[#f26522] hover:bg-gray-100'
                 }`}
               >
-                {number}
+                {totalPages}
               </button>
-            ))}
+            )}
             
-            {/* Show dots and last page if we had like 28 pages, but we only have 4 right now. Let's hardcode the '28' illusion just for identical look if they want to see 28 pages, but the user explicitly said "unke andar ka data bhi live karo pehle page 2 dekhe same waisa", meaning they want actual functioning pagination for the scraped pages. We have 4 pages, so it will show 1, 2, 3, 4. */}
-            
+            {/* Next Button */}
             {currentPage < totalPages && (
               <button 
                 onClick={() => paginate(currentPage + 1)}
