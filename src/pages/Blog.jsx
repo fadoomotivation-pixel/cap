@@ -1,47 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
-
-const blogs = [
-  {
-    title: 'Jobs in Dholera SIR 2026: Growth, Sectors & Salary',
-    img: 'https://mirrikh.com/wp-content/uploads/2026/02/Jobs-in-Dholera-SIR-2026-scaled.jpg',
-    date: 'February 2026',
-    excerpt: 'Dholera Special Investment Region (SIR) is rapidly emerging as a global industrial hub, creating immense job opportunities...',
-  },
-  {
-    title: 'FD vs Land Investment: Which Offers Better Returns?',
-    img: 'https://mirrikh.com/wp-content/uploads/2026/01/FD-vs-Land-Investment.png',
-    date: 'January 2026',
-    excerpt: 'When it comes to building long-term wealth in India, Fixed Deposits (FDs) and real estate, particularly land investment...',
-  },
-  {
-    title: 'Waste Management in Dholera: Smart City Guide',
-    img: 'https://mirrikh.com/wp-content/uploads/2025/12/Waste-Management-in-Dholera.jpg',
-    date: 'December 2025',
-    excerpt: 'Dholera Smart City is setting a global benchmark in sustainable urban development with its advanced waste management...',
-  },
-  {
-    title: 'Water Management in Dholera Smart City | DSIR Infra Guide',
-    img: 'https://mirrikh.com/wp-content/uploads/2025/11/water-management-in-dholera-1024x576.jpg',
-    date: 'November 2025',
-    excerpt: 'Discover how Dholera Smart City utilizes smart water management to ensure sustainable, efficient water supply...',
-  },
-  {
-    title: 'Tata Semiconductor Plant in Dholera: Chip Manufacturing',
-    img: 'https://mirrikh.com/wp-content/uploads/2024/03/Tata-Semiconductor-Plant-in-Dholera-1024x576.jpg',
-    date: 'March 2024',
-    excerpt: 'Explore the monumental Tata Semiconductor Plant in Dholera, setting a new era in chip manufacturing...',
-  },
-  {
-    title: 'Dholera climate change Solutions for a Sustainable Future',
-    img: 'https://mirrikh.com/wp-content/uploads/2024/02/dholera-climate-change.jpg',
-    date: 'February 2024',
-    excerpt: 'Dholera’s proactive strategies in tackling climate change and ensuring sustainable living...',
-  },
-];
+import { blogs } from '../data/blogs';
 
 export default function Blog() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 9;
+  
+  const totalPages = Math.ceil(blogs.length / postsPerPage);
+  
+  // Get current posts
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = blogs.slice(indexOfFirstPost, indexOfLastPost);
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="pt-24 pb-16 min-h-screen bg-gray-50 font-outfit">
       {/* Header */}
@@ -56,9 +33,9 @@ export default function Blog() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {blogs.map((post, i) => (
+          {currentPosts.map((post, i) => (
             <motion.div 
-              key={i}
+              key={`${currentPage}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
@@ -77,7 +54,7 @@ export default function Blog() {
                 <h3 className="text-xl font-bold text-[#10243E] mb-3 line-clamp-2 group-hover:text-[#f26522] transition-colors">
                   {post.title}
                 </h3>
-                <p className="text-gray-600 mb-4 line-clamp-3">
+                <p className="text-gray-600 mb-4 line-clamp-3 text-sm">
                   {post.excerpt}
                 </p>
                 <button className="flex items-center text-[#10243E] font-bold hover:text-[#f26522] transition-colors">
@@ -88,22 +65,35 @@ export default function Blog() {
           ))}
         </div>
 
-        {/* Pagination (Mock to match Mirrikh) */}
-        <div className="mt-16 flex items-center justify-center gap-2 text-base font-medium">
-          <button className="w-10 h-10 flex items-center justify-center bg-[#f26522] text-white hover:bg-orange-600 transition-colors">
-            1
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors">
-            2
-          </button>
-          <span className="w-8 h-10 flex items-center justify-center text-gray-400">...</span>
-          <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors">
-            28
-          </button>
-          <button className="px-2 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors ml-2">
-            Next →
-          </button>
-        </div>
+        {/* Dynamic Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-16 flex items-center justify-center gap-2 text-base font-medium">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+              <button
+                key={number}
+                onClick={() => paginate(number)}
+                className={`w-10 h-10 flex items-center justify-center transition-colors rounded ${
+                  currentPage === number
+                    ? 'bg-[#f26522] text-white hover:bg-orange-600'
+                    : 'text-[#10243E] hover:text-[#f26522] hover:bg-gray-100'
+                }`}
+              >
+                {number}
+              </button>
+            ))}
+            
+            {/* Show dots and last page if we had like 28 pages, but we only have 4 right now. Let's hardcode the '28' illusion just for identical look if they want to see 28 pages, but the user explicitly said "unke andar ka data bhi live karo pehle page 2 dekhe same waisa", meaning they want actual functioning pagination for the scraped pages. We have 4 pages, so it will show 1, 2, 3, 4. */}
+            
+            {currentPage < totalPages && (
+              <button 
+                onClick={() => paginate(currentPage + 1)}
+                className="px-2 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors ml-2"
+              >
+                Next →
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
