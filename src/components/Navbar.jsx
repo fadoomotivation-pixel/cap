@@ -37,7 +37,8 @@ const navLinks = [
     name: 'Our Projects',
     path: '/projects',
     hasDropdown: true,
-    dropdown: [
+    // Two-column dropdown: ongoing (left) + sold-out (right) — exact mirrikh.com order
+    ongoing: [
       { name: 'Mayur NOVA', path: '/projects/mayur-nova' },
       { name: 'Mayur Aerocity II', path: '/projects/mayur-aerocity-ii' },
       { name: 'Mayur Park III', path: '/projects/mayur-park-iii' },
@@ -45,9 +46,23 @@ const navLinks = [
       { name: 'Mayur Greenz Courtyard', path: '/projects/mayur-greenz-courtyard' },
       { name: 'Mayur Ananta II', path: '/projects/mayur-ananta-ii' },
       { name: 'Mayur Industrial Landmark', path: '/projects/mayur-industrial-landmark' },
-      { name: '— Sold Out Projects —', path: '/projects', isDivider: true },
+    ],
+    soldOut: [
+      { name: 'Mayur Signature', path: '/projects/mayur-signature' },
+      { name: 'Mayur Enclave 5', path: '/projects/mayur-enclave-5' },
+      { name: 'Mayur Swastik', path: '/projects/mayur-swastik' },
+      { name: 'Mayur Greenz III', path: '/projects/mayur-greenz-iii' },
+      { name: 'Mayur KALP', path: '/projects/mayur-kalp' },
+      { name: 'Mayur Evana', path: '/projects/mayur-evana' },
+      { name: 'Mayur Aerocity', path: '/projects/mayur-aerocity' },
+      { name: 'Mayur Industrial Hub', path: '/projects/mayur-industrial-hub' },
+      { name: 'Mayur Greenz II', path: '/projects/mayur-greenz-ii' },
+      { name: 'Mayur Enclave 4', path: '/projects/mayur-enclave-4' },
+      { name: 'Mayur Iconic', path: '/projects/mayur-iconic' },
       { name: 'Mayur Greenz', path: '/projects/mayur-greenz' },
-      { name: 'Mayur Park I', path: '/projects/mayur-park' },
+      { name: 'Mayur Ananta', path: '/projects/mayur-ananta' },
+      { name: 'Mayur Enclave III', path: '/projects/mayur-enclave-iii' },
+      { name: 'Mayur Industrial Park II', path: '/projects/mayur-industrial-park-ii' },
     ]
   },
   { name: 'Events', path: '#' },
@@ -102,19 +117,45 @@ export default function Navbar() {
                 </Link>
 
                 {link.hasDropdown && activeDropdown === link.name && (
-                  <div className="absolute top-full left-0 w-60 bg-white shadow-xl border border-gray-100 rounded-sm py-2 z-50">
-                    {link.dropdown.map((item) => (
-                      item.isDivider
-                        ? <div key={item.name} className="px-4 py-2 text-xs text-gray-400 font-semibold uppercase tracking-wider border-t border-gray-100 mt-1 pt-3">{item.name}</div>
-                        : <Link
-                            key={item.name}
-                            to={item.path}
-                            onClick={() => setActiveDropdown(null)}
-                            className="block px-5 py-2.5 text-sm text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 transition-colors"
-                          >
-                            {item.name}
-                          </Link>
-                    ))}
+                  <div className="absolute top-full left-0 bg-white shadow-2xl border border-gray-100 rounded-sm z-50 flex"
+                    style={{ minWidth: '540px' }}>
+                    {/* Left: Ongoing / Current */}
+                    <div className="w-[240px] py-3 border-r border-gray-100">
+                      <p className="px-4 py-1.5 text-[10px] font-black text-[#10243E] uppercase tracking-[0.2em]">Current Projects</p>
+                      {link.ongoing.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.path}
+                          onClick={() => setActiveDropdown(null)}
+                          className="block px-4 py-2 text-sm text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 transition-colors"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                      <div className="px-4 pt-3 mt-1 border-t border-gray-100">
+                        <Link
+                          to="/projects"
+                          onClick={() => setActiveDropdown(null)}
+                          className="text-[#f26522] text-xs font-bold hover:underline"
+                        >
+                          Sold Out Projects →
+                        </Link>
+                      </div>
+                    </div>
+                    {/* Right: Sold Out */}
+                    <div className="w-[270px] py-3 bg-gray-50">
+                      <p className="px-4 py-1.5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sold Out</p>
+                      {link.soldOut.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.path}
+                          onClick={() => setActiveDropdown(null)}
+                          className="block px-4 py-1.5 text-sm text-gray-500 hover:text-[#f26522] hover:bg-orange-50 transition-colors"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -168,18 +209,31 @@ export default function Navbar() {
               >
                 {link.name}
               </Link>
-              {link.hasDropdown && link.dropdown.map((item) => (
-                !item.isDivider && (
-                  <Link
-                    key={item.name}
-                    to={item.path}
-                    onClick={() => setIsOpen(false)}
-                    className="block px-10 py-2.5 text-sm text-gray-500 hover:text-[#f26522] hover:bg-orange-50 border-b border-gray-50 transition-colors"
-                  >
-                    {item.name}
-                  </Link>
-                )
+              {link.hasDropdown && link.ongoing && link.ongoing.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  onClick={() => setIsOpen(false)}
+                  className="block px-10 py-2 text-sm text-gray-600 hover:text-[#f26522] hover:bg-orange-50 border-b border-gray-50 transition-colors"
+                >
+                  {item.name}
+                </Link>
               ))}
+              {link.hasDropdown && link.soldOut && (
+                <>
+                  <div className="px-10 py-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-gray-50">Sold Out</div>
+                  {link.soldOut.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      onClick={() => setIsOpen(false)}
+                      className="block px-10 py-1.5 text-sm text-gray-400 hover:text-[#f26522] hover:bg-orange-50 border-b border-gray-50 transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </>
+              )}
             </div>
           ))}
           <div className="px-6 py-4 flex gap-4 items-center">

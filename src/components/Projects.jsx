@@ -15,7 +15,7 @@ const projectMeta = {
   'Mayur Park':           { img: 'https://mirrikh.com/wp-content/uploads/2023/10/11-5-1.jpg',  tag: 'Residential', hot: false },
 };
 
-const filters = ['All', 'Residential', 'Industrial', 'Delivered'];
+const filters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 
 function ProjectCard({ p }) {
   const meta = projectMeta[p.name] || {};
@@ -94,7 +94,6 @@ export default function Projects() {
   const [filter, setFilter] = useState('All');
   const visible = projects.filter(p =>
     filter === 'All' ? true
-    : filter === 'Delivered' ? p.category === 'Delivered'
     : p.category === filter
   );
 
