@@ -41,8 +41,8 @@ const navLinks = [
   { name: 'Dholera SIR', path: '/dholera' },
   { name: 'About Us', path: '/about' },
   { name: 'Our Projects', path: '/projects', hasDropdown: true },
-  { name: 'Events', path: '#' },
-  { name: 'Our Blog', path: '#' },
+  { name: 'Events', path: '/events' },
+  { name: 'Our Blog', path: '/blog' },
   { name: 'Contact', path: '/contact' },
 ];
 
