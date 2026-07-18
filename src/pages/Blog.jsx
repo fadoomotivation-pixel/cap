@@ -87,6 +87,23 @@ export default function Blog() {
             </motion.div>
           ))}
         </div>
+
+        {/* Pagination (Mock to match Mirrikh) */}
+        <div className="mt-16 flex items-center justify-center gap-2 text-base font-medium">
+          <button className="w-10 h-10 flex items-center justify-center bg-[#f26522] text-white hover:bg-orange-600 transition-colors">
+            1
+          </button>
+          <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors">
+            2
+          </button>
+          <span className="w-8 h-10 flex items-center justify-center text-gray-400">...</span>
+          <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors">
+            28
+          </button>
+          <button className="px-2 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors ml-2">
+            Next →
+          </button>
+        </div>
       </div>
     </div>
   );
