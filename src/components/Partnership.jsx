@@ -1,55 +1,43 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Award, Building2, FileCheck, Handshake } from 'lucide-react';
 import { partnership } from '../data/site';
+import { ShieldCheck, Award, Building2, Handshake, MapPin, Cpu, Route, Landmark } from 'lucide-react';
 
-const icons = {
-  Award,
-  Building2,
-  FileCheck,
-  Handshake,
+const ICONS = {
+  Award, Building2, FileCheck: ShieldCheck, Handshake, Landmark, Cpu, Route
 };
 
 export default function Partnership() {
   return (
-    <section className="section-padding bg-white" id="partnership">
-      <div className="container mx-auto max-w-7xl px-4">
-        <motion.div
-          className="bg-brand-gray p-8 md:p-12 rounded-lg border border-gray-200 shadow-sm text-center"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-50px' }}
-          transition={{ duration: 0.7 }}
-        >
-          <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-brand-blue mb-4">
-            {partnership.heading}
+    <section className="py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-16 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#101010] mb-6">
+            Benefits of growing together.
           </h2>
-          <p className="text-gray-600 text-lg max-w-3xl mx-auto mb-12">
+          <p className="text-gray-600 text-lg leading-relaxed">
             {partnership.intro}
           </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
-            {partnership.points.map((point, i) => {
-              const Icon = icons[point.icon];
-              return (
-                <motion.div 
-                  key={point.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-brand-orange mb-6">
-                    <Icon size={28} />
-                  </div>
-                  <h3 className="text-xl font-bold text-brand-blue mb-3">{point.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">{point.text}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {partnership.points.map((pt, i) => {
+            const IconComponent = ICONS[pt.icon] || Handshake;
+            return (
+              <div
+                key={i}
+                className="bg-[#f9fafb] p-8 rounded-sm hover:shadow-lg transition-shadow border border-gray-100 group"
+              >
+                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-[#f37435] mb-6 shadow-sm group-hover:scale-110 transition-transform">
+                  <IconComponent size={32} strokeWidth={1.5} />
+                </div>
+                <h3 className="text-xl font-bold text-[#101010] mb-4">{pt.title}</h3>
+                <p className="text-gray-500 leading-relaxed text-sm">
+                  {pt.text}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
