@@ -1,5 +1,6 @@
 import React from 'react';
 import Hero from '../components/Hero';
+import Stats from '../components/Stats';
 import HomeAbout from '../components/HomeAbout';
 import Projects from '../components/Projects';
 import Partnership from '../components/Partnership';
@@ -12,6 +13,7 @@ export default function Home() {
   return (
     <main>
       <Hero />
+      <Stats />
       <HomeAbout />
       <Projects />
       <Partnership />

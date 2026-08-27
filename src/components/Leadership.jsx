@@ -13,8 +13,8 @@ export default function Leadership() {
           
           {/* Image Section */}
           <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="w-full lg:w-5/12 relative"
@@ -25,10 +25,10 @@ export default function Leadership() {
                 alt="Jasvinder Singh - Founder & CEO" 
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 text-white">
-                <p className="text-[#f26522] font-bold text-sm tracking-widest uppercase mb-1">Founder & CEO</p>
-                <h3 className="text-3xl font-bold font-outfit">Jasvinder Singh</h3>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#10243E] via-black/40 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 text-white z-10">
+                <p className="text-[#f26522] font-bold text-sm tracking-widest uppercase mb-1 drop-shadow-md">Founder & CEO</p>
+                <h3 className="text-3xl font-bold font-outfit text-white drop-shadow-lg">Jasvinder Singh</h3>
               </div>
             </div>
             {/* Decorative block behind image */}
@@ -37,8 +37,8 @@ export default function Leadership() {
 
           {/* Text Section */}
           <motion.div 
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="w-full lg:w-7/12"

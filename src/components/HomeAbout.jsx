@@ -3,13 +3,13 @@ import { motion } from 'framer-motion';
 
 export default function HomeAbout() {
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         
         {/* Left: Text */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
@@ -40,19 +40,19 @@ export default function HomeAbout() {
 
         {/* Right: Images Grid (Mirrikh style) */}
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
           className="grid grid-cols-2 gap-4"
         >
           <img 
-            src="https://mirrikh.com/wp-content/uploads/2024/02/dholera-climate-change.jpg" 
+            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop" 
             alt="Dholera Infrastructure"
             className="w-full h-48 md:h-64 object-cover rounded-sm shadow-sm"
           />
           <img 
-            src="https://mirrikh.com/wp-content/uploads/2026/02/Jobs-in-Dholera-SIR-2026-scaled.jpg" 
+            src="https://images.unsplash.com/photo-1541888009-8b01c18251e0?q=80&w=800&auto=format&fit=crop" 
             alt="Dholera Smart City"
             className="w-full h-48 md:h-64 object-cover rounded-sm shadow-sm mt-8"
           />

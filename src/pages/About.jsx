@@ -2,10 +2,10 @@ import React from 'react';
 
 const team = [
   {
-    name: 'Rajeel Kumar Jangir',
-    role: 'Founder & CMD',
-    bio: 'Founded as Shreeji Developers in 2010, rebranded to Mirrikh Infratech in 2017. Featured in Forbes India (March 2025). Pioneer in Dholera Smart City real estate since 2012.',
-    img: 'https://mirrikh.com/wp-content/uploads/2023/10/rajeel-jangir.jpg',
+    name: 'Jasvinder Singh',
+    role: 'Founder & CEO',
+    bio: 'A visionary leader and successful entrepreneur owning multiple ventures. Renowned for his dynamic approach, he has driven Capital Brix to be a premier partner for Dholera Smart City real estate.',
+    img: '/founder.jpg',
   },
 ];
 

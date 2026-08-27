@@ -19,7 +19,7 @@ export default function ContactForm() {
         <div className="flex flex-col lg:flex-row gap-0 bg-white rounded-sm overflow-hidden shadow-sm border border-gray-100">
           {/* Contact Info Sidebar */}
           <div className="w-full lg:w-2/5 bg-[#101010] text-white p-10 md:p-14">
-            <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
+            <h3 className="text-2xl font-bold text-white mb-6">Contact Information</h3>
             <p className="text-gray-400 mb-12 text-sm leading-relaxed">
               Fill up the form and our team will get back to you within 24 hours.
             </p>
@@ -28,21 +28,21 @@ export default function ContactForm() {
               <div className="flex items-start gap-4">
                 <Phone className="text-[#f37435] mt-1 flex-shrink-0" size={24} />
                 <div>
-                  <h4 className="font-bold text-lg mb-1">Phone</h4>
+                  <h4 className="font-bold text-lg text-white mb-1">Phone</h4>
                   <p className="text-gray-400">{site.phoneDisplay}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <Mail className="text-[#f37435] mt-1 flex-shrink-0" size={24} />
                 <div>
-                  <h4 className="font-bold text-lg mb-1">Email</h4>
+                  <h4 className="font-bold text-lg text-white mb-1">Email</h4>
                   <p className="text-gray-400">{site.email}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <MapPin className="text-[#f37435] mt-1 flex-shrink-0" size={24} />
                 <div>
-                  <h4 className="font-bold text-lg mb-1">Address</h4>
+                  <h4 className="font-bold text-lg text-white mb-1">Address</h4>
                   <p className="text-gray-400 leading-relaxed text-sm">{site.address}</p>
                 </div>
               </div>
