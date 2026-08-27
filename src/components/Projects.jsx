@@ -11,7 +11,11 @@ const projectMeta = {
   'Mayur Forest Villa':         { logo: 'https://mirrikh.com/wp-content/uploads/2026/05/Mayur-Forest-Villa-Dholera-logo1.jpg', tag: 'Residential', hot: true },
   'Mayur Greenz Courtyard':     { logo: 'https://mirrikh.com/wp-content/uploads/2026/04/Mayur-Greenz-Courtyard-logo.svg', tag: 'Residential', hot: true },
   'Mayur Industrial Landmark':  { logo: 'https://mirrikh.com/wp-content/uploads/2026/01/Mayur-Industrial-Landmark-logo.png', tag: 'Industrial', hot: true },
-  'Mayur Park III':             { logo: 'https://mirrikh.com/wp-content/uploads/2025/11/Mayur-Park-3-Logo.png', tag: 'Residential', hot: false },
+  'Mayur Park III':             { img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800&auto=format&fit=crop', tag: 'Residential', hot: false },
+  'Mayur Greenz III':           { img: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=800&auto=format&fit=crop', tag: 'Residential' },
+  'Mayur KALP':                 { img: 'https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=800&auto=format&fit=crop', tag: 'Residential' },
+  'Mayur Aerocity':             { img: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop', tag: 'Commercial' },
+  'Mayur Industrial Hub':       { img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop', tag: 'Industrial' },
   
   // Sold Out Projects
   'Mayur Greenz II':      { img: 'https://mirrikh.com/wp-content/uploads/2023/10/1-3-1.jpg',   tag: 'Residential', hot: true },
@@ -53,8 +57,11 @@ function ProjectCard({ p }) {
             onError={(e) => { e.target.style.display = 'none'; }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200">
-            <span className="text-gray-400 text-3xl font-bold">{p.name}</span>
+          <div className="w-full h-full bg-white flex flex-col items-center justify-center text-[#10243E]">
+            <span className="text-sm font-semibold tracking-[0.3em] uppercase mb-1">MAYUR</span>
+            <span className="text-3xl font-outfit font-light uppercase tracking-wide">
+              {p.name.replace('Mayur ', '')}
+            </span>
           </div>
         )}
       </div>
@@ -95,26 +102,6 @@ export default function Projects() {
           {ongoing.map(p => <ProjectCard key={p.name} p={p} />)}
         </div>
 
-
-        {/* Sold Out Projects Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#101010] mb-2">Sold Out Projects</h2>
-          <div className="w-16 h-1 bg-[#f37435] mx-auto"></div>
-        </div>
-
-        {/* Sold Out Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {soldOut.slice(0, 8).map(p => <ProjectCard key={p.name} p={p} />)}
-        </div>
-        
-        <div className="text-center mt-12">
-          <Link
-            to="/projects"
-            className="inline-block bg-[#101010] text-white px-10 py-4 rounded-sm font-semibold uppercase tracking-wider text-sm hover:bg-[#f37435] transition-colors"
-          >
-            View All Sold Out Projects
-          </Link>
-        </div>
 
       </div>
     </section>
