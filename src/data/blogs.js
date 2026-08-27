@@ -1,19 +1,19 @@
 export const blogs = [
   {
     "title": "Dholera Tourism Guide | Future Smart City Hub",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-Dholera-tourism-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "Discover the future of travel with Dholera tourism, a unique journey into smart city tourism development in India. Blend..."
   },
   {
     "title": "Dholera Logistics Hub: Supply Chain Infrastructure in India",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-TDholera-logistics-hub-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1586528116311-ad8ed7c663e0?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "The Dholera logistics hub marks a definitive shift in how industrial movement, freight management, and global exports ar..."
   },
   {
     "title": "TDS on Property Sale by NRI in India: Complete Guide",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-TDS-on-property-sale-by-NRI-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "Selling an immovable asset in India can involve several legal and financial formalities, especially when the seller is a..."
   },
@@ -703,19 +703,19 @@ export const blogs = [
   },
   {
     "title": "Dholera Tourism Guide | Future Smart City Hub",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-Dholera-tourism-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "Discover the future of travel with Dholera tourism, a unique journey into smart city tourism development in India. Blend..."
   },
   {
     "title": "Dholera Logistics Hub: Supply Chain Infrastructure in India",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-TDholera-logistics-hub-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1586528116311-ad8ed7c663e0?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "The Dholera logistics hub marks a definitive shift in how industrial movement, freight management, and global exports ar..."
   },
   {
     "title": "TDS on Property Sale by NRI in India: Complete Guide",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-TDS-on-property-sale-by-NRI-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "Selling an immovable asset in India can involve several legal and financial formalities, especially when the seller is a..."
   },
@@ -1405,19 +1405,19 @@ export const blogs = [
   },
   {
     "title": "Dholera Tourism Guide | Future Smart City Hub",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-Dholera-tourism-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "Discover the future of travel with Dholera tourism, a unique journey into smart city tourism development in India. Blend..."
   },
   {
     "title": "Dholera Logistics Hub: Supply Chain Infrastructure in India",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-TDholera-logistics-hub-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1586528116311-ad8ed7c663e0?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "The Dholera logistics hub marks a definitive shift in how industrial movement, freight management, and global exports ar..."
   },
   {
     "title": "TDS on Property Sale by NRI in India: Complete Guide",
-    "img": "https://mirrikh.com/wp-content/uploads/2026/07/banner-TDS-on-property-sale-by-NRI-1-1024x401.jpg",
+    "img": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "Selling an immovable asset in India can involve several legal and financial formalities, especially when the seller is a..."
   },
