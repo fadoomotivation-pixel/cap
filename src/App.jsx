@@ -12,7 +12,7 @@ import Dholera from './pages/Dholera';
 import Contact from './pages/Contact';
 import Blog from './pages/Blog';
 import Events from './pages/Events';
-import EmployeeKYC from './pages/EmployeeKYC';
+import EmployeePortal from './pages/EmployeePortal';
 
 import './index.css';
 
@@ -57,7 +57,7 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/events" element={<Events />} />
-        <Route path="/employee-kyc" element={<EmployeeKYC />} />
+        <Route path="/employee-kyc" element={<EmployeePortal />} />
       </Routes>
       <Footer />
       <WhatsAppFloat />
