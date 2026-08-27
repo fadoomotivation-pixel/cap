@@ -208,14 +208,14 @@ function EmployeeDashboard({ session, onLogout }) {
 
         <div className="grid md:grid-cols-4 gap-8">
           {/* Sidebar */}
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="md:col-span-1 space-y-2 flex flex-row md:flex-col overflow-x-auto pb-2 md:pb-0">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="md:col-span-1 space-y-2 flex flex-row md:flex-col overflow-x-auto pb-2 md:pb-0 gap-2">
             <button onClick={() => setActiveTab('kyc')} 
-              className={`min-w-fit flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'kyc' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-              <User size={18} /> My Profile & KYC
+              className={`flex-1 min-w-fit flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'kyc' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              <User size={18} /> <span className="whitespace-nowrap">My Profile & KYC</span>
             </button>
             <button onClick={() => setActiveTab('features')} 
-              className={`min-w-fit flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'features' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-              <Building size={18} /> Workspace Apps
+              className={`flex-1 min-w-fit flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'features' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              <Building size={18} /> <span className="whitespace-nowrap">Workspace Apps</span>
             </button>
           </motion.div>
 
