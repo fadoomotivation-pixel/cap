@@ -25,10 +25,10 @@ export default function Leadership() {
                 alt="Jasvinder Singh - Founder & CEO" 
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 text-white">
-                <p className="text-[#f26522] font-bold text-sm tracking-widest uppercase mb-1">Founder & CEO</p>
-                <h3 className="text-3xl font-bold font-outfit">Jasvinder Singh</h3>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#10243E] via-black/40 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 text-white z-10">
+                <p className="text-[#f26522] font-bold text-sm tracking-widest uppercase mb-1 drop-shadow-md">Founder & CEO</p>
+                <h3 className="text-3xl font-bold font-outfit text-white drop-shadow-lg">Jasvinder Singh</h3>
               </div>
             </div>
             {/* Decorative block behind image */}

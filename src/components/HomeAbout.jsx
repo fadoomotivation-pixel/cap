@@ -47,12 +47,12 @@ export default function HomeAbout() {
           className="grid grid-cols-2 gap-4"
         >
           <img 
-            src="https://mirrikh.com/wp-content/uploads/2024/02/dholera-climate-change.jpg" 
+            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop" 
             alt="Dholera Infrastructure"
             className="w-full h-48 md:h-64 object-cover rounded-sm shadow-sm"
           />
           <img 
-            src="https://mirrikh.com/wp-content/uploads/2026/02/Jobs-in-Dholera-SIR-2026-scaled.jpg" 
+            src="https://images.unsplash.com/photo-1541888009-8b01c18251e0?q=80&w=800&auto=format&fit=crop" 
             alt="Dholera Smart City"
             className="w-full h-48 md:h-64 object-cover rounded-sm shadow-sm mt-8"
           />

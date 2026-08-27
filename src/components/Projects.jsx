@@ -12,6 +12,10 @@ const projectMeta = {
   'Mayur Greenz Courtyard':     { logo: 'https://mirrikh.com/wp-content/uploads/2026/04/Mayur-Greenz-Courtyard-logo.svg', tag: 'Residential', hot: true },
   'Mayur Industrial Landmark':  { logo: 'https://mirrikh.com/wp-content/uploads/2026/01/Mayur-Industrial-Landmark-logo.png', tag: 'Industrial', hot: true },
   'Mayur Park III':             { logo: 'https://mirrikh.com/wp-content/uploads/2025/11/Mayur-Park-3-Logo.png', tag: 'Residential', hot: false },
+  'Mayur Greenz III':           { img: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=800&auto=format&fit=crop', tag: 'Residential' },
+  'Mayur KALP':                 { img: 'https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=800&auto=format&fit=crop', tag: 'Residential' },
+  'Mayur Aerocity':             { img: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop', tag: 'Commercial' },
+  'Mayur Industrial Hub':       { img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop', tag: 'Industrial' },
   
   // Sold Out Projects
   'Mayur Greenz II':      { img: 'https://mirrikh.com/wp-content/uploads/2023/10/1-3-1.jpg',   tag: 'Residential', hot: true },
@@ -53,8 +57,15 @@ function ProjectCard({ p }) {
             onError={(e) => { e.target.style.display = 'none'; }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200">
-            <span className="text-gray-400 text-3xl font-bold">{p.name}</span>
+          <div className="w-full h-full relative">
+            <img 
+              src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop" 
+              alt={p.name} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-[#10243E]/40 flex items-center justify-center p-4 text-center">
+              <span className="text-white text-2xl font-bold font-outfit drop-shadow-md">{p.name}</span>
+            </div>
           </div>
         )}
       </div>
