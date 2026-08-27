@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Cake, CreditCard, FileSignature, XCircle } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isAdminEmail } from '../lib/admin';
 
 export default function EmployeePortal() {
   const [session, setSession] = useState(null);
@@ -31,10 +32,8 @@ export default function EmployeePortal() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const ADMIN_EMAILS = ['admin@capitalbrix.co.in', 'ujjwal@capitalbrix.co.in', 'disha@capitalbrix.com'];
-
   const checkIfAdmin = (email) => {
-    setIsAdmin(ADMIN_EMAILS.includes(email));
+    setIsAdmin(isAdminEmail(email));
   };
 
   const handleAuth = async (e) => {
