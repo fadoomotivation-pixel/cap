@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function EmployeePortal() {
   const [session, setSession] = useState(null);
@@ -12,7 +13,6 @@ export default function EmployeePortal() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
-  const [signupSuccess, setSignupSuccess] = useState(false); // NEW STATE
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -55,7 +55,6 @@ export default function EmployeePortal() {
           options: { data: { full_name: fullName } }
         });
         if (error) throw error;
-        setSignupSuccess(true); // SHOW POPUP
       }
     } catch (err) {
       setError(err.message);
@@ -75,50 +74,52 @@ export default function EmployeePortal() {
   // --- NOT LOGGED IN ---
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0A1F3F] via-[#10243E] to-[#1a3a5c] flex items-center justify-center p-4 font-outfit pt-20">
+      <div className="min-h-screen bg-gradient-to-br from-[#0A1F3F] via-[#10243E] to-[#1a3a5c] flex items-center justify-center p-4 font-outfit pt-20 overflow-hidden">
         
-        {signupSuccess ? (
-          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl text-center transform transition-all scale-100 animate-fade-in">
-            <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Mail className="text-[#f26522] w-10 h-10" />
-            </div>
-            <h2 className="text-2xl font-bold text-[#10243E] mb-3">Check Your Email!</h2>
-            <p className="text-gray-600 text-sm mb-8 leading-relaxed">
-              We've sent a confirmation link to <br/>
-              <strong className="text-[#10243E]">{email}</strong>.<br/><br/>
-              Please click the link in your email to verify your account and complete your KYC.
-            </p>
-            <button 
-              onClick={() => { setSignupSuccess(false); setIsLogin(true); setEmail(''); setPassword(''); }} 
-              className="w-full bg-[#f26522] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/20"
-            >
-              Return to Login
-            </button>
-          </div>
-        ) : (
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-6 sm:p-8 w-full max-w-sm shadow-2xl">
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={isLogin ? 'login' : 'signup'}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.4, type: 'spring', bounce: 0.4 }}
+            className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-6 sm:p-8 w-full max-w-sm shadow-2xl"
+          >
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Employee Portal</h1>
+              <motion.h1 
+                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                className="text-3xl font-bold text-white mb-2"
+              >
+                Employee Portal
+              </motion.h1>
               <p className="text-white/70 text-sm">Capital Brix Internal System</p>
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
                 <AlertCircle size={16} className="shrink-0" /> <span className="flex-1">{error}</span>
-              </div>
+              </motion.div>
             )}
 
             <form onSubmit={handleAuth} className="space-y-4">
-              {!isLogin && (
-                <div>
-                  <label className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Full Name</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-                    <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required
-                      className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-sm" placeholder="John Doe" />
-                  </div>
-                </div>
-              )}
+              <AnimatePresence>
+                {!isLogin && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <label className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                      <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required
+                        className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-sm" placeholder="John Doe" />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
               <div>
                 <label className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Email</label>
                 <div className="relative">
@@ -127,6 +128,7 @@ export default function EmployeePortal() {
                     className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-sm" placeholder="you@example.com" />
                 </div>
               </div>
+              
               <div>
                 <label className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Password</label>
                 <div className="relative">
@@ -136,11 +138,14 @@ export default function EmployeePortal() {
                 </div>
               </div>
 
-              <button type="submit" disabled={loading}
-                className="w-full bg-[#f26522] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/30 mt-6 active:scale-95"
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit" disabled={loading}
+                className="w-full bg-[#f26522] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/30 mt-6"
               >
                 {loading ? 'Processing...' : (isLogin ? 'Login Securely' : 'Create Account')}
-              </button>
+              </motion.button>
             </form>
 
             <div className="mt-8 text-center text-white/60 text-sm">
@@ -149,8 +154,8 @@ export default function EmployeePortal() {
                 {isLogin ? "Sign up" : "Login instead"}
               </button>
             </div>
-          </div>
-        )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     );
   }
@@ -191,7 +196,7 @@ function EmployeeDashboard({ session, onLogout }) {
       <div className="max-w-6xl mx-auto px-4 py-8">
         
         {/* Header */}
-        <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm mb-8">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm mb-8">
           <div>
             <h1 className="text-2xl font-bold text-[#10243E]">Welcome, {userName}! 👋</h1>
             <p className="text-gray-500 text-sm">Capital Brix Employee Portal</p>
@@ -199,44 +204,49 @@ function EmployeeDashboard({ session, onLogout }) {
           <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg transition">
             <LogOut size={18} /> Logout
           </button>
-        </div>
+        </motion.div>
 
         <div className="grid md:grid-cols-4 gap-8">
           {/* Sidebar */}
-          <div className="md:col-span-1 space-y-2">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="md:col-span-1 space-y-2 flex flex-row md:flex-col overflow-x-auto pb-2 md:pb-0">
             <button onClick={() => setActiveTab('kyc')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'kyc' ? 'bg-[#10243E] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              className={`min-w-fit flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'kyc' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
               <User size={18} /> My Profile & KYC
             </button>
             <button onClick={() => setActiveTab('features')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'features' ? 'bg-[#10243E] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              className={`min-w-fit flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'features' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
               <Building size={18} /> Workspace Apps
             </button>
-          </div>
+          </motion.div>
 
           {/* Content */}
           <div className="md:col-span-3">
-            {activeTab === 'kyc' && (
-              <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8">
-                {kycStatus === 'completed' ? (
-                  <div className="text-center py-12">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="text-green-600" size={40} />
+            <AnimatePresence mode="wait">
+              {activeTab === 'kyc' && (
+                <motion.div key="kyc" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-white rounded-3xl shadow-sm p-6 md:p-8">
+                  {kycStatus === 'completed' ? (
+                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-16">
+                      <motion.div 
+                        initial={{ scale: 0 }} animate={{ scale: 1, rotate: 360 }} transition={{ type: 'spring', damping: 10, stiffness: 100 }}
+                        className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/20"
+                      >
+                        <CheckCircle className="text-green-500" size={48} />
+                      </motion.div>
+                      <h2 className="text-3xl font-bold text-[#10243E] mb-3">KYC Completed! 🎉</h2>
+                      <p className="text-gray-500 text-lg">Your profile has been successfully submitted.</p>
+                      <p className="text-gray-400 text-sm mt-2">You will be notified once your account is verified by Admin.</p>
+                    </motion.div>
+                  ) : (
+                    <div>
+                      <h2 className="text-2xl font-bold text-[#10243E] mb-8 border-b pb-4">Complete Your Profile (KYC)</h2>
+                      <EmployeeKYCForm session={session} onComplete={() => setKycStatus('completed')} />
                     </div>
-                    <h2 className="text-2xl font-bold text-[#10243E] mb-2">KYC Completed!</h2>
-                    <p className="text-gray-500">Your profile is up to date. You will be notified when your account is verified by Admin.</p>
-                  </div>
-                ) : (
-                  <div>
-                    <h2 className="text-xl font-bold text-[#10243E] mb-6 border-b pb-4">Complete Your Profile (KYC)</h2>
-                    <EmployeeKYCForm session={session} onComplete={() => setKycStatus('completed')} />
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </motion.div>
+              )}
 
             {activeTab === 'features' && (
-              <div className="grid sm:grid-cols-2 gap-4">
+              <motion.div key="features" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid sm:grid-cols-2 gap-4">
                 <FeatureCard 
                   icon={<FileText />} title="Lead & Sales Tracker" 
                   desc="Track your daily calls, follow-ups, and conversion targets." 
@@ -253,8 +263,9 @@ function EmployeeDashboard({ session, onLogout }) {
                   icon={<Calendar />} title="Leave & Attendance" 
                   desc="Quick punch-in and leave management." 
                 />
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

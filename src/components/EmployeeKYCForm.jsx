@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Camera, Upload, User, Phone, Mail, Calendar, Heart, CheckCircle, AlertCircle, X, RotateCcw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const departments = ['Sales', 'Marketing', 'Operations', 'Finance', 'HR', 'IT', 'Management', 'Telecalling', 'Field Sales', 'Other'];
 const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
@@ -126,112 +127,127 @@ export default function EmployeeKYCForm({ session, onComplete }) {
     }
   };
 
+  const slideVariants = {
+    hidden: { x: 50, opacity: 0 },
+    visible: { x: 0, opacity: 1 },
+    exit: { x: -50, opacity: 0 }
+  };
+
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto overflow-hidden">
       {/* Progress */}
       <div className="flex items-center justify-center gap-2 mb-8">
         {[1, 2, 3].map((s) => (
           <div key={s} className="flex items-center gap-2">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-              step === s ? 'bg-[#f26522] text-white scale-110 shadow-lg shadow-orange-500/30' :
+            <motion.div 
+              animate={{ scale: step === s ? 1.1 : 1 }}
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+              step === s ? 'bg-[#f26522] text-white shadow-lg shadow-orange-500/30' :
               step > s ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-400'
             }`}>
               {step > s ? '✓' : s}
-            </div>
-            {s < 3 && <div className={`w-12 h-0.5 ${step > s ? 'bg-green-500' : 'bg-gray-100'}`} />}
+            </motion.div>
+            {s < 3 && <div className={`w-12 h-0.5 transition-colors ${step > s ? 'bg-green-500' : 'bg-gray-100'}`} />}
           </div>
         ))}
       </div>
       
       {error && (
-        <div className="bg-red-50 text-red-600 border border-red-200 text-sm px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-50 text-red-600 border border-red-200 text-sm px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
           <AlertCircle size={16} /> {error}
-        </div>
+        </motion.div>
       )}
 
-      {/* STEP 1 */}
-      {step === 1 && (
-        <div className="space-y-4">
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Full Name *</label>
-            <input name="full_name" value={form.full_name} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]" /></div>
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Date of Birth *</label>
-            <input type="date" name="date_of_birth" value={form.date_of_birth} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]" /></div>
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Phone Number *</label>
-            <input name="phone" type="tel" value={form.phone} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]" /></div>
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Blood Group</label>
-            <select name="blood_group" value={form.blood_group} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]">
-              <option value="">Select</option>
-              {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
-            </select></div>
-          <button onClick={() => { if (!form.full_name || !form.date_of_birth || !form.phone) { setError('Fill required fields'); return; } setError(''); setStep(2); }} className="w-full bg-[#10243E] hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl transition">Next →</button>
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {/* STEP 1 */}
+        {step === 1 && (
+          <motion.div key="step1" variants={slideVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Full Name *</label>
+              <input name="full_name" value={form.full_name} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Date of Birth *</label>
+              <input type="date" name="date_of_birth" value={form.date_of_birth} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Phone Number *</label>
+              <input name="phone" type="tel" value={form.phone} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Blood Group</label>
+              <select name="blood_group" value={form.blood_group} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base">
+                <option value="">Select</option>
+                {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
+              </select></div>
+            <motion.button whileTap={{ scale: 0.97 }} onClick={() => { if (!form.full_name || !form.date_of_birth || !form.phone) { setError('Fill required fields'); return; } setError(''); setStep(2); }} className="w-full bg-[#10243E] hover:bg-gray-800 text-white font-bold py-4 rounded-xl transition shadow-lg mt-4 text-lg">Next →</motion.button>
+          </motion.div>
+        )}
 
-      {/* STEP 2 */}
-      {step === 2 && (
-        <div className="space-y-4">
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Date of Joining</label>
-            <input type="date" name="date_of_joining" value={form.date_of_joining} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]" /></div>
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Department</label>
-            <select name="department" value={form.department} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]">
-              <option value="">Select Department</option>
-              {departments.map(d => <option key={d} value={d}>{d}</option>)}
-            </select></div>
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Your Role / Designation</label>
-            <input name="role_title" value={form.role_title} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]" /></div>
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Emergency Contact Name</label>
-            <input name="emergency_contact_name" value={form.emergency_contact_name} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]" /></div>
-          <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Emergency Contact Phone</label>
-            <input name="emergency_contact_phone" type="tel" value={form.emergency_contact_phone} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#f26522]" /></div>
-          <div className="flex gap-3 mt-2">
-            <button onClick={() => setStep(1)} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3.5 rounded-xl hover:bg-gray-200 transition">← Back</button>
-            <button onClick={() => { setError(''); setStep(3); }} className="flex-1 bg-[#10243E] hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl transition">Next →</button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3 */}
-      {step === 3 && (
-        <div className="space-y-5 text-center">
-          {photoPreview ? (
-            <div className="relative inline-block mx-auto">
-              <img src={photoPreview} alt="Preview" className="w-48 h-48 rounded-2xl object-cover border-4 border-[#f26522] shadow-lg" />
-              <button onClick={removePhoto} className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-lg"><X size={16} /></button>
+        {/* STEP 2 */}
+        {step === 2 && (
+          <motion.div key="step2" variants={slideVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Date of Joining</label>
+              <input type="date" name="date_of_joining" value={form.date_of_joining} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Department</label>
+              <select name="department" value={form.department} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base">
+                <option value="">Select Department</option>
+                {departments.map(d => <option key={d} value={d}>{d}</option>)}
+              </select></div>
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Your Role / Designation</label>
+              <input name="role_title" value={form.role_title} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Emergency Contact Name</label>
+              <input name="emergency_contact_name" value={form.emergency_contact_name} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
+            <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Emergency Contact Phone</label>
+              <input name="emergency_contact_phone" type="tel" value={form.emergency_contact_phone} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
+            <div className="flex gap-3 mt-4 pt-2">
+              <motion.button whileTap={{ scale: 0.97 }} onClick={() => setStep(1)} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition text-lg">← Back</motion.button>
+              <motion.button whileTap={{ scale: 0.97 }} onClick={() => { setError(''); setStep(3); }} className="flex-1 bg-[#10243E] hover:bg-gray-800 text-white font-bold py-4 rounded-xl transition shadow-lg text-lg">Next →</motion.button>
             </div>
-          ) : cameraActive ? (
-            <div className="relative inline-block mx-auto">
-              <div className="w-64 h-64 rounded-2xl overflow-hidden border-2 border-[#f26522] mx-auto relative">
-                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }} />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-36 h-44 border-2 border-dashed border-white/50 rounded-[50%]" /></div>
-              </div>
-              <div className="flex justify-center gap-3 mt-4">
-                <button onClick={flipCamera} className="bg-gray-100 text-gray-700 p-3 rounded-full shadow"><RotateCcw size={18} /></button>
-                <button onClick={capturePhoto} className="bg-[#f26522] text-white px-8 py-3 rounded-full font-bold shadow-lg"><Camera size={18} className="inline mr-2" /> Capture</button>
-                <button onClick={stopCamera} className="bg-gray-100 text-gray-700 p-3 rounded-full shadow"><X size={18} /></button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-48 h-48 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
-                <User size={48} strokeWidth={1} /><span className="text-xs mt-2">No photo</span>
-              </div>
-              <div className="flex gap-3 w-full">
-                <button onClick={startCamera} className="flex-1 bg-[#10243E] text-white font-semibold py-3 rounded-xl flex justify-center items-center gap-2"><Camera size={18} /> Camera</button>
-                <button onClick={() => fileInputRef.current?.click()} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-xl border border-gray-200 flex justify-center items-center gap-2"><Upload size={18} /> Upload</button>
-              </div>
-            </div>
-          )}
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-          <canvas ref={canvasRef} className="hidden" />
+          </motion.div>
+        )}
 
-          <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
-            <button onClick={() => { stopCamera(); setStep(2); }} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3.5 rounded-xl hover:bg-gray-200 transition">← Back</button>
-            <button onClick={handleSubmit} disabled={submitting || !photoFile} className={`flex-1 font-bold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 ${submitting || !photoFile ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#f26522] hover:bg-orange-600 text-white'}`}>
-              {submitting ? 'Submitting...' : 'Submit Profile'}
-            </button>
-          </div>
-        </div>
-      )}
+        {/* STEP 3 */}
+        {step === 3 && (
+          <motion.div key="step3" variants={slideVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3 }} className="space-y-6 text-center">
+            {photoPreview ? (
+              <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="relative inline-block mx-auto">
+                <img src={photoPreview} alt="Preview" className="w-56 h-56 rounded-3xl object-cover border-4 border-[#f26522] shadow-2xl" />
+                <button onClick={removePhoto} className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-2 shadow-lg"><X size={18} /></button>
+              </motion.div>
+            ) : cameraActive ? (
+              <div className="relative inline-block mx-auto">
+                <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-3xl overflow-hidden border-4 border-[#f26522] shadow-2xl mx-auto relative">
+                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }} />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-40 h-48 sm:w-48 sm:h-56 border-2 border-dashed border-white/50 rounded-[50%]" /></div>
+                </div>
+                <div className="flex justify-center gap-4 mt-6">
+                  <button onClick={flipCamera} className="bg-gray-100 text-gray-700 p-4 rounded-full shadow-md"><RotateCcw size={20} /></button>
+                  <button onClick={capturePhoto} className="bg-[#f26522] text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-orange-500/40 text-lg flex items-center"><Camera size={20} className="mr-2" /> Capture</button>
+                  <button onClick={stopCamera} className="bg-gray-100 text-gray-700 p-4 rounded-full shadow-md"><X size={20} /></button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-6">
+                <div className="w-56 h-56 rounded-3xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
+                  <User size={56} strokeWidth={1} /><span className="text-sm mt-3 font-medium">No photo selected</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 w-full">
+                  <motion.button whileTap={{ scale: 0.97 }} onClick={startCamera} className="flex-1 bg-[#10243E] text-white font-semibold py-4 rounded-xl flex justify-center items-center gap-2 shadow-lg text-lg"><Camera size={20} /> Open Camera</motion.button>
+                  <motion.button whileTap={{ scale: 0.97 }} onClick={() => fileInputRef.current?.click()} className="flex-1 bg-white text-gray-700 font-semibold py-4 rounded-xl border-2 border-gray-200 flex justify-center items-center gap-2 shadow-sm text-lg"><Upload size={20} /> Upload Photo</motion.button>
+                </div>
+              </div>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+            <canvas ref={canvasRef} className="hidden" />
+
+            <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
+              <motion.button whileTap={{ scale: 0.97 }} onClick={() => { stopCamera(); setStep(2); }} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition text-lg">← Back</motion.button>
+              <motion.button 
+                whileTap={{ scale: 0.97 }} 
+                onClick={handleSubmit} 
+                disabled={submitting || !photoFile} 
+                className={`flex-[2] font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg ${submitting || !photoFile ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#f26522] hover:bg-orange-600 text-white shadow-orange-500/30'}`}
+              >
+                {submitting ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</> : 'Submit Profile'}
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
