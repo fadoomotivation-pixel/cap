@@ -49,12 +49,21 @@ export default function EmployeePortal() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { full_name: fullName } }
         });
         if (error) throw error;
+
+        // With "Confirm email" disabled, signUp already returns an active
+        // session. Some Supabase project configs still omit it on the
+        // signUp response even when confirmation is off, so fall back to
+        // an explicit sign-in to avoid stranding the user on the login form.
+        if (!data.session) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) throw signInError;
+        }
       }
     } catch (err) {
       setError(err.message);
