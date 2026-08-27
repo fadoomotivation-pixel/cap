@@ -13,6 +13,9 @@ import Contact from './pages/Contact';
 import Blog from './pages/Blog';
 import Events from './pages/Events';
 import EmployeePortal from './pages/EmployeePortal';
+import InterviewAdmin from './pages/InterviewAdmin';
+import InterviewBooking from './pages/InterviewBooking';
+import InterviewConfirmation from './pages/InterviewConfirmation';
 
 import './index.css';
 
@@ -58,6 +61,11 @@ export default function App() {
         <Route path="/blog" element={<Blog />} />
         <Route path="/events" element={<Events />} />
         <Route path="/employee-kyc" element={<EmployeePortal />} />
+        
+        {/* Interview Scheduler Routes */}
+        <Route path="/admin/interviews" element={<InterviewAdmin />} />
+        <Route path="/book/:token" element={<InterviewBooking />} />
+        <Route path="/book/confirm/:bookingId" element={<InterviewConfirmation />} />
       </Routes>
       <Footer />
       <WhatsAppFloat />
