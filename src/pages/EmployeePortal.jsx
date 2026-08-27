@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase'; // We'll create this
+import { supabase } from '../lib/supabase';
 import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X } from 'lucide-react';
-import EmployeeKYCForm from '../components/EmployeeKYCForm'; // We'll extract the form
+import EmployeeKYCForm from '../components/EmployeeKYCForm';
 
 export default function EmployeePortal() {
   const [session, setSession] = useState(null);
@@ -12,6 +12,7 @@ export default function EmployeePortal() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false); // NEW STATE
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -31,7 +32,6 @@ export default function EmployeePortal() {
   }, []);
 
   const checkIfAdmin = (email) => {
-    // You can set your super admin emails here
     if (email === 'admin@capitalbrix.co.in' || email === 'ujjwal@capitalbrix.co.in') {
       setIsAdmin(true);
     } else {
@@ -52,14 +52,10 @@ export default function EmployeePortal() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: {
-              full_name: fullName,
-            }
-          }
+          options: { data: { full_name: fullName } }
         });
         if (error) throw error;
-        // Auto-login or show success message depending on confirm email setting
+        setSignupSuccess(true); // SHOW POPUP
       }
     } catch (err) {
       setError(err.message);
@@ -73,66 +69,88 @@ export default function EmployeePortal() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#0A1F3F] flex items-center justify-center text-white">Loading...</div>;
+    return <div className="min-h-screen bg-[#0A1F3F] flex items-center justify-center text-white font-outfit">Loading...</div>;
   }
 
   // --- NOT LOGGED IN ---
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0A1F3F] via-[#10243E] to-[#1a3a5c] flex items-center justify-center p-4 font-outfit">
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-8 w-full max-w-md shadow-2xl">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Employee Portal</h1>
-            <p className="text-white/70 text-sm">Capital Brix Internal System</p>
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
-              <AlertCircle size={16} /> {error}
+      <div className="min-h-screen bg-gradient-to-br from-[#0A1F3F] via-[#10243E] to-[#1a3a5c] flex items-center justify-center p-4 font-outfit pt-20">
+        
+        {signupSuccess ? (
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl text-center transform transition-all scale-100 animate-fade-in">
+            <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Mail className="text-[#f26522] w-10 h-10" />
             </div>
-          )}
+            <h2 className="text-2xl font-bold text-[#10243E] mb-3">Check Your Email!</h2>
+            <p className="text-gray-600 text-sm mb-8 leading-relaxed">
+              We've sent a confirmation link to <br/>
+              <strong className="text-[#10243E]">{email}</strong>.<br/><br/>
+              Please click the link in your email to verify your account and complete your KYC.
+            </p>
+            <button 
+              onClick={() => { setSignupSuccess(false); setIsLogin(true); setEmail(''); setPassword(''); }} 
+              className="w-full bg-[#f26522] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/20"
+            >
+              Return to Login
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-6 sm:p-8 w-full max-w-sm shadow-2xl">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-white mb-2">Employee Portal</h1>
+              <p className="text-white/70 text-sm">Capital Brix Internal System</p>
+            </div>
 
-          <form onSubmit={handleAuth} className="space-y-4">
-            {!isLogin && (
-              <div>
-                <label className="text-white/70 text-sm font-medium mb-1.5 block">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required
-                    className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#f26522] transition" placeholder="John Doe" />
-                </div>
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+                <AlertCircle size={16} className="shrink-0" /> <span className="flex-1">{error}</span>
               </div>
             )}
-            <div>
-              <label className="text-white/70 text-sm font-medium mb-1.5 block">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                  className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#f26522] transition" placeholder="you@example.com" />
-              </div>
-            </div>
-            <div>
-              <label className="text-white/70 text-sm font-medium mb-1.5 block">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
-                  className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#f26522] transition" placeholder="••••••••" />
-              </div>
-            </div>
 
-            <button type="submit" disabled={loading}
-              className="w-full bg-[#f26522] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/20 mt-4">
-              {loading ? 'Processing...' : (isLogin ? 'Login' : 'Create Account')}
-            </button>
-          </form>
+            <form onSubmit={handleAuth} className="space-y-4">
+              {!isLogin && (
+                <div>
+                  <label className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                    <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required
+                      className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-sm" placeholder="John Doe" />
+                  </div>
+                </div>
+              )}
+              <div>
+                <label className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+                    className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-sm" placeholder="you@example.com" />
+                </div>
+              </div>
+              <div>
+                <label className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+                    className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-sm" placeholder="••••••••" />
+                </div>
+              </div>
 
-          <div className="mt-6 text-center text-white/60 text-sm">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button onClick={() => setIsLogin(!isLogin)} className="text-[#f26522] font-semibold hover:underline">
-              {isLogin ? "Sign up" : "Login"}
-            </button>
+              <button type="submit" disabled={loading}
+                className="w-full bg-[#f26522] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/30 mt-6 active:scale-95"
+              >
+                {loading ? 'Processing...' : (isLogin ? 'Login Securely' : 'Create Account')}
+              </button>
+            </form>
+
+            <div className="mt-8 text-center text-white/60 text-sm">
+              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="text-[#f26522] font-semibold hover:text-orange-400 transition ml-1">
+                {isLogin ? "Sign up" : "Login instead"}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
