@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Camera, Upload, User, Phone, Mail, Calendar, Heart, CheckCircle, AlertCircle, X, RotateCcw } from 'lucide-react';
+import { Camera, Upload, User, Phone, Mail, Calendar, Heart, CheckCircle, AlertCircle, X, RotateCcw, FileText, CreditCard, FileSignature } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const departments = ['Sales', 'Marketing', 'Operations', 'Finance', 'HR', 'IT', 'Management', 'Telecalling', 'Field Sales', 'Other'];
@@ -10,8 +10,14 @@ export default function EmployeeKYCForm({ session, onComplete }) {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
+  // Photo
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
+  
+  // Documents
+  const [docs, setDocs] = useState({ pan: null, aadhaar: null, marksheet: null });
+  
   const [cameraActive, setCameraActive] = useState(false);
   const [facingMode, setFacingMode] = useState('user');
   const videoRef = useRef(null);
@@ -77,7 +83,7 @@ export default function EmployeeKYCForm({ session, onComplete }) {
     }
   }, [cameraActive, stopCamera, startCamera]);
 
-  const handleFileUpload = (e) => {
+  const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { setError('Photo must be under 5MB'); return; }
@@ -87,6 +93,13 @@ export default function EmployeeKYCForm({ session, onComplete }) {
     reader.readAsDataURL(file);
   };
 
+  const handleDocUpload = (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError('Document must be under 5MB'); return; }
+    setDocs(prev => ({ ...prev, [type]: file }));
+  };
+
   const removePhoto = () => { setPhotoPreview(null); setPhotoFile(null); };
 
   // Submit
@@ -94,28 +107,35 @@ export default function EmployeeKYCForm({ session, onComplete }) {
     if (!form.full_name || !form.date_of_birth || !form.phone) {
       setError('Please fill Name, Date of Birth and Phone number.'); return;
     }
-    if (!photoFile) { setError('Please capture or upload your photo.'); return; }
+    if (!photoFile) { setError('Please capture or upload your profile photo.'); return; }
     
     setSubmitting(true); setError('');
 
     try {
-      const fileName = `${session.user.id}_${Date.now()}.jpg`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('employee-photos')
-        .upload(fileName, photoFile, { contentType: 'image/jpeg' });
+      // 1. Upload Profile Photo
+      const photoName = `${session.user.id}_photo_${Date.now()}.jpg`;
+      const { error: photoErr } = await supabase.storage.from('employee-photos').upload(photoName, photoFile, { contentType: 'image/jpeg' });
+      if (photoErr) throw photoErr;
+      const photo_url = supabase.storage.from('employee-photos').getPublicUrl(photoName).data.publicUrl;
 
-      if (uploadError) throw uploadError;
+      // 2. Upload Documents (Optional)
+      const uploadDoc = async (file, type) => {
+        if (!file) return null;
+        const ext = file.name.split('.').pop();
+        const docName = `${session.user.id}_${type}_${Date.now()}.${ext}`;
+        const { error } = await supabase.storage.from('employee-photos').upload(docName, file);
+        if (error) throw error;
+        return supabase.storage.from('employee-photos').getPublicUrl(docName).data.publicUrl;
+      };
 
-      const { data: publicUrlData } = supabase.storage
-        .from('employee-photos')
-        .getPublicUrl(fileName);
+      const pan_url = await uploadDoc(docs.pan, 'pan');
+      const aadhaar_url = await uploadDoc(docs.aadhaar, 'aadhaar');
+      const marksheet_url = await uploadDoc(docs.marksheet, 'marksheet');
 
-      const photo_url = publicUrlData.publicUrl;
-
+      // 3. Save to Database
       const { error: insertError } = await supabase
         .from('employee_kyc')
-        .insert([{ ...form, photo_url, user_id: session.user.id }]);
+        .insert([{ ...form, photo_url, pan_url, aadhaar_url, marksheet_url, user_id: session.user.id }]);
 
       if (insertError) throw insertError;
 
@@ -136,18 +156,18 @@ export default function EmployeeKYCForm({ session, onComplete }) {
   return (
     <div className="max-w-xl mx-auto overflow-hidden">
       {/* Progress */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        {[1, 2, 3].map((s) => (
-          <div key={s} className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8">
+        {[1, 2, 3, 4].map((s) => (
+          <div key={s} className="flex items-center gap-1 sm:gap-2">
             <motion.div 
               animate={{ scale: step === s ? 1.1 : 1 }}
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+              className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-colors ${
               step === s ? 'bg-[#f26522] text-white shadow-lg shadow-orange-500/30' :
               step > s ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-400'
             }`}>
               {step > s ? '✓' : s}
             </motion.div>
-            {s < 3 && <div className={`w-12 h-0.5 transition-colors ${step > s ? 'bg-green-500' : 'bg-gray-100'}`} />}
+            {s < 4 && <div className={`w-6 sm:w-10 h-0.5 transition-colors ${step > s ? 'bg-green-500' : 'bg-gray-100'}`} />}
           </div>
         ))}
       </div>
@@ -193,16 +213,86 @@ export default function EmployeeKYCForm({ session, onComplete }) {
               <input name="emergency_contact_name" value={form.emergency_contact_name} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
             <div><label className="text-gray-700 text-sm font-medium mb-1.5 block">Emergency Contact Phone</label>
               <input name="emergency_contact_phone" type="tel" value={form.emergency_contact_phone} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-base" /></div>
-            <div className="flex gap-3 mt-4 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3 mt-4 pt-2">
               <motion.button whileTap={{ scale: 0.97 }} onClick={() => setStep(1)} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition text-lg">← Back</motion.button>
               <motion.button whileTap={{ scale: 0.97 }} onClick={() => { setError(''); setStep(3); }} className="flex-1 bg-[#10243E] hover:bg-gray-800 text-white font-bold py-4 rounded-xl transition shadow-lg text-lg">Next →</motion.button>
             </div>
           </motion.div>
         )}
 
-        {/* STEP 3 */}
+        {/* STEP 3 - Documents */}
         {step === 3 && (
-          <motion.div key="step3" variants={slideVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3 }} className="space-y-6 text-center">
+          <motion.div key="step3" variants={slideVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3 }} className="space-y-6">
+            <div className="bg-blue-50 rounded-2xl p-4 mb-4 border border-blue-100">
+              <p className="text-[#10243E] text-sm font-medium">📄 Document Uploads (Optional)</p>
+              <p className="text-gray-500 text-xs mt-1">You can upload these now or provide them later.</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* PAN Card */}
+              <div className="border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gray-100 p-2 rounded-lg text-gray-500"><CreditCard size={20} /></div>
+                  <div>
+                    <p className="font-semibold text-sm text-[#10243E]">PAN Card</p>
+                    <p className="text-xs text-gray-400">{docs.pan ? docs.pan.name : 'Not uploaded'}</p>
+                  </div>
+                </div>
+                <label className="bg-[#10243E] text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-800 transition">
+                  {docs.pan ? 'Change' : 'Upload'}
+                  <input type="file" accept="image/*,.pdf" onChange={(e) => handleDocUpload(e, 'pan')} className="hidden" />
+                </label>
+              </div>
+
+              {/* Aadhaar Card */}
+              <div className="border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gray-100 p-2 rounded-lg text-gray-500"><FileText size={20} /></div>
+                  <div>
+                    <p className="font-semibold text-sm text-[#10243E]">Aadhaar Card</p>
+                    <p className="text-xs text-gray-400">{docs.aadhaar ? docs.aadhaar.name : 'Not uploaded'}</p>
+                  </div>
+                </div>
+                <label className="bg-[#10243E] text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-800 transition">
+                  {docs.aadhaar ? 'Change' : 'Upload'}
+                  <input type="file" accept="image/*,.pdf" onChange={(e) => handleDocUpload(e, 'aadhaar')} className="hidden" />
+                </label>
+              </div>
+
+              {/* Marksheet */}
+              <div className="border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gray-100 p-2 rounded-lg text-gray-500"><FileSignature size={20} /></div>
+                  <div>
+                    <p className="font-semibold text-sm text-[#10243E]">Last Marksheet</p>
+                    <p className="text-xs text-gray-400">{docs.marksheet ? docs.marksheet.name : 'Not uploaded'}</p>
+                  </div>
+                </div>
+                <label className="bg-[#10243E] text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-800 transition">
+                  {docs.marksheet ? 'Change' : 'Upload'}
+                  <input type="file" accept="image/*,.pdf" onChange={(e) => handleDocUpload(e, 'marksheet')} className="hidden" />
+                </label>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-2">
+              <motion.button whileTap={{ scale: 0.97 }} onClick={() => setStep(2)} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition text-lg">← Back</motion.button>
+              <motion.button whileTap={{ scale: 0.97 }} onClick={() => setStep(4)} className="flex-1 bg-[#10243E] hover:bg-gray-800 text-white font-bold py-4 rounded-xl transition shadow-lg text-lg">Next →</motion.button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* STEP 4 - Photo */}
+        {step === 4 && (
+          <motion.div key="step4" variants={slideVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3 }} className="space-y-6 text-center">
+            
+            <div className="bg-orange-50 rounded-2xl p-4 mb-6 border border-orange-100">
+              <p className="text-[#10243E] font-medium text-sm">
+                📸 <span className="font-bold text-[#f26522]">Upload your best professional picture!</span><br/>
+                This photo will be used for your ID card, birthday wishes, and celebrating your achievements.
+              </p>
+            </div>
+
             {photoPreview ? (
               <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="relative inline-block mx-auto">
                 <img src={photoPreview} alt="Preview" className="w-56 h-56 rounded-3xl object-cover border-4 border-[#f26522] shadow-2xl" />
@@ -231,16 +321,16 @@ export default function EmployeeKYCForm({ session, onComplete }) {
                 </div>
               </div>
             )}
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             <canvas ref={canvasRef} className="hidden" />
 
-            <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
-              <motion.button whileTap={{ scale: 0.97 }} onClick={() => { stopCamera(); setStep(2); }} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition text-lg">← Back</motion.button>
+            <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-gray-100">
+              <motion.button whileTap={{ scale: 0.97 }} onClick={() => { stopCamera(); setStep(3); }} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition text-lg">← Back</motion.button>
               <motion.button 
                 whileTap={{ scale: 0.97 }} 
                 onClick={handleSubmit} 
                 disabled={submitting || !photoFile} 
-                className={`flex-[2] font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg ${submitting || !photoFile ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#f26522] hover:bg-orange-600 text-white shadow-orange-500/30'}`}
+                className={`flex-1 font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg ${submitting || !photoFile ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#f26522] hover:bg-orange-600 text-white shadow-orange-500/30'}`}
               >
                 {submitting ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</> : 'Submit Profile'}
               </motion.button>
