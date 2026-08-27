@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X } from 'lucide-react';
+import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Cake, CreditCard, FileSignature, XCircle } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,12 +31,10 @@ export default function EmployeePortal() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const ADMIN_EMAILS = ['admin@capitalbrix.co.in', 'ujjwal@capitalbrix.co.in', 'disha@capitalbrix.com'];
+
   const checkIfAdmin = (email) => {
-    if (email === 'admin@capitalbrix.co.in' || email === 'ujjwal@capitalbrix.co.in') {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
+    setIsAdmin(ADMIN_EMAILS.includes(email));
   };
 
   const handleAuth = async (e) => {
@@ -297,6 +295,36 @@ function FeatureCard({ icon, title, desc }) {
   );
 }
 
+function getUpcomingBirthdays(employees, withinDays = 30) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return employees
+    .filter((emp) => emp.date_of_birth)
+    .map((emp) => {
+      const dob = new Date(emp.date_of_birth);
+      let next = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+      if (next < today) next = new Date(today.getFullYear() + 1, dob.getMonth(), dob.getDate());
+      const daysAway = Math.round((next - today) / (1000 * 60 * 60 * 24));
+      return { ...emp, daysAway, nextBirthday: next };
+    })
+    .filter((emp) => emp.daysAway <= withinDays)
+    .sort((a, b) => a.daysAway - b.daysAway);
+}
+
+function DocBadge({ label, url, Icon }) {
+  return url ? (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="flex items-center gap-1 bg-green-50 text-green-700 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-green-100 transition">
+      <Icon size={12} /> {label} <CheckCircle size={12} />
+    </a>
+  ) : (
+    <span className="flex items-center gap-1 bg-gray-50 text-gray-400 text-xs font-semibold px-2 py-1 rounded-lg">
+      <Icon size={12} /> {label} <XCircle size={12} />
+    </span>
+  );
+}
+
 function AdminDashboard({ session, onLogout }) {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -309,6 +337,8 @@ function AdminDashboard({ session, onLogout }) {
     };
     fetchEmployees();
   }, []);
+
+  const upcomingBirthdays = getUpcomingBirthdays(employees);
 
   return (
     <div className="min-h-screen bg-[#F0F5FA] font-outfit pt-20">
@@ -325,11 +355,45 @@ function AdminDashboard({ session, onLogout }) {
           </button>
         </div>
 
+        {/* Upcoming Birthdays */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 mb-8">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-2">
+            <Cake className="text-[#f26522]" size={20} />
+            <h2 className="text-lg font-bold text-[#10243E]">Upcoming Birthdays (Next 30 Days)</h2>
+          </div>
+          <div className="p-6">
+            {loading ? (
+              <p className="text-gray-400 text-sm">Loading...</p>
+            ) : upcomingBirthdays.length === 0 ? (
+              <p className="text-gray-400 text-sm">No birthdays in the next 30 days.</p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {upcomingBirthdays.map((emp) => (
+                  <div key={emp.id} className="flex items-center gap-3 bg-orange-50 border border-orange-100 rounded-xl px-4 py-2.5">
+                    {emp.photo_url ? (
+                      <img src={emp.photo_url} alt={emp.full_name} className="w-9 h-9 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500"><User size={16} /></div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-[#10243E] text-sm">{emp.full_name}</p>
+                      <p className="text-xs text-[#f26522] font-medium">
+                        {emp.daysAway === 0 ? "Today! 🎉" : emp.daysAway === 1 ? "Tomorrow" : `In ${emp.daysAway} days`}
+                        {' · '}{emp.nextBirthday.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-100">
             <h2 className="text-lg font-bold text-[#10243E]">Employee Directory (KYC Data)</h2>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -339,13 +403,14 @@ function AdminDashboard({ session, onLogout }) {
                   <th className="p-4 font-medium">Role & Dept</th>
                   <th className="p-4 font-medium">Join Date</th>
                   <th className="p-4 font-medium">Emergency</th>
+                  <th className="p-4 font-medium">Documents</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {loading ? (
-                  <tr><td colSpan="5" className="p-8 text-center text-gray-400">Loading records...</td></tr>
+                  <tr><td colSpan="6" className="p-8 text-center text-gray-400">Loading records...</td></tr>
                 ) : employees.length === 0 ? (
-                  <tr><td colSpan="5" className="p-8 text-center text-gray-400">No employee records found.</td></tr>
+                  <tr><td colSpan="6" className="p-8 text-center text-gray-400">No employee records found.</td></tr>
                 ) : (
                   employees.map((emp) => (
                     <tr key={emp.id} className="hover:bg-gray-50/50 transition">
@@ -374,6 +439,13 @@ function AdminDashboard({ session, onLogout }) {
                       <td className="p-4">
                         <p className="text-sm text-gray-700">{emp.emergency_contact_name || 'N/A'}</p>
                         <p className="text-xs text-gray-500">{emp.emergency_contact_phone}</p>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1.5">
+                          <DocBadge label="PAN" url={emp.pan_url} Icon={CreditCard} />
+                          <DocBadge label="Aadhaar" url={emp.aadhaar_url} Icon={FileText} />
+                          <DocBadge label="Marksheet" url={emp.marksheet_url} Icon={FileSignature} />
+                        </div>
                       </td>
                     </tr>
                   ))
