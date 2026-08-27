@@ -203,6 +203,14 @@ export default function EmployeeKYCForm({ session, onComplete }) {
         {/* STEP 3 */}
         {step === 3 && (
           <motion.div key="step3" variants={slideVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3 }} className="space-y-6 text-center">
+            
+            <div className="bg-orange-50 rounded-2xl p-4 mb-6 border border-orange-100">
+              <p className="text-[#10243E] font-medium text-sm">
+                📸 <span className="font-bold text-[#f26522]">Upload your best professional picture!</span><br/>
+                This photo will be used for your ID card, birthday wishes, and celebrating your achievements.
+              </p>
+            </div>
+
             {photoPreview ? (
               <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="relative inline-block mx-auto">
                 <img src={photoPreview} alt="Preview" className="w-56 h-56 rounded-3xl object-cover border-4 border-[#f26522] shadow-2xl" />
