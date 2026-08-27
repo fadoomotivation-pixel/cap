@@ -1,64 +1,67 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-
-const leaders = [
-  {
-    name: 'Rajeel Jangir',
-    title: 'Founder & Managing Director',
-    img: 'https://mirrikh.com/wp-content/uploads/2024/02/member-1.jpg', // Placeholder
-  },
-  {
-    name: 'Kashyap',
-    title: 'Executive Director',
-    img: 'https://mirrikh.com/wp-content/uploads/2024/02/member-2.jpg', // Placeholder
-  },
-  {
-    name: 'Aarav Patel',
-    title: 'Head of Operations',
-    img: 'https://mirrikh.com/wp-content/uploads/2024/02/member-3.jpg', // Placeholder
-  },
-  {
-    name: 'Priya Sharma',
-    title: 'Sales Director',
-    img: 'https://mirrikh.com/wp-content/uploads/2024/02/member-4.jpg', // Placeholder
-  }
-];
+import { Quote } from 'lucide-react';
 
 export default function Leadership() {
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#101010] mb-2">
-            Meet our leadership.
-          </h2>
-          <div className="w-16 h-1 bg-[#f37435] mx-auto"></div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {leaders.map((leader, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="text-center group"
-            >
-              <div className="relative overflow-hidden rounded-sm mb-4 bg-gray-200 aspect-[3/4]">
-                <img 
-                  src={leader.img} 
-                  alt={leader.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=f37435&color=fff&size=512`;
-                  }}
-                />
+    <section className="py-24 bg-gray-50 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-[#10243E]/5 transform skew-x-[-15deg] translate-x-20 z-0 hidden lg:block"></div>
+      
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-16">
+          
+          {/* Image Section */}
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="w-full lg:w-5/12 relative"
+          >
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[3/4]">
+              <img 
+                src="/founder.jpg" 
+                alt="Jasvinder Singh - Founder & CEO" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 text-white">
+                <p className="text-[#f26522] font-bold text-sm tracking-widest uppercase mb-1">Founder & CEO</p>
+                <h3 className="text-3xl font-bold font-outfit">Jasvinder Singh</h3>
               </div>
-              <h3 className="text-xl font-bold text-[#101010]">{leader.name}</h3>
-              <p className="text-[#f37435] text-sm font-semibold uppercase tracking-wider">{leader.title}</p>
-            </motion.div>
-          ))}
+            </div>
+            {/* Decorative block behind image */}
+            <div className="absolute -bottom-6 -left-6 w-3/4 h-3/4 border-[12px] border-[#f26522] rounded-2xl -z-10"></div>
+          </motion.div>
+
+          {/* Text Section */}
+          <motion.div 
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="w-full lg:w-7/12"
+          >
+            <div className="mb-8 relative">
+              <Quote className="text-[#f26522]/20 w-24 h-24 absolute -top-8 -left-8 -z-10" />
+              <blockquote className="text-2xl md:text-3xl font-bold text-[#10243E] font-outfit leading-tight italic">
+                "I truly believe that if you really want to do something, you'll find a way. If you don't, you'll find an excuse."
+              </blockquote>
+            </div>
+
+            <div className="w-16 h-1 bg-[#f26522] mb-8"></div>
+
+            <div className="space-y-6 text-gray-600 leading-relaxed text-lg">
+              <p>
+                Said by Dynamic, successful and high profile personality, Founder of Capital Brix <strong className="text-[#10243E]">Mr. Jasvinder Singh</strong>, a successful entrepreneur owning multiple ventures and flamboyant enough to be covered many times by the most renowned medias.
+              </p>
+              <p>
+                Among the multitude, he is also conferred with many prestigious awards because of his visionary approach and his exemplary contributions. The professionalism he has endured in this sector has helped immensely in understanding the pulse of the market and prospective buyers.
+              </p>
+            </div>
+          </motion.div>
+
         </div>
       </div>
     </section>
