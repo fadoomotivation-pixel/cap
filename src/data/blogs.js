@@ -7,7 +7,7 @@ export const blogs = [
   },
   {
     "title": "Dholera Logistics Hub: Supply Chain Infrastructure in India",
-    "img": "https://images.unsplash.com/photo-1586528116311-ad8ed7c663e0?q=80&w=800&auto=format&fit=crop",
+    "img": "https://images.unsplash.com/photo-1580674285054-bed31e145f59?q=80&w=800&auto=format&fit=crop",
     "date": "2025",
     "excerpt": "The Dholera logistics hub marks a definitive shift in how industrial movement, freight management, and global exports ar..."
   },

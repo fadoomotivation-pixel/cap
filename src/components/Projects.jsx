@@ -57,15 +57,11 @@ function ProjectCard({ p }) {
             onError={(e) => { e.target.style.display = 'none'; }}
           />
         ) : (
-          <div className="w-full h-full relative">
-            <img 
-              src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop" 
-              alt={p.name} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-            <div className="absolute inset-0 bg-[#10243E]/40 flex items-center justify-center p-4 text-center">
-              <span className="text-white text-2xl font-bold font-outfit drop-shadow-md">{p.name}</span>
-            </div>
+          <div className="w-full h-full bg-white flex flex-col items-center justify-center text-[#10243E]">
+            <span className="text-sm font-semibold tracking-[0.3em] uppercase mb-1">MAYUR</span>
+            <span className="text-3xl font-outfit font-light uppercase tracking-wide">
+              {p.name.replace('Mayur ', '')}
+            </span>
           </div>
         )}
       </div>
