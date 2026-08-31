@@ -1,4 +1,6 @@
 import React from 'react';
+import Seo from '../components/Seo';
+import { pageSeo } from '../lib/seo';
 
 const team = [
   {
@@ -21,6 +23,7 @@ const timeline = [
 export default function About() {
   return (
     <main className="pt-[72px] bg-[#F0F5FA] min-h-screen">
+    <Seo {...pageSeo.about} />
       {/* Banner */}
       <div className="bg-[#10243E] py-20 text-center text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-5" style={{

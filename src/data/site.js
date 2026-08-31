@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────
 // CAPITAL BRIX — SITE CONTENT
-// Capital Brix LLP · Exclusive Channel Partner of Mirrikh Infratech
+// Capital Brix LLP · Official Strategy Partner of Mirrikh Infratech
 // Yahan se saara content edit kar sakte ho: phone, projects,
 // prices, FAQs. Code change karne ki zaroorat nahi.
 // ─────────────────────────────────────────────────────────────
 
 export const site = {
   name: 'Capital Brix',
-  tagline: 'Exclusive Partner · Mirrikh Infratech',
+  tagline: 'Official Strategy Partner · Mirrikh Infratech',
   partner: 'Mirrikh Infratech',
   // WhatsApp/call number (country code ke saath, bina + ke)
   phone: '917048917300',
@@ -17,7 +17,7 @@ export const site = {
   // Form leads is inbox me aati hain (FormSubmit)
   leadEmail: 'musicofmajor@gmail.com',
   address: 'A-118, 6th Floor, The Diamond, Sector 136, Noida 201304',
-  domain: 'https://capitalbrix.com',
+  domain: 'https://www.capitalbrix.co.in',
   whatsappMessage:
     'Hi Capital Brix! I am interested in Mirrikh Infratech projects in Dholera Smart City. Please share current prices and plot availability.',
 };
@@ -30,9 +30,9 @@ export const stats = [
 ];
 
 export const partnership = {
-  heading: 'Exclusive Channel Partner of Mirrikh Infratech',
+  heading: 'Official Strategy Partner of Mirrikh Infratech',
   intro:
-    'Capital Brix LLP is the exclusive channel partner of Mirrikh Infratech Pvt. Ltd. — one of the most trusted developers in Dholera Smart City. You get direct developer pricing, verified inventory and end-to-end support from our Noida office.',
+    'Capital Brix LLP is the official strategy partner of Mirrikh Infratech Pvt. Ltd. — one of the most trusted developers in Dholera Smart City. You get direct developer pricing, verified inventory and end-to-end support from our Noida office.',
   points: [
     {
       icon: 'Award',
@@ -52,7 +52,7 @@ export const partnership = {
     {
       icon: 'Handshake',
       title: 'Direct Developer Pricing',
-      text: 'As exclusive partner you book at official developer rates with pre-launch discounts — no middlemen, no markup.',
+      text: 'As official strategy partner you book at official developer rates with pre-launch discounts — no middlemen, no markup.',
     },
   ],
 };
@@ -454,8 +454,8 @@ export const faqs = [
     a: "Dholera SIR is India's first greenfield smart city — backed by the Government of Gujarat and the Delhi–Mumbai Industrial Corridor. With the ₹91,000 crore Tata semiconductor fab, the international airport nearing completion and the Ahmedabad–Dholera Expressway, land prices are still at an early-growth stage (₹6,000–₹10,000/sq yd), giving strong long-term appreciation potential.",
   },
   {
-    q: 'What does "Exclusive Channel Partner of Mirrikh Infratech" mean?',
-    a: 'Capital Brix LLP is the authorised exclusive partner for Mirrikh Infratech projects. You book directly at official developer rates with pre-launch discounts, verified inventory and full documentation support — with the delivery track record of a developer that has completed 8+ projects in Dholera since 2012.',
+    q: 'What does "Official Strategy Partner of Mirrikh Infratech" mean?',
+    a: 'Capital Brix LLP is the authorised official strategy partner for Mirrikh Infratech projects. You book directly at official developer rates with pre-launch discounts, verified inventory and full documentation support — with the delivery track record of a developer that has completed 8+ projects in Dholera since 2012.',
   },
   {
     q: 'Are the plots legal and title clear?',

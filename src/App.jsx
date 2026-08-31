@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+import Seo from './components/Seo';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppFloat from './components/WhatsAppFloat';
@@ -13,6 +15,9 @@ import Contact from './pages/Contact';
 import Blog from './pages/Blog';
 import Events from './pages/Events';
 import EmployeePortal from './pages/EmployeePortal';
+import InterviewAdmin from './pages/InterviewAdmin';
+import InterviewBooking from './pages/InterviewBooking';
+import InterviewConfirmation from './pages/InterviewConfirmation';
 
 import './index.css';
 
@@ -36,8 +41,17 @@ const PlaceholderContent = ({ title }) => (
   </div>
 );
 
+// Private/utility screens: keep them out of Google's index entirely.
+const PrivateRoute = ({ title, children }) => (
+  <>
+    <Seo title={title} noIndex />
+    {children}
+  </>
+);
+
 export default function App() {
   return (
+    <HelmetProvider>
     <Router>
       <Navbar />
       <Routes>
@@ -57,10 +71,16 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/events" element={<Events />} />
-        <Route path="/employee-kyc" element={<EmployeePortal />} />
+        <Route path="/employee-kyc" element={<PrivateRoute title="Employee Portal | Capital Brix"><EmployeePortal /></PrivateRoute>} />
+
+        {/* Interview Scheduler Routes */}
+        <Route path="/admin/interviews" element={<PrivateRoute title="Interview Scheduler | Capital Brix"><InterviewAdmin /></PrivateRoute>} />
+        <Route path="/book/:token" element={<PrivateRoute title="Schedule Your Interview | Capital Brix"><InterviewBooking /></PrivateRoute>} />
+        <Route path="/book/confirm/:bookingId" element={<PrivateRoute title="Interview Confirmed | Capital Brix"><InterviewConfirmation /></PrivateRoute>} />
       </Routes>
       <Footer />
       <WhatsAppFloat />
     </Router>
+    </HelmetProvider>
   );
 }

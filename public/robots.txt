@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://capitalbrix.com/sitemap.xml
+# Private / internal tools — never index these
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+Sitemap: https://www.capitalbrix.co.in/sitemap.xml

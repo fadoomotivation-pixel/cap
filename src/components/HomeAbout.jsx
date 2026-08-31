@@ -23,7 +23,7 @@ export default function HomeAbout() {
             Dholera Special Investment Region (DSIR) is India's first greenfield smart city. Designed to be a global manufacturing and trading hub, it is equipped with world-class infrastructure, seamless connectivity, and sustainable development practices.
           </p>
           <p className="text-gray-600 leading-relaxed">
-            As an exclusive channel partner of Mirrikh Infratech, Capital Brix provides unmatched investment opportunities in this rapidly growing region. Secure your future in a city that promises exponential growth and world-class living standards.
+            As the official strategy partner of Mirrikh Infratech, Capital Brix provides unmatched investment opportunities in this rapidly growing region. Secure your future in a city that promises exponential growth and world-class living standards.
           </p>
           
           <div className="mt-8 flex gap-8">

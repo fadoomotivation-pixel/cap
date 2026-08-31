@@ -135,7 +135,12 @@ export default function EmployeeKYCForm({ session, onComplete }) {
       // 3. Save to Database
       const { error: insertError } = await supabase
         .from('employee_kyc')
-        .insert([{ ...form, photo_url, pan_url, aadhaar_url, marksheet_url, user_id: session.user.id }]);
+        .insert([{
+          ...form,
+          date_of_joining: form.date_of_joining || null,
+          photo_url, pan_url, aadhaar_url, marksheet_url,
+          user_id: session.user.id,
+        }]);
 
       if (insertError) throw insertError;
 
