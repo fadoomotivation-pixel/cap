@@ -23,3 +23,13 @@
     @apply py-16 md:py-24;
   }
 }
+
+/* Horizontal tab strips (employee portal, HR console) scroll on small screens
+   without showing a scrollbar over the content. */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

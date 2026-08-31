@@ -203,35 +203,40 @@ function EmployeeDashboard({ session, onLogout }) {
       <div className="max-w-6xl mx-auto px-4 py-8">
         
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-[#10243E]">Welcome, {userName}! 👋</h1>
-            <p className="text-gray-500 text-sm">Capital Brix Employee Portal</p>
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center gap-3 bg-white p-4 sm:p-6 rounded-2xl shadow-sm mb-6 sm:mb-8">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#10243E] truncate">Welcome, {userName}! 👋</h1>
+            <p className="text-gray-500 text-xs sm:text-sm">Capital Brix Employee Portal</p>
           </div>
-          <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg transition">
-            <LogOut size={18} /> Logout
+          <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 sm:px-4 py-2 rounded-lg transition shrink-0">
+            <LogOut size={18} /> <span className="hidden sm:inline">Logout</span>
           </button>
         </motion.div>
 
-        <div className="grid md:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="md:col-span-1 space-y-2 flex flex-row md:flex-col overflow-x-auto pb-2 md:pb-0 gap-2">
-            <button onClick={() => setActiveTab('kyc')}
-              className={`flex-1 min-w-fit flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'kyc' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-              <User size={18} /> <span className="whitespace-nowrap">My Profile & KYC</span>
-            </button>
-            <button onClick={() => setActiveTab('attendance')}
-              className={`flex-1 min-w-fit flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'attendance' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-              <Clock size={18} /> <span className="whitespace-nowrap">Attendance</span>
-            </button>
-            <button onClick={() => setActiveTab('features')}
-              className={`flex-1 min-w-fit flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'features' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-              <Building size={18} /> <span className="whitespace-nowrap">Workspace Apps</span>
-            </button>
+        <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
+          {/* Nav — a scrollable pill bar on phones and tablets, a sidebar from
+              lg up. The old version squeezed three full labels into a narrow
+              column as soon as the viewport hit md, which is unreadable. */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="lg:col-span-1 flex lg:flex-col gap-2 overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 lg:pb-0 scrollbar-none">
+            {[
+              { key: 'kyc', label: 'Profile & KYC', Icon: User },
+              { key: 'attendance', label: 'Attendance', Icon: Clock },
+              { key: 'features', label: 'Workspace', Icon: Building },
+            ].map(({ key, label, Icon }) => (
+              <button key={key} onClick={() => setActiveTab(key)}
+                className={`shrink-0 lg:w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium transition ${
+                  activeTab === key
+                    ? 'bg-[#10243E] text-white shadow-lg'
+                    : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
+                }`}>
+                <Icon size={18} className="shrink-0" /> <span className="whitespace-nowrap">{label}</span>
+              </button>
+            ))}
           </motion.div>
 
           {/* Content */}
-          <div className="md:col-span-3">
+          <div className="lg:col-span-3">
             <AnimatePresence mode="wait">
               {activeTab === 'kyc' && (
                 <motion.div key="kyc" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-white rounded-3xl shadow-sm p-6 md:p-8">
@@ -359,7 +364,7 @@ function AdminDashboard({ session, onLogout }) {
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-red-500 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Super Admin</span>
             </div>
-            <h1 className="text-2xl font-bold">Admin Command Center</h1>
+            <h1 className="text-2xl font-bold text-white">Admin Command Center</h1>
           </div>
           <button onClick={onLogout} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition">
             <LogOut size={18} /> Logout

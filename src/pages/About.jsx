@@ -32,7 +32,7 @@ export default function About() {
         }}/>
         <div className="relative z-10 max-w-3xl mx-auto px-6">
           <p className="text-[#f26522] font-bold uppercase tracking-[0.25em] text-sm mb-3">Mirrikh Infratech Pvt. Ltd.</p>
-          <h1 className="text-5xl md:text-6xl font-black mb-4">Who We Are</h1>
+          <h1 className="text-5xl md:text-6xl font-black mb-4 text-white">Who We Are</h1>
           <p className="text-white/70 text-lg max-w-xl mx-auto">
             The most trusted developer in Dholera Smart City since 2012 — building communities for India's future.
           </p>

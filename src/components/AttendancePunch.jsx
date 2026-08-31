@@ -182,7 +182,9 @@ export default function AttendancePunch({ session }) {
       {/* Today's status */}
       <div className="bg-[#10243E] text-white rounded-2xl p-6">
         <p className="text-white/60 text-sm">{format(new Date(), 'EEEE, d MMMM yyyy')}</p>
-        <h3 className="text-2xl font-bold mt-1">Hi {employee.full_name.split(' ')[0]} 👋</h3>
+        {/* index.css sets a dark colour on all headings, so headings on dark
+            cards must state their own colour or they vanish. */}
+        <h3 className="text-2xl font-bold mt-1 text-white">Hi {employee.full_name.split(' ')[0]} 👋</h3>
         <div className="grid grid-cols-2 gap-4 mt-5">
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <p className="text-white/50 text-xs uppercase tracking-wider">Punch In</p>
@@ -284,16 +286,22 @@ export default function AttendancePunch({ session }) {
         ) : (
           <div className="space-y-2">
             {history.map((r) => (
-              <div key={r.id} className="flex flex-wrap justify-between items-center gap-2 text-sm border-b border-gray-50 pb-2 last:border-0">
-                <span className="font-medium text-[#10243E]">{format(new Date(r.work_date), 'EEE, MMM d')}</span>
-                <span className="text-gray-500 capitalize">{r.work_mode.replace('-', ' ')}</span>
-                <span className="text-gray-600">{fmtTime(r.check_in_at)} → {fmtTime(r.check_out_at)}</span>
-                {r.check_in_lat && (
-                  <a href={`https://www.google.com/maps?q=${r.check_in_lat},${r.check_in_lng}`} target="_blank" rel="noreferrer"
-                    className="text-[#f26522] hover:underline flex items-center gap-1 text-xs">
-                    <MapPin size={12} /> Map
-                  </a>
-                )}
+              <div key={r.id} className="flex items-center justify-between gap-3 text-sm border-b border-gray-50 pb-2.5 last:border-0">
+                <div className="min-w-0">
+                  <p className="font-medium text-[#10243E]">{format(new Date(r.work_date), 'EEE, MMM d')}</p>
+                  <p className="text-xs text-gray-500 capitalize">{r.work_mode.replace('-', ' ')}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-gray-600 text-xs sm:text-sm whitespace-nowrap">
+                    {fmtTime(r.check_in_at)} → {fmtTime(r.check_out_at)}
+                  </span>
+                  {r.check_in_lat && (
+                    <a href={`https://www.google.com/maps?q=${r.check_in_lat},${r.check_in_lng}`} target="_blank" rel="noreferrer"
+                      className="text-[#f26522] hover:underline flex items-center gap-1 text-xs shrink-0">
+                      <MapPin size={12} /> Map
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>

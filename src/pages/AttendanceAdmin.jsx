@@ -265,11 +265,11 @@ export default function AttendanceAdmin() {
       <div className="max-w-7xl mx-auto px-4">
 
         <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-          <div className="flex items-center gap-3">
-            <img src="/logo-capital-brix.png" alt="Capital Brix" className="w-12 h-12 rounded-xl object-contain" />
-            <div>
-              <h1 className="text-3xl font-bold text-[#10243E]">HR Console</h1>
-              <p className="text-gray-500 text-sm">{session.user.email}</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <img src="/logo-capital-brix.png" alt="Capital Brix" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#10243E]">HR Console</h1>
+              <p className="text-gray-500 text-xs sm:text-sm truncate">{session.user.email}</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -321,7 +321,7 @@ export default function AttendanceAdmin() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
+        <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
           {[['today', 'Daily Register', Calendar], ['roster', 'Employees', Users], ['monthly', 'Monthly Report', BarChart3], ['settings', 'Settings', Settings]].map(([key, label, Icon]) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition ${
@@ -347,7 +347,7 @@ export default function AttendanceAdmin() {
             <div className="bg-[#10243E] text-white rounded-xl p-6 mb-6">
               <div className="flex flex-wrap gap-4 justify-between items-start">
                 <div>
-                  <h2 className="text-lg font-bold flex items-center gap-2"><Send size={18} className="text-[#f26522]" /> Daily Report to Founder</h2>
+                  <h2 className="text-lg font-bold flex items-center gap-2 text-white"><Send size={18} className="text-[#f26522]" /> Daily Report to Founder</h2>
                   <p className="text-white/60 text-sm mt-1">
                     One tap — opens WhatsApp with the day&apos;s summary already written.
                     {!settings?.founder_whatsapp && ' Add the founder\'s number in Settings to skip picking a contact.'}
@@ -404,7 +404,7 @@ export default function AttendanceAdmin() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
                     <tr>
@@ -541,7 +541,7 @@ export default function AttendanceAdmin() {
               </form>
             )}
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
                   <tr>
@@ -619,7 +619,7 @@ export default function AttendanceAdmin() {
                 </button>
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
                   <tr>

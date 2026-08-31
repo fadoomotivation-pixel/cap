@@ -227,7 +227,7 @@ export default function ProjectDetail() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="flex flex-col lg:flex-row">
             <div className="lg:w-1/3 bg-[#10243E] text-white p-8 lg:p-12 flex flex-col justify-center">
-              <h3 className="text-2xl font-bold mb-4">Enquire Now</h3>
+              <h3 className="text-2xl font-bold mb-4 text-white">Enquire Now</h3>
               <p className="text-white/80 leading-relaxed mb-6">
                 {project.status === 'Delivered'
                   ? "This project has been delivered. Contact us for resale availability or explore our new launches."

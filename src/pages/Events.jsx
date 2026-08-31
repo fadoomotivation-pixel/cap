@@ -26,7 +26,7 @@ export default function Events() {
       {/* Header */}
       <div className="bg-[#10243E] text-white py-16 mb-12">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Events</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Events</h1>
           <p className="text-xl text-gray-300 max-w-2xl">
             Success celebrations, awareness programs, and global exhibitions hosted by Mirrikh Infratech.
           </p>
