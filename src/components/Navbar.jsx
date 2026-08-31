@@ -82,9 +82,12 @@ export default function Navbar() {
       <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-3 flex justify-between items-center">
 
         {/* ── Logo ── */}
-        <Link to="/" onClick={closeAll} className="flex-shrink-0 flex flex-col leading-none">
-          <span className="font-extrabold text-[20px] sm:text-[22px] text-[#10243E] leading-none tracking-tight">Capital Brix</span>
-          <span className="text-[9px] text-[#f26522] font-bold uppercase tracking-[0.15em] mt-0.5">Strategy Partner</span>
+        <Link to="/" onClick={closeAll} className="flex-shrink-0 flex items-center gap-2.5">
+          <img src="/logo-capital-brix.png" alt="Capital Brix" width="44" height="44" className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-contain" />
+          <span className="flex flex-col leading-none">
+            <span className="font-extrabold text-[20px] sm:text-[22px] text-[#10243E] leading-none tracking-tight">Capital Brix</span>
+            <span className="text-[9px] text-[#f26522] font-bold uppercase tracking-[0.15em] mt-0.5">Strategy Partner</span>
+          </span>
         </Link>
 
         {/* ── Desktop Nav ── */}

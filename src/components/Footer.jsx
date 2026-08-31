@@ -34,9 +34,12 @@ export default function Footer() {
 
           {/* Col 1: Brand */}
           <div className="lg:col-span-1">
-            <div className="mb-6 flex flex-col leading-none">
-              <span className="font-extrabold text-[28px] text-white tracking-tight">Capital Brix</span>
-              <span className="text-[10px] text-[#f37435] font-bold uppercase tracking-[0.15em] mt-1">Strategy Partner</span>
+            <div className="mb-6 flex items-center gap-3">
+              <img src="/logo-capital-brix.png" alt="Capital Brix" width="56" height="56" className="w-14 h-14 rounded-xl object-contain" />
+              <span className="flex flex-col leading-none">
+                <span className="font-extrabold text-[24px] text-white tracking-tight">Capital Brix</span>
+                <span className="text-[10px] text-[#f37435] font-bold uppercase tracking-[0.15em] mt-1">Strategy Partner</span>
+              </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
               Mirrikh Group is a diversified business conglomerate dedicated to creating enduring value, fostering growth, and elevating lifestyles.

@@ -65,8 +65,38 @@ the token columns (`confirmation_token`, `recovery_token`, `email_change_token_n
 
 Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/*`,
 `/blog`, `/events`, `/contact`.
-Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`, `/book/:token`,
-`/book/confirm/:bookingId`.
+Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
+`/admin/attendance`, `/book/:token`, `/book/confirm/:bookingId`.
+
+## Attendance module
+
+Tables are namespaced `cb_*` because `public.attendance` already exists and
+belongs to the SalesAutoCall app (company_id/salesperson_id, live rows) — never
+touch that one.
+
+- `cb_employees` — HR-managed roster. The `email` must match the employee's login
+  email; that's how punches are linked to a person.
+- `cb_attendance` — one row per employee per day (unique constraint), with work
+  mode (`office` / `site-visit` / `wfh`), check-in/out timestamps + GPS, optional
+  selfie URL and a note.
+- Employees have **no direct INSERT/UPDATE** on `cb_attendance`. Punching goes
+  through `cb_punch_in()` / `cb_punch_out()`, SECURITY DEFINER RPCs that stamp
+  `now()` server-side — so nobody can backdate their own arrival or edit someone
+  else's row. `cb_my_employee()` resolves the caller to their roster record.
+- Site-visit punches require location; the UI refuses to submit without it.
+- HR console `/admin/attendance`: daily register (joined against the roster so
+  **absentees are visible**, not just people who punched), map link + selfie
+  thumbnail as proof, day stats, CSV export, and roster add/deactivate.
+- Employee self-service lives in the Employee Portal's "Attendance" tab.
+
+## Interview slot autopilot
+
+`cb_scheduler_settings` (single row) drives `cb_ensure_interview_slots()`, which
+tops up a rolling window of open slots. The interview admin calls it on every
+load, so HR never creates slots by hand — manual creation still exists but is
+tucked behind "Show manual slot creation". The function is idempotent: it skips
+times that already exist, past times, weekends/lunch per settings, and never
+touches booked slots.
 
 ## SEO conventions
 

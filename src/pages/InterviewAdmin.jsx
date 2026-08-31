@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Calendar, Clock, Link as LinkIcon, Trash2, Users, Copy, CheckCircle, LogOut, X,
   Search, Download, CalendarDays, CalendarCheck, DoorOpen, Ban, MessageCircle, RefreshCw,
-  Phone, Mail, Printer, CalendarClock, StickyNote, UserCheck, UserX, ThumbsUp, ThumbsDown,
+  Phone, Mail, Printer, CalendarClock, StickyNote, UserCheck, UserX, ThumbsUp, ThumbsDown, Zap,
 } from 'lucide-react';
 import { format, addMinutes, addDays, parse, isBefore, isToday, isTomorrow, parseISO, isAfter } from 'date-fns';
 import { ADMIN_EMAILS } from '../lib/admin';
@@ -43,6 +43,9 @@ export default function InterviewAdmin() {
   const [links, setLinks] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [settings, setSettings] = useState(null);
+  const [autoCreated, setAutoCreated] = useState(0);
+  const [showManual, setShowManual] = useState(false);
 
   // Slot generator
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -99,15 +102,31 @@ export default function InterviewAdmin() {
 
   const fetchData = async () => {
     setRefreshing(true);
-    const [{ data: slotsData }, { data: linksData }, { data: bookingsData }] = await Promise.all([
+    // Autopilot: top up the rolling window of open slots before loading, so HR
+    // never has to remember to create them. No-ops when autopilot is off.
+    const { data: topUp } = await supabase.rpc('cb_ensure_interview_slots');
+    if (topUp?.created) setAutoCreated(topUp.created);
+
+    const [{ data: slotsData }, { data: linksData }, { data: bookingsData }, { data: settingsRow }] = await Promise.all([
       supabase.from('interview_slots').select('*').order('slot_date').order('start_time'),
       supabase.from('interview_links').select('*').order('created_at', { ascending: false }),
       supabase.from('interview_bookings').select('*, interview_slots(*)').order('booked_at', { ascending: false }),
+      supabase.from('cb_scheduler_settings').select('*').eq('id', 1).maybeSingle(),
     ]);
     if (slotsData) setSlots(slotsData);
     if (linksData) setLinks(linksData);
     if (bookingsData) setBookings(bookingsData);
+    if (settingsRow) setSettings(settingsRow);
     setRefreshing(false);
+  };
+
+  const saveSettings = async (patch) => {
+    const next = { ...settings, ...patch };
+    setSettings(next);
+    await supabase.from('cb_scheduler_settings')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('id', 1);
+    fetchData();
   };
 
   const handleLogin = async (e) => {
@@ -357,11 +376,17 @@ export default function InterviewAdmin() {
       <div className="max-w-7xl mx-auto px-4">
 
         <div className="flex flex-wrap gap-4 justify-between items-center mb-8 no-print">
-          <div>
-            <h1 className="text-3xl font-bold text-[#10243E]">Interview Scheduler</h1>
-            <p className="text-gray-500 text-sm mt-1">{session.user.email}</p>
+          <div className="flex items-center gap-3">
+            <img src="/logo-capital-brix.png" alt="Capital Brix" className="w-12 h-12 rounded-xl object-contain" />
+            <div>
+              <h1 className="text-3xl font-bold text-[#10243E]">Interview Scheduler</h1>
+              <p className="text-gray-500 text-sm">{session.user.email}</p>
+            </div>
           </div>
           <div className="flex gap-2">
+            <a href="/admin/attendance" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors">
+              <Users size={16} /> Attendance
+            </a>
             <button onClick={() => window.print()} className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors" title="Print today's interview sheet">
               <Printer size={16} /> Day Sheet
             </button>
@@ -412,8 +437,79 @@ export default function InterviewAdmin() {
 
           {/* Left: generators */}
           <div className="space-y-6">
+            {/* Autopilot — slots keep themselves topped up so HR does nothing */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Calendar size={20} className="text-[#f26522]" /> Generate Slots</h2>
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2"><Zap size={20} className="text-[#f26522]" /> Slot Autopilot</h2>
+                <button type="button" onClick={() => saveSettings({ auto_generate: !settings?.auto_generate })}
+                  className={`relative w-12 h-6 rounded-full transition shrink-0 ${settings?.auto_generate ? 'bg-[#f26522]' : 'bg-gray-300'}`}
+                  title={settings?.auto_generate ? 'Autopilot on' : 'Autopilot off'}>
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${settings?.auto_generate ? 'left-6.5 translate-x-[22px]' : 'left-0.5'}`} />
+                </button>
+              </div>
+
+              {settings?.auto_generate ? (
+                <>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Slots are created automatically for the next{' '}
+                    <strong className="text-[#10243E]">{settings.days_ahead} days</strong> — nothing to do by hand.
+                    {autoCreated > 0 && <span className="text-[#f26522]"> Just added {autoCreated}.</span>}
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <label className="flex-1">
+                        <span className="block text-xs text-gray-500 mb-1">Day starts</span>
+                        <input type="time" value={settings.start_time?.slice(0, 5) || '10:00'}
+                          onChange={(e) => saveSettings({ start_time: e.target.value })}
+                          className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                      </label>
+                      <label className="flex-1">
+                        <span className="block text-xs text-gray-500 mb-1">Day ends</span>
+                        <input type="time" value={settings.end_time?.slice(0, 5) || '18:00'}
+                          onChange={(e) => saveSettings({ end_time: e.target.value })}
+                          className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                      </label>
+                    </div>
+                    <div className="flex gap-3">
+                      <label className="flex-1">
+                        <span className="block text-xs text-gray-500 mb-1">Slot length</span>
+                        <select value={settings.slot_minutes} onChange={(e) => saveSettings({ slot_minutes: Number(e.target.value) })}
+                          className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]">
+                          {DURATIONS.map((d) => <option key={d} value={d}>{d} min</option>)}
+                        </select>
+                      </label>
+                      <label className="flex-1">
+                        <span className="block text-xs text-gray-500 mb-1">Days ahead</span>
+                        <select value={settings.days_ahead} onChange={(e) => saveSettings({ days_ahead: Number(e.target.value) })}
+                          className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]">
+                          {[7, 14, 21, 30].map((d) => <option key={d} value={d}>{d} days</option>)}
+                        </select>
+                      </label>
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input type="checkbox" checked={settings.skip_weekends} onChange={(e) => saveSettings({ skip_weekends: e.target.checked })} className="accent-[#f26522]" />
+                      Skip weekends
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input type="checkbox" checked={settings.skip_lunch} onChange={(e) => saveSettings({ skip_lunch: e.target.checked })} className="accent-[#f26522]" />
+                      Skip lunch ({settings.lunch_start?.slice(0, 5)}–{settings.lunch_end?.slice(0, 5)})
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Autopilot is off — you&apos;ll need to create slots manually below.
+                </p>
+              )}
+
+              <button type="button" onClick={() => setShowManual(!showManual)}
+                className="text-xs text-gray-400 hover:text-[#f26522] mt-4 underline">
+                {showManual ? 'Hide' : 'Show'} manual slot creation
+              </button>
+            </div>
+
+            <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-100 ${showManual ? '' : 'hidden'}`}>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Calendar size={20} className="text-[#f26522]" /> Manual Slots</h2>
               <div className="space-y-4">
                 <div className="flex gap-3">
                   <div className="flex-1">
