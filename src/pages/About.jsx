@@ -12,7 +12,7 @@ const team = [
 ];
 
 const timeline = [
-  { year: '2010', event: 'Founded as Shreeji Developers by Rajeel Kumar Jangir in Surat, Gujarat.' },
+  { year: '2010', event: 'Founded as Shreeji Developers in Surat, Gujarat.' },
   { year: '2016', event: 'First project Mayur Park Villa launched at Kamatalav village, Dholera.' },
   { year: '2017', event: 'Rebranded as Mirrikh Infratech Pvt. Ltd. with expanded vision for Dholera.' },
   { year: '2020', event: '10+ projects delivered; expanding into industrial and commercial segments.' },

@@ -36,18 +36,29 @@ export default function InterviewBooking() {
       setLoading(false);
       return;
     }
-    
+
+    // The DB rejects expired links too; check here so the candidate sees a
+    // clear message instead of an empty slot list.
+    if (link.expires_at && new Date(link.expires_at) <= new Date()) {
+      setError('This booking link has expired. Please request a new one from HR.');
+      setLoading(false);
+      return;
+    }
+
     setLinkData(link);
 
-    // 2. Fetch open slots
+    // 2. Fetch open slots from today onwards, then drop times that have
+    // already passed today — offering a slot in the past just wastes a click.
     const { data: slotsData } = await supabase
       .from('interview_slots')
       .select('*')
       .eq('status', 'open')
+      .gte('slot_date', new Date().toISOString().slice(0, 10))
       .order('slot_date', { ascending: true })
       .order('start_time', { ascending: true });
 
-    setSlots(slotsData || []);
+    const now = new Date();
+    setSlots((slotsData || []).filter((s) => new Date(`${s.slot_date}T${s.start_time}`) > now));
     setLoading(false);
   };
 

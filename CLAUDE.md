@@ -38,9 +38,12 @@ Vite + React 19 + Tailwind + Framer Motion, deployed on Vercel, backed by Supaba
   RLS: employees see only their own row; admins (by email) can read all.
 - `interview_slots` / `interview_links` / `interview_bookings` — interview scheduler.
   Booking goes through the `book_interview_slot()` SECURITY DEFINER RPC, which does an
-  atomic `UPDATE ... WHERE status='open'` to prevent double-booking. Public confirmation
-  reads go through `get_booking_confirmation()` — never query `interview_bookings`
-  directly from the anon key (that would expose every candidate's PII).
+  atomic `UPDATE ... WHERE status='open'` to prevent double-booking, and also rejects
+  inactive links, links past `expires_at`, and slots whose time has already passed.
+  Public confirmation reads go through `get_booking_confirmation()` — never query
+  `interview_bookings` directly from the anon key (that would expose every candidate's PII).
+  Slot status values: `open` / `booked` / `blocked`. Link types: `generic` / `single-use`
+  (single-use links are burned by setting `is_active = false` after one booking).
 - Storage bucket `employee-photos` (public read; authenticated insert).
 
 ### Admin emails — single source of truth
@@ -76,6 +79,61 @@ Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`, `/book/:tok
   with award) on the homepage, `Product` per project detail page.
 - Known limitation: this is a client-rendered SPA, so crawlers depend on JS rendering.
   The highest-impact next SEO step is prerendering/SSR for public routes.
+
+## Interview Scheduler — what HR can do
+
+`/admin/interviews` (admin-only, `noindex`):
+- **Stats**: upcoming open slots, today's interviews, selected count, no-show rate,
+  active links.
+- **Slot generation**: single date or a date range (with weekend skip), configurable
+  length (15/20/30/45/60 min), optional lunch-break skip. Re-running is safe —
+  existing start times on a date are skipped, so no duplicates.
+- **Slot management**: upcoming open slots grouped by day (Today/Tomorrow labels),
+  per-slot delete and "clear day". Past slots are hidden.
+- **Links**: generic or single-use, optional expiry, with copy / WhatsApp share /
+  deactivate and Active / Expired / Inactive status.
+- **Candidates**: tabs (Upcoming / Today / Past / All), search by name/email/phone,
+  outcome filter, CSV export (includes outcome + notes).
+- **Per candidate**: outcome tracking (`scheduled` / `attended` / `no-show` /
+  `selected` / `rejected` / `on-hold`), free-text interview notes, one-click
+  call / email / WhatsApp, reschedule to another open slot, and cancel.
+- **Today's line-up** panel and a printable **Day Sheet** for the interview panel
+  (`window.print()`, with blank outcome/notes columns to fill in by hand).
+
+Rescheduling goes through the `reschedule_interview_booking()` RPC — it claims the
+new slot atomically, frees the old one, and re-checks the caller is an admin
+(SECURITY DEFINER functions run as their owner, so they must verify the caller).
+
+`/book/:token` (public): validates the link (active + not expired), shows only
+future open slots, collects name/email/phone, books via the RPC.
+`/book/confirm/:bookingId`: reads via `get_booking_confirmation()` RPC, shows
+time, office address, map and directions.
+
+## Content rules
+
+- **Never name Mirrikh Infratech's founder on the site.** Credibility claims should
+  reference the company ("Mirrikh Infratech — featured in Forbes India") not an
+  individual. The name previously appeared in `src/data/site.js` (partnership points)
+  and the About page timeline and has been removed from both.
+- Jasvinder Singh (Capital Brix Founder & CEO) IS named — that's our own leadership.
+
+## Working alongside Antigravity (or any other AI tool)
+
+Multiple AI tools work on this repo. Each runs in its own isolated container, so
+"I committed it locally" in one tool means nothing to the others — only what is
+**pushed to GitHub** is real. This has already caused two incidents: a feature
+whose frontend was never pushed (the URL 404'd), and duplicated work when two
+tools built the same feature at once.
+
+Rules:
+1. Always `git fetch` + `git log origin/<branch>` before starting — another tool
+   may have pushed since your last look.
+2. Push early; never end a session with work only committed locally.
+3. Before building a feature someone says exists, verify it's actually on the
+   remote branch, not just claimed.
+4. If a schema was applied to Supabase by another tool, read the real schema
+   (`information_schema`, `pg_policies`) and build against **that**, not against
+   what a chat log describes — they drift.
 
 ## Conventions
 
