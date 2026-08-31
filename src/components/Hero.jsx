@@ -40,7 +40,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl mb-12 font-light"
           >
-            NA-approved, title-clear plots in Dholera Smart City at direct developer pricing—from ₹17,250 / sq yd. Full documentation support from our Noida office.
+            NA-approved, title-clear plots in Dholera Smart City at direct developer pricing—from ₹7,250 / sq yd. Full documentation support from our Noida office.
           </motion.p>
 
           <motion.div
