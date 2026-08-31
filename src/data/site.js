@@ -37,7 +37,7 @@ export const partnership = {
     {
       icon: 'Award',
       title: 'Forbes-Featured Leadership',
-      text: 'Mirrikh Infratech founder Rajeel Jangir — featured in Forbes India (March 2025) — has a track record in Dholera real estate since 2012.',
+      text: 'Mirrikh Infratech — featured in Forbes India (March 2025) — has a track record in Dholera real estate since 2012.',
     },
     {
       icon: 'Building2',
