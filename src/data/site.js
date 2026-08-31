@@ -47,12 +47,12 @@ export const partnership = {
     {
       icon: 'FileCheck',
       title: '100% Legal & Transparent',
-      text: 'Every project is NA, NOC, title clear and plan passed — sold only through registered sale deeds in your name.',
+      text: 'NA, NOC, title clear and plan passed \u2014 and the plot is registered in your name by sale deed, not an allotment letter.',
     },
     {
       icon: 'Handshake',
       title: 'Direct Developer Pricing',
-      text: 'As official strategy partner you book at official developer rates with pre-launch discounts — no middlemen, no markup.',
+      text: 'You pay the developer\u2019s own rate \u2014 the same price the builder sells at, plus pre-launch discounts. No broker commission stacked on top.',
     },
   ],
 };

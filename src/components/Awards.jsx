@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { Parallax, RiseIn } from './motion/Reveal';
 import { Award, Globe, TrendingUp } from 'lucide-react';
 
 const highlights = [
@@ -29,14 +29,10 @@ export default function Awards() {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-          {/* Award creative */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="relative mx-auto w-full max-w-md"
-          >
+          {/* Award creative — drifts against the copy as you scroll, which is
+              what gives the section a sense of depth on a phone. */}
+          <Parallax distance={34} className="relative mx-auto w-full max-w-md">
+            <div className="relative">
             <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
               <img
                 src="/award-jasvinder-singh-jagran-achievers-2026.jpg"
@@ -51,15 +47,11 @@ export default function Awards() {
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-90">Awarded</p>
               <p className="text-lg font-bold leading-none mt-0.5">2026</p>
             </div>
-          </motion.div>
+            </div>
+          </Parallax>
 
           {/* Copy */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-          >
+          <RiseIn delay={0.1}>
             <span className="inline-block text-[#f26522] font-bold uppercase tracking-[0.2em] text-xs mb-4">
               Recognition
             </span>
@@ -87,7 +79,7 @@ export default function Awards() {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </RiseIn>
 
         </div>
       </div>
