@@ -1,9 +1,12 @@
 import React from 'react';
 import Projects from '../components/Projects';
+import Seo from '../components/Seo';
+import { pageSeo } from '../lib/seo';
 
 export default function ProjectsPage() {
   return (
     <main className="pt-[72px] bg-[#F0F5FA] min-h-screen">
+    <Seo {...pageSeo.projects} />
       {/* Page Banner */}
       <div className="bg-[#10243E] py-20 text-center text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-5" style={{

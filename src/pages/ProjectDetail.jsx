@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { projects, site } from '../data/site';
+import Seo from '../components/Seo';
 
 // Feature icons inline SVG
 const LegalIcon = () => (
@@ -43,8 +44,39 @@ export default function ProjectDetail() {
 
   const mapUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d60000!2d71.9686971!3d22.516858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3959b8c2d8c36ba5%3A0x6e288e7a6ed7f766!2sDholera%2C%20Gujarat!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin`;
 
+  // Per-project SEO: each plot project targets its own long-tail query
+  // ("mayur greenz ii dholera price") instead of all of them competing
+  // for the same generic "Dholera plots" term.
+  const seoTitle = `${project.name} Dholera | ${project.type} in ${project.location} — Capital Brix`;
+  const seoDescription = `${project.name} — ${project.type} at ${project.location}. ${project.size}. ${
+    project.price === 'On Request' ? 'Pricing on request' : `Starting ${project.price}`
+  }. NA/NOC approved, title-clear plots via Capital Brix, official strategy partner of Mirrikh Infratech.`;
+
+  const projectSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: `${project.name}, Dholera Smart City`,
+    description: seoDescription,
+    category: project.type,
+    brand: { '@type': 'Brand', name: 'Mirrikh Infratech' },
+    offers: {
+      '@type': 'Offer',
+      availability: project.category === 'Sold Out'
+        ? 'https://schema.org/SoldOut'
+        : 'https://schema.org/InStock',
+      priceCurrency: 'INR',
+      seller: { '@type': 'Organization', name: 'Capital Brix' },
+    },
+  };
+
   return (
     <main className="pt-[72px] min-h-screen bg-[#F0F5FA]">
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        path={`/projects/${id}`}
+        jsonLd={projectSchema}
+      />
 
       {/* ── HERO BANNER: 3-column split ── */}
       <div className="flex flex-col xl:flex-row w-full" style={{ minHeight: '80vh' }}>

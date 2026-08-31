@@ -84,7 +84,7 @@ export default function Navbar() {
         {/* ── Logo ── */}
         <Link to="/" onClick={closeAll} className="flex-shrink-0 flex flex-col leading-none">
           <span className="font-extrabold text-[20px] sm:text-[22px] text-[#10243E] leading-none tracking-tight">Capital Brix</span>
-          <span className="text-[9px] text-[#f26522] font-bold uppercase tracking-[0.15em] mt-0.5">Exclusive Partner</span>
+          <span className="text-[9px] text-[#f26522] font-bold uppercase tracking-[0.15em] mt-0.5">Strategy Partner</span>
         </Link>
 
         {/* ── Desktop Nav ── */}

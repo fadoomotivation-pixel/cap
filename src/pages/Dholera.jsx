@@ -1,8 +1,11 @@
 import React from 'react';
+import Seo from '../components/Seo';
+import { pageSeo } from '../lib/seo';
 
 export default function Dholera() {
   return (
     <main className="pt-24 bg-brand-gray min-h-screen">
+    <Seo {...pageSeo.dholera} />
       <div className="bg-brand-blue py-16 text-center text-white">
         <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">Dholera Smart City</h1>
         <p className="text-white/80 max-w-2xl mx-auto text-lg">

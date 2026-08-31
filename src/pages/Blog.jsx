@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { blogs } from '../data/blogs';
+import Seo from '../components/Seo';
+import { pageSeo } from '../lib/seo';
 
 export default function Blog() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,6 +23,8 @@ export default function Blog() {
 
   return (
     <div className="pt-24 pb-16 min-h-screen bg-gray-50 font-outfit">
+
+    <Seo {...pageSeo.blog} />
       {/* Header */}
       <div className="bg-[#10243E] text-white py-16 mb-12">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
