@@ -9,7 +9,7 @@
 
 export const SITE_URL = 'https://www.capitalbrix.co.in';
 export const SITE_NAME = 'Capital Brix';
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/hero-bg.jpg`;
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-capital-brix.jpg`;
 
 export const absoluteUrl = (path = '/') => `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
