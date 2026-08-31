@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   Calendar, Clock, Link as LinkIcon, Trash2, Users, Copy, CheckCircle, LogOut, X,
   Search, Download, CalendarDays, CalendarCheck, DoorOpen, Ban, MessageCircle, RefreshCw,
-  Phone, Mail, Printer, CalendarClock, StickyNote, UserCheck, UserX, ThumbsUp, ThumbsDown, Zap,
+  Phone, Mail, Printer, CalendarClock, StickyNote, UserCheck, UserX, ThumbsUp, ThumbsDown, Zap, Wallet,
 } from 'lucide-react';
 import { format, addMinutes, addDays, parse, isBefore, isToday, isTomorrow, parseISO, isAfter } from 'date-fns';
 import { ADMIN_EMAILS } from '../lib/admin';
@@ -386,6 +386,9 @@ export default function InterviewAdmin() {
           <div className="flex gap-2">
             <a href="/admin/attendance" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors">
               <Users size={16} /> Attendance
+            </a>
+            <a href="/admin/expenses" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors">
+              <Wallet size={16} /> Petty Cash
             </a>
             <button onClick={() => window.print()} className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors" title="Print today's interview sheet">
               <Printer size={16} /> Day Sheet

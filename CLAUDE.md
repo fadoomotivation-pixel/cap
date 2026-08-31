@@ -56,6 +56,10 @@ enforced in Postgres RLS policies (`auth.jwt() ->> 'email' in (...)`) on
 `employee_kyc`, `interview_slots`, `interview_links`, `interview_bookings` — so
 adding an admin means updating **both** `src/lib/admin.js` and those policies.
 
+The petty-cash tables instead call the `cb_is_admin()` SQL function, which holds
+the list once. New admin-only objects should use it; the older inline policies
+above are still the reason an admin change means editing more than one place.
+
 Auth note: Supabase "Confirm email" is OFF. Users created manually via SQL must have
 the token columns (`confirmation_token`, `recovery_token`, `email_change_token_new`,
 `email_change`, …) set to `''`, not NULL, or login fails with
@@ -66,7 +70,7 @@ the token columns (`confirmation_token`, `recovery_token`, `email_change_token_n
 Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/*`,
 `/blog`, `/events`, `/contact`.
 Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
-`/admin/attendance`, `/book/:token`, `/book/confirm/:bookingId`.
+`/admin/attendance`, `/admin/expenses`, `/book/:token`, `/book/confirm/:bookingId`.
 
 ## Attendance module
 
@@ -114,6 +118,44 @@ a prefilled WhatsApp message. Never move this into client code.
 numbers, then only rows needing a decision: absent, late, site visits, geofence
 flags). The HR console renders it with a one-tap `wa.me` link to the founder's
 number from settings. There is no server-side scheduler — HR taps Send.
+
+## Petty cash / office expenses
+
+`/admin/expenses` — admin-only, `noindex`. Built on the **imprest (float) model**,
+because a plain expense list can never be proved right: the office hands HR cash,
+every spend draws it down, and cash in hand must equal what is physically in the tin.
+
+- `cb_expense_categories` — seeded with what this office actually buys (milk,
+  pantry, water, housekeeping, courier, cab…), each with an optional
+  `monthly_budget`. The monthly report goes red when a budget is crossed.
+- `cb_expense_topups` — cash handed to HR. **Only `source='cash'` adds to cash in
+  hand**; a bank or UPI float does not put notes in the tin.
+- `cb_expenses` — the ledger. `payment_mode` is `cash` / `upi` / `card` / `bank` /
+  **`credit`**. Credit is how milk actually works: taken daily, settled at month
+  end — so it sits under "unpaid dues" and only draws down cash on the day it is
+  marked paid, and only if it was paid in cash. A `before` trigger
+  (`cb_expenses_normalise`) keeps the settlement columns consistent so callers
+  never have to remember that rule.
+- `cb_expense_recurring` — daily/weekly/monthly items. `cb_recurring_due(date)`
+  returns them with an `already_logged` flag, which is what makes the Daily Entry
+  tab's one-tap buttons safe: an item disappears once entered, so nothing is
+  double-counted or forgotten.
+- `cb_cash_counts` — physical counts. `variance` is a generated column
+  (counted − expected), and a non-zero one raises a banner across every tab.
+- `cb_cash_position()` and `cb_expense_month(month)` are admin-only SECURITY
+  DEFINER RPCs, so the on-screen figures, the CSV and the WhatsApp summary are
+  computed from one place and cannot disagree.
+- Bills live in the **private** `expense-bills` bucket (unlike `employee-photos`,
+  which is public) — they carry amounts and vendor names, so the console opens
+  them through short-lived signed URLs.
+- `src/lib/expenses.js` builds the founder's WhatsApp money summary, same pattern
+  as `attendanceReport.js`: headline numbers, then only the lines needing a
+  decision (over budget, unpaid dues, a cash count that did not tally).
+- An entry typed days after the spend is tagged "entered Nd later" in the table —
+  not blocked, since late entry is legitimate, but visible.
+
+Employees have **no access at all** to these tables — RLS is admin-only on every
+one of them, including read.
 
 ## Interview slot autopilot
 
