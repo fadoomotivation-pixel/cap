@@ -15,7 +15,7 @@ export default {
         }
       },
       fontFamily: {
-        heading: ['Manrope', 'sans-serif'],
+        heading: ['Playfair Display', 'serif'],
         body: ['Inter', 'sans-serif'],
       }
     },
