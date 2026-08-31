@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Cake, CreditCard, FileSignature, XCircle } from 'lucide-react';
+import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
+import AttendancePunch from '../components/AttendancePunch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isAdminEmail } from '../lib/admin';
 
@@ -219,6 +220,10 @@ function EmployeeDashboard({ session, onLogout }) {
               className={`flex-1 min-w-fit flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'kyc' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
               <User size={18} /> <span className="whitespace-nowrap">My Profile & KYC</span>
             </button>
+            <button onClick={() => setActiveTab('attendance')}
+              className={`flex-1 min-w-fit flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'attendance' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              <Clock size={18} /> <span className="whitespace-nowrap">Attendance</span>
+            </button>
             <button onClick={() => setActiveTab('features')}
               className={`flex-1 min-w-fit flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'features' ? 'bg-[#10243E] text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
               <Building size={18} /> <span className="whitespace-nowrap">Workspace Apps</span>
@@ -250,6 +255,13 @@ function EmployeeDashboard({ session, onLogout }) {
                   )}
                 </motion.div>
               )}
+
+            {activeTab === 'attendance' && (
+              <motion.div key="attendance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-white rounded-3xl shadow-sm p-6 md:p-8">
+                <h2 className="text-2xl font-bold text-[#10243E] mb-6 border-b pb-4">Attendance</h2>
+                <AttendancePunch session={session} />
+              </motion.div>
+            )}
 
             {activeTab === 'features' && (
               <motion.div key="features" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid sm:grid-cols-2 gap-4">

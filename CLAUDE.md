@@ -65,8 +65,64 @@ the token columns (`confirmation_token`, `recovery_token`, `email_change_token_n
 
 Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/*`,
 `/blog`, `/events`, `/contact`.
-Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`, `/book/:token`,
-`/book/confirm/:bookingId`.
+Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
+`/admin/attendance`, `/book/:token`, `/book/confirm/:bookingId`.
+
+## Attendance module
+
+Tables are namespaced `cb_*` because `public.attendance` already exists and
+belongs to the SalesAutoCall app (company_id/salesperson_id, live rows) — never
+touch that one.
+
+- `cb_employees` — HR-managed roster. The `email` must match the employee's login
+  email; that's how punches are linked to a person.
+- `cb_attendance` — one row per employee per day (unique constraint), with work
+  mode (`office` / `site-visit` / `wfh`), check-in/out timestamps + GPS, optional
+  selfie URL and a note.
+- Employees have **no direct INSERT/UPDATE** on `cb_attendance`. Punching goes
+  through `cb_punch_in()` / `cb_punch_out()`, SECURITY DEFINER RPCs that stamp
+  `now()` server-side — so nobody can backdate their own arrival or edit someone
+  else's row. `cb_my_employee()` resolves the caller to their roster record.
+- Site-visit punches require location; the UI refuses to submit without it.
+- `cb_hr_settings` (single row) holds shift timing, late grace, office geofence
+  (lat/lng + radius) and the founder's WhatsApp number.
+- `cb_daily_attendance(date)` and `cb_monthly_attendance(month)` are admin-only
+  SECURITY DEFINER RPCs that join the roster with attendance and compute late /
+  geofence flags **server-side**, so the register, CSV and WhatsApp summary can
+  never disagree with each other.
+- HR marks approved absences via `cb_attendance.hr_status`
+  (`leave` / `holiday` / `half-day` / `wfh-approved` / `on-duty`), so "Absent"
+  in the register means genuinely unaccounted for.
+- HR console `/admin/attendance` has four tabs: Daily Register (with absentees
+  visible, late flags, geofence flags, map + selfie proof, CSV), Employees
+  (roster + login creation), Monthly Report, and Settings.
+- Employee self-service lives in the Employee Portal's "Attendance" tab.
+
+### HR creates employee logins
+
+Creating an auth user needs the service-role key, which must never reach the
+browser. So it runs in the **`create-employee-login` Edge Function**: it verifies
+the caller's JWT belongs to an admin email, then uses the service role to create
+the user with `email_confirm: true` and a readable temp password, and links
+`user_id` back onto the `cb_employees` row. If the account already exists it
+resets the password instead. HR hands the credentials over via a copy button or
+a prefilled WhatsApp message. Never move this into client code.
+
+### Daily report to the founder
+
+`src/lib/attendanceReport.js` builds a plain-text WhatsApp summary (headline
+numbers, then only rows needing a decision: absent, late, site visits, geofence
+flags). The HR console renders it with a one-tap `wa.me` link to the founder's
+number from settings. There is no server-side scheduler — HR taps Send.
+
+## Interview slot autopilot
+
+`cb_scheduler_settings` (single row) drives `cb_ensure_interview_slots()`, which
+tops up a rolling window of open slots. The interview admin calls it on every
+load, so HR never creates slots by hand — manual creation still exists but is
+tucked behind "Show manual slot creation". The function is idempotent: it skips
+times that already exist, past times, weekends/lunch per settings, and never
+touches booked slots.
 
 ## SEO conventions
 
