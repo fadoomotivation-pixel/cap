@@ -106,6 +106,15 @@ export default function AttendanceAdmin() {
     createLogin(data);
   };
 
+  // Resetting an existing login replaces a password the person is already using,
+  // so make that an explicit choice rather than a same-looking button.
+  const confirmCreateLogin = (emp) => {
+    if (emp.user_id && !window.confirm(
+      `${emp.full_name} already has a login. Reset their password to a new one?\n\nTheir current password will stop working immediately.`
+    )) return;
+    createLogin(emp);
+  };
+
   const createLogin = async (emp) => {
     setCreatingFor(emp.id);
     setError('');
@@ -567,11 +576,19 @@ export default function AttendanceAdmin() {
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-3">
-                          <button onClick={() => createLogin(e)} disabled={creatingFor === e.id}
-                            className="text-[#f26522] hover:text-orange-600 flex items-center gap-1 text-xs font-medium disabled:opacity-50"
-                            title={e.user_id ? 'Reset their password' : 'Create a login so they can punch attendance'}>
-                            <KeyRound size={14} /> {creatingFor === e.id ? 'Working…' : e.user_id ? 'Reset password' : 'Create login'}
-                          </button>
+                          {ADMIN_EMAILS.includes(e.email?.toLowerCase()) ? (
+                            // Never offer to reset an HR account from the roster —
+                            // one misclick locks HR out of this console.
+                            <span className="text-xs text-gray-400 flex items-center gap-1" title="HR admin account — manage its password in Supabase">
+                              <KeyRound size={14} /> HR account
+                            </span>
+                          ) : (
+                            <button onClick={() => confirmCreateLogin(e)} disabled={creatingFor === e.id}
+                              className="text-[#f26522] hover:text-orange-600 flex items-center gap-1 text-xs font-medium disabled:opacity-50"
+                              title={e.user_id ? 'Reset their password' : 'Create a login so they can punch attendance'}>
+                              <KeyRound size={14} /> {creatingFor === e.id ? 'Working…' : e.user_id ? 'Reset password' : 'Create login'}
+                            </button>
+                          )}
                           <button onClick={() => toggleActive(e)} className="text-gray-400 hover:text-red-500 flex items-center gap-1 text-xs">
                             <Power size={14} /> {e.is_active ? 'Deactivate' : 'Activate'}
                           </button>
