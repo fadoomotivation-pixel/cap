@@ -37,6 +37,7 @@ export default function AttendanceAdmin() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [showAdd, setShowAdd] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', department: '', role_title: '', employee_code: '', date_of_joining: '' });
   const [credential, setCredential] = useState(null); // {email, password, existed}
   const [creatingFor, setCreatingFor] = useState(null);
@@ -86,21 +87,23 @@ export default function AttendanceAdmin() {
   const flash = (msg) => { setOk(msg); setTimeout(() => setOk(''), 4000); };
 
   // ── Roster ─────────────────────────────────────────────────────────
+  // One action: add the person AND give them a login. A roster row on its own
+  // can't punch, so splitting these into two steps only creates a way to forget
+  // the second one.
   const addEmployee = async (e) => {
     e.preventDefault();
     setError('');
+    setCreatingFor('new');
     const payload = { ...form, created_by: session.user.id };
     if (!payload.date_of_joining) delete payload.date_of_joining;
     const { data, error } = await supabase.from('cb_employees').insert([payload]).select().single();
+    setCreatingFor(null);
     if (error) { setError(error.message); return; }
     setForm({ full_name: '', email: '', phone: '', department: '', role_title: '', employee_code: '', date_of_joining: '' });
     setShowAdd(false);
+    setShowMore(false);
     await fetchData();
-    // Creating the roster row alone doesn't let them punch — they need a login,
-    // so offer it immediately rather than making HR remember a second step.
-    if (window.confirm(`Employee added. Create a login for ${data.full_name} now so they can punch attendance?`)) {
-      createLogin(data);
-    }
+    createLogin(data);
   };
 
   const createLogin = async (emp) => {
@@ -110,7 +113,17 @@ export default function AttendanceAdmin() {
       const { data, error } = await supabase.functions.invoke('create-employee-login', {
         body: { employee_id: emp.id, email: emp.email, full_name: emp.full_name },
       });
-      if (error) throw error;
+      // The function answers 200 with {success:false, error} on failure, but if
+      // it ever fails at the platform level, dig the real message out instead of
+      // showing "non-2xx status code".
+      if (error) {
+        let detail = error.message;
+        try {
+          const body = await error.context?.json?.();
+          if (body?.error) detail = body.error;
+        } catch { /* keep the original message */ }
+        throw new Error(detail);
+      }
       if (!data?.success) throw new Error(data?.error || 'Could not create the login.');
       setCredential({ ...data, name: emp.full_name, phone: emp.phone });
       await fetchData();
@@ -477,17 +490,44 @@ export default function AttendanceAdmin() {
             </div>
 
             {showAdd && (
-              <form onSubmit={addEmployee} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <input required placeholder="Full name *" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
-                <input required type="email" placeholder="Email * (becomes their login)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
-                <input placeholder="WhatsApp / phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
-                <input placeholder="Department" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
-                <input placeholder="Role / designation" value={form.role_title} onChange={(e) => setForm({ ...form, role_title: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
-                <input placeholder="Employee code" value={form.employee_code} onChange={(e) => setForm({ ...form, employee_code: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
-                <input type="date" value={form.date_of_joining} onChange={(e) => setForm({ ...form, date_of_joining: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
-                <div className="flex gap-2 sm:col-span-2 lg:col-span-3">
-                  <button type="submit" className="bg-[#10243E] text-white px-5 py-2 rounded-md text-sm hover:bg-[#1a365d]">Save & Create Login</button>
-                  <button type="button" onClick={() => setShowAdd(false)} className="text-gray-500 px-4 py-2 text-sm hover:text-gray-700">Cancel</button>
+              <form onSubmit={addEmployee} className="mb-6 p-5 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-sm text-gray-500 mb-4">
+                  Three things and they&apos;re ready to punch — we create their login automatically.
+                </p>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <label>
+                    <span className="block text-xs font-medium text-gray-600 mb-1">Name</span>
+                    <input required placeholder="Ankit Jha" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                  </label>
+                  <label>
+                    <span className="block text-xs font-medium text-gray-600 mb-1">Email <span className="text-gray-400">(their login)</span></span>
+                    <input required type="email" placeholder="ankit@capitalbrix.co.in" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                  </label>
+                  <label>
+                    <span className="block text-xs font-medium text-gray-600 mb-1">WhatsApp <span className="text-gray-400">(to send the login)</span></span>
+                    <input placeholder="9199XXXXXXXX" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                  </label>
+                </div>
+
+                <button type="button" onClick={() => setShowMore(!showMore)} className="text-xs text-gray-400 hover:text-[#f26522] underline mt-3">
+                  {showMore ? 'Hide' : 'Add'} department, role, code, joining date
+                </button>
+
+                {showMore && (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+                    <input placeholder="Department" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                    <input placeholder="Role / designation" value={form.role_title} onChange={(e) => setForm({ ...form, role_title: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                    <input placeholder="Employee code" value={form.employee_code} onChange={(e) => setForm({ ...form, employee_code: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                    <input type="date" value={form.date_of_joining} onChange={(e) => setForm({ ...form, date_of_joining: e.target.value })} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                  </div>
+                )}
+
+                <div className="flex gap-2 mt-5">
+                  <button type="submit" disabled={creatingFor === 'new'}
+                    className="bg-[#f26522] text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-orange-600 disabled:opacity-50">
+                    {creatingFor === 'new' ? 'Adding…' : 'Add & Create Login'}
+                  </button>
+                  <button type="button" onClick={() => { setShowAdd(false); setShowMore(false); }} className="text-gray-500 px-4 py-2 text-sm hover:text-gray-700">Cancel</button>
                 </div>
               </form>
             )}
