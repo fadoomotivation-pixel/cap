@@ -5,7 +5,7 @@ import { buildDailyWhatsAppSummary, whatsappLink, buildNudgeMessage } from '../l
 import {
   Users, UserPlus, MapPin, Download, Search, LogOut, RefreshCw, CheckCircle, Clock,
   Building2, Navigation, Home, UserX, Power, Calendar, Send, KeyRound, Settings, AlertTriangle,
-  Copy, BarChart3, Bell, Crosshair, X,
+  Copy, BarChart3, Bell, Crosshair, X, Wallet,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
@@ -273,6 +273,9 @@ export default function AttendanceAdmin() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            <a href="/admin/expenses" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
+              <Wallet size={16} /> Petty Cash
+            </a>
             <a href="/admin/interviews" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
               <Clock size={16} /> Interviews
             </a>

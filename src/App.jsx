@@ -17,6 +17,7 @@ import Events from './pages/Events';
 import EmployeePortal from './pages/EmployeePortal';
 import InterviewAdmin from './pages/InterviewAdmin';
 import AttendanceAdmin from './pages/AttendanceAdmin';
+import ExpenseAdmin from './pages/ExpenseAdmin';
 import InterviewBooking from './pages/InterviewBooking';
 import InterviewConfirmation from './pages/InterviewConfirmation';
 
@@ -77,6 +78,7 @@ export default function App() {
         {/* Interview Scheduler Routes */}
         <Route path="/admin/interviews" element={<PrivateRoute title="Interview Scheduler | Capital Brix"><InterviewAdmin /></PrivateRoute>} />
         <Route path="/admin/attendance" element={<PrivateRoute title="Attendance | Capital Brix"><AttendanceAdmin /></PrivateRoute>} />
+        <Route path="/admin/expenses" element={<PrivateRoute title="Petty Cash | Capital Brix"><ExpenseAdmin /></PrivateRoute>} />
         <Route path="/book/:token" element={<PrivateRoute title="Schedule Your Interview | Capital Brix"><InterviewBooking /></PrivateRoute>} />
         <Route path="/book/confirm/:bookingId" element={<PrivateRoute title="Interview Confirmed | Capital Brix"><InterviewConfirmation /></PrivateRoute>} />
       </Routes>
