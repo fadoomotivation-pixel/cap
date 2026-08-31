@@ -5,27 +5,17 @@ import { projects } from '../data/site';
 
 const projectMeta = {
   // Ongoing Projects
-  'Mayur NOVA':                 { logo: 'https://mirrikh.com/wp-content/uploads/2026/07/Mayur-NOVA-Logo1-1024x542.png', tag: 'Residential', hot: true },
-  'Mayur Aerocity II':          { logo: 'https://mirrikh.com/wp-content/uploads/2026/07/Mayur-Aerocity-II-Logo1-scaled.png', tag: 'Residential', hot: true },
-  'Mayur Ananta II':            { logo: 'https://mirrikh.com/wp-content/uploads/2026/02/Mayur-Ananta-logo2.png', tag: 'Residential', hot: false },
-  'Mayur Forest Villa':         { logo: 'https://mirrikh.com/wp-content/uploads/2026/05/Mayur-Forest-Villa-Dholera-logo1.jpg', tag: 'Residential', hot: true },
-  'Mayur Greenz Courtyard':     { logo: 'https://mirrikh.com/wp-content/uploads/2026/04/Mayur-Greenz-Courtyard-logo.svg', tag: 'Residential', hot: true },
-  'Mayur Industrial Landmark':  { logo: 'https://mirrikh.com/wp-content/uploads/2026/01/Mayur-Industrial-Landmark-logo.png', tag: 'Industrial', hot: true },
-  'Mayur Park III':             { img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800&auto=format&fit=crop', tag: 'Residential', hot: false },
-  'Mayur Greenz III':           { img: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=800&auto=format&fit=crop', tag: 'Residential' },
-  'Mayur KALP':                 { img: 'https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=800&auto=format&fit=crop', tag: 'Residential' },
-  'Mayur Aerocity':             { img: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=800&auto=format&fit=crop', tag: 'Commercial' },
-  'Mayur Industrial Hub':       { img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop', tag: 'Industrial' },
-  
-  // Sold Out Projects
-  'Mayur Greenz II':      { img: 'https://mirrikh.com/wp-content/uploads/2023/10/1-3-1.jpg',   tag: 'Residential', hot: true },
-  'Mayur Evana':          { img: 'https://mirrikh.com/wp-content/uploads/2023/10/1-6-1.jpg',   tag: 'Residential', hot: true },
-  'Mayur Enclave 5':      { img: 'https://mirrikh.com/wp-content/uploads/2023/10/1-9-1.jpg',   tag: 'Residential', hot: false },
-  'Mayur Signature':      { img: 'https://mirrikh.com/wp-content/uploads/2023/10/10-2-1.jpg',  tag: 'Residential', hot: false },
-  'Mayur Swastik':        { img: 'https://mirrikh.com/wp-content/uploads/2023/10/10-5-1.jpg',  tag: 'Residential', hot: false },
-  'Mayur Industrial Park':{ img: 'https://mirrikh.com/wp-content/uploads/2023/10/10-6-1.jpg',  tag: 'Industrial',  hot: false },
-  'Mayur Greenz':         { img: 'https://mirrikh.com/wp-content/uploads/2023/10/11-2-1.jpg',  tag: 'Residential', hot: false },
-  'Mayur Park':           { img: 'https://mirrikh.com/wp-content/uploads/2023/10/11-5-1.jpg',  tag: 'Residential', hot: false },
+  'Mayur NOVA':                 { logo: 'https://mirrikh.com/wp-content/uploads/2026/07/Mayur-NOVA-Logo1-1024x542.png', tag: 'Residential' },
+  'Mayur Aerocity II':          { logo: 'https://mirrikh.com/wp-content/uploads/2026/07/Mayur-Aerocity-II-Logo1-scaled.png', tag: 'Residential' },
+  'Mayur Ananta II':            { logo: 'https://mirrikh.com/wp-content/uploads/2026/02/Mayur-Ananta-logo2.png', tag: 'Residential' },
+  'Mayur Forest Villa':         { logo: 'https://mirrikh.com/wp-content/uploads/2026/05/Mayur-Forest-Villa-Dholera-logo1.jpg', tag: 'Residential' },
+  'Mayur Greenz Courtyard':     { logo: 'https://mirrikh.com/wp-content/uploads/2026/04/Mayur-Greenz-Courtyard-logo.svg', tag: 'Residential' },
+  'Mayur Industrial Landmark':  { logo: 'https://mirrikh.com/wp-content/uploads/2026/01/Mayur-Industrial-Landmark-logo.png', tag: 'Industrial' },
+  'Mayur Park III':             { tag: 'Residential' },
+  'Mayur Greenz III':           { tag: 'Residential' },
+  'Mayur KALP':                 { tag: 'Residential' },
+  'Mayur Aerocity':             { tag: 'Commercial' },
+  'Mayur Industrial Hub':       { tag: 'Industrial' },
 };
 
 function ProjectCard({ p }) {
@@ -34,50 +24,44 @@ function ProjectCard({ p }) {
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-      className="bg-white rounded-sm overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-shadow flex flex-col group"
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      className="group block"
     >
-      <div className="relative h-56 bg-[#f9fafb] overflow-hidden flex items-center justify-center">
+      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden mb-6">
         {meta.logo ? (
-          <img
-            src={meta.logo}
-            alt={`${p.name} Logo`}
-            className="w-2/3 h-2/3 object-contain group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-        ) : meta.img ? (
-          <img
-            src={meta.img}
-            alt={p.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
+          <div className="w-full h-full flex items-center justify-center p-8 bg-white border border-gray-100">
+            <img
+              src={meta.logo}
+              alt={`${p.name} Logo`}
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
         ) : (
-          <div className="w-full h-full bg-white flex flex-col items-center justify-center text-[#10243E]">
-            <span className="text-sm font-semibold tracking-[0.3em] uppercase mb-1">MAYUR</span>
-            <span className="text-3xl font-outfit font-light uppercase tracking-wide">
+          <div className="w-full h-full bg-[#1A1A1A] flex flex-col items-center justify-center text-white border border-gray-100 group-hover:scale-105 transition-transform duration-700 ease-out">
+            <span className="text-xs font-semibold tracking-[0.3em] uppercase mb-2 text-[#D4AF37]">MAYUR</span>
+            <span className="text-3xl font-heading font-light uppercase tracking-wide">
               {p.name.replace('Mayur ', '')}
             </span>
           </div>
         )}
       </div>
 
-      <div className="p-6 flex flex-col flex-grow text-center">
-        <h3 className="text-xl font-bold text-[#101010] mb-2">{p.name}</h3>
-        <p className="text-gray-500 text-sm mb-6">{p.location}</p>
+      <div>
+        <p className="text-[#D4AF37] text-[10px] font-bold uppercase tracking-widest mb-2">{meta.tag || p.category}</p>
+        <h3 className="text-2xl font-heading text-[#1A1A1A] mb-1">{p.name}</h3>
+        <p className="text-gray-500 text-sm font-light mb-4">{p.location}</p>
         
-        <div className="mt-auto">
-          <Link
-            to={`/projects/${id}`}
-            className="inline-block bg-white border border-[#f37435] text-[#f37435] py-2 px-6 rounded-sm font-semibold text-sm uppercase tracking-wider hover:bg-[#f37435] hover:text-white transition-colors"
-          >
-            Explore
-          </Link>
-        </div>
+        <Link
+          to={`/projects/${id}`}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#1A1A1A] hover:text-[#D4AF37] transition-colors uppercase tracking-widest"
+        >
+          View Details
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transform group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </Link>
       </div>
     </motion.div>
   );
@@ -85,23 +69,24 @@ function ProjectCard({ p }) {
 
 export default function Projects() {
   const ongoing = projects.filter(p => p.category !== 'Sold Out');
-  const soldOut = projects.filter(p => p.category === 'Sold Out');
 
   return (
-    <section className="bg-gray-50 pt-10 pb-20" id="projects">
-      <div className="max-w-[1500px] mx-auto px-6 lg:px-12">
+    <section className="py-24 lg:py-32 bg-white" id="projects">
+      <div className="max-w-7xl mx-auto px-6">
 
-        {/* Current Projects Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#101010] mb-2">Our Current Projects</h2>
-          <div className="w-16 h-1 bg-[#f37435] mx-auto"></div>
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 lg:mb-24">
+          <div className="max-w-2xl">
+            <h2 className="text-[#D4AF37] font-semibold tracking-[0.2em] uppercase text-xs mb-4">Portfolio</h2>
+            <h3 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] leading-tight">Featured Projects</h3>
+          </div>
+          <p className="text-gray-500 font-light mt-6 md:mt-0 max-w-sm text-sm">
+            Discover our premium NA-approved plots designed for exceptional appreciation and world-class living in Dholera SIR.
+          </p>
         </div>
 
-        {/* Current Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
           {ongoing.map(p => <ProjectCard key={p.name} p={p} />)}
         </div>
-
 
       </div>
     </section>

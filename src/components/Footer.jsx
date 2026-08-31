@@ -27,7 +27,7 @@ const currentProjects = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#101010] text-gray-300">
+    <footer className="bg-[#0A1016] text-gray-300">
       {/* Main Footer Grid */}
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -38,7 +38,7 @@ export default function Footer() {
               <img src="/logo-capital-brix.png" alt="Capital Brix" width="56" height="56" className="w-14 h-14 rounded-xl object-contain" />
               <span className="flex flex-col leading-none">
                 <span className="font-extrabold text-[24px] text-white tracking-tight">Capital Brix</span>
-                <span className="text-[10px] text-[#f37435] font-bold uppercase tracking-[0.15em] mt-1">Strategy Partner</span>
+                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-1">Strategy Partner</span>
               </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
@@ -52,7 +52,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#f37435] transition-all"
+                  className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-[#0A1016] hover:bg-[#D4AF37] transition-all"
                 >
                   {s.icon}
                 </a>
@@ -66,11 +66,11 @@ export default function Footer() {
               About Dholera SIR
             </h4>
             <ul className="space-y-3 text-sm">
-              <li><Link to="/dholera/about" className="hover:text-[#f37435] transition-colors">About Dholera SIR</Link></li>
-              <li><Link to="/dholera/overview" className="hover:text-[#f37435] transition-colors">Overview</Link></li>
-              <li><Link to="/dholera/city-highlights" className="hover:text-[#f37435] transition-colors">City Highlights</Link></li>
-              <li><Link to="/dholera/airport" className="hover:text-[#f37435] transition-colors">Dholera International Airport</Link></li>
-              <li><Link to="/dholera/renew-power" className="hover:text-[#f37435] transition-colors">Dholera Renew Power</Link></li>
+              <li><Link to="/dholera/about" className="hover:text-[#D4AF37] transition-colors">About Dholera SIR</Link></li>
+              <li><Link to="/dholera/overview" className="hover:text-[#D4AF37] transition-colors">Overview</Link></li>
+              <li><Link to="/dholera/city-highlights" className="hover:text-[#D4AF37] transition-colors">City Highlights</Link></li>
+              <li><Link to="/dholera/airport" className="hover:text-[#D4AF37] transition-colors">Dholera International Airport</Link></li>
+              <li><Link to="/dholera/renew-power" className="hover:text-[#D4AF37] transition-colors">Dholera Renew Power</Link></li>
             </ul>
           </div>
 
@@ -80,11 +80,11 @@ export default function Footer() {
               About Capital Brix
             </h4>
             <ul className="space-y-3 text-sm">
-              <li><Link to="/about" className="hover:text-[#f37435] transition-colors">About Capital Brix</Link></li>
-              <li><Link to="/about" className="hover:text-[#f37435] transition-colors">Why Capital Brix?</Link></li>
-              <li><Link to="/events" className="hover:text-[#f37435] transition-colors">Events</Link></li>
-              <li><Link to="/contact" className="hover:text-[#f37435] transition-colors">Career</Link></li>
-              <li><Link to="/contact" className="hover:text-[#f37435] transition-colors">Contact</Link></li>
+              <li><Link to="/about" className="hover:text-[#D4AF37] transition-colors">About Capital Brix</Link></li>
+              <li><Link to="/about" className="hover:text-[#D4AF37] transition-colors">Why Capital Brix?</Link></li>
+              <li><Link to="/events" className="hover:text-[#D4AF37] transition-colors">Events</Link></li>
+              <li><Link to="/contact" className="hover:text-[#D4AF37] transition-colors">Career</Link></li>
+              <li><Link to="/contact" className="hover:text-[#D4AF37] transition-colors">Contact</Link></li>
             </ul>
           </div>
 
@@ -94,10 +94,10 @@ export default function Footer() {
               Quick Links
             </h4>
             <ul className="space-y-3 text-sm">
-              <li><Link to="/blog" className="hover:text-[#f37435] transition-colors">Our Blog</Link></li>
-              <li><a href="tel:+917048917300" className="hover:text-[#f37435] transition-colors">+91 70489 17300</a></li>
-              <li><a href="mailto:info@capitalbrix.com" className="hover:text-[#f37435] transition-colors">info@capitalbrix.com</a></li>
-              <li><a href={`https://wa.me/917048917300`} target="_blank" rel="noreferrer" className="hover:text-[#f37435] transition-colors">WhatsApp Us</a></li>
+              <li><Link to="/blog" className="hover:text-[#D4AF37] transition-colors">Our Blog</Link></li>
+              <li><a href="tel:+917048917300" className="hover:text-[#D4AF37] transition-colors">+91 70489 17300</a></li>
+              <li><a href="mailto:info@capitalbrix.com" className="hover:text-[#D4AF37] transition-colors">info@capitalbrix.com</a></li>
+              <li><a href={`https://wa.me/917048917300`} target="_blank" rel="noreferrer" className="hover:text-[#D4AF37] transition-colors">WhatsApp Us</a></li>
             </ul>
           </div>
 
@@ -109,7 +109,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               {currentProjects.map((p) => (
                 <li key={p.name}>
-                  <Link to={p.path} className="hover:text-[#f37435] transition-colors">{p.name}</Link>
+                  <Link to={p.path} className="hover:text-[#D4AF37] transition-colors">{p.name}</Link>
                 </li>
               ))}
             </ul>
@@ -119,7 +119,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-800 bg-[#0a0a0a]">
+      <div className="border-t border-gray-800 bg-[#070C11]">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <p>Copyright © {new Date().getFullYear()} Capital Brix LLP (Partner of Mirrikh Infratech Pvt. Ltd.). All Rights Reserved.</p>
           <div className="flex gap-6">

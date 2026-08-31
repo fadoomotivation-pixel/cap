@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Search, Menu, X, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -70,7 +70,20 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+
+  // The homepage opens on a full-bleed dark hero, so the bar rides over it
+  // transparently and only turns solid once you scroll past the fold.
+  const isHome = location.pathname === '/';
+  const transparent = isHome && !scrolled && !isOpen;
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const closeAll = () => {
     setIsOpen(false);
@@ -78,20 +91,26 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed w-full top-0 z-50 bg-white shadow-sm border-b border-gray-100">
+    <header
+      className={`fixed w-full top-0 z-50 transition-colors duration-300 ${
+        transparent
+          ? 'bg-transparent border-b border-white/10'
+          : 'bg-white shadow-sm border-b border-gray-100'
+      }`}
+    >
       <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-3 flex justify-between items-center">
 
         {/* ── Logo ── */}
         <Link to="/" onClick={closeAll} className="flex-shrink-0 flex items-center gap-2.5">
           <img src="/logo-capital-brix.png" alt="Capital Brix" width="44" height="44" className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-contain" />
           <span className="flex flex-col leading-none">
-            <span className="font-extrabold text-[20px] sm:text-[22px] text-[#10243E] leading-none tracking-tight">Capital Brix</span>
-            <span className="text-[9px] text-[#f26522] font-bold uppercase tracking-[0.15em] mt-0.5">Strategy Partner</span>
+            <span className={`font-extrabold text-[20px] sm:text-[22px] leading-none tracking-tight ${transparent ? 'text-white' : 'text-[#10243E]'}`}>Capital Brix</span>
+            <span className="text-[9px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-0.5">Strategy Partner</span>
           </span>
         </Link>
 
         {/* ── Desktop Nav ── */}
-        <nav className="hidden lg:flex items-center gap-1 text-[14px] font-medium text-[#10243E]">
+        <nav className={`hidden lg:flex items-center gap-1 text-[14px] font-medium ${transparent ? 'text-white' : 'text-[#10243E]'}`}>
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path || (link.path !== '/' && link.path !== '#' && location.pathname.startsWith(link.path));
             return (
@@ -103,7 +122,9 @@ export default function Navbar() {
               >
                 <Link
                   to={link.path}
-                  className={`flex items-center gap-0.5 px-3 py-2 rounded transition-colors hover:text-[#f26522] ${isActive ? 'text-[#f26522]' : ''}`}
+                  className={`flex items-center gap-0.5 px-3 py-2 rounded transition-colors ${
+                    transparent ? 'hover:text-[#D4AF37]' : 'hover:text-[#9C7C1C]'
+                  } ${isActive ? (transparent ? 'text-[#D4AF37]' : 'text-[#9C7C1C]') : ''}`}
                 >
                   {link.name}
                   {link.hasDropdown && <span className="text-[10px]">▾</span>}
@@ -128,13 +149,13 @@ export default function Navbar() {
                               key={item.name}
                               to={item.path}
                               onClick={() => setActiveDropdown(null)}
-                              className="block px-4 py-2 text-sm text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 transition-colors"
+                              className="block px-4 py-2 text-sm text-[#10243E] hover:text-[#9C7C1C] hover:bg-[#FAF6E9] transition-colors"
                             >
                               {item.name}
                             </Link>
                           ))}
                           <div className="px-4 pt-2 mt-1 border-t border-gray-100">
-                            <Link to="/projects" onClick={() => setActiveDropdown(null)} className="text-[#f26522] text-xs font-bold hover:underline">
+                            <Link to="/projects" onClick={() => setActiveDropdown(null)} className="text-[#9C7C1C] text-xs font-bold hover:underline">
                               View All Projects →
                             </Link>
                           </div>
@@ -149,7 +170,7 @@ export default function Navbar() {
                               key={item.name}
                               to={item.path}
                               onClick={() => setActiveDropdown(null)}
-                              className="block px-4 py-1.5 text-sm text-gray-500 hover:text-[#f26522] hover:bg-orange-50 transition-colors"
+                              className="block px-4 py-1.5 text-sm text-gray-500 hover:text-[#9C7C1C] hover:bg-[#FAF6E9] transition-colors"
                             >
                               {item.name}
                             </Link>
@@ -168,7 +189,7 @@ export default function Navbar() {
                             key={item.name}
                             to={item.path}
                             onClick={() => setActiveDropdown(null)}
-                            className="block px-4 py-2.5 text-sm font-medium text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 transition-colors border-b border-gray-50 last:border-0"
+                            className="block px-4 py-2.5 text-sm font-medium text-[#10243E] hover:text-[#9C7C1C] hover:bg-[#FAF6E9] transition-colors border-b border-gray-50 last:border-0"
                           >
                             {item.name}
                           </Link>
@@ -192,19 +213,19 @@ export default function Navbar() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={s.label}
-                className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white hover:bg-orange-600 transition-colors hover:-translate-y-0.5 duration-300"
+                className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0A1016] hover:bg-[#B8860B] transition-colors hover:-translate-y-0.5 duration-300"
               >
                 {s.icon}
               </a>
             ))}
           </div>
-          <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors ml-2">
+          <button aria-label="Search" className={`w-10 h-10 flex items-center justify-center transition-colors hover:text-[#D4AF37] ${transparent ? 'text-white' : 'text-[#10243E]'}`}>
             <Search size={18} strokeWidth={2.5} />
           </button>
           <Link
             to="/employee-kyc"
             onClick={closeAll}
-            className="px-6 py-2.5 bg-[#f26522] text-white font-bold text-sm hover:bg-[#10243E] transition-colors duration-300 rounded shadow-md ml-2 uppercase tracking-wide"
+            className="px-6 py-2.5 bg-[#D4AF37] text-[#0A1016] font-bold text-sm hover:bg-[#B8860B] transition-colors duration-300 rounded-sm shadow-md ml-2 uppercase tracking-wide"
           >
             Login
           </Link>
@@ -212,7 +233,8 @@ export default function Navbar() {
 
         {/* ── Mobile Hamburger ── */}
         <button
-          className="lg:hidden text-[#10243E] p-2 -mr-2"
+          aria-label="Menu"
+          className={`lg:hidden p-2 -mr-2 ${transparent ? 'text-white' : 'text-[#10243E]'}`}
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -230,7 +252,7 @@ export default function Navbar() {
                 /* Toggle accordion */
                 <button
                   onClick={() => setMobileProjectsOpen(mobileProjectsOpen === link.name ? null : link.name)}
-                  className="w-full flex items-center justify-between px-5 py-3.5 font-semibold text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 border-b border-gray-100 transition-colors text-left text-base"
+                  className="w-full flex items-center justify-between px-5 py-3.5 font-semibold text-[#10243E] hover:text-[#9C7C1C] hover:bg-[#FAF6E9] border-b border-gray-100 transition-colors text-left text-base"
                 >
                   <span>{link.name}</span>
                   {mobileProjectsOpen === link.name ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -239,7 +261,7 @@ export default function Navbar() {
                 <Link
                   to={link.path}
                   onClick={closeAll}
-                  className="block px-5 py-3.5 font-semibold text-[#10243E] hover:text-[#f26522] hover:bg-orange-50 border-b border-gray-100 transition-colors text-base"
+                  className="block px-5 py-3.5 font-semibold text-[#10243E] hover:text-[#9C7C1C] hover:bg-[#FAF6E9] border-b border-gray-100 transition-colors text-base"
                 >
                   {link.name}
                 </Link>
@@ -251,7 +273,7 @@ export default function Navbar() {
                   {link.dropdownType === 'mega' && (
                     <>
                       {/* Current */}
-                      <p className="px-5 py-2 text-[10px] font-black text-[#10243E] uppercase tracking-wider bg-orange-50">
+                      <p className="px-5 py-2 text-[10px] font-black text-[#10243E] uppercase tracking-wider bg-[#FAF6E9]">
                         Current Projects
                       </p>
                       {ongoing.map((item) => (
@@ -259,7 +281,7 @@ export default function Navbar() {
                           key={item.name}
                           to={item.path}
                           onClick={closeAll}
-                          className="block px-8 py-2.5 text-sm text-[#10243E] hover:text-[#f26522] border-b border-gray-100 transition-colors"
+                          className="block px-8 py-2.5 text-sm text-[#10243E] hover:text-[#9C7C1C] border-b border-gray-100 transition-colors"
                         >
                           {item.name}
                         </Link>
@@ -273,7 +295,7 @@ export default function Navbar() {
                           key={item.name}
                           to={item.path}
                           onClick={closeAll}
-                          className="block px-8 py-2 text-sm text-gray-500 hover:text-[#f26522] border-b border-gray-100 transition-colors"
+                          className="block px-8 py-2 text-sm text-gray-500 hover:text-[#9C7C1C] border-b border-gray-100 transition-colors"
                         >
                           {item.name}
                         </Link>
@@ -281,7 +303,7 @@ export default function Navbar() {
                       <Link
                         to="/projects"
                         onClick={closeAll}
-                        className="block px-5 py-3 text-sm font-bold text-[#f26522] hover:underline"
+                        className="block px-5 py-3 text-sm font-bold text-[#9C7C1C] hover:underline"
                       >
                         View All Projects →
                       </Link>
@@ -292,7 +314,7 @@ export default function Navbar() {
                       key={item.name}
                       to={item.path}
                       onClick={closeAll}
-                      className="block px-8 py-3 text-sm font-medium text-[#10243E] hover:text-[#f26522] border-b border-gray-100 transition-colors"
+                      className="block px-8 py-3 text-sm font-medium text-[#10243E] hover:text-[#9C7C1C] border-b border-gray-100 transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -312,7 +334,7 @@ export default function Navbar() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={s.label}
-                  className="w-8 h-8 rounded-full bg-[#f26522] flex items-center justify-center text-white"
+                  className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0A1016]"
                 >
                   {s.icon}
                 </a>
@@ -321,7 +343,7 @@ export default function Navbar() {
             <Link
               to="/employee-kyc"
               onClick={closeAll}
-              className="bg-[#f26522] text-white px-5 py-2 rounded-sm font-bold text-sm"
+              className="bg-[#D4AF37] text-[#0A1016] px-5 py-2 rounded-sm font-bold text-sm"
             >
               Login
             </Link>

@@ -7,8 +7,8 @@ export default function ContactForm() {
     <section className="py-20 bg-gray-50" id="contact">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#101010] mb-2 uppercase">
-            Connect With Capital Brix!
+          <h2 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] mb-4">
+            Connect With Capital Brix
           </h2>
           <div className="w-16 h-1 bg-[#f37435] mx-auto"></div>
           <p className="text-gray-600 mt-6 max-w-2xl mx-auto">

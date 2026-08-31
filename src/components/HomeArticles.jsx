@@ -11,8 +11,8 @@ export default function HomeArticles() {
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#101010] mb-2">
-            Our Articles
+          <h2 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] mb-4">
+            Insights & Updates
           </h2>
           <div className="w-16 h-1 bg-[#f37435] mx-auto"></div>
         </div>
@@ -40,7 +40,7 @@ export default function HomeArticles() {
                   {blog.date}
                 </div>
                 
-                <h3 className="text-xl font-bold text-[#101010] mb-3 line-clamp-2 hover:text-[#f37435] transition-colors">
+                <h3 className="text-2xl font-heading text-[#1A1A1A] mb-3 line-clamp-2 hover:text-[#D4AF37] transition-colors">
                   <Link to="/blog">{blog.title}</Link>
                 </h3>
                 
