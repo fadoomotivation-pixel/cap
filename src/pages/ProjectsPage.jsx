@@ -15,7 +15,7 @@ export default function ProjectsPage() {
         }}/>
         <div className="relative z-10 max-w-3xl mx-auto px-6">
           <p className="text-[#f26522] font-bold uppercase tracking-[0.25em] text-sm mb-3">Mirrikh Infratech</p>
-          <h1 className="text-5xl md:text-6xl font-black mb-4">Our Projects</h1>
+          <h1 className="text-5xl md:text-6xl font-black mb-4 text-white">Our Projects</h1>
           <p className="text-white/70 text-lg max-w-xl mx-auto">
             Explore our complete portfolio of NA-approved, title-clear residential and industrial projects in Dholera Smart City.
           </p>

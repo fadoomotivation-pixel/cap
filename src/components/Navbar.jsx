@@ -201,9 +201,13 @@ export default function Navbar() {
           <button className="w-10 h-10 flex items-center justify-center text-[#10243E] hover:text-[#f26522] transition-colors ml-2">
             <Search size={18} strokeWidth={2.5} />
           </button>
-          <button className="px-6 py-2.5 bg-[#f26522] text-white font-bold text-sm hover:bg-[#10243E] transition-colors duration-300 rounded shadow-md ml-2 uppercase tracking-wide">
+          <Link
+            to="/employee-kyc"
+            onClick={closeAll}
+            className="px-6 py-2.5 bg-[#f26522] text-white font-bold text-sm hover:bg-[#10243E] transition-colors duration-300 rounded shadow-md ml-2 uppercase tracking-wide"
+          >
             Login
-          </button>
+          </Link>
         </div>
 
         {/* ── Mobile Hamburger ── */}
@@ -314,9 +318,13 @@ export default function Navbar() {
                 </a>
               ))}
             </div>
-            <button className="bg-[#f26522] text-white px-5 py-2 rounded-sm font-bold text-sm">
+            <Link
+              to="/employee-kyc"
+              onClick={closeAll}
+              className="bg-[#f26522] text-white px-5 py-2 rounded-sm font-bold text-sm"
+            >
               Login
-            </button>
+            </Link>
           </div>
         </div>
       )}

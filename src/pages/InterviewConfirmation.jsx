@@ -60,7 +60,7 @@ export default function InterviewConfirmation() {
           {/* Top Banner */}
           <div className="bg-green-500 text-white p-8 text-center">
             <CheckCircle size={64} className="mx-auto mb-4 opacity-90" />
-            <h1 className="text-3xl font-black mb-2">Booking Confirmed!</h1>
+            <h1 className="text-3xl font-black mb-2 text-white">Booking Confirmed!</h1>
             <p className="text-green-50 text-lg opacity-90">
               Hi {booking.candidate_name.split(' ')[0]}, your interview is scheduled.
             </p>
