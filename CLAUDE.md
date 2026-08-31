@@ -82,14 +82,27 @@ Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`, `/book/:tok
 
 ## Interview Scheduler — what HR can do
 
-`/admin/interviews` (admin-only, `noindex`): stats overview (open slots, booked,
-today's interviews, active links); slot generation for a date with configurable
-length (15/20/30/45/60 min) and an optional lunch-break skip — re-running is safe
-because existing start times on that date are skipped; open slots grouped by day
-(Today/Tomorrow labels) with per-slot delete and "clear day"; shareable link
-creation (generic or single-use, optional expiry) with copy + WhatsApp share +
-deactivate; upcoming interviews panel; searchable booking list with CSV export
-and cancel (which reopens the slot).
+`/admin/interviews` (admin-only, `noindex`):
+- **Stats**: upcoming open slots, today's interviews, selected count, no-show rate,
+  active links.
+- **Slot generation**: single date or a date range (with weekend skip), configurable
+  length (15/20/30/45/60 min), optional lunch-break skip. Re-running is safe —
+  existing start times on a date are skipped, so no duplicates.
+- **Slot management**: upcoming open slots grouped by day (Today/Tomorrow labels),
+  per-slot delete and "clear day". Past slots are hidden.
+- **Links**: generic or single-use, optional expiry, with copy / WhatsApp share /
+  deactivate and Active / Expired / Inactive status.
+- **Candidates**: tabs (Upcoming / Today / Past / All), search by name/email/phone,
+  outcome filter, CSV export (includes outcome + notes).
+- **Per candidate**: outcome tracking (`scheduled` / `attended` / `no-show` /
+  `selected` / `rejected` / `on-hold`), free-text interview notes, one-click
+  call / email / WhatsApp, reschedule to another open slot, and cancel.
+- **Today's line-up** panel and a printable **Day Sheet** for the interview panel
+  (`window.print()`, with blank outcome/notes columns to fill in by hand).
+
+Rescheduling goes through the `reschedule_interview_booking()` RPC — it claims the
+new slot atomically, frees the old one, and re-checks the caller is an admin
+(SECURITY DEFINER functions run as their owner, so they must verify the caller).
 
 `/book/:token` (public): validates the link (active + not expired), shows only
 future open slots, collects name/email/phone, books via the RPC.

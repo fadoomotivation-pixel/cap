@@ -3,11 +3,24 @@ import { supabase } from '../lib/supabase';
 import {
   Calendar, Clock, Link as LinkIcon, Trash2, Users, Copy, CheckCircle, LogOut, X,
   Search, Download, CalendarDays, CalendarCheck, DoorOpen, Ban, MessageCircle, RefreshCw,
+  Phone, Mail, Printer, CalendarClock, StickyNote, UserCheck, UserX, ThumbsUp, ThumbsDown,
 } from 'lucide-react';
-import { format, addMinutes, parse, isBefore, isToday, isTomorrow, parseISO } from 'date-fns';
+import { format, addMinutes, addDays, parse, isBefore, isToday, isTomorrow, parseISO, isAfter } from 'date-fns';
 import { ADMIN_EMAILS } from '../lib/admin';
 
 const DURATIONS = [15, 20, 30, 45, 60];
+
+// Interview outcomes HR tracks after the fact.
+const OUTCOMES = [
+  { value: 'scheduled', label: 'Scheduled', cls: 'bg-blue-50 text-blue-700 border-blue-200', Icon: CalendarClock },
+  { value: 'attended', label: 'Attended', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', Icon: UserCheck },
+  { value: 'no-show', label: 'No-show', cls: 'bg-amber-50 text-amber-700 border-amber-200', Icon: UserX },
+  { value: 'selected', label: 'Selected', cls: 'bg-green-100 text-green-800 border-green-300', Icon: ThumbsUp },
+  { value: 'rejected', label: 'Rejected', cls: 'bg-red-50 text-red-700 border-red-200', Icon: ThumbsDown },
+  { value: 'on-hold', label: 'On Hold', cls: 'bg-gray-100 text-gray-600 border-gray-300', Icon: StickyNote },
+];
+const outcomeMeta = (v) => OUTCOMES.find((o) => o.value === v) || OUTCOMES[0];
+
 const hhmm = (t) => (t ? t.substring(0, 5) : '');
 const slotStart = (slot) => new Date(`${slot.slot_date}T${slot.start_time}`);
 
@@ -26,7 +39,6 @@ export default function InterviewAdmin() {
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Data
   const [slots, setSlots] = useState([]);
   const [links, setLinks] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -34,6 +46,8 @@ export default function InterviewAdmin() {
 
   // Slot generator
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [untilDate, setUntilDate] = useState('');
+  const [skipWeekends, setSkipWeekends] = useState(true);
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('18:00');
   const [duration, setDuration] = useState(15);
@@ -48,7 +62,14 @@ export default function InterviewAdmin() {
 
   const [copiedLink, setCopiedLink] = useState(null);
   const [bookingSearch, setBookingSearch] = useState('');
+  const [bookingTab, setBookingTab] = useState('upcoming'); // upcoming | today | past | all
+  const [outcomeFilter, setOutcomeFilter] = useState('all');
   const [busy, setBusy] = useState(false);
+
+  // Per-booking UI state
+  const [notesDraft, setNotesDraft] = useState({});
+  const [openNotes, setOpenNotes] = useState(null);
+  const [reschedulingId, setReschedulingId] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -56,13 +77,11 @@ export default function InterviewAdmin() {
       if (session) checkIfAdmin(session.user.email);
       else setLoading(false);
     });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) checkIfAdmin(session.user.email);
       else { setIsAdmin(false); setLoading(false); }
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -100,7 +119,7 @@ export default function InterviewAdmin() {
     setLoading(false);
   };
 
-  // ── Slot generation ────────────────────────────────────────────────
+  // ── Slots ──────────────────────────────────────────────────────────
   const generateSlots = async () => {
     setBusy(true);
     setError('');
@@ -112,31 +131,40 @@ export default function InterviewAdmin() {
       const lStart = skipLunch ? parse(lunchStart, 'HH:mm', new Date()) : null;
       const lEnd = skipLunch ? parse(lunchEnd, 'HH:mm', new Date()) : null;
 
-      // Times already on this date — never create duplicates/overlaps.
-      const taken = new Set(
-        slots.filter((s) => s.slot_date === selectedDate).map((s) => hhmm(s.start_time))
-      );
+      // Build the list of dates: single day, or a range when "until" is set.
+      const dates = [];
+      let cursor = parseISO(selectedDate);
+      const last = untilDate ? parseISO(untilDate) : cursor;
+      if (isBefore(last, cursor)) throw new Error('"Until" date must be after the start date.');
+      while (!isAfter(cursor, last)) {
+        const dow = cursor.getDay();
+        if (!(skipWeekends && (dow === 0 || dow === 6))) dates.push(format(cursor, 'yyyy-MM-dd'));
+        cursor = addDays(cursor, 1);
+      }
+      if (dates.length === 0) throw new Error('That range has no working days selected.');
 
       const newSlots = [];
-      let current = start;
-      while (isBefore(current, end)) {
-        const next = addMinutes(current, duration);
-        if (isBefore(end, next)) break; // don't spill past the end time
-        const startStr = format(current, 'HH:mm');
-        const inLunch = skipLunch && !isBefore(current, lStart) && isBefore(current, lEnd);
-        if (!inLunch && !taken.has(startStr)) {
-          newSlots.push({
-            slot_date: selectedDate,
-            start_time: format(current, 'HH:mm:ss'),
-            end_time: format(next, 'HH:mm:ss'),
-            status: 'open',
-          });
+      for (const date of dates) {
+        const taken = new Set(slots.filter((s) => s.slot_date === date).map((s) => hhmm(s.start_time)));
+        let current = start;
+        while (isBefore(current, end)) {
+          const next = addMinutes(current, duration);
+          if (isBefore(end, next)) break;
+          const startStr = format(current, 'HH:mm');
+          const inLunch = skipLunch && !isBefore(current, lStart) && isBefore(current, lEnd);
+          if (!inLunch && !taken.has(startStr)) {
+            newSlots.push({
+              slot_date: date,
+              start_time: format(current, 'HH:mm:ss'),
+              end_time: format(next, 'HH:mm:ss'),
+              status: 'open',
+            });
+          }
+          current = next;
         }
-        current = next;
       }
 
       if (newSlots.length === 0) throw new Error('No new slots to create — those times already exist.');
-
       const { error } = await supabase.from('interview_slots').insert(newSlots);
       if (error) throw error;
       await fetchData();
@@ -193,10 +221,35 @@ export default function InterviewAdmin() {
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  const isLinkUsable = (l) =>
-    l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date());
+  const isLinkUsable = (l) => l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date());
 
   // ── Bookings ───────────────────────────────────────────────────────
+  const setOutcome = async (bookingId, status) => {
+    await supabase.from('interview_bookings').update({ status, updated_at: new Date().toISOString() }).eq('id', bookingId);
+    setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status } : b)));
+  };
+
+  const saveNotes = async (bookingId) => {
+    const notes = notesDraft[bookingId] ?? '';
+    await supabase.from('interview_bookings').update({ notes, updated_at: new Date().toISOString() }).eq('id', bookingId);
+    setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, notes } : b)));
+    setOpenNotes(null);
+  };
+
+  const reschedule = async (bookingId, newSlotId) => {
+    setBusy(true);
+    setError('');
+    const { data, error: rpcError } = await supabase.rpc('reschedule_interview_booking', {
+      p_booking_id: bookingId,
+      p_new_slot_id: newSlotId,
+    });
+    if (rpcError) setError(rpcError.message);
+    else if (!data?.success) setError(data?.error || 'Could not reschedule.');
+    else setReschedulingId(null);
+    await fetchData();
+    setBusy(false);
+  };
+
   const cancelBooking = async (id, slotId) => {
     if (!window.confirm('Cancel booking and reopen slot?')) return;
     await supabase.from('interview_bookings').delete().eq('id', id);
@@ -204,25 +257,30 @@ export default function InterviewAdmin() {
     fetchData();
   };
 
+  const now = new Date();
+
   const filteredBookings = useMemo(() => {
     const q = bookingSearch.trim().toLowerCase();
-    if (!q) return bookings;
-    return bookings.filter((b) =>
-      [b.candidate_name, b.candidate_email, b.candidate_phone]
+    return bookings.filter((b) => {
+      const s = b.interview_slots;
+      if (bookingTab === 'upcoming' && !(s && slotStart(s) > now)) return false;
+      if (bookingTab === 'today' && !(s && isToday(parseISO(s.slot_date)))) return false;
+      if (bookingTab === 'past' && !(s && slotStart(s) <= now)) return false;
+      if (outcomeFilter !== 'all' && (b.status || 'scheduled') !== outcomeFilter) return false;
+      if (!q) return true;
+      return [b.candidate_name, b.candidate_email, b.candidate_phone]
         .filter(Boolean)
-        .some((v) => v.toLowerCase().includes(q))
-    );
-  }, [bookings, bookingSearch]);
+        .some((v) => v.toLowerCase().includes(q));
+    });
+  }, [bookings, bookingSearch, bookingTab, outcomeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const exportCsv = () => {
-    const header = ['Name', 'Email', 'Phone', 'Date', 'Start', 'End', 'Booked At'];
+    const header = ['Name', 'Email', 'Phone', 'Date', 'Start', 'End', 'Outcome', 'Notes', 'Booked At'];
     const rows = filteredBookings.map((b) => [
-      b.candidate_name,
-      b.candidate_email,
-      b.candidate_phone,
+      b.candidate_name, b.candidate_email, b.candidate_phone,
       b.interview_slots?.slot_date ?? '',
-      hhmm(b.interview_slots?.start_time),
-      hhmm(b.interview_slots?.end_time),
+      hhmm(b.interview_slots?.start_time), hhmm(b.interview_slots?.end_time),
+      b.status || 'scheduled', b.notes || '',
       b.booked_at ? format(new Date(b.booked_at), 'yyyy-MM-dd HH:mm') : '',
     ]);
     const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
@@ -235,30 +293,38 @@ export default function InterviewAdmin() {
     URL.revokeObjectURL(url);
   };
 
-  // ── Derived data ───────────────────────────────────────────────────
-  const now = new Date();
-
+  // ── Derived ────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const upcomingOpen = slots.filter((s) => s.status === 'open' && slotStart(s) > now).length;
-    const booked = slots.filter((s) => s.status === 'booked').length;
     const todays = bookings.filter((b) => b.interview_slots && isToday(parseISO(b.interview_slots.slot_date))).length;
-    return { upcomingOpen, booked, todays, activeLinks: links.filter(isLinkUsable).length };
+    const done = bookings.filter((b) => ['attended', 'no-show', 'selected', 'rejected'].includes(b.status));
+    const noShows = bookings.filter((b) => b.status === 'no-show').length;
+    return {
+      upcomingOpen,
+      todays,
+      selected: bookings.filter((b) => b.status === 'selected').length,
+      activeLinks: links.filter(isLinkUsable).length,
+      noShowRate: done.length ? Math.round((noShows / done.length) * 100) : null,
+    };
   }, [slots, bookings, links]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Upcoming open slots grouped by date (past slots are noise for HR)
   const slotsByDate = useMemo(() => {
     const groups = {};
-    slots
-      .filter((s) => s.status === 'open' && slotStart(s) > now)
-      .forEach((s) => {
-        (groups[s.slot_date] = groups[s.slot_date] || []).push(s);
-      });
+    slots.filter((s) => s.status === 'open' && slotStart(s) > now)
+      .forEach((s) => { (groups[s.slot_date] = groups[s.slot_date] || []).push(s); });
     return groups;
   }, [slots]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const upcomingBookings = useMemo(
-    () => bookings.filter((b) => b.interview_slots && slotStart(b.interview_slots) > now),
-    [bookings] // eslint-disable-line react-hooks/exhaustive-deps
+  const openFutureSlots = useMemo(
+    () => slots.filter((s) => s.status === 'open' && slotStart(s) > now),
+    [slots] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const todaysBookings = useMemo(
+    () => bookings
+      .filter((b) => b.interview_slots && isToday(parseISO(b.interview_slots.slot_date)))
+      .sort((a, b) => a.interview_slots.start_time.localeCompare(b.interview_slots.start_time)),
+    [bookings]
   );
 
   if (loading) return <div className="pt-[100px] text-center min-h-screen">Loading...</div>;
@@ -286,15 +352,19 @@ export default function InterviewAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[100px] pb-20 font-outfit">
+    <div className="min-h-screen bg-gray-50 pt-[100px] pb-20 font-outfit print:pt-0 print:bg-white">
+      <style>{`@media print { .no-print { display: none !important; } .print-only { display: block !important; } }`}</style>
       <div className="max-w-7xl mx-auto px-4">
 
-        <div className="flex flex-wrap gap-4 justify-between items-center mb-8">
+        <div className="flex flex-wrap gap-4 justify-between items-center mb-8 no-print">
           <div>
             <h1 className="text-3xl font-bold text-[#10243E]">Interview Scheduler</h1>
             <p className="text-gray-500 text-sm mt-1">{session.user.email}</p>
           </div>
           <div className="flex gap-2">
+            <button onClick={() => window.print()} className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors" title="Print today's interview sheet">
+              <Printer size={16} /> Day Sheet
+            </button>
             <button onClick={fetchData} disabled={refreshing} className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors disabled:opacity-50">
               <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} /> Refresh
             </button>
@@ -304,27 +374,63 @@ export default function InterviewAdmin() {
           </div>
         </div>
 
-        {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-6 text-sm">{error}</div>}
+        {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-6 text-sm no-print">{error}</div>}
+
+        {/* Printable day sheet for the interview panel */}
+        <div className="hidden print-only mb-8">
+          <h2 className="text-2xl font-bold mb-1">Interview Day Sheet — {format(new Date(), 'EEEE, MMMM d, yyyy')}</h2>
+          <p className="text-sm text-gray-500 mb-4">Capital Brix · {todaysBookings.length} interview(s)</p>
+          <table className="w-full text-left text-sm border-collapse">
+            <thead><tr className="border-b-2 border-gray-300">
+              <th className="py-2">Time</th><th>Candidate</th><th>Contact</th><th>Outcome</th><th>Notes</th>
+            </tr></thead>
+            <tbody>
+              {todaysBookings.map((b) => (
+                <tr key={b.id} className="border-b border-gray-200">
+                  <td className="py-2 font-medium">{hhmm(b.interview_slots.start_time)}</td>
+                  <td>{b.candidate_name}</td>
+                  <td>{b.candidate_phone}<br />{b.candidate_email}</td>
+                  <td>____________</td>
+                  <td>____________________</td>
+                </tr>
+              ))}
+              {todaysBookings.length === 0 && <tr><td colSpan="5" className="py-4 text-gray-400">No interviews scheduled today.</td></tr>}
+            </tbody>
+          </table>
+        </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8 no-print">
           <StatCard icon={<DoorOpen size={20} />} label="Open Slots" value={stats.upcomingOpen} hint="upcoming" />
-          <StatCard icon={<CalendarCheck size={20} />} label="Booked" value={stats.booked} hint="all time" accent />
-          <StatCard icon={<CalendarDays size={20} />} label="Interviews Today" value={stats.todays} hint="scheduled" />
+          <StatCard icon={<CalendarDays size={20} />} label="Today" value={stats.todays} hint="interviews" accent />
+          <StatCard icon={<ThumbsUp size={20} />} label="Selected" value={stats.selected} hint="all time" />
+          <StatCard icon={<UserX size={20} />} label="No-show Rate" value={stats.noShowRate === null ? '—' : `${stats.noShowRate}%`} hint="of completed" />
           <StatCard icon={<LinkIcon size={20} />} label="Active Links" value={stats.activeLinks} hint="shareable" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 no-print">
 
           {/* Left: generators */}
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Calendar size={20} className="text-[#f26522]" /> Generate Slots</h2>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Date</label>
-                  <input type="date" value={selectedDate} min={format(new Date(), 'yyyy-MM-dd')} onChange={(e) => setSelectedDate(e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-[#f26522]" />
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-sm text-gray-600 mb-1">From date</label>
+                    <input type="date" value={selectedDate} min={format(new Date(), 'yyyy-MM-dd')} onChange={(e) => setSelectedDate(e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-[#f26522]" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm text-gray-600 mb-1">Until <span className="text-gray-400">(optional)</span></label>
+                    <input type="date" value={untilDate} min={selectedDate} onChange={(e) => setUntilDate(e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-[#f26522]" />
+                  </div>
                 </div>
+                {untilDate && (
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="checkbox" checked={skipWeekends} onChange={(e) => setSkipWeekends(e.target.checked)} className="accent-[#f26522]" />
+                    Skip weekends
+                  </label>
+                )}
                 <div className="flex gap-4">
                   <div className="flex-1">
                     <label className="block text-sm text-gray-600 mb-1">Start</label>
@@ -340,9 +446,7 @@ export default function InterviewAdmin() {
                   <div className="flex flex-wrap gap-2">
                     {DURATIONS.map((d) => (
                       <button key={d} type="button" onClick={() => setDuration(d)}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium border transition ${
-                          duration === d ? 'bg-[#10243E] text-white border-[#10243E]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#f26522]'
-                        }`}>
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium border transition ${duration === d ? 'bg-[#10243E] text-white border-[#10243E]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#f26522]'}`}>
                         {d} min
                       </button>
                     ))}
@@ -363,7 +467,7 @@ export default function InterviewAdmin() {
                 <button onClick={generateSlots} disabled={busy} className="w-full bg-[#10243E] text-white py-2.5 rounded-md hover:bg-[#1a365d] transition disabled:opacity-50">
                   Generate Slots
                 </button>
-                <p className="text-xs text-gray-400">Existing times on this date are skipped, so it&apos;s safe to run twice.</p>
+                <p className="text-xs text-gray-400">Existing times are skipped, so running this twice is safe.</p>
               </div>
             </div>
 
@@ -378,8 +482,8 @@ export default function InterviewAdmin() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Label / Title</label>
-                  <input type="text" placeholder="e.g. Frontend Dev Walk-in" value={linkLabel} onChange={(e) => setLinkLabel(e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-[#f26522]" />
+                  <label className="block text-sm text-gray-600 mb-1">Label / Role</label>
+                  <input type="text" placeholder="e.g. Telecaller — Noida" value={linkLabel} onChange={(e) => setLinkLabel(e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-[#f26522]" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">Expires on <span className="text-gray-400">(optional)</span></label>
@@ -390,35 +494,31 @@ export default function InterviewAdmin() {
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Right: dashboard */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* Upcoming interviews */}
+            {/* Today's schedule at a glance */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h2 className="text-xl font-semibold mb-4 text-[#10243E] flex items-center gap-2">
-                <CalendarCheck size={20} className="text-[#f26522]" /> Upcoming Interviews
-                <span className="text-sm font-normal text-gray-400">({upcomingBookings.length})</span>
-              </h2>
-              {upcomingBookings.length === 0 ? (
-                <p className="text-gray-400 py-4 text-sm">No upcoming interviews scheduled.</p>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><CalendarCheck size={20} className="text-[#f26522]" /> Today&apos;s Line-up</h2>
+              {todaysBookings.length === 0 ? (
+                <p className="text-gray-400 text-sm">Nothing scheduled today.</p>
               ) : (
-                <div className="space-y-2">
-                  {upcomingBookings.slice(0, 5).map((b) => (
-                    <div key={b.id} className="flex flex-wrap justify-between items-center gap-2 p-3 rounded-lg bg-orange-50/60 border border-orange-100">
-                      <div>
-                        <p className="font-semibold text-[#10243E]">{b.candidate_name}</p>
-                        <p className="text-xs text-gray-500">{b.candidate_email} • {b.candidate_phone}</p>
-                      </div>
-                      <p className="text-sm font-semibold text-[#f26522]">
-                        {dayLabel(b.interview_slots.slot_date)} · {hhmm(b.interview_slots.start_time)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                <ol className="space-y-2">
+                  {todaysBookings.map((b) => {
+                    const meta = outcomeMeta(b.status);
+                    return (
+                      <li key={b.id} className="flex items-center gap-3 text-sm">
+                        <span className="font-bold text-[#10243E] w-12 shrink-0">{hhmm(b.interview_slots.start_time)}</span>
+                        <span className="flex-1 truncate text-gray-700">{b.candidate_name}</span>
+                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${meta.cls}`}>{meta.label}</span>
+                      </li>
+                    );
+                  })}
+                </ol>
               )}
             </div>
+          </div>
+
+          {/* Right */}
+          <div className="lg:col-span-2 space-y-6">
 
             {/* Links */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -441,31 +541,23 @@ export default function InterviewAdmin() {
                         <tr key={link.id} className="hover:bg-gray-50/50">
                           <td className="p-3 font-medium text-gray-800">
                             {link.label || 'Unnamed Link'}
-                            {link.expires_at && (
-                              <span className="block text-xs text-gray-400">expires {format(new Date(link.expires_at), 'MMM d, yyyy')}</span>
-                            )}
+                            {link.expires_at && <span className="block text-xs text-gray-400">expires {format(new Date(link.expires_at), 'MMM d, yyyy')}</span>}
                           </td>
                           <td className="p-3 text-sm"><span className="bg-gray-100 px-2 py-1 rounded text-gray-600">{link.type}</span></td>
                           <td className="p-3 text-sm">
-                            {usable ? (
-                              <span className="text-green-600 font-medium flex items-center gap-1"><CheckCircle size={14} /> Active</span>
-                            ) : expired ? (
-                              <span className="text-amber-600 font-medium flex items-center gap-1"><Ban size={14} /> Expired</span>
-                            ) : (
-                              <span className="text-red-500 font-medium">Inactive</span>
-                            )}
+                            {usable ? <span className="text-green-600 font-medium flex items-center gap-1"><CheckCircle size={14} /> Active</span>
+                              : expired ? <span className="text-amber-600 font-medium flex items-center gap-1"><Ban size={14} /> Expired</span>
+                              : <span className="text-red-500 font-medium">Inactive</span>}
                           </td>
                           <td className="p-3">
                             <div className="flex items-center gap-3">
                               {usable && (
                                 <>
-                                  <button onClick={() => copyToClipboard(link.token)} className="text-[#10243E] hover:text-[#f26522] transition-colors" title="Copy link">
+                                  <button onClick={() => copyToClipboard(link.token)} className="text-[#10243E] hover:text-[#f26522]" title="Copy link">
                                     {copiedLink === link.token ? <CheckCircle size={18} className="text-green-500" /> : <Copy size={18} />}
                                   </button>
-                                  <button onClick={() => whatsappShare(link.token)} className="text-green-600 hover:text-green-700 transition-colors" title="Share on WhatsApp">
-                                    <MessageCircle size={18} />
-                                  </button>
-                                  <button onClick={() => deactivateLink(link.token)} className="text-red-400 hover:text-red-600 text-sm font-medium transition-colors">Deactivate</button>
+                                  <button onClick={() => whatsappShare(link.token)} className="text-green-600 hover:text-green-700" title="Share on WhatsApp"><MessageCircle size={18} /></button>
+                                  <button onClick={() => deactivateLink(link.token)} className="text-red-400 hover:text-red-600 text-sm font-medium">Deactivate</button>
                                 </>
                               )}
                             </div>
@@ -479,50 +571,122 @@ export default function InterviewAdmin() {
               </div>
             </div>
 
-            {/* Bookings */}
+            {/* Candidates */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-[#10243E]">All Bookings <span className="text-sm font-normal text-gray-400">({filteredBookings.length})</span></h2>
-                <div className="flex gap-2">
+                <h2 className="text-xl font-semibold text-[#10243E]">Candidates <span className="text-sm font-normal text-gray-400">({filteredBookings.length})</span></h2>
+                <div className="flex flex-wrap gap-2">
                   <div className="relative">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input value={bookingSearch} onChange={(e) => setBookingSearch(e.target.value)} placeholder="Search name, email, phone"
-                      className="pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#f26522] w-56" />
+                      className="pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#f26522] w-52" />
                   </div>
+                  <select value={outcomeFilter} onChange={(e) => setOutcomeFilter(e.target.value)} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]">
+                    <option value="all">All outcomes</option>
+                    {OUTCOMES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                   <button onClick={exportCsv} disabled={filteredBookings.length === 0}
                     className="flex items-center gap-2 bg-[#10243E] text-white px-4 py-2 rounded-md text-sm hover:bg-[#1a365d] transition disabled:opacity-40">
                     <Download size={16} /> CSV
                   </button>
                 </div>
               </div>
+
+              <div className="flex gap-1 mb-4 border-b border-gray-100">
+                {[['upcoming', 'Upcoming'], ['today', 'Today'], ['past', 'Past'], ['all', 'All']].map(([key, label]) => (
+                  <button key={key} onClick={() => setBookingTab(key)}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+                      bookingTab === key ? 'border-[#f26522] text-[#f26522]' : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               <div className="space-y-3">
-                {filteredBookings.map((booking) => (
-                  <div key={booking.id} className="flex flex-col md:flex-row justify-between p-4 border border-gray-100 rounded-lg hover:border-gray-200 bg-gray-50/30 transition-colors">
-                    <div>
-                      <h3 className="font-bold text-[#10243E] flex items-center gap-2"><Users size={16} className="text-[#f26522]" /> {booking.candidate_name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{booking.candidate_email} • {booking.candidate_phone}</p>
-                      {booking.interview_slots && (
-                        <p className="text-sm font-medium text-[#f26522] mt-2 flex items-center gap-1">
-                          <Clock size={14} /> {format(parseISO(booking.interview_slots.slot_date), 'MMM dd, yyyy')} | {hhmm(booking.interview_slots.start_time)} - {hhmm(booking.interview_slots.end_time)}
-                        </p>
+                {filteredBookings.map((booking) => {
+                  const meta = outcomeMeta(booking.status);
+                  const slot = booking.interview_slots;
+                  return (
+                    <div key={booking.id} className="p-4 border border-gray-100 rounded-lg bg-gray-50/30 hover:border-gray-200 transition-colors">
+                      <div className="flex flex-col md:flex-row md:justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-bold text-[#10243E] flex items-center gap-2"><Users size={16} className="text-[#f26522]" /> {booking.candidate_name}</h3>
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${meta.cls}`}>{meta.label}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-3 mt-2 text-sm">
+                            <a href={`tel:${booking.candidate_phone}`} className="text-gray-600 hover:text-[#f26522] flex items-center gap-1"><Phone size={13} /> {booking.candidate_phone}</a>
+                            <a href={`mailto:${booking.candidate_email}`} className="text-gray-600 hover:text-[#f26522] flex items-center gap-1"><Mail size={13} /> {booking.candidate_email}</a>
+                            <a href={`https://wa.me/${(booking.candidate_phone || '').replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="text-green-600 hover:text-green-700 flex items-center gap-1"><MessageCircle size={13} /> WhatsApp</a>
+                          </div>
+                          {slot && (
+                            <p className="text-sm font-medium text-[#f26522] mt-2 flex items-center gap-1">
+                              <Clock size={14} /> {format(parseISO(slot.slot_date), 'MMM dd, yyyy')} | {hhmm(slot.start_time)} - {hhmm(slot.end_time)}
+                            </p>
+                          )}
+                          {booking.notes && openNotes !== booking.id && (
+                            <p className="text-sm text-gray-500 mt-2 bg-white border border-gray-100 rounded p-2 whitespace-pre-wrap">{booking.notes}</p>
+                          )}
+                        </div>
+
+                        <div className="flex md:flex-col gap-2 md:items-end shrink-0">
+                          <select value={booking.status || 'scheduled'} onChange={(e) => setOutcome(booking.id, e.target.value)}
+                            className="border border-gray-200 rounded-md px-2 py-1.5 text-sm outline-none focus:border-[#f26522] bg-white">
+                            {OUTCOMES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          </select>
+                          <div className="flex gap-3 text-sm">
+                            <button onClick={() => { setOpenNotes(openNotes === booking.id ? null : booking.id); setNotesDraft((d) => ({ ...d, [booking.id]: booking.notes || '' })); }}
+                              className="text-gray-500 hover:text-[#10243E] flex items-center gap-1"><StickyNote size={14} /> Notes</button>
+                            <button onClick={() => setReschedulingId(reschedulingId === booking.id ? null : booking.id)}
+                              className="text-gray-500 hover:text-[#10243E] flex items-center gap-1"><CalendarClock size={14} /> Move</button>
+                            <button onClick={() => cancelBooking(booking.id, booking.slot_id)}
+                              className="text-red-400 hover:text-red-600 flex items-center gap-1"><Trash2 size={14} /> Cancel</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {openNotes === booking.id && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <textarea rows="3" value={notesDraft[booking.id] ?? ''} onChange={(e) => setNotesDraft((d) => ({ ...d, [booking.id]: e.target.value }))}
+                            placeholder="Interview notes — experience, expected CTC, availability, verdict…"
+                            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => saveNotes(booking.id)} className="bg-[#10243E] text-white px-4 py-1.5 rounded-md text-sm hover:bg-[#1a365d]">Save</button>
+                            <button onClick={() => setOpenNotes(null)} className="text-gray-500 px-3 py-1.5 text-sm hover:text-gray-700">Cancel</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {reschedulingId === booking.id && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <p className="text-sm text-gray-600 mb-2">Move to an open slot:</p>
+                          {openFutureSlots.length === 0 ? (
+                            <p className="text-sm text-gray-400">No open slots available — generate some first.</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                              {openFutureSlots.map((s) => (
+                                <button key={s.id} onClick={() => reschedule(booking.id, s.id)} disabled={busy}
+                                  className="px-3 py-1.5 rounded-md text-sm border border-gray-200 bg-white hover:border-[#f26522] hover:text-[#f26522] transition disabled:opacity-50">
+                                  {dayLabel(s.slot_date)} · {hhmm(s.start_time)}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <div className="mt-4 md:mt-0 flex items-start justify-end">
-                      <button onClick={() => cancelBooking(booking.id, booking.slot_id)} className="text-red-400 text-sm hover:text-red-600 hover:underline flex items-center gap-1 transition-colors">
-                        <Trash2 size={16} /> Cancel
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {filteredBookings.length === 0 && (
                   <p className="text-center text-gray-400 py-6">
-                    {bookingSearch ? 'No bookings match that search.' : 'No interviews booked yet.'}
+                    {bookingSearch || outcomeFilter !== 'all' ? 'No candidates match these filters.' : 'No interviews booked yet.'}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Open slots by day */}
+            {/* Open slots */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-semibold mb-4 text-[#10243E]">Manage Open Slots</h2>
               {Object.keys(slotsByDate).length === 0 ? (
