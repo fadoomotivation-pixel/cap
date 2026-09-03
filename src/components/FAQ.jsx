@@ -10,9 +10,9 @@ export default function FAQ() {
       <div className="max-w-4xl mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] mb-4">
-            Frequently Asked Questions
+            Buying a plot in Dholera — frequently asked
           </h2>
-          <div className="w-16 h-1 bg-[#f37435] mx-auto"></div>
+          <div className="w-16 h-1 bg-[#D4AF37] mx-auto"></div>
         </div>
 
         <div className="space-y-4">

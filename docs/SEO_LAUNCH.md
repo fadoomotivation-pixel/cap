@@ -1,6 +1,6 @@
 # SEO launch checklist — the parts that live outside this repo
 
-Everything technical on the site is done: 42 public routes ship as real HTML,
+Everything technical on the site is done: 41 public routes ship as real HTML,
 each page has one correct canonical, the blog is original, and leads are
 captured. What is left cannot be done from the codebase — it needs sign-in to
 Google with the Capital Brix account. This file is written so each step is
@@ -29,7 +29,7 @@ ranking.
      DNS can take a few minutes to propagate; if it fails, wait and retry.
 3. **Sitemaps → Add a new sitemap** → enter `sitemap.xml` → Submit.
    The full URL is <https://www.capitalbrix.co.in/sitemap.xml> and it lists
-   all 42 public URLs with a `lastmod` date.
+   all 41 public URLs with a `lastmod` date.
 4. **URL Inspection** — paste each of these and click *Request indexing*.
    Do the money pages first; Google rate-limits manual requests to roughly
    ten a day, so spread them over a few days:
@@ -171,8 +171,8 @@ Same NAP as step 2, exactly, on each:
 - Google Maps (via the Business Profile above)
 - Bing Places
 - Apple Business Connect
-- Facebook Page — with the address filled in
-- LinkedIn Company Page
+- Facebook Page — the address filled in on the existing page
+- LinkedIn Company Page — the address filled in on the existing page
 
 ### Content-led links (slower, worth far more)
 
@@ -189,18 +189,30 @@ The 8 blog guides exist partly to earn these:
 - **Mirrikh Infratech.** As their Official Strategy Partner, a link from their
   site to ours is legitimate and easy to ask for.
 
-### One thing to fix that is not in this repo's control
+### Social profiles — done in the repo, needs finishing on the platforms
 
-**The footer's social icons all point at Mirrikh Infratech's accounts** —
-YouTube, Instagram, LinkedIn, X and Facebook. For entity resolution that
-reads as "this website belongs to Mirrikh", which works against building
-Capital Brix as its own searchable brand, and it is why no `sameAs` block was
-added to the site's structured data.
+The site now links Capital Brix's own accounts, and declares them as `sameAs`
+in the organisation schema so Google can tie the profiles, the website and the
+Business Profile to one entity:
 
-Once Capital Brix has its own handles, send them over and they should replace
-the footer links, and be added as `sameAs` in the `RealEstateAgent` schema in
-`index.html`. Until then, leaving them unclaimed is better than claiming
-someone else's.
+```
+https://www.youtube.com/@capitalbrixllp
+https://www.instagram.com/capitalbrix
+https://www.linkedin.com/company/capitalbrixofficial/
+https://www.facebook.com/CapitalBrixOfficial/
+```
+
+Two things to do on the platforms themselves, because `sameAs` only works when
+the link points back:
+
+1. **Put `https://www.capitalbrix.co.in` in the website field of every profile.**
+   Google confirms an entity by checking the link in both directions.
+2. **Use the same name, logo and description across all four** — the Business
+   Profile description in this document works for all of them.
+
+There is no X / Twitter handle, so the X icon was removed rather than left
+pointing at someone else's account. If one is created, add it to
+`site.socials` in `src/data/site.js` and to `sameAs` in `index.html`.
 
 ---
 

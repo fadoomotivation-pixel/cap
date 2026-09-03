@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    {
+      "source": "/dholera/airport",
+      "destination": "/blog/dholera-international-airport",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

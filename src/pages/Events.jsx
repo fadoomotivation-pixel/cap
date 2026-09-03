@@ -68,8 +68,8 @@ export default function Events() {
                   onClick={() => paginate(number)}
                   className={`w-10 h-10 flex items-center justify-center transition-colors rounded-sm ${
                     currentPage === number
-                      ? 'bg-[#f26522] text-white'
-                      : 'text-[#10243E] hover:text-[#f26522] hover:bg-gray-100 bg-white border border-gray-200'
+                      ? 'bg-[#D4AF37] text-[#0A1016]'
+                      : 'text-[#10243E] hover:text-[#9C7C1C] hover:bg-gray-100 bg-white border border-gray-200'
                   }`}
                 >
                   {number}
@@ -80,7 +80,7 @@ export default function Events() {
             {currentPage < totalPages && (
               <button 
                 onClick={() => paginate(currentPage + 1)}
-                className="px-4 h-10 flex items-center justify-center text-[#10243E] bg-white border border-gray-200 hover:text-[#f26522] hover:border-[#f26522] transition-colors ml-2 rounded-sm"
+                className="px-4 h-10 flex items-center justify-center text-[#10243E] bg-white border border-gray-200 hover:text-[#9C7C1C] hover:border-[#D4AF37] transition-colors ml-2 rounded-sm"
               >
                 Next →
               </button>

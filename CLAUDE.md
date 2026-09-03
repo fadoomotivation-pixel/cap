@@ -67,7 +67,7 @@ the token columns (`confirmation_token`, `recovery_token`, `email_change_token_n
 
 ## Routes
 
-Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/*`,
+Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/:slug`,
 `/blog`, `/events`, `/contact`.
 Public: also `/blog/:slug` (8 original guides — see below).
 Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
@@ -187,6 +187,39 @@ They are gone. In their place are 8 original long-form guides, each with its own
   rename a folder and tells a crawler whose content it is.
 - Adding a post: unique slug, a keyword nothing else on the site targets,
   real substance, and add the URL to `public/sitemap.xml`.
+
+## Dholera pillar pages
+
+`/dholera/:slug` renders from `src/data/dholera.js`. These five routes used to
+render the **same** placeholder paragraph from a `PlaceholderContent` component
+over hotlinked mirrikh.com banners — five near-identical ~215-word URLs in the
+sitemap, which is textbook duplicate thin content.
+
+Each now owns one keyword cluster: `about` (what is Dholera SIR), `overview`
+(master plan and phases), `city-highlights` (infrastructure), `renew-power`
+(solar and energy). **`/dholera/airport` is gone on purpose** — the blog guide
+owns that query, so the URL 301s there via `vercel.json` rather than competing
+with it. Nav and footer link straight to the guide, not through the redirect.
+
+## Project detail pages
+
+`/projects/:id` composes its long-form content in `src/lib/projectContent.js`
+from real fields in `site.js` — nothing is invented. **These 22 pages share
+most of their data**, so composed copy can only differentiate so far: the most
+similar pair is still ~97% word-identical. The fix is data, not code — give a
+project a real `location`, `size`, `price` and an `about` paragraph in
+`site.js` and the page picks it up with no code change.
+
+An earlier attempt added shared "how to verify a plot" prose to all 22, which
+raised word count and left them 90% identical. Don't do that: link the guide
+that owns the query instead.
+
+### Heading semantics
+
+Several sections marked the tiny uppercase eyebrow label as the `<h2>` and the
+real headline as an `<h3>`, so Google read "Portfolio" and "The Capital Brix
+Vision" as the section headings. Eyebrows are `<p>`; the visible headline is
+the `<h2>`.
 
 ### The duplicate-canonical trap
 
