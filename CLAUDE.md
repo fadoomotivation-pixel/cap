@@ -67,10 +67,12 @@ the token columns (`confirmation_token`, `recovery_token`, `email_change_token_n
 
 ## Routes
 
-Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/*`,
+Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/:slug`,
 `/blog`, `/events`, `/contact`.
+Public: also `/blog/:slug` (8 original guides — see below).
 Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
-`/admin/attendance`, `/admin/expenses`, `/book/:token`, `/book/confirm/:bookingId`.
+`/admin/attendance`, `/admin/expenses`, `/admin/leads`, `/book/:token`,
+`/book/confirm/:bookingId`.
 
 ## Attendance module
 
@@ -166,6 +168,85 @@ tucked behind "Show manual slot creation". The function is idempotent: it skips
 times that already exist, past times, weekends/lunch per settings, and never
 touches booked slots.
 
+## Blog — original content only
+
+`src/data/blogs.js` once held 252 stub entries whose titles, excerpts and images
+were copied verbatim from mirrikh.com, with 243 images hotlinked from their
+server. None had a body or a URL, so none could rank; together they read to a
+crawler as a scraped, thin doorway page — a sitewide risk, not a `/blog` one.
+
+They are gone. In their place are 8 original long-form guides, each with its own
+`/blog/<slug>` URL, one keyword cluster, 800+ words, 3+ rendered FAQs, and
+`BlogPosting` + `BreadcrumbList` + `FAQPage` schema.
+
+- **Never paste content from mirrikh.com or any other site into this repo.**
+  We are their strategy partner, not their mirror; duplicate content competes
+  with the source and loses.
+- Cover art is generated in `src/components/BlogArt.jsx` (SVG, per-post `tone`).
+  Do not go back to hotlinking someone else's images — it breaks when they
+  rename a folder and tells a crawler whose content it is.
+- Adding a post: unique slug, a keyword nothing else on the site targets,
+  real substance, and add the URL to `public/sitemap.xml`.
+
+## Dholera pillar pages
+
+`/dholera/:slug` renders from `src/data/dholera.js`. These five routes used to
+render the **same** placeholder paragraph from a `PlaceholderContent` component
+over hotlinked mirrikh.com banners — five near-identical ~215-word URLs in the
+sitemap, which is textbook duplicate thin content.
+
+Each now owns one keyword cluster: `about` (what is Dholera SIR), `overview`
+(master plan and phases), `city-highlights` (infrastructure), `renew-power`
+(solar and energy). **`/dholera/airport` is gone on purpose** — the blog guide
+owns that query, so the URL 301s there via `vercel.json` rather than competing
+with it. Nav and footer link straight to the guide, not through the redirect.
+
+## Project detail pages
+
+`/projects/:id` composes its long-form content in `src/lib/projectContent.js`
+from real fields in `site.js` — nothing is invented. **These 22 pages share
+most of their data**, so composed copy can only differentiate so far: the most
+similar pair is still ~97% word-identical. The fix is data, not code — give a
+project a real `location`, `size`, `price` and an `about` paragraph in
+`site.js` and the page picks it up with no code change.
+
+An earlier attempt added shared "how to verify a plot" prose to all 22, which
+raised word count and left them 90% identical. Don't do that: link the guide
+that owns the query instead.
+
+### Heading semantics
+
+Several sections marked the tiny uppercase eyebrow label as the `<h2>` and the
+real headline as an `<h3>`, so Google read "Portfolio" and "The Capital Brix
+Vision" as the section headings. Eyebrows are `<p>`; the visible headline is
+the `<h2>`.
+
+### The duplicate-canonical trap
+
+`index.html` carries fallback SEO tags marked `data-static-seo`, for crawlers
+that never run JS (the WhatsApp/Facebook/X scrapers). On React 19,
+react-helmet-async **renders** its tags and lets React hoist them — it does not
+remove those fallbacks. Left alone, every route served two descriptions and two
+canonicals, and the canonical read first said `/` on every page, which tells
+Google not to rank any of them. `src/components/Seo.jsx` therefore strips
+`[data-static-seo]` on mount. If you add a tag to `index.html` that `Seo` also
+emits, mark it `data-static-seo` too.
+
+## Website leads
+
+`cb_leads` — every enquiry from the site. Before this existed, `ContactForm`
+called `preventDefault()` and nothing else, so every lead was silently dropped.
+
+- RLS: **anon may INSERT, nobody but admins may SELECT.** A public read policy
+  here would expose every enquiry the site has received to anyone with the anon
+  key. Validation lives in column checks, not in the client.
+- `source` / `source_path` record which page produced the lead, so
+  `/admin/leads` can show which blog post actually earns enquiries.
+- `src/lib/leads.js` is the only writer; `src/components/LeadForm.jsx` is the
+  reusable conversion block used on blog posts and the blog index.
+- HR sees them at `/admin/leads` with one-tap WhatsApp / call and a status
+  pipeline (`new` → `contacted` → `site-visit` → `converted` / `lost`).
+
 ## SEO conventions
 
 - Every public page renders `<Seo {...pageSeo.<key>} />` (`src/components/Seo.jsx`);
@@ -175,8 +256,22 @@ touches booked slots.
   regenerate it when projects are added. `public/robots.txt` disallows private routes.
 - Structured data: `RealEstateAgent` + `FAQPage` in `index.html`, `Person` (founder,
   with award) on the homepage, `Product` per project detail page.
-- Known limitation: this is a client-rendered SPA, so crawlers depend on JS rendering.
-  The highest-impact next SEO step is prerendering/SSR for public routes.
+- **Public routes are prerendered at build time.** `npm run build` runs
+  `vite build` and then `scripts/prerender.mjs`, which renders every public
+  route to real HTML so a crawler that does not execute JS still sees the page.
+  Routes come from `public/sitemap.xml`, so the prerendered set can never drift
+  from the indexed set — **add a new public route to the sitemap or it will not
+  be prerendered.** A failing route fails the build rather than shipping an
+  empty page.
+  - `src/entry-server.jsx` renders `AppContent` under a `StaticRouter`.
+    React 19's `renderToString` hoists `<title>`/`<meta>`/`<link>` to the front
+    of the returned string; the script peels them into `<head>`, otherwise every
+    page hydrates with a mismatch.
+  - Prerendered head tags are **not** marked `data-static-seo` — React adopts
+    them during hydration, so removing them would strip the page's canonical.
+  - `dist/app.html` is the plain SPA shell that `vercel.json` rewrites to.
+    Private routes and unknown URLs get that, never the prerendered homepage.
+  - `src/main.jsx` hydrates when `#root` has `data-prerendered`, else mounts fresh.
 
 ## Interview Scheduler — what HR can do
 

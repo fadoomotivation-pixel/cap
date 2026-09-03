@@ -32,12 +32,12 @@ export default function HomeAbout() {
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           className="md:col-span-7"
         >
-          <h2 className="text-[#D4AF37] font-semibold tracking-[0.2em] uppercase text-xs mb-4">
+          <p className="text-[#D4AF37] font-semibold tracking-[0.2em] uppercase text-xs mb-4">
             The Capital Brix Vision
+          </p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-heading text-[#1A1A1A] leading-[1.1] mb-8">
+            Buying plots in Dholera SIR, without the guesswork.
           </h2>
-          <h3 className="text-4xl md:text-5xl lg:text-6xl font-heading text-[#1A1A1A] leading-[1.1] mb-8">
-            Pioneering wealth creation in Dholera SIR.
-          </h3>
           <div className="space-y-6 text-gray-600 font-light text-lg">
             <p>
               Dholera Special Investment Region (DSIR) is India's first greenfield smart city. Designed to be a global manufacturing and trading hub, it is equipped with world-class infrastructure, seamless connectivity, and sustainable development practices.

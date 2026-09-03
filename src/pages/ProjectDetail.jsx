@@ -1,7 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { projects, site } from '../data/site';
 import Seo from '../components/Seo';
+import LeadForm from '../components/LeadForm';
+import ArticleBody from '../components/ArticleBody';
+import { projectIntro, projectSections, projectFaqs } from '../lib/projectContent';
 
 // Feature icons inline SVG
 const LegalIcon = () => (
@@ -28,6 +31,7 @@ const projectFeatures = [
 
 export default function ProjectDetail() {
   const { id } = useParams();
+  const [openFaq, setOpenFaq] = useState(0);
   const project = projects.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === id);
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
@@ -52,8 +56,12 @@ export default function ProjectDetail() {
     project.price === 'On Request' ? 'Pricing on request' : `Starting ${project.price}`
   }. NA/NOC approved, title-clear plots via Capital Brix, official strategy partner of Mirrikh Infratech.`;
 
+  const faqs = projectFaqs(project);
+  const sections = projectSections(project);
+
   const projectSchema = {
     '@context': 'https://schema.org',
+    '@graph': [{
     '@type': 'Product',
     name: `${project.name}, Dholera Smart City`,
     description: seoDescription,
@@ -67,6 +75,13 @@ export default function ProjectDetail() {
       priceCurrency: 'INR',
       seller: { '@type': 'Organization', name: 'Capital Brix' },
     },
+  }, {
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question', name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  }],
   };
 
   return (
@@ -87,7 +102,7 @@ export default function ProjectDetail() {
           {/* BG: subtle project color */}
           <div
             className="absolute top-0 right-0 w-[55%] h-full opacity-[0.06] pointer-events-none"
-            style={{ background: `radial-gradient(ellipse at center, ${project.accent || '#f26522'}, transparent 70%)` }}
+            style={{ background: `radial-gradient(ellipse at center, ${project.accent || '#D4AF37'}, transparent 70%)` }}
           />
 
           <div className="relative z-10 max-w-xl">
@@ -104,7 +119,7 @@ export default function ProjectDetail() {
               </h1>
               {projectSub && (
                 <span
-                  className="inline-block font-black text-[#f26522] leading-none tracking-tight"
+                  className="inline-block font-black text-[#9C7C1C] leading-none tracking-tight"
                   style={{ fontSize: 'clamp(2rem, 5vw, 4rem)' }}
                 >
                   {projectSub}
@@ -113,7 +128,7 @@ export default function ProjectDetail() {
               {/* Underline curve */}
               <div className="mt-3 mb-8">
                 <svg width="120" height="12" viewBox="0 0 120 12">
-                  <path d="M0 10 Q60 0 120 10" stroke="#f26522" strokeWidth="3" fill="none" strokeLinecap="round" />
+                  <path d="M0 10 Q60 0 120 10" stroke="#D4AF37" strokeWidth="3" fill="none" strokeLinecap="round" />
                 </svg>
               </div>
             </div>
@@ -123,14 +138,14 @@ export default function ProjectDetail() {
               className="font-bold text-[#10243E] leading-tight mb-4"
               style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
             >
-              Rise. <span className="text-[#f26522]">Live.</span> Belong.
+              Rise. <span className="text-[#9C7C1C]">Live.</span> Belong.
             </h2>
 
             {/* Price & Location */}
             <div className="flex flex-wrap gap-6 mb-10">
               <div>
                 <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Starting Price</p>
-                <p className="text-3xl font-black text-[#f26522]">{project.price}</p>
+                <p className="text-3xl font-black text-[#9C7C1C]">{project.price}</p>
                 <p className="text-sm text-gray-500">{project.priceUnit}</p>
               </div>
               <div>
@@ -140,7 +155,7 @@ export default function ProjectDetail() {
               <div>
                 <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Status</p>
                 <span className={`inline-block px-4 py-1 rounded-full text-sm font-bold ${
-                  project.category === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-[#f26522]'
+                  project.category === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-[#9C7C1C]'
                 }`}>{project.status}</span>
               </div>
             </div>
@@ -163,7 +178,7 @@ export default function ProjectDetail() {
                 href={wa}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-[#f26522] text-white px-8 py-3.5 rounded-sm font-bold hover:bg-[#d65116] transition-colors text-sm uppercase tracking-wide"
+                className="bg-[#D4AF37] text-[#0A1016] px-8 py-3.5 rounded-sm font-bold hover:bg-[#B8860B] transition-colors text-sm uppercase tracking-wide"
               >
                 Request Price & Layout
               </a>
@@ -180,7 +195,7 @@ export default function ProjectDetail() {
 
           {/* Orange decorative arch (background) */}
           <div
-            className="absolute -right-16 -bottom-16 w-[300px] h-[300px] rounded-full bg-[#f26522] opacity-10 pointer-events-none"
+            className="absolute -right-16 -bottom-16 w-[300px] h-[300px] rounded-full bg-[#D4AF37] text-[#0A1016] opacity-10 pointer-events-none"
           />
         </div>
 
@@ -217,81 +232,79 @@ export default function ProjectDetail() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
           {project.highlights.map((h, i) => (
             <div key={i} className="flex items-start gap-4 bg-white p-5 rounded shadow-sm border border-gray-100">
-              <span className="w-8 h-8 rounded-full bg-[#f26522] text-white flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">✓</span>
+              <span className="w-8 h-8 rounded-full bg-[#D4AF37] text-[#0A1016] flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">✓</span>
               <span className="text-[#10243E] font-medium text-base leading-relaxed">{h}</span>
             </div>
           ))}
         </div>
 
-        {/* ── ENQUIRY FORM ── */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          <div className="flex flex-col lg:flex-row">
-            <div className="lg:w-1/3 bg-[#10243E] text-white p-8 lg:p-12 flex flex-col justify-center">
-              <h3 className="text-2xl font-bold mb-4 text-white">Enquire Now</h3>
-              <p className="text-white/80 leading-relaxed mb-6">
-                {project.status === 'Delivered'
-                  ? "This project has been delivered. Contact us for resale availability or explore our new launches."
-                  : "Inventory is limited. Lock in your plot today at direct developer pricing."}
-              </p>
-              <a
-                href={wa}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-[#f26522] text-white px-6 py-3 rounded-sm font-bold hover:bg-[#d65116] transition-colors text-center text-sm uppercase tracking-wide"
-              >
-                WhatsApp Us
-              </a>
-              <p className="text-white/50 text-xs mt-4">Response within 15 minutes</p>
-            </div>
-            <div className="lg:w-2/3 p-8 lg:p-12">
-              <form
-                action={`https://formsubmit.co/musicofmajor@gmail.com`}
-                method="POST"
-                className="grid grid-cols-1 md:grid-cols-2 gap-5"
-              >
-                <input type="hidden" name="_subject" value={`New Enquiry: ${project.name}`} />
-                <input type="hidden" name="_next" value="https://capitalbrix.co.in/thank-you" />
-                <input type="hidden" name="project" value={project.name} />
+        {/* ── ABOUT THIS PROJECT ──
+            These 22 pages carried ~220 indexable words each and read as
+            near-duplicates, which is why none of them ranked for the long-tail
+            brand queries they should own. Everything below is built from this
+            project's own fields — see src/lib/projectContent.js. */}
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-12 lg:gap-16 mt-4">
+          <div className="min-w-0">
+            <h2 className="text-3xl font-black text-[#10243E] mb-5">About {project.name}</h2>
+            <p className="text-lg text-[#10243E] leading-relaxed font-light border-l-2 border-[#D4AF37] pl-6 mb-12">
+              {projectIntro(project)}
+            </p>
 
+            <ArticleBody sections={sections} />
+
+            {/* Hub-and-spoke: the project page owns the brand query, the guides
+                own the topic queries. Linking rather than repeating keeps every
+                URL unique and pushes authority to the page that should rank. */}
+            <div className="rounded-2xl border border-gray-200 p-6 mb-12">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9C7C1C] mb-4">
+                Read before you buy
+              </p>
+              <ul className="space-y-4">
                 {[
-                  { label: 'Full Name', name: 'name', type: 'text', placeholder: 'Your Name', full: false },
-                  { label: 'Phone Number', name: 'phone', type: 'tel', placeholder: '+91 00000 00000', full: false },
-                  { label: 'Email Address', name: 'email', type: 'email', placeholder: 'you@example.com', full: false },
-                  { label: 'City / Location', name: 'city', type: 'text', placeholder: 'Your City', full: false },
-                ].map(f => (
-                  <div key={f.name} className={`flex flex-col gap-1.5 ${f.full ? 'md:col-span-2' : ''}`}>
-                    <label className="text-xs font-bold text-[#10243E] uppercase tracking-wider">{f.label}</label>
-                    <input
-                      type={f.type}
-                      name={f.name}
-                      placeholder={f.placeholder}
-                      required
-                      className="w-full px-4 py-2.5 rounded border border-gray-200 text-sm focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition-colors"
-                    />
+                  ['/blog/how-to-verify-a-dholera-plot', 'How to verify a Dholera plot before you pay anything', 'NA, NOC, title chain, 7/12, encumbrance — what each one proves'],
+                  ['/blog/dholera-plot-price-2026', 'What a Dholera plot actually costs in 2026', 'The price band, what drives it, and what the quote leaves out'],
+                  ['/dholera/overview', 'The Dholera master plan: phases and zones', 'Why where a plot sits in the phasing matters more than distance'],
+                ].map(([href, title, sub]) => (
+                  <li key={href}>
+                    <Link to={href} className="group block">
+                      <p className="text-sm font-medium text-[#10243E] group-hover:text-[#9C7C1C] transition-colors leading-snug">{title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{sub}</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <section className="mb-4">
+              <h2 className="text-2xl lg:text-3xl font-heading text-[#10243E] mb-6">
+                {project.name} — frequently asked
+              </h2>
+              <div className="border-t border-gray-200">
+                {faqs.map((f, i) => (
+                  <div key={i} className="border-b border-gray-200">
+                    <button onClick={() => setOpenFaq(openFaq === i ? -1 : i)} aria-expanded={openFaq === i}
+                      className="w-full flex items-start justify-between gap-4 text-left py-5 group">
+                      <span className="font-medium text-[#10243E] group-hover:text-[#9C7C1C] transition-colors">{f.q}</span>
+                      <span className="shrink-0 text-[#D4AF37] mt-0.5 text-xl leading-none">{openFaq === i ? '\u2212' : '+'}</span>
+                    </button>
+                    {openFaq === i && <p className="text-gray-600 leading-[1.85] pb-6 pr-8 text-[15px]">{f.a}</p>}
                   </div>
                 ))}
-
-                <div className="flex flex-col gap-1.5 md:col-span-2">
-                  <label className="text-xs font-bold text-[#10243E] uppercase tracking-wider">Message</label>
-                  <textarea
-                    name="message"
-                    rows={3}
-                    placeholder={`I'm interested in ${project.name}. Please share plot details and pricing.`}
-                    className="w-full px-4 py-2.5 rounded border border-gray-200 text-sm focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition-colors resize-none"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <button
-                    type="submit"
-                    className="bg-[#f26522] text-white px-10 py-3.5 rounded-sm font-bold hover:bg-[#d65116] transition-colors text-sm uppercase tracking-wide"
-                  >
-                    Submit Enquiry
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+            </section>
           </div>
+
+          {/* This used to be a custom <form> with no onSubmit handler at all —
+              submitting it reloaded the page and dropped the enquiry. */}
+          <aside className="lg:sticky lg:top-28 lg:self-start">
+            <LeadForm
+              source={`project:${id}`}
+              headline={`Enquire about ${project.name}`}
+              sub={project.status === 'Delivered'
+                ? 'This project is delivered. Ask us about resale availability, or about the current launches nearby.'
+                : 'We will send the plot layout, the approvals and a single all-in cost — land, stamp duty, registration and legal.'}
+            />
+          </aside>
         </div>
       </div>
 

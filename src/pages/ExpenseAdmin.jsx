@@ -11,6 +11,7 @@ import {
   Repeat, AlertTriangle, CheckCircle, Clock, Users, FileText, ArrowDownToLine,
   Milk, ShoppingCart, Coffee, Droplets, Sparkles, Printer, Package, Car, Wrench,
   Zap, Wifi, HeartHandshake,
+  Inbox,
 } from 'lucide-react';
 import { format, parseISO, startOfMonth } from 'date-fns';
 
@@ -383,6 +384,9 @@ export default function ExpenseAdmin() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            <a href="/admin/leads" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
+              <Inbox size={16} /> Leads
+            </a>
             <a href="/admin/attendance" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
               <Users size={16} /> Attendance
             </a>

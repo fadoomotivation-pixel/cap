@@ -17,6 +17,15 @@ export const site = {
   // Form leads is inbox me aati hain (FormSubmit)
   leadEmail: 'musicofmajor@gmail.com',
   address: 'A-118, 6th Floor, The Diamond, Sector 136, Noida 201304',
+  // Capital Brix's OWN profiles. These previously pointed at Mirrikh
+  // Infratech's accounts, which told Google the site belonged to them.
+  // Also emitted as `sameAs` in the organisation schema — keep both in sync.
+  socials: [
+    { name: 'YouTube',   href: 'https://www.youtube.com/@capitalbrixllp' },
+    { name: 'Instagram', href: 'https://www.instagram.com/capitalbrix' },
+    { name: 'LinkedIn',  href: 'https://www.linkedin.com/company/capitalbrixofficial/' },
+    { name: 'Facebook',  href: 'https://www.facebook.com/CapitalBrixOfficial/' },
+  ],
   domain: 'https://www.capitalbrix.co.in',
   whatsappMessage:
     'Hi Capital Brix! I am interested in Mirrikh Infratech projects in Dholera Smart City. Please share current prices and plot availability.',
@@ -94,6 +103,12 @@ export const whyDholera = [
 export const projectFilters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 
 // ─── ONGOING / CURRENT PROJECTS (from mirrikh.com dropdown) ───────────────
+// Each project renders a detail page at /projects/<slug>. Optional fields that
+// make that page rank better — add them wherever you have the real detail:
+//   about:     one paragraph specific to this project (why a buyer picks it)
+//   aboutMore: a second paragraph if there is more to say
+// Without them, pages fall back to copy composed from the fields below, which
+// can only be as distinct as the data is. See src/lib/projectContent.js.
 export const projects = [
   {
     name: 'Mayur NOVA',

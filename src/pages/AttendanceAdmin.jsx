@@ -6,6 +6,7 @@ import {
   Users, UserPlus, MapPin, Download, Search, LogOut, RefreshCw, CheckCircle, Clock,
   Building2, Navigation, Home, UserX, Power, Calendar, Send, KeyRound, Settings, AlertTriangle,
   Copy, BarChart3, Bell, Crosshair, X, Wallet,
+  Inbox,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
@@ -273,6 +274,9 @@ export default function AttendanceAdmin() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            <a href="/admin/leads" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
+              <Inbox size={16} /> Leads
+            </a>
             <a href="/admin/expenses" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
               <Wallet size={16} /> Petty Cash
             </a>

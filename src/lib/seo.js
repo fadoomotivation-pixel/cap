@@ -47,9 +47,9 @@ export const pageSeo = {
     path: '/contact',
   },
   blog: {
-    title: 'Dholera Investment Insights & News | Capital Brix Blog',
+    title: 'Dholera Insights: Price, Legal & Infrastructure Guides',
     description:
-      'Latest updates on Dholera Smart City — infrastructure progress, land price trends, government approvals and practical guidance for plot buyers and investors.',
+      'Practical guides for Dholera plot buyers — what land costs in 2026, how to verify NA/NOC/title documents, what the airport, expressway and Tata fab actually mean, and an NRI buying checklist.',
     path: '/blog',
   },
   events: {
@@ -62,3 +62,57 @@ export const pageSeo = {
 
 // Private/utility routes must never be indexed.
 export const noIndexRoutes = ['/employee-kyc', '/admin/interviews', '/book'];
+
+// ── Blog posts ───────────────────────────────────────────────
+// Each post owns one keyword cluster and gets its own canonical URL, so the
+// blog can actually rank instead of being one page of truncated excerpts.
+
+export const blogPostSeo = (post) => ({
+  title: post.seoTitle || post.title,
+  description: post.excerpt,
+  path: `/blog/${post.slug}`,
+});
+
+/** BlogPosting + FAQPage + BreadcrumbList for a post. Only marks up content
+ *  that is actually rendered on the page — invisible schema is a manual-action
+ *  risk, not a shortcut. */
+export const blogPostJsonLd = (post) => ({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'BlogPosting',
+      headline: post.title,
+      description: post.excerpt,
+      datePublished: post.date,
+      dateModified: post.updated || post.date,
+      inLanguage: 'en-IN',
+      mainEntityOfPage: { '@type': 'WebPage', '@id': absoluteUrl(`/blog/${post.slug}`) },
+      author: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+      publisher: {
+        '@type': 'Organization',
+        name: SITE_NAME,
+        url: SITE_URL,
+        logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo-capital-brix.png` },
+      },
+      about: post.keyword,
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: absoluteUrl('/blog') },
+        { '@type': 'ListItem', position: 3, name: post.title, item: absoluteUrl(`/blog/${post.slug}`) },
+      ],
+    },
+    ...(post.faqs?.length
+      ? [{
+          '@type': 'FAQPage',
+          mainEntity: post.faqs.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        }]
+      : []),
+  ],
+});

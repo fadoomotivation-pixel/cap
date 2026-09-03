@@ -76,8 +76,8 @@ export default function Projects() {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 lg:mb-24">
           <div className="max-w-2xl">
-            <h2 className="text-[#D4AF37] font-semibold tracking-[0.2em] uppercase text-xs mb-4">Portfolio</h2>
-            <h3 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] leading-tight">Featured Projects</h3>
+            <p className="text-[#D4AF37] font-semibold tracking-[0.2em] uppercase text-xs mb-4">Portfolio</p>
+            <h2 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] leading-tight">Dholera plot projects by Mirrikh Infratech</h2>
           </div>
           <p className="text-gray-500 font-light mt-6 md:mt-0 max-w-sm text-sm">
             Discover our premium NA-approved plots designed for exceptional appreciation and world-class living in Dholera SIR.
