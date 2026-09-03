@@ -223,8 +223,22 @@ called `preventDefault()` and nothing else, so every lead was silently dropped.
   regenerate it when projects are added. `public/robots.txt` disallows private routes.
 - Structured data: `RealEstateAgent` + `FAQPage` in `index.html`, `Person` (founder,
   with award) on the homepage, `Product` per project detail page.
-- Known limitation: this is a client-rendered SPA, so crawlers depend on JS rendering.
-  The highest-impact next SEO step is prerendering/SSR for public routes.
+- **Public routes are prerendered at build time.** `npm run build` runs
+  `vite build` and then `scripts/prerender.mjs`, which renders every public
+  route to real HTML so a crawler that does not execute JS still sees the page.
+  Routes come from `public/sitemap.xml`, so the prerendered set can never drift
+  from the indexed set — **add a new public route to the sitemap or it will not
+  be prerendered.** A failing route fails the build rather than shipping an
+  empty page.
+  - `src/entry-server.jsx` renders `AppContent` under a `StaticRouter`.
+    React 19's `renderToString` hoists `<title>`/`<meta>`/`<link>` to the front
+    of the returned string; the script peels them into `<head>`, otherwise every
+    page hydrates with a mismatch.
+  - Prerendered head tags are **not** marked `data-static-seo` — React adopts
+    them during hydration, so removing them would strip the page's canonical.
+  - `dist/app.html` is the plain SPA shell that `vercel.json` rewrites to.
+    Private routes and unknown URLs get that, never the prerendered homepage.
+  - `src/main.jsx` hydrates when `#root` has `data-prerendered`, else mounts fresh.
 
 ## Interview Scheduler — what HR can do
 

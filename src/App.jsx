@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Seo from './components/Seo';
 import Navbar from './components/Navbar';
@@ -53,10 +53,15 @@ const PrivateRoute = ({ title, children }) => (
   </>
 );
 
-export default function App() {
+/**
+ * Everything inside the router. Split out so the build-time prerenderer can
+ * mount the same tree under a StaticRouter — public routes are rendered to
+ * real HTML at build time, because this is a client-rendered SPA and a
+ * crawler that does not execute JS would otherwise see an empty <div>.
+ */
+export function AppContent() {
   return (
-    <HelmetProvider>
-    <Router>
+    <>
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -88,7 +93,16 @@ export default function App() {
       </Routes>
       <Footer />
       <WhatsAppFloat />
-    </Router>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <HelmetProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
     </HelmetProvider>
   );
 }
