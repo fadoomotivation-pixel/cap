@@ -7,9 +7,16 @@
     <link rel="apple-touch-icon" href="/logo-capital-brix.png" />
     <meta name="theme-color" content="#0A1A33" />
 
+    <!-- Tags marked data-static-seo exist for crawlers that do NOT execute JS —
+         chiefly the social scrapers behind WhatsApp, Facebook and X, which read
+         this raw HTML and never run the app. Once the app mounts, <Seo> removes
+         them, because on React 19 react-helmet-async appends its tags rather
+         than replacing these — which left every route serving two descriptions
+         and two canonicals, the surviving canonical always pointing at "/".
+         A wrong canonical on every page is a reason nothing ranks. -->
     <!-- ── Primary SEO ─────────────────────────────────────── -->
     <title>Dholera Smart City Plots | Capital Brix — Official Strategy Partner of Mirrikh Infratech</title>
-    <meta
+    <meta data-static-seo
       name="description"
       content="Capital Brix — official strategy partner of Mirrikh Infratech. Book NA-approved, title-clear plots in Dholera SIR from ₹7,250/sq yd at direct developer pricing: Mayur Greenz II, Mayur Evana, Mayur Enclave 5, Mayur Signature. Near Dholera International Airport & Ahmedabad–Dholera Expressway. Free site visit."
     />
@@ -17,30 +24,30 @@
       name="keywords"
       content="Dholera, Dholera Smart City, Dholera SIR, Dholera plots, plots in Dholera, Dholera plot price, Dholera investment, residential plots Dholera, industrial plots Dholera, Dholera International Airport, Ahmedabad Dholera Expressway, Dholera Special Investment Region, buy plot in Dholera, Dholera smart city investment, Capital Brix, Mirrikh Infratech, Mayur Greenz II, Mayur Evana Kasindra, Mayur Enclave 5, Mayur Signature Rojka, Mayur Industrial Park Dholera"
     />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta data-static-seo name="robots" content="index, follow, max-image-preview:large" />
     <meta name="author" content="Capital Brix" />
     <meta name="geo.region" content="IN-GJ" />
     <meta name="geo.placename" content="Dholera, Gujarat" />
-    <link rel="canonical" href="https://www.capitalbrix.co.in/" />
+    <link data-static-seo rel="canonical" href="https://www.capitalbrix.co.in/" />
 
     <!-- ── Open Graph / social ─────────────────────────────── -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Capital Brix" />
-    <meta property="og:title" content="Dholera Smart City Plots | Capital Brix" />
-    <meta
+    <meta data-static-seo property="og:type" content="website" />
+    <meta data-static-seo property="og:site_name" content="Capital Brix" />
+    <meta data-static-seo property="og:title" content="Dholera Smart City Plots | Capital Brix" />
+    <meta data-static-seo
       property="og:description"
       content="Official Mirrikh Infratech strategy partner — NA-approved, title-clear Dholera plots from ₹7,250/sq yd at direct developer pricing. Book a free site visit."
     />
-    <meta property="og:url" content="https://www.capitalbrix.co.in/" />
-    <meta property="og:image" content="https://www.capitalbrix.co.in/og-capital-brix.jpg" />
+    <meta data-static-seo property="og:url" content="https://www.capitalbrix.co.in/" />
+    <meta data-static-seo property="og:image" content="https://www.capitalbrix.co.in/og-capital-brix.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Capital Brix — NA-approved, title-clear plots in Dholera Smart City" />
-    <meta property="og:locale" content="en_IN" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://www.capitalbrix.co.in/og-capital-brix.jpg" />
-    <meta name="twitter:title" content="Dholera Smart City Plots | Capital Brix" />
-    <meta
+    <meta data-static-seo property="og:locale" content="en_IN" />
+    <meta data-static-seo name="twitter:card" content="summary_large_image" />
+    <meta data-static-seo name="twitter:image" content="https://www.capitalbrix.co.in/og-capital-brix.jpg" />
+    <meta data-static-seo name="twitter:title" content="Dholera Smart City Plots | Capital Brix" />
+    <meta data-static-seo
       name="twitter:description"
       content="Invest early in India's first greenfield smart city. Title-clear Dholera plots with registered sale deed."
     />

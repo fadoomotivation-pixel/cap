@@ -69,8 +69,10 @@ the token columns (`confirmation_token`, `recovery_token`, `email_change_token_n
 
 Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/*`,
 `/blog`, `/events`, `/contact`.
+Public: also `/blog/:slug` (8 original guides — see below).
 Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
-`/admin/attendance`, `/admin/expenses`, `/book/:token`, `/book/confirm/:bookingId`.
+`/admin/attendance`, `/admin/expenses`, `/admin/leads`, `/book/:token`,
+`/book/confirm/:bookingId`.
 
 ## Attendance module
 
@@ -165,6 +167,52 @@ load, so HR never creates slots by hand — manual creation still exists but is
 tucked behind "Show manual slot creation". The function is idempotent: it skips
 times that already exist, past times, weekends/lunch per settings, and never
 touches booked slots.
+
+## Blog — original content only
+
+`src/data/blogs.js` once held 252 stub entries whose titles, excerpts and images
+were copied verbatim from mirrikh.com, with 243 images hotlinked from their
+server. None had a body or a URL, so none could rank; together they read to a
+crawler as a scraped, thin doorway page — a sitewide risk, not a `/blog` one.
+
+They are gone. In their place are 8 original long-form guides, each with its own
+`/blog/<slug>` URL, one keyword cluster, 800+ words, 3+ rendered FAQs, and
+`BlogPosting` + `BreadcrumbList` + `FAQPage` schema.
+
+- **Never paste content from mirrikh.com or any other site into this repo.**
+  We are their strategy partner, not their mirror; duplicate content competes
+  with the source and loses.
+- Cover art is generated in `src/components/BlogArt.jsx` (SVG, per-post `tone`).
+  Do not go back to hotlinking someone else's images — it breaks when they
+  rename a folder and tells a crawler whose content it is.
+- Adding a post: unique slug, a keyword nothing else on the site targets,
+  real substance, and add the URL to `public/sitemap.xml`.
+
+### The duplicate-canonical trap
+
+`index.html` carries fallback SEO tags marked `data-static-seo`, for crawlers
+that never run JS (the WhatsApp/Facebook/X scrapers). On React 19,
+react-helmet-async **renders** its tags and lets React hoist them — it does not
+remove those fallbacks. Left alone, every route served two descriptions and two
+canonicals, and the canonical read first said `/` on every page, which tells
+Google not to rank any of them. `src/components/Seo.jsx` therefore strips
+`[data-static-seo]` on mount. If you add a tag to `index.html` that `Seo` also
+emits, mark it `data-static-seo` too.
+
+## Website leads
+
+`cb_leads` — every enquiry from the site. Before this existed, `ContactForm`
+called `preventDefault()` and nothing else, so every lead was silently dropped.
+
+- RLS: **anon may INSERT, nobody but admins may SELECT.** A public read policy
+  here would expose every enquiry the site has received to anyone with the anon
+  key. Validation lives in column checks, not in the client.
+- `source` / `source_path` record which page produced the lead, so
+  `/admin/leads` can show which blog post actually earns enquiries.
+- `src/lib/leads.js` is the only writer; `src/components/LeadForm.jsx` is the
+  reusable conversion block used on blog posts and the blog index.
+- HR sees them at `/admin/leads` with one-tap WhatsApp / call and a status
+  pipeline (`new` → `contacted` → `site-visit` → `converted` / `lost`).
 
 ## SEO conventions
 

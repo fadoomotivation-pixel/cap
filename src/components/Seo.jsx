@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { SITE_NAME, DEFAULT_OG_IMAGE, absoluteUrl } from '../lib/seo';
 
@@ -10,6 +10,16 @@ import { SITE_NAME, DEFAULT_OG_IMAGE, absoluteUrl } from '../lib/seo';
 export default function Seo({ title, description, path = '/', image, noIndex = false, jsonLd, children }) {
   const canonical = absoluteUrl(path);
   const ogImage = image || DEFAULT_OG_IMAGE;
+
+  // index.html carries a set of fallback SEO tags for crawlers that never run
+  // JS. On React 19, react-helmet-async renders its tags and lets React hoist
+  // them into <head> — it does not remove those fallbacks. Left alone, every
+  // route ends up with two descriptions and two canonicals, and the canonical
+  // a crawler reads first is the homepage one, which tells Google not to rank
+  // this page at all. So the moment the app takes over, drop the fallbacks.
+  useEffect(() => {
+    document.head.querySelectorAll('[data-static-seo]').forEach((el) => el.remove());
+  }, []);
 
   return (
     <Helmet>
