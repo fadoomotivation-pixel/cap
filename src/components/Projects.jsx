@@ -12,8 +12,18 @@ import BlogArt from './BlogArt';
 //
 // To use a real photograph: add `image: '/projects/<slug>.webp'` to the project
 // in src/data/site.js and drop the file in public/projects/. It must be a file
-// WE host — never a URL on someone else's server. Everything else here is
-// unchanged, and the generated art stays as the fallback.
+// WE host — never a URL on someone else's server.
+//
+// Two rendering modes, because the supplied assets are Mirrikh's BRAND
+// CREATIVES (a logo and a headline on a coloured ground), not photographs of
+// the land. Burying those under a dark gradient and stamping the project name
+// over them printed the same words twice and chopped the artwork. So an image
+// is shown clean, with the name in the text block below; the generated-art
+// fallback keeps the gradient, because there the name has to live on the art.
+//
+// The supplied creatives are 4:3 crops of taller posters, so some have their
+// own logo clipped at the top. That is baked into the file — no CSS fixes it.
+// Real 4:3 site photographs would.
 const TONES = ['gold', 'navy', 'teal', 'green', 'sky', 'violet', 'indigo', 'amber'];
 
 const STATUS_STYLE = {
@@ -39,46 +49,53 @@ function ProjectCard({ p, i }) {
       <Link to={`/projects/${id}`} className="group block">
         {/* Cover — the project name lives ON the art, so the card has presence
             even before a photograph exists for it. */}
-        <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-[#0A1016]">
+        <div className={`relative aspect-[4/3] overflow-hidden rounded-sm ${p.image ? 'bg-gray-50 border border-gray-100' : 'bg-[#0A1016]'}`}>
           {p.image ? (
             <img
               src={p.image}
-              alt={`${p.name} — ${p.type.toLowerCase()} at ${p.location}, Dholera Smart City`}
+              alt={`${p.name} — ${p.type.toLowerCase()} in Dholera Smart City by Mirrikh Infratech`}
               loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
             />
           ) : (
-            <BlogArt
-              tone={TONES[i % TONES.length]}
-              seed={i + 3}
-              label={p.name}
-              className="absolute inset-0 w-full h-full group-hover:scale-[1.04] transition-transform duration-700 ease-out"
-            />
+            <>
+              <BlogArt
+                tone={TONES[i % TONES.length]}
+                seed={i + 3}
+                label={p.name}
+                className="absolute inset-0 w-full h-full group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(to top, rgba(10,16,22,0.88) 0%, rgba(10,16,22,0.25) 55%, rgba(10,16,22,0.1) 100%)' }}
+              />
+              <div className="absolute inset-x-0 bottom-0 p-5">
+                <p className="text-[#D4AF37] text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">{p.type}</p>
+                <h3 className="text-white font-heading text-2xl lg:text-[1.65rem] leading-tight">{p.name}</h3>
+              </div>
+            </>
           )}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(to top, rgba(10,16,22,0.88) 0%, rgba(10,16,22,0.25) 55%, rgba(10,16,22,0.1) 100%)' }}
-          />
 
           <span className={`absolute top-4 left-4 text-[10px] font-bold uppercase tracking-[0.14em] px-2.5 py-1 rounded-sm ${
-            STATUS_STYLE[p.status] || 'bg-white/15 text-white backdrop-blur-sm'
+            p.image
+              ? 'bg-[#0A1016] text-white'
+              : STATUS_STYLE[p.status] || 'bg-white/15 text-white backdrop-blur-sm'
           }`}>
             {p.status}
           </span>
-
-          <div className="absolute inset-x-0 bottom-0 p-5">
-            <p className="text-[#D4AF37] text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">
-              {p.type}
-            </p>
-            <h3 className="text-white font-heading text-2xl lg:text-[1.65rem] leading-tight">
-              {p.name}
-            </h3>
-          </div>
         </div>
 
         {/* The facts a plot buyer actually scans for. The old card showed a
             logo, a category and a city — none of which help anyone choose. */}
         <div className="pt-4">
+          {p.image && (
+            <>
+              <p className="text-[#9C7C1C] text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">{p.type}</p>
+              <h3 className="font-heading text-2xl text-[#10243E] leading-tight mb-2 group-hover:text-[#9C7C1C] transition-colors">
+                {p.name}
+              </h3>
+            </>
+          )}
           <p className="flex items-start gap-2 text-sm text-gray-500 mb-3">
             <MapPin size={14} className="text-[#9C7C1C] shrink-0 mt-0.5" />
             <span className="leading-snug">{p.location}</span>

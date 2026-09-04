@@ -151,7 +151,9 @@ export const projects = [
   },
   {
     name: 'Mayur Park III',
-    image: '/projects/mayur-park-iii.webp',
+    // Asset supplied for this slug is the MAYUR PARK-II brand mark, not Park III.
+    // Re-enable once Mirrikh sends the correct one.
+    // image: '/projects/mayur-park-iii.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
