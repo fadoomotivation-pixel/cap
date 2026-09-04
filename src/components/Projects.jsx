@@ -9,6 +9,11 @@ import BlogArt from './BlogArt';
 // mirrikh.com inside a 4:3 white box — so the homepage's most important
 // commercial section was seven large empty rectangles, and it broke entirely
 // whenever their server did. Generated SVG instead, same system as the blog.
+//
+// To use a real photograph: add `image: '/projects/<slug>.webp'` to the project
+// in src/data/site.js and drop the file in public/projects/. It must be a file
+// WE host — never a URL on someone else's server. Everything else here is
+// unchanged, and the generated art stays as the fallback.
 const TONES = ['gold', 'navy', 'teal', 'green', 'sky', 'violet', 'indigo', 'amber'];
 
 const STATUS_STYLE = {
@@ -35,12 +40,21 @@ function ProjectCard({ p, i }) {
         {/* Cover — the project name lives ON the art, so the card has presence
             even before a photograph exists for it. */}
         <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-[#0A1016]">
-          <BlogArt
-            tone={TONES[i % TONES.length]}
-            seed={i + 3}
-            label={p.name}
-            className="absolute inset-0 w-full h-full group-hover:scale-[1.04] transition-transform duration-700 ease-out"
-          />
+          {p.image ? (
+            <img
+              src={p.image}
+              alt={`${p.name} — ${p.type.toLowerCase()} at ${p.location}, Dholera Smart City`}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+            />
+          ) : (
+            <BlogArt
+              tone={TONES[i % TONES.length]}
+              seed={i + 3}
+              label={p.name}
+              className="absolute inset-0 w-full h-full group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+            />
+          )}
           <div
             className="absolute inset-0"
             style={{ background: 'linear-gradient(to top, rgba(10,16,22,0.88) 0%, rgba(10,16,22,0.25) 55%, rgba(10,16,22,0.1) 100%)' }}

@@ -107,6 +107,9 @@ export const projectFilters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 // make that page rank better — add them wherever you have the real detail:
 //   about:     one paragraph specific to this project (why a buyer picks it)
 //   aboutMore: a second paragraph if there is more to say
+//   image:     '/projects/<slug>.webp' — a photo WE host, in public/projects/.
+//              Never a URL on another company's server: it breaks when they
+//              rename a folder, and it tells a crawler whose content it is.
 // Without them, pages fall back to copy composed from the fields below, which
 // can only be as distinct as the data is. See src/lib/projectContent.js.
 export const projects = [

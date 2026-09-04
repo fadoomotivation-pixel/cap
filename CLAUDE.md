@@ -328,6 +328,16 @@ Rules:
    (`information_schema`, `pg_policies`) and build against **that**, not against
    what a chat log describes — they drift.
 
+`docs/ANTIGRAVITY_BRIEF.md` is the current handoff: what the SEO work changed,
+the project-photo task, and the list of load-bearing things not to "clean up".
+Update it when the state of the repo moves on.
+
+**Project photos:** drop a file in `public/projects/<slug>.webp` and add
+`image: '/projects/<slug>.webp'` to that project in `site.js`. The card uses it
+and falls back to generated art otherwise. Files must be **self-hosted** —
+pointing an `<img src>` at mirrikh.com is what made the homepage render seven
+empty boxes.
+
 ## Conventions
 
 - Run `npx vite build` before pushing — it's the only build check in the repo.
