@@ -6,9 +6,9 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-16 lg:py-24 bg-gray-50">
       <div className="max-w-4xl mx-auto px-6">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 lg:mb-14">
           <h2 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] mb-4">
             Buying a plot in Dholera — frequently asked
           </h2>
@@ -21,16 +21,16 @@ export default function FAQ() {
             return (
               <div 
                 key={index} 
-                className={`bg-white border ${isOpen ? 'border-[#f37435]' : 'border-gray-200'} rounded-sm overflow-hidden transition-colors`}
+                className={`bg-white border ${isOpen ? 'border-[#D4AF37]' : 'border-gray-200'} rounded-sm overflow-hidden transition-colors`}
               >
                 <button
                   className="w-full text-left px-6 py-5 flex items-center justify-between focus:outline-none"
                   onClick={() => setOpenIndex(isOpen ? -1 : index)}
                 >
-                  <span className={`font-semibold text-lg ${isOpen ? 'text-[#f37435]' : 'text-[#101010]'}`}>
+                  <span className={`font-semibold text-lg ${isOpen ? 'text-[#9C7C1C]' : 'text-[#101010]'}`}>
                     {faq.q}
                   </span>
-                  <span className={`text-2xl transform transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#f37435]' : 'text-gray-400'}`}>
+                  <span className={`text-2xl transform transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#9C7C1C]' : 'text-gray-400'}`}>
                     {isOpen ? '−' : '+'}
                   </span>
                 </button>

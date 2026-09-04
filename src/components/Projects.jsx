@@ -1,91 +1,145 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ArrowRight, MapPin, Maximize2 } from 'lucide-react';
 import { projects } from '../data/site';
+import BlogArt from './BlogArt';
 
-const projectMeta = {
-  // Ongoing Projects
-  'Mayur NOVA':                 { logo: 'https://mirrikh.com/wp-content/uploads/2026/07/Mayur-NOVA-Logo1-1024x542.png', tag: 'Residential' },
-  'Mayur Aerocity II':          { logo: 'https://mirrikh.com/wp-content/uploads/2026/07/Mayur-Aerocity-II-Logo1-scaled.png', tag: 'Residential' },
-  'Mayur Ananta II':            { logo: 'https://mirrikh.com/wp-content/uploads/2026/02/Mayur-Ananta-logo2.png', tag: 'Residential' },
-  'Mayur Forest Villa':         { logo: 'https://mirrikh.com/wp-content/uploads/2026/05/Mayur-Forest-Villa-Dholera-logo1.jpg', tag: 'Residential' },
-  'Mayur Greenz Courtyard':     { logo: 'https://mirrikh.com/wp-content/uploads/2026/04/Mayur-Greenz-Courtyard-logo.svg', tag: 'Residential' },
-  'Mayur Industrial Landmark':  { logo: 'https://mirrikh.com/wp-content/uploads/2026/01/Mayur-Industrial-Landmark-logo.png', tag: 'Industrial' },
-  'Mayur Park III':             { tag: 'Residential' },
-  'Mayur Greenz III':           { tag: 'Residential' },
-  'Mayur KALP':                 { tag: 'Residential' },
-  'Mayur Aerocity':             { tag: 'Commercial' },
-  'Mayur Industrial Hub':       { tag: 'Industrial' },
+// Cover art per project. These cards used to render a LOGO hotlinked from
+// mirrikh.com inside a 4:3 white box — so the homepage's most important
+// commercial section was seven large empty rectangles, and it broke entirely
+// whenever their server did. Generated SVG instead, same system as the blog.
+const TONES = ['gold', 'navy', 'teal', 'green', 'sky', 'violet', 'indigo', 'amber'];
+
+const STATUS_STYLE = {
+  'New Launch':  'bg-[#D4AF37] text-[#0A1016]',
+  'Pre-Launch':  'bg-white text-[#0A1016]',
+  Ongoing:       'bg-white/15 text-white backdrop-blur-sm',
+  Delivered:     'bg-white/15 text-white backdrop-blur-sm',
 };
 
-function ProjectCard({ p }) {
-  const meta = projectMeta[p.name] || {};
-  const id = p.name.toLowerCase().replace(/\s+/g, '-');
+const slug = (name) => name.toLowerCase().replace(/\s+/g, '-');
+
+function ProjectCard({ p, i }) {
+  const id = slug(p.name);
+  const hasPrice = p.price && p.price !== 'On Request';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
+    <motion.article
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className="group block"
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: 'easeOut' }}
     >
-      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden mb-6">
-        {meta.logo ? (
-          <div className="w-full h-full flex items-center justify-center p-8 bg-white border border-gray-100">
-            <img
-              src={meta.logo}
-              alt={`${p.name} Logo`}
-              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-          </div>
-        ) : (
-          <div className="w-full h-full bg-[#1A1A1A] flex flex-col items-center justify-center text-white border border-gray-100 group-hover:scale-105 transition-transform duration-700 ease-out">
-            <span className="text-xs font-semibold tracking-[0.3em] uppercase mb-2 text-[#D4AF37]">MAYUR</span>
-            <span className="text-3xl font-heading font-light uppercase tracking-wide">
-              {p.name.replace('Mayur ', '')}
-            </span>
-          </div>
-        )}
-      </div>
+      <Link to={`/projects/${id}`} className="group block">
+        {/* Cover — the project name lives ON the art, so the card has presence
+            even before a photograph exists for it. */}
+        <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-[#0A1016]">
+          <BlogArt
+            tone={TONES[i % TONES.length]}
+            seed={i + 3}
+            label={p.name}
+            className="absolute inset-0 w-full h-full group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to top, rgba(10,16,22,0.88) 0%, rgba(10,16,22,0.25) 55%, rgba(10,16,22,0.1) 100%)' }}
+          />
 
-      <div>
-        <p className="text-[#D4AF37] text-[10px] font-bold uppercase tracking-widest mb-2">{meta.tag || p.category}</p>
-        <h3 className="text-2xl font-heading text-[#1A1A1A] mb-1">{p.name}</h3>
-        <p className="text-gray-500 text-sm font-light mb-4">{p.location}</p>
-        
-        <Link
-          to={`/projects/${id}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#1A1A1A] hover:text-[#D4AF37] transition-colors uppercase tracking-widest"
-        >
-          View Details
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transform group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-        </Link>
-      </div>
-    </motion.div>
+          <span className={`absolute top-4 left-4 text-[10px] font-bold uppercase tracking-[0.14em] px-2.5 py-1 rounded-sm ${
+            STATUS_STYLE[p.status] || 'bg-white/15 text-white backdrop-blur-sm'
+          }`}>
+            {p.status}
+          </span>
+
+          <div className="absolute inset-x-0 bottom-0 p-5">
+            <p className="text-[#D4AF37] text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">
+              {p.type}
+            </p>
+            <h3 className="text-white font-heading text-2xl lg:text-[1.65rem] leading-tight">
+              {p.name}
+            </h3>
+          </div>
+        </div>
+
+        {/* The facts a plot buyer actually scans for. The old card showed a
+            logo, a category and a city — none of which help anyone choose. */}
+        <div className="pt-4">
+          <p className="flex items-start gap-2 text-sm text-gray-500 mb-3">
+            <MapPin size={14} className="text-[#9C7C1C] shrink-0 mt-0.5" />
+            <span className="leading-snug">{p.location}</span>
+          </p>
+
+          <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-gray-100 pt-3">
+            <div className="min-w-0">
+              <dt className="text-[10px] uppercase tracking-wider text-gray-400">Plot sizes</dt>
+              <dd className="text-sm text-[#10243E] font-medium truncate">{p.size || 'Multiple sizes'}</dd>
+            </div>
+            <div className="ml-auto text-right">
+              <dt className="text-[10px] uppercase tracking-wider text-gray-400">
+                {hasPrice ? 'Starting' : 'Pricing'}
+              </dt>
+              <dd className={`text-sm font-semibold ${hasPrice ? 'text-[#9C7C1C]' : 'text-[#10243E]'}`}>
+                {hasPrice ? p.price : 'On request'}
+              </dd>
+            </div>
+          </dl>
+
+          <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#10243E] group-hover:text-[#9C7C1C] group-hover:gap-3 transition-all">
+            View project <ArrowRight size={14} />
+          </span>
+        </div>
+      </Link>
+    </motion.article>
   );
 }
 
 export default function Projects() {
-  const ongoing = projects.filter(p => p.category !== 'Sold Out');
+  const ongoing = projects.filter((p) => p.category !== 'Sold Out');
+  // Six on the homepage, not every one. A shorter grid with a clear route to
+  // the full list reads better — and on a phone, where the cards stack into a
+  // single column, the last two are hidden entirely: six stacked cards is
+  // 3,000px of scroll before anyone reaches the rest of the page.
+  const featured = ongoing.slice(0, 6);
 
   return (
-    <section className="py-24 lg:py-32 bg-white" id="projects">
+    <section className="py-20 lg:py-28 bg-white" id="projects">
       <div className="max-w-7xl mx-auto px-6">
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 lg:mb-24">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 lg:mb-16">
           <div className="max-w-2xl">
-            <p className="text-[#D4AF37] font-semibold tracking-[0.2em] uppercase text-xs mb-4">Portfolio</p>
-            <h2 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] leading-tight">Dholera plot projects by Mirrikh Infratech</h2>
+            <p className="text-[#9C7C1C] font-semibold tracking-[0.2em] uppercase text-xs mb-3">Portfolio</p>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading text-[#1A1A1A] leading-tight">
+              Dholera plot projects by Mirrikh Infratech
+            </h2>
           </div>
-          <p className="text-gray-500 font-light mt-6 md:mt-0 max-w-sm text-sm">
-            Discover our premium NA-approved plots designed for exceptional appreciation and world-class living in Dholera SIR.
-          </p>
+          <Link
+            to="/projects"
+            className="shrink-0 inline-flex items-center gap-2 text-sm font-semibold text-[#10243E] border-b border-[#D4AF37] pb-1 hover:text-[#9C7C1C] hover:gap-3 transition-all"
+          >
+            All {ongoing.length} projects <ArrowRight size={15} />
+          </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
-          {ongoing.map(p => <ProjectCard key={p.name} p={p} />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+          {featured.map((p, i) => (
+            <div key={p.name} className={i >= 4 ? 'hidden sm:block' : ''}>
+              <ProjectCard p={p} i={i} />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-gray-100 pt-8">
+          <p className="flex items-center gap-2 text-sm text-gray-500">
+            <Maximize2 size={15} className="text-[#D4AF37]" />
+            Every plot is NA-converted, NOC-cleared, title-clear and plan-passed.
+          </p>
+          <Link
+            to="/projects"
+            className="inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] px-6 py-3 rounded-sm text-sm font-semibold transition-colors"
+          >
+            Browse all projects <ArrowRight size={16} />
+          </Link>
         </div>
 
       </div>

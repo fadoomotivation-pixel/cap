@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 
 export default function HomeAbout() {
   return (
-    <section className="py-24 lg:py-32 bg-[#FAFAFA] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-16 lg:gap-24 items-center">
+    <section className="py-16 lg:py-24 bg-[#FAFAFA] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-20 items-center">
         
         {/* Left: Founder Image */}
         <motion.div
