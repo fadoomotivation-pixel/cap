@@ -115,6 +115,7 @@ export const projectFilters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 export const projects = [
   {
     name: 'Mayur NOVA',
+    image: '/projects/mayur-nova.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Ratanpur, Dholera Smart City',
@@ -132,6 +133,7 @@ export const projects = [
   },
   {
     name: 'Mayur Aerocity II',
+    image: '/projects/mayur-aerocity-ii.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Near Dholera International Airport',
@@ -149,6 +151,7 @@ export const projects = [
   },
   {
     name: 'Mayur Park III',
+    image: '/projects/mayur-park-iii.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
@@ -166,6 +169,7 @@ export const projects = [
   },
   {
     name: 'Mayur Forest Villa',
+    image: '/projects/mayur-forest-villa.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
@@ -183,6 +187,7 @@ export const projects = [
   },
   {
     name: 'Mayur Greenz Courtyard',
+    image: '/projects/mayur-greenz-courtyard.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
@@ -200,6 +205,7 @@ export const projects = [
   },
   {
     name: 'Mayur Ananta II',
+    image: '/projects/mayur-ananta-ii.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
@@ -217,6 +223,7 @@ export const projects = [
   },
   {
     name: 'Mayur Industrial Landmark',
+    image: '/projects/mayur-industrial-landmark.webp',
     type: 'Industrial Plots',
     category: 'Industrial',
     location: 'Dholera Smart City Industrial Zone',
