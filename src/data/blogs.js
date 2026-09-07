@@ -301,7 +301,7 @@ export const blogs = [
         list: {
           ordered: true,
           items: [
-            '**Confirm the survey number and physically locate the plot.** Stand on it. Match the boundaries against the layout. A surprising number of disputes begin with a buyer who never visited the land they bought.',
+            '**Confirm the survey number and physically locate the plot.** Stand on it and match the boundaries against the layout. Before visiting in person, inspect the [official Dholera 360° virtual tour](/dholera/virtual-tour) to verify the ABCD Building, internal road network, and activation area grid. A surprising number of disputes begin with a buyer who never verified the land.',
             '**Verify NA conversion and plan approval for that survey number.** If this fails, stop. Nothing further is worth your time.',
             '**Pull the 7/12 extract and read the names.** Ask about anyone you do not recognise.',
             '**Trace the title chain.** Have a lawyer do this if you are not confident; the fee is trivial against the exposure.',
