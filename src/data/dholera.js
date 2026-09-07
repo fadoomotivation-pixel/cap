@@ -369,24 +369,25 @@ export const dholeraPages = [
       {
         h2: 'Official land allotment pricing & procedures',
         p: [
-          'Land in Dholera SIR is allotted by DICDL on a 99-year leasehold basis through an online application and single-window clearance portal. Base rates published by DICDL reflect statutory valuations across designated land-use categories:',
+          'Land in Dholera SIR is allotted by DICDL on a 99-year leasehold basis through an online application and single-window clearance portal. Base rates published by DICDL reflect statutory valuations across designated land-use categories.',
+          'The official rates are published per square metre. Retail plots — including ours — are quoted per square yard, and the two are not comparable until one is converted into the other. Both are shown below so the comparison can be made honestly rather than by unit confusion (1 sq m ≈ 1.196 sq yd).',
         ],
         table: {
-          head: ['Land-Use Category', 'Official Base Rate (₹ / sq m)', 'Leasehold Terms'],
+          head: ['Land-Use Category', 'Official Base Rate (₹ / sq m)', 'Same rate (₹ / sq yd)', 'Leasehold Terms'],
           rows: [
-            ['Industrial & Utilities', '₹4,000 / sq m', '99-year leasehold via DICDL single-window portal'],
-            ['Residential', '₹6,000 / sq m', 'Designated residential zones in TP 1 & TP 2'],
-            ['High Access Corridor (HAC)', '₹6,000 / sq m', 'Mixed-use frontage along major transit corridors'],
-            ['City Centre / Commercial (CBD)', '₹8,000 / sq m', 'Central business district core parcels'],
-            ['Knowledge & IT', '₹4,000 / sq m', 'Institutional, universities, and research facilities'],
-            ['Tourism & Hospitality', '₹8,000 / sq m', 'Hotel, resort, and commercial hospitality parcels'],
-            ['Solar Park', '₹400 / sq m', '5,000 MW Ultra Mega Solar Power Park zone'],
+            ['Industrial & Utilities', '₹4,000 / sq m', '≈ ₹3,345 / sq yd', '99-year leasehold via DICDL single-window portal'],
+            ['Residential', '₹6,000 / sq m', '≈ ₹5,015 / sq yd', 'Designated residential zones in TP 1 & TP 2'],
+            ['High Access Corridor (HAC)', '₹6,000 / sq m', '≈ ₹5,015 / sq yd', 'Mixed-use frontage along major transit corridors'],
+            ['City Centre / Commercial (CBD)', '₹8,000 / sq m', '≈ ₹6,690 / sq yd', 'Central business district core parcels'],
+            ['Knowledge & IT', '₹4,000 / sq m', '≈ ₹3,345 / sq yd', 'Institutional, universities, and research facilities'],
+            ['Tourism & Hospitality', '₹8,000 / sq m', '≈ ₹6,690 / sq yd', 'Hotel, resort, and commercial hospitality parcels'],
+            ['Solar Park', '₹400 / sq m', '≈ ₹335 / sq yd', '5,000 MW Ultra Mega Solar Power Park zone'],
           ],
         },
         callout: {
           tone: 'warn',
-          title: 'Government allotment vs private freehold / NA plots',
-          text: 'DICDL rates apply to direct government leasehold allotments of large institutional or industrial acreage. Private retail plot developments (such as projects delivered by Mirrikh Infratech) operate on legally converted Non-Agricultural (NA), plan-passed land with private title ownership deeds. Always check whether your agreement is a registered sale deed or a lease assignment.',
+          title: 'Why our plots cost more than the official base rate — and what the difference buys',
+          text: 'The residential base rate above works out to roughly ₹5,015 per sq yd. Plots on this site start at ₹7,250 per sq yd. That gap is real, and it is worth understanding rather than glossing over: the two numbers describe two different things. A DICDL base rate is the statutory floor price for a 99-year **leasehold** allotment of a parcel in a designated zone, applied for through the government single-window portal. What is sold here is a **freehold** plot — land already converted to Non-Agricultural use, inside a plan-passed layout with roads and demarcation in place, transferred to you by registered sale deed. One is a lease you apply for; the other is title you own. Before you compare the two figures, get it in writing which of the two your agreement actually is.',
         },
       },
       {

@@ -40,18 +40,6 @@ export const pageSeo = {
       'Everything about Dholera Special Investment Region — India\'s first greenfield smart city. Tata semiconductor fab, Dholera International Airport, the Ahmedabad–Dholera Expressway, master plan, land prices and investment outlook.',
     path: '/dholera',
   },
-  'dholera/virtual-tour': {
-    title: 'Official Dholera Virtual Tour: 360° Ground Reality & Sourcing',
-    description:
-      'Explore the official Government of Gujarat 360° virtual tour of Dholera SIR. Verify trunk infrastructure, ABCD building, 72 km road network, and activation area.',
-    path: '/dholera/virtual-tour',
-  },
-  dholeraVirtualTour: {
-    title: 'Official Dholera Virtual Tour: 360° Ground Reality & Sourcing',
-    description:
-      'Explore the official Government of Gujarat 360° virtual tour of Dholera SIR. Verify trunk infrastructure, ABCD building, 72 km road network, and activation area.',
-    path: '/dholera/virtual-tour',
-  },
   contact: {
     title: 'Contact Capital Brix | Book a Free Dholera Site Visit',
     description:

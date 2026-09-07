@@ -95,8 +95,15 @@ export default function ArticleBody({ sections }) {
           )}
 
           {s.table && (
+            /* min-width was sized when every table had three columns. The
+               pricing table has four, and at 560px the last column wrapped to
+               three lines per row. The container scrolls either way; this just
+               stops it scrolling into an unreadable squeeze. */
             <div className="overflow-x-auto my-7 -mx-6 px-6 lg:mx-0 lg:px-0">
-              <table className="w-full text-sm border border-gray-200 min-w-[560px]">
+              <table
+                className="w-full text-sm border border-gray-200"
+                style={{ minWidth: `${Math.max(560, s.table.head.length * 180)}px` }}
+              >
                 <thead>
                   <tr className="bg-[#10243E] text-white text-left">
                     {s.table.head.map((h, j) => (
@@ -130,7 +137,10 @@ export default function ArticleBody({ sections }) {
               </span>
               <div>
                 <p className="font-semibold text-[#10243E] mb-1">{s.callout.title}</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{s.callout.text}</p>
+                {/* Callout text was the one content field rendered raw, so a
+                    **bold** span in it shipped as literal asterisks. It now goes
+                    through the same parser as paragraphs and list items. */}
+                <p className="text-sm text-gray-700 leading-relaxed"><RichText>{s.callout.text}</RichText></p>
               </div>
             </aside>
           )}
