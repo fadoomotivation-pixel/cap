@@ -107,11 +107,15 @@ export const projectFilters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 // make that page rank better — add them wherever you have the real detail:
 //   about:     one paragraph specific to this project (why a buyer picks it)
 //   aboutMore: a second paragraph if there is more to say
+//   image:     '/projects/<slug>.webp' — a photo WE host, in public/projects/.
+//              Never a URL on another company's server: it breaks when they
+//              rename a folder, and it tells a crawler whose content it is.
 // Without them, pages fall back to copy composed from the fields below, which
 // can only be as distinct as the data is. See src/lib/projectContent.js.
 export const projects = [
   {
     name: 'Mayur NOVA',
+    image: '/projects/mayur-nova.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Ratanpur, Dholera Smart City',
@@ -129,6 +133,7 @@ export const projects = [
   },
   {
     name: 'Mayur Aerocity II',
+    image: '/projects/mayur-aerocity-ii.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Near Dholera International Airport',
@@ -146,6 +151,9 @@ export const projects = [
   },
   {
     name: 'Mayur Park III',
+    // Asset supplied for this slug is the MAYUR PARK-II brand mark, not Park III.
+    // Re-enable once Mirrikh sends the correct one.
+    // image: '/projects/mayur-park-iii.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
@@ -163,6 +171,7 @@ export const projects = [
   },
   {
     name: 'Mayur Forest Villa',
+    image: '/projects/mayur-forest-villa.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
@@ -180,6 +189,7 @@ export const projects = [
   },
   {
     name: 'Mayur Greenz Courtyard',
+    image: '/projects/mayur-greenz-courtyard.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
@@ -197,6 +207,7 @@ export const projects = [
   },
   {
     name: 'Mayur Ananta II',
+    image: '/projects/mayur-ananta-ii.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
@@ -214,6 +225,7 @@ export const projects = [
   },
   {
     name: 'Mayur Industrial Landmark',
+    image: '/projects/mayur-industrial-landmark.webp',
     type: 'Industrial Plots',
     category: 'Industrial',
     location: 'Dholera Smart City Industrial Zone',

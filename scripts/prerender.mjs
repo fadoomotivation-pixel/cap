@@ -18,7 +18,7 @@ import { build } from 'vite';
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -57,7 +57,7 @@ const run = async () => {
     },
   });
 
-  const { render } = await import(path.join(ssrDist, 'entry-server.js'));
+  const { render } = await import(pathToFileURL(path.join(ssrDist, 'entry-server.js')).href);
 
   // React 19's renderToString hoists <title>, <meta> and <link> to the FRONT of
   // the returned string rather than into a <head>. Left inside #root they cause

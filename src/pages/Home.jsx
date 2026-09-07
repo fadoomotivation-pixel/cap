@@ -5,7 +5,6 @@ import HomeAbout from '../components/HomeAbout';
 import Projects from '../components/Projects';
 import Partnership from '../components/Partnership';
 import Leadership from '../components/Leadership';
-import Awards from '../components/Awards';
 import HomeArticles from '../components/HomeArticles';
 import FAQ from '../components/FAQ';
 import ContactForm from '../components/ContactForm';
@@ -35,7 +34,6 @@ export default function Home() {
       <Projects />
       <Partnership />
       <Leadership />
-      <Awards />
       <HomeArticles />
       <FAQ />
       <ContactForm />

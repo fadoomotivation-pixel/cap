@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import AdminNav from '../components/AdminNav';
 import { ADMIN_EMAILS } from '../lib/admin';
 import {
   PAYMENT_MODES, SETTLE_MODES, inr, inrExact, fmtDate, backdatedDays,
@@ -355,7 +356,9 @@ export default function ExpenseAdmin() {
           <img src="/logo-capital-brix.png" alt="Capital Brix" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain" />
           <h2 className="text-2xl font-bold text-center mb-6 text-[#10243E]">Petty Cash Login</h2>
           {session && !isAdmin && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">This account is not authorised for HR access.</div>}
-          {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
+          <AdminNav className="mb-6" />
+
+        {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
           <form onSubmit={async (e) => { e.preventDefault(); setError(''); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setError(error.message); }} className="space-y-4">
             <input type="email" required placeholder="HR Email" value={email} onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md outline-none focus:border-[#f26522]" />
@@ -384,15 +387,6 @@ export default function ExpenseAdmin() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a href="/admin/leads" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
-              <Inbox size={16} /> Leads
-            </a>
-            <a href="/admin/attendance" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
-              <Users size={16} /> Attendance
-            </a>
-            <a href="/admin/interviews" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
-              <Clock size={16} /> Interviews
-            </a>
             <button onClick={loadCore} disabled={busy} className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 disabled:opacity-50">
               <RefreshCw size={16} className={busy ? 'animate-spin' : ''} /> Refresh
             </button>

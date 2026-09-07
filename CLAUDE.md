@@ -71,8 +71,14 @@ Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/:slug
 `/blog`, `/events`, `/contact`.
 Public: also `/blog/:slug` (8 original guides — see below).
 Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
-`/admin/attendance`, `/admin/expenses`, `/admin/leads`, `/book/:token`,
-`/book/confirm/:bookingId`.
+`/admin/attendance`, `/admin/expenses`, `/admin/leads`, `/admin/cards`,
+`/book/:token`, `/book/confirm/:bookingId`.
+
+Every admin console renders `<AdminNav />` (`src/components/AdminNav.jsx`),
+which is the **one** place the console links live. Each page used to carry its
+own hand-written row, so they drifted — and the Admin Command Center at
+`/employee-kyc`, where HR actually lands after logging in, linked to nothing at
+all. Add a new console to `ADMIN_LINKS`, not to each page.
 
 ## Attendance module
 
@@ -232,6 +238,22 @@ Google not to rank any of them. `src/components/Seo.jsx` therefore strips
 `[data-static-seo]` on mount. If you add a tag to `index.html` that `Seo` also
 emits, mark it `data-static-seo` too.
 
+## Visiting / ID card requests
+
+`cb_card_requests` — an employee raises a request from the Employee Portal's
+Cards tab; HR works it at `/admin/cards` through
+`requested → approved → printing → ready → delivered` (or `rejected`).
+
+- The printed fields (`print_name`, `designation`, `print_phone`, `print_email`)
+  are asked for explicitly rather than read off the roster. A card is printed
+  once and a misprint costs money, so the employee confirms exactly what goes
+  on it. The form prefills from `cb_employees` but every field stays editable.
+- RLS: an employee may INSERT only `user_id = auth.uid()` and SELECT only their
+  own rows; **only admins may UPDATE**, so nobody marks their own card
+  delivered. `admin_notes` is visible to the employee — it is how HR replies.
+- "Print spec" copies a plain-text batch of every approved/printing request,
+  formatted for the printer, so one order covers everyone.
+
 ## Website leads
 
 `cb_leads` — every enquiry from the site. Before this existed, `ContactForm`
@@ -327,6 +349,16 @@ Rules:
 4. If a schema was applied to Supabase by another tool, read the real schema
    (`information_schema`, `pg_policies`) and build against **that**, not against
    what a chat log describes — they drift.
+
+`docs/ANTIGRAVITY_BRIEF.md` is the current handoff: what the SEO work changed,
+the project-photo task, and the list of load-bearing things not to "clean up".
+Update it when the state of the repo moves on.
+
+**Project photos:** drop a file in `public/projects/<slug>.webp` and add
+`image: '/projects/<slug>.webp'` to that project in `site.js`. The card uses it
+and falls back to generated art otherwise. Files must be **self-hosted** —
+pointing an `<img src>` at mirrikh.com is what made the homepage render seven
+empty boxes.
 
 ## Conventions
 

@@ -20,6 +20,7 @@ import InterviewAdmin from './pages/InterviewAdmin';
 import AttendanceAdmin from './pages/AttendanceAdmin';
 import ExpenseAdmin from './pages/ExpenseAdmin';
 import LeadsAdmin from './pages/LeadsAdmin';
+import CardsAdmin from './pages/CardsAdmin';
 import InterviewBooking from './pages/InterviewBooking';
 import InterviewConfirmation from './pages/InterviewConfirmation';
 
@@ -66,6 +67,7 @@ export function AppContent() {
         <Route path="/admin/attendance" element={<PrivateRoute title="Attendance | Capital Brix"><AttendanceAdmin /></PrivateRoute>} />
         <Route path="/admin/expenses" element={<PrivateRoute title="Petty Cash | Capital Brix"><ExpenseAdmin /></PrivateRoute>} />
         <Route path="/admin/leads" element={<PrivateRoute title="Website Leads | Capital Brix"><LeadsAdmin /></PrivateRoute>} />
+        <Route path="/admin/cards" element={<PrivateRoute title="Card Requests | Capital Brix"><CardsAdmin /></PrivateRoute>} />
         <Route path="/book/:token" element={<PrivateRoute title="Schedule Your Interview | Capital Brix"><InterviewBooking /></PrivateRoute>} />
         <Route path="/book/confirm/:bookingId" element={<PrivateRoute title="Interview Confirmed | Capital Brix"><InterviewConfirmation /></PrivateRoute>} />
       </Routes>

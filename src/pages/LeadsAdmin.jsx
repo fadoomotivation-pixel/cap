@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import AdminNav from '../components/AdminNav';
 import { ADMIN_EMAILS } from '../lib/admin';
 import { downloadCsv } from '../lib/expenses';
 import {
@@ -128,15 +129,14 @@ export default function LeadsAdmin() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a href="/admin/attendance" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100"><Users size={16} /> Attendance</a>
-            <a href="/admin/expenses" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100"><Wallet size={16} /> Petty Cash</a>
-            <a href="/admin/interviews" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100"><Clock size={16} /> Interviews</a>
             <button onClick={load} disabled={busy} className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 disabled:opacity-50">
               <RefreshCw size={16} className={busy ? 'animate-spin' : ''} /> Refresh
             </button>
             <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 text-gray-600 hover:text-red-500 bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100"><LogOut size={18} /> Logout</button>
           </div>
         </div>
+
+        <AdminNav className="mb-6" />
 
         {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-4 text-sm flex justify-between gap-3">{error}<button onClick={() => setError('')}><X size={16} /></button></div>}
 

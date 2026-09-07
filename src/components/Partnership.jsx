@@ -7,7 +7,7 @@ const ICONS = { Award, Building2, FileCheck: ShieldCheck, Handshake, Landmark, C
 
 export default function Partnership() {
   return (
-    <section className="py-24 lg:py-32 bg-[#0A1016]">
+    <section className="py-16 lg:py-24 bg-[#0A1016]">
       <div className="max-w-7xl mx-auto px-6">
         
         <motion.div 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import AdminNav from '../components/AdminNav';
 import { ADMIN_EMAILS } from '../lib/admin';
 import { buildDailyWhatsAppSummary, whatsappLink, buildNudgeMessage } from '../lib/attendanceReport';
 import {
@@ -248,7 +249,9 @@ export default function AttendanceAdmin() {
           <img src="/logo-capital-brix.png" alt="Capital Brix" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain" />
           <h2 className="text-2xl font-bold text-center mb-6 text-[#10243E]">HR Attendance Login</h2>
           {session && !isAdmin && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">This account is not authorised for HR access.</div>}
-          {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
+          <AdminNav className="mb-6" />
+
+        {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="email" required placeholder="HR Email" value={email} onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md outline-none focus:border-[#f26522]" />
@@ -274,15 +277,6 @@ export default function AttendanceAdmin() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a href="/admin/leads" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
-              <Inbox size={16} /> Leads
-            </a>
-            <a href="/admin/expenses" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
-              <Wallet size={16} /> Petty Cash
-            </a>
-            <a href="/admin/interviews" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
-              <Clock size={16} /> Interviews
-            </a>
             <button onClick={fetchData} disabled={refreshing} className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 disabled:opacity-50">
               <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} /> Refresh
             </button>

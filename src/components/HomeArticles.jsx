@@ -9,16 +9,16 @@ export default function HomeArticles() {
   const recentBlogs = blogs.slice(0, 3);
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-16 lg:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 lg:mb-14">
           <h2 className="text-4xl md:text-5xl font-heading text-[#1A1A1A] mb-4">
             Dholera, explained
           </h2>
           <div className="w-16 h-1 bg-[#D4AF37] mx-auto"></div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 lg:gap-8">
           {recentBlogs.map((blog, index) => (
             <motion.article 
               key={index}
@@ -33,16 +33,16 @@ export default function HomeArticles() {
                   className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
               </div>
               
-              <div className="p-6 flex flex-col flex-grow">
+              <div className="p-5 lg:p-6 flex flex-col flex-grow">
                 <div className="text-[#9C7C1C] text-xs font-bold uppercase tracking-wider mb-2">
                   {blog.category}
                 </div>
                 
-                <h3 className="text-2xl font-heading text-[#1A1A1A] mb-3 line-clamp-2 hover:text-[#D4AF37] transition-colors">
+                <h3 className="text-xl lg:text-2xl font-heading text-[#1A1A1A] mb-2 line-clamp-2 hover:text-[#D4AF37] transition-colors">
                   <Link to={`/blog/${blog.slug}`}>{blog.title}</Link>
                 </h3>
                 
-                <p className="text-gray-500 text-sm line-clamp-3 mb-6">
+                <p className="text-gray-500 text-sm line-clamp-2 mb-4">
                   {blog.excerpt}
                 </p>
 
