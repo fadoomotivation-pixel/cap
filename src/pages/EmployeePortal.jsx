@@ -351,6 +351,38 @@ function DocBadge({ label, url, Icon }) {
   );
 }
 
+/**
+ * A KYC file submitted from a personal address sits on an account the company
+ * does not control: we cannot reset that password, and the person keeps access
+ * to their own ID documents after they leave. So the row says so and hands HR a
+ * one-tap nudge rather than treating the record as settled.
+ */
+function ResubmitNudge({ name, phone, personalLogin, workEmail }) {
+  const digits = (phone || '').replace(/\D/g, '');
+  const text = encodeURIComponent(
+    `Hi ${(name || '').trim()}, your KYC was submitted from ${personalLogin}. ` +
+    `Please log in to the Employee Portal with your work email (${workEmail}) and submit it again ` +
+    `so your documents sit on your company account. Thanks — Capital Brix HR`
+  );
+  return (
+    <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5">
+      <span className="text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5">
+        Submitted from {personalLogin}
+      </span>
+      {digits && (
+        <a
+          href={`https://wa.me/${digits.length === 10 ? `91${digits}` : digits}?text=${text}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[11px] font-medium text-[#9C7C1C] hover:underline"
+        >
+          Ask to resubmit
+        </a>
+      )}
+    </div>
+  );
+}
+
 function AdminDashboard({ session, onLogout }) {
   const [employees, setEmployees] = useState([]);
   const [orphanKyc, setOrphanKyc] = useState([]);
@@ -365,11 +397,16 @@ function AdminDashboard({ session, onLogout }) {
   // with KYC attached where it links. Everyone appears; those without KYC are
   // marked pending, which is the thing HR needs to act on.
   //
-  // Matching is on user_id, not email: several people filled the KYC form while
-  // logged in with a personal address (gmail/icloud) that does not match their
-  // roster email, so an email join misses them. KYC records that match nobody
-  // are surfaced separately rather than guessed at — linking "Munish Tyagi" to
-  // "Munish Kumar Tyagi" is HR's call to make, not the code's.
+  // Several people filled the KYC form while logged in with a personal address
+  // (gmail/icloud), so their employee_kyc.user_id is a different auth user from
+  // the work login on their roster row and a user_id join misses them. Those are
+  // attached through employee_kyc.employee_id, which HR sets — we cannot instead
+  // repoint cb_employees.user_id at the personal account, because that column is
+  // the work login attendance punches resolve through.
+  //
+  // A record reached that way still counts as KYC, but it is flagged: the file
+  // is tied to an address the company does not control, so the row asks for a
+  // resubmission from the work login rather than quietly accepting it.
   useEffect(() => {
     const fetchEmployees = async () => {
       const [{ data: roster }, { data: kyc }] = await Promise.all([
@@ -378,15 +415,18 @@ function AdminDashboard({ session, onLogout }) {
       ]);
 
       const kycByUser = new Map((kyc || []).filter((k) => k.user_id).map((k) => [k.user_id, k]));
+      const kycByEmployee = new Map((kyc || []).filter((k) => k.employee_id).map((k) => [k.employee_id, k]));
       const used = new Set();
 
       const merged = (roster || []).map((emp) => {
-        const k = emp.user_id ? kycByUser.get(emp.user_id) : null;
+        const k = kycByEmployee.get(emp.id) || (emp.user_id ? kycByUser.get(emp.user_id) : null);
         if (k) used.add(k.id);
+        const personalLogin = k && k.user_id && emp.user_id && k.user_id !== emp.user_id ? k.email : null;
         return {
           ...(k || {}),
           id: emp.id,
           hasKyc: !!k,
+          personalLogin,
           full_name: emp.full_name || k?.full_name,
           email: emp.email || k?.email,
           phone: emp.phone || k?.phone,
@@ -470,9 +510,11 @@ function AdminDashboard({ session, onLogout }) {
               <AlertCircle size={18} /> {orphanKyc.length} KYC record{orphanKyc.length === 1 ? '' : 's'} not linked to anyone on the roster
             </h2>
             <p className="text-sm text-amber-800/80 mb-4">
-              These were submitted from a login that does not match a roster email — usually a
-              personal address. Add the person in <strong>Attendance → Employees</strong> using
-              that same email, or ask them to resubmit from their work login.
+              These belong to nobody on the roster — either the person was never added, or they
+              filled the form from an address HR has not attached yet. Add them in{' '}
+              <strong>Attendance → Employees</strong>, then link the record by setting
+              <code className="mx-1 bg-white/70 border border-amber-200 rounded px-1">employee_id</code>
+              on the KYC row. They do not appear in the directory until one of those happens.
             </p>
             <div className="flex flex-wrap gap-2">
               {orphanKyc.map((k) => (
@@ -501,6 +543,11 @@ function AdminDashboard({ session, onLogout }) {
                 {employees.filter((e) => !e.hasKyc).length > 0 && (
                   <span className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-amber-800 font-medium">
                     {employees.filter((e) => !e.hasKyc).length} KYC pending
+                  </span>
+                )}
+                {employees.filter((e) => e.personalLogin).length > 0 && (
+                  <span className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-amber-800 font-medium">
+                    {employees.filter((e) => e.personalLogin).length} to resubmit from work login
                   </span>
                 )}
               </div>
@@ -540,6 +587,14 @@ function AdminDashboard({ session, onLogout }) {
                               <p className="text-xs text-gray-500">DOB: {emp.date_of_birth || '—'}</p>
                             ) : (
                               <p className="text-xs text-amber-700 font-medium">KYC pending</p>
+                            )}
+                            {emp.personalLogin && (
+                              <ResubmitNudge
+                                name={emp.full_name}
+                                phone={emp.phone}
+                                personalLogin={emp.personalLogin}
+                                workEmail={emp.email}
+                              />
                             )}
                           </div>
                         </div>
