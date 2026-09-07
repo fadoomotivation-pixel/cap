@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import PasswordInput from '../components/PasswordInput';
 import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
 import AttendancePunch from '../components/AttendancePunch';
@@ -142,7 +143,7 @@ export default function EmployeePortal() {
                 <label className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+                  <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} required
                     className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:border-[#f26522] focus:ring-1 focus:ring-[#f26522] transition text-sm" placeholder="••••••••" />
                 </div>
               </div>
@@ -352,12 +353,51 @@ function DocBadge({ label, url, Icon }) {
 
 function AdminDashboard({ session, onLogout }) {
   const [employees, setEmployees] = useState([]);
+  const [orphanKyc, setOrphanKyc] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // The directory used to read employee_kyc alone, so it listed only the people
+  // who had submitted KYC — 11 of 23 — and silently omitted everyone else. HR
+  // saw a roster of 23 in Attendance and a directory of 11 here with no
+  // explanation.
+  //
+  // It is now driven by cb_employees, the roster of who actually works here,
+  // with KYC attached where it links. Everyone appears; those without KYC are
+  // marked pending, which is the thing HR needs to act on.
+  //
+  // Matching is on user_id, not email: several people filled the KYC form while
+  // logged in with a personal address (gmail/icloud) that does not match their
+  // roster email, so an email join misses them. KYC records that match nobody
+  // are surfaced separately rather than guessed at — linking "Munish Tyagi" to
+  // "Munish Kumar Tyagi" is HR's call to make, not the code's.
   useEffect(() => {
     const fetchEmployees = async () => {
-      const { data } = await supabase.from('employee_kyc').select('*').order('created_at', { ascending: false });
-      if (data) setEmployees(data);
+      const [{ data: roster }, { data: kyc }] = await Promise.all([
+        supabase.from('cb_employees').select('*').order('full_name'),
+        supabase.from('employee_kyc').select('*').order('created_at', { ascending: false }),
+      ]);
+
+      const kycByUser = new Map((kyc || []).filter((k) => k.user_id).map((k) => [k.user_id, k]));
+      const used = new Set();
+
+      const merged = (roster || []).map((emp) => {
+        const k = emp.user_id ? kycByUser.get(emp.user_id) : null;
+        if (k) used.add(k.id);
+        return {
+          ...(k || {}),
+          id: emp.id,
+          hasKyc: !!k,
+          full_name: emp.full_name || k?.full_name,
+          email: emp.email || k?.email,
+          phone: emp.phone || k?.phone,
+          role_title: emp.role_title || k?.role_title,
+          department: emp.department || k?.department,
+          date_of_joining: emp.date_of_joining || k?.date_of_joining,
+        };
+      });
+
+      setEmployees(merged);
+      setOrphanKyc((kyc || []).filter((k) => !used.has(k.id)));
       setLoading(false);
     };
     fetchEmployees();
@@ -419,9 +459,52 @@ function AdminDashboard({ session, onLogout }) {
           </div>
         </div>
 
+        {/* KYC submitted by a login that matches nobody on the roster. Seven of
+            eleven records are like this: the employee filled the form while
+            signed in with a personal address, or they were never added to the
+            roster. Guessing the link would be putting words in HR's mouth on
+            an identity record, so they are shown instead of hidden. */}
+        {!loading && orphanKyc.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-8">
+            <h2 className="text-base font-bold text-amber-900 flex items-center gap-2 mb-1">
+              <AlertCircle size={18} /> {orphanKyc.length} KYC record{orphanKyc.length === 1 ? '' : 's'} not linked to anyone on the roster
+            </h2>
+            <p className="text-sm text-amber-800/80 mb-4">
+              These were submitted from a login that does not match a roster email — usually a
+              personal address. Add the person in <strong>Attendance → Employees</strong> using
+              that same email, or ask them to resubmit from their work login.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {orphanKyc.map((k) => (
+                <span key={k.id} className="bg-white border border-amber-200 rounded-lg px-3 py-2 text-sm">
+                  <strong className="text-[#10243E]">{k.full_name}</strong>
+                  <span className="text-gray-500"> · {k.email}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-[#10243E]">Employee Directory (KYC Data)</h2>
+          <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-[#10243E]">Employee Directory</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Everyone on the HR roster. KYC is attached where the employee has submitted it.
+              </p>
+            </div>
+            {!loading && (
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600">
+                  {employees.length} on roster
+                </span>
+                {employees.filter((e) => !e.hasKyc).length > 0 && (
+                  <span className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-amber-800 font-medium">
+                    {employees.filter((e) => !e.hasKyc).length} KYC pending
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -440,7 +523,7 @@ function AdminDashboard({ session, onLogout }) {
                 {loading ? (
                   <tr><td colSpan="6" className="p-8 text-center text-gray-400">Loading records...</td></tr>
                 ) : employees.length === 0 ? (
-                  <tr><td colSpan="6" className="p-8 text-center text-gray-400">No employee records found.</td></tr>
+                  <tr><td colSpan="6" className="p-8 text-center text-gray-400">No employees on the roster yet — add them in Attendance → Employees.</td></tr>
                 ) : (
                   employees.map((emp) => (
                     <tr key={emp.id} className="hover:bg-gray-50/50 transition">
@@ -453,7 +536,11 @@ function AdminDashboard({ session, onLogout }) {
                           )}
                           <div>
                             <p className="font-semibold text-[#10243E]">{emp.full_name}</p>
-                            <p className="text-xs text-gray-500">DOB: {emp.date_of_birth}</p>
+                            {emp.hasKyc ? (
+                              <p className="text-xs text-gray-500">DOB: {emp.date_of_birth || '—'}</p>
+                            ) : (
+                              <p className="text-xs text-amber-700 font-medium">KYC pending</p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -471,11 +558,15 @@ function AdminDashboard({ session, onLogout }) {
                         <p className="text-xs text-gray-500">{emp.emergency_contact_phone}</p>
                       </td>
                       <td className="p-4">
-                        <div className="flex flex-col gap-1.5">
-                          <DocBadge label="PAN" url={emp.pan_url} Icon={CreditCard} />
-                          <DocBadge label="Aadhaar" url={emp.aadhaar_url} Icon={FileText} />
-                          <DocBadge label="Marksheet" url={emp.marksheet_url} Icon={FileSignature} />
-                        </div>
+                        {emp.hasKyc ? (
+                          <div className="flex flex-col gap-1.5">
+                            <DocBadge label="PAN" url={emp.pan_url} Icon={CreditCard} />
+                            <DocBadge label="Aadhaar" url={emp.aadhaar_url} Icon={FileText} />
+                            <DocBadge label="Marksheet" url={emp.marksheet_url} Icon={FileSignature} />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">Not submitted</span>
+                        )}
                       </td>
                     </tr>
                   ))

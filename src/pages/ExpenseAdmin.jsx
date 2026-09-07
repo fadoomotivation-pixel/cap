@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import PasswordInput from '../components/PasswordInput';
 import AdminNav from '../components/AdminNav';
 import { ADMIN_EMAILS } from '../lib/admin';
 import {
@@ -360,7 +361,7 @@ export default function ExpenseAdmin() {
           <form onSubmit={async (e) => { e.preventDefault(); setError(''); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setError(error.message); }} className="space-y-4">
             <input type="email" required placeholder="HR Email" value={email} onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md outline-none focus:border-[#f26522]" />
-            <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
+            <PasswordInput required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md outline-none focus:border-[#f26522]" />
             <button type="submit" className="w-full bg-[#10243E] text-white py-2.5 rounded-md font-medium hover:bg-[#1a365d]">Login</button>
           </form>
