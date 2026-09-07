@@ -4,10 +4,10 @@ import PasswordInput from '../components/PasswordInput';
 import { ADMIN_EMAILS } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
 import { downloadCsv } from '../lib/expenses';
-import { CARD_STATUSES, STATUS_META, cardTypeLabel, showsQuantity } from '../lib/cards';
+import { CARD_STATUSES, STATUS_META, cardTypeLabel, showsQuantity, duplicateIds } from '../lib/cards';
 import {
   IdCard, RefreshCw, LogOut, Search, X, ArrowDownToLine, Copy, Printer,
-  MessageCircle, Phone, CheckCircle2, Clock3,
+  MessageCircle, Phone, CheckCircle2, Clock3, CopyCheck,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -82,6 +82,11 @@ export default function CardsAdmin() {
         .filter(Boolean).some((v) => v.toLowerCase().includes(q));
     });
   }, [rows, status, search]);
+
+  // Flagged, not filtered: a second card may genuinely be wanted, and HR is the
+  // only one who can say. Computed over every row so a duplicate stays marked
+  // even when the filter hides the original.
+  const dupes = useMemo(() => duplicateIds(rows), [rows]);
 
   const stats = useMemo(() => ({
     open: rows.filter((r) => !['delivered', 'rejected'].includes(r.status)).length,
@@ -204,22 +209,68 @@ export default function CardsAdmin() {
               {shown.map((r) => {
                 const meta = STATUS_META[r.status] || STATUS_META.requested;
                 return (
-                  <div key={r.id} className="border border-gray-100 rounded-xl p-4 hover:border-gray-200 transition">
+                  <div key={r.id} className={`border rounded-xl p-4 transition ${
+                    dupes.has(r.id) ? 'border-amber-300 bg-amber-50/40' : 'border-gray-100 hover:border-gray-200'
+                  }`}>
+                    {dupes.has(r.id) && (
+                      <p className="flex items-start gap-2 text-sm text-amber-900 bg-amber-100/60 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                        <CopyCheck size={16} className="shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Same request already open.</strong> Identical to an earlier one from
+                          this person — printing both means paying twice. Reject this one unless a
+                          second card is genuinely wanted.
+                        </span>
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-4 justify-between items-start">
                       <div className="min-w-0">
-                        <p className="font-semibold text-[#10243E]">
+                        {/* What HR is being asked to order, said once and plainly.
+                            It used to be a run-on line — card type, phone and
+                            email separated by dots — which read as one address. */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-wide bg-[#FAF6E9] text-[#9C7C1C] border border-[#EADFBF] rounded-md px-2 py-1">
+                            {cardTypeLabel(r.card_type)}
+                          </span>
+                          {showsQuantity(r.card_type) && (
+                            <span className="text-xs font-semibold bg-[#10243E] text-white rounded-md px-2 py-1">
+                              {r.quantity} visiting cards
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="font-semibold text-[#10243E] mt-2">
                           {r.print_name}
                           <span className="font-normal text-gray-400"> · {r.designation}</span>
                         </p>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          {cardTypeLabel(r.card_type)}
-                          {showsQuantity(r.card_type) ? ` · ${r.quantity} cards` : ''}
-                          {' · '}{r.print_phone}
-                          {r.print_email ? ` · ${r.print_email}` : ''}
-                        </p>
-                        {r.notes && <p className="text-sm text-gray-600 mt-2">{r.notes}</p>}
+
+                        {/* These four are the print spec — a misprint costs money,
+                            so each one is labelled rather than run together. */}
+                        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                          <dt className="text-gray-400">Name</dt>
+                          <dd className="text-gray-700">{r.print_name}</dd>
+                          <dt className="text-gray-400">Designation</dt>
+                          <dd className="text-gray-700">{r.designation}</dd>
+                          <dt className="text-gray-400">Phone</dt>
+                          <dd className="text-gray-700">{r.print_phone}</dd>
+                          {r.print_email && (<>
+                            <dt className="text-gray-400">Email</dt>
+                            <dd className="text-gray-700 break-all">{r.print_email}</dd>
+                          </>)}
+                        </dl>
+
+                        {r.notes && (
+                          <p className="text-sm text-gray-600 mt-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                            <span className="text-gray-400">Employee note:</span> {r.notes}
+                          </p>
+                        )}
+
+                        {/* The requester's login only earns a line when it is not
+                            the address going on the card — otherwise it was the
+                            same email printed twice with nothing to tell them apart. */}
                         <p className="text-xs text-gray-400 mt-2">
-                          {r.employee_email} · raised {format(new Date(r.created_at), 'd MMM yyyy')}
+                          Raised {format(new Date(r.created_at), 'd MMM yyyy')}
+                          {r.employee_email && r.employee_email !== r.print_email
+                            ? ` by ${r.employee_email}` : ''}
                         </p>
                       </div>
 

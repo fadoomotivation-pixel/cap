@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { CARD_TYPES, STATUS_META, cardTypeLabel, showsQuantity } from '../lib/cards';
+import { CARD_TYPES, STATUS_META, cardTypeLabel, showsQuantity, QUANTITY_PRESETS } from '../lib/cards';
 import { IdCard, Send, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -60,8 +60,26 @@ export default function CardRequestForm({ session }) {
       });
   }, [session.user.email]);
 
+  // Disabling the button during the request was not enough: two identical rows
+  // landed two seconds apart, because nothing stopped a second send once the
+  // first had finished and the form still held the same values. HR then had two
+  // jobs for one card. The check is here rather than a database constraint
+  // because a second card is sometimes legitimate — a lost ID, a reprint — so
+  // the employee is asked, not blocked.
+  const alreadyOpen = rows.some((r) =>
+    !['delivered', 'rejected'].includes(r.status) &&
+    r.card_type === form.card_type &&
+    (r.print_name || '').trim().toLowerCase() === form.print_name.trim().toLowerCase() &&
+    (r.designation || '').trim().toLowerCase() === form.designation.trim().toLowerCase() &&
+    (r.print_phone || '').trim() === form.print_phone.trim()
+  );
+
   const submit = async (e) => {
     e.preventDefault();
+    if (busy) return;
+    if (alreadyOpen && !window.confirm(
+      'You already have an open request for exactly this card. Send another one anyway?'
+    )) return;
     setBusy(true); setError('');
     const { error } = await supabase.from('cb_card_requests').insert([{
       user_id: session.user.id,
@@ -103,6 +121,14 @@ export default function CardRequestForm({ session }) {
         {error && (
           <p className="flex items-start gap-2 text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm mb-4">
             <AlertTriangle size={17} className="shrink-0 mt-0.5" /> {error}
+          </p>
+        )}
+
+        {alreadyOpen && !done && (
+          <p className="flex items-start gap-2 text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm mb-4">
+            <AlertTriangle size={17} className="shrink-0 mt-0.5" />
+            You already have an open request for this exact card — check "Your requests" below
+            before sending another.
           </p>
         )}
 
@@ -151,12 +177,29 @@ export default function CardRequestForm({ session }) {
               className={input} />
           </label>
 
+          {/* This was a number input with min=1 and step=50, so the browser's
+              own steppers walked 1, 51, 101, 151 — one request came in for 101
+              cards. Visiting cards are ordered in boxes anyway, so the amounts
+              HR actually orders are the only choices. */}
           {showsQuantity(form.card_type) && (
             <label>
-              <span className={label}>Visiting cards needed</span>
-              <input type="number" min="1" max="2000" step="50" value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                className={input} />
+              <span className={label}>How many visiting cards</span>
+              <div className="flex flex-wrap gap-2">
+                {QUANTITY_PRESETS.map((q) => (
+                  <button
+                    key={q} type="button"
+                    onClick={() => setForm({ ...form, quantity: q })}
+                    aria-pressed={Number(form.quantity) === q}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
+                      Number(form.quantity) === q
+                        ? 'bg-[#10243E] text-white border-[#10243E]'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-[#D4AF37]'
+                    }`}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
             </label>
           )}
 
@@ -192,9 +235,12 @@ export default function CardRequestForm({ session }) {
                   <div className="min-w-0">
                     <p className="font-semibold text-[#10243E]">
                       {cardTypeLabel(r.card_type)}
-                      {showsQuantity(r.card_type) ? ` · ${r.quantity} cards` : ''}
+                      {showsQuantity(r.card_type) ? ` · ${r.quantity} visiting cards` : ''}
                     </p>
                     <p className="text-sm text-gray-500">{r.print_name} — {r.designation}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {r.print_phone}{r.print_email ? ` · ${r.print_email}` : ''}
+                    </p>
                     {r.admin_notes && (
                       <p className="text-sm text-gray-600 mt-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
                         <span className="text-gray-400">HR:</span> {r.admin_notes}
