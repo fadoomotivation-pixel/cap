@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import { ADMIN_EMAILS } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
+import { friendlyError } from '../lib/errors';
 import { downloadCsv } from '../lib/expenses';
 import { CARD_STATUSES, STATUS_META, cardTypeLabel, showsQuantity, duplicateIds } from '../lib/cards';
 import {
@@ -120,7 +121,7 @@ export default function CardsAdmin() {
           <h2 className="text-2xl font-bold text-center mb-6 text-[#10243E]">Card Requests Login</h2>
           {session && !isAdmin && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">This account is not authorised.</div>}
           {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
-          <form onSubmit={async (e) => { e.preventDefault(); setError(''); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setError(error.message); }} className="space-y-4">
+          <form onSubmit={async (e) => { e.preventDefault(); setError(''); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setError(friendlyError(error)); }} className="space-y-4">
             <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md outline-none focus:border-[#D4AF37]" />
             <PasswordInput required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}

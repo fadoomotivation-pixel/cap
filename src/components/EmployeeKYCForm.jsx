@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Camera, Upload, User, Phone, Mail, Calendar, Heart, CheckCircle, AlertCircle, X, RotateCcw, FileText, CreditCard, FileSignature } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { compressImage } from '../lib/image';
+import { friendlyError, withRetry } from '../lib/errors';
 
 const departments = ['Sales', 'Marketing', 'Operations', 'Finance', 'HR', 'IT', 'Management', 'Telecalling', 'Field Sales', 'Other'];
 const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
@@ -97,21 +99,29 @@ export default function EmployeeKYCForm({ session, existing = null, onComplete, 
     }
   }, [cameraActive, stopCamera, startCamera]);
 
-  const handlePhotoUpload = (e) => {
+  // A phone photo is 3–5 MB and was uploaded at full size, which is what kept
+  // dying on mobile data. It is shrunk here, before the upload, so the size
+  // limit is no longer something the employee has to satisfy themselves.
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { setError('Photo must be under 5MB'); return; }
-    setPhotoFile(file);
+    setError('');
+    const small = await compressImage(file, 1000, 0.85);
+    setPhotoFile(small);
     const reader = new FileReader();
     reader.onload = (ev) => setPhotoPreview(ev.target.result);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(small);
   };
 
-  const handleDocUpload = (e, type) => {
+  const handleDocUpload = async (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { setError('Document must be under 5MB'); return; }
-    setDocs(prev => ({ ...prev, [type]: file }));
+    setError('');
+    // A photographed Aadhaar shrinks like any other image; a PDF passes through
+    // untouched, so it still needs a ceiling of its own.
+    const small = await compressImage(file, 1600, 0.85);
+    if (small.size > 5 * 1024 * 1024) { setError('That file is too large — please use one under 5MB.'); return; }
+    setDocs(prev => ({ ...prev, [type]: small }));
   };
 
   const removePhoto = () => { setPhotoPreview(null); setPhotoFile(null); };
@@ -135,18 +145,27 @@ export default function EmployeeKYCForm({ session, existing = null, onComplete, 
       let photo_url = existing?.photo_url || null;
       if (photoFile) {
         const photoName = `${session.user.id}_photo_${Date.now()}.jpg`;
-        const { error: photoErr } = await supabase.storage.from('employee-photos').upload(photoName, photoFile, { contentType: 'image/jpeg' });
-        if (photoErr) throw photoErr;
+        await withRetry(async () => {
+          const { error: photoErr } = await supabase.storage.from('employee-photos')
+            .upload(photoName, photoFile, { contentType: photoFile.type || 'image/jpeg' });
+          if (photoErr) throw photoErr;
+        });
         photo_url = supabase.storage.from('employee-photos').getPublicUrl(photoName).data.publicUrl;
       }
 
       // 2. Upload Documents (Optional)
       const uploadDoc = async (file, type) => {
         if (!file) return null;
-        const ext = file.name.split('.').pop();
+        // A compressed image is a Blob and has no name, so the extension comes
+        // from the type — the old file.name.split() produced "undefined" on it.
+        const ext = (file.type === 'application/pdf' ? 'pdf'
+          : file.name?.includes('.') ? file.name.split('.').pop() : 'jpg');
         const docName = `${session.user.id}_${type}_${Date.now()}.${ext}`;
-        const { error } = await supabase.storage.from('employee-photos').upload(docName, file);
-        if (error) throw error;
+        await withRetry(async () => {
+          const { error } = await supabase.storage.from('employee-photos')
+            .upload(docName, file, { contentType: file.type || undefined });
+          if (error) throw error;
+        });
         return supabase.storage.from('employee-photos').getPublicUrl(docName).data.publicUrl;
       };
 
@@ -163,15 +182,16 @@ export default function EmployeeKYCForm({ session, existing = null, onComplete, 
         photo_url, pan_url, aadhaar_url, marksheet_url,
       };
 
-      const { error: saveError } = existing
-        ? await supabase.from('employee_kyc').update(payload).eq('id', existing.id)
-        : await supabase.from('employee_kyc').insert([{ ...payload, user_id: session.user.id }]);
-
-      if (saveError) throw saveError;
+      await withRetry(async () => {
+        const { error: saveError } = existing
+          ? await supabase.from('employee_kyc').update(payload).eq('id', existing.id)
+          : await supabase.from('employee_kyc').insert([{ ...payload, user_id: session.user.id }]);
+        if (saveError) throw saveError;
+      });
 
       onComplete();
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(friendlyError(err));
     } finally {
       setSubmitting(false);
     }
@@ -334,7 +354,11 @@ export default function EmployeeKYCForm({ session, existing = null, onComplete, 
 
             {photoPreview ? (
               <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="relative inline-block mx-auto">
-                <img src={photoPreview} alt="Preview" className="w-56 h-56 rounded-3xl object-cover border-4 border-[#f26522] shadow-2xl" />
+                {/* An existing photo is loaded by URL and can fail — a dead link
+                    or the same dropped connection — which left a black square
+                    with no explanation. Fall back to asking for a new one. */}
+                <img src={photoPreview} alt="Preview" onError={() => { setPhotoPreview(null); setPhotoFile(null); }}
+                  className="w-56 h-56 rounded-3xl object-cover border-4 border-[#f26522] shadow-2xl bg-gray-100" />
                 <button onClick={removePhoto} className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-2 shadow-lg"><X size={18} /></button>
               </motion.div>
             ) : cameraActive ? (

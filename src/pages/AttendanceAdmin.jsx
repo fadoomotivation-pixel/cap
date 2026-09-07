@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import AdminNav from '../components/AdminNav';
+import { friendlyError } from '../lib/errors';
 import { ADMIN_EMAILS } from '../lib/admin';
 import { buildDailyWhatsAppSummary, whatsappLink, buildNudgeMessage } from '../lib/attendanceReport';
 import {
@@ -84,7 +85,7 @@ export default function AttendanceAdmin() {
     e.preventDefault();
     setError('');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError(error.message);
+    if (error) setError(friendlyError(error));
   };
 
   const flash = (msg) => { setOk(msg); setTimeout(() => setOk(''), 4000); };
