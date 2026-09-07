@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle } from 'lucide-react';
+import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
 import AttendancePunch from '../components/AttendancePunch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isAdminEmail } from '../lib/admin';
+import AdminNav from '../components/AdminNav';
+import CardRequestForm from '../components/CardRequestForm';
 
 export default function EmployeePortal() {
   const [session, setSession] = useState(null);
@@ -222,6 +224,7 @@ function EmployeeDashboard({ session, onLogout }) {
             {[
               { key: 'kyc', label: 'Profile & KYC', Icon: User },
               { key: 'attendance', label: 'Attendance', Icon: Clock },
+              { key: 'cards', label: 'Cards', Icon: IdCard },
               { key: 'features', label: 'Workspace', Icon: Building },
             ].map(({ key, label, Icon }) => (
               <button key={key} onClick={() => setActiveTab(key)}
@@ -265,6 +268,12 @@ function EmployeeDashboard({ session, onLogout }) {
               <motion.div key="attendance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-white rounded-3xl shadow-sm p-6 md:p-8">
                 <h2 className="text-2xl font-bold text-[#10243E] mb-6 border-b pb-4">Attendance</h2>
                 <AttendancePunch session={session} />
+              </motion.div>
+            )}
+
+            {activeTab === 'cards' && (
+              <motion.div key="cards" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <CardRequestForm session={session} />
               </motion.div>
             )}
 
@@ -370,6 +379,11 @@ function AdminDashboard({ session, onLogout }) {
             <LogOut size={18} /> Logout
           </button>
         </div>
+
+        {/* HR logs in and arrives here. Until now this page linked to nothing,
+            so attendance, leads, petty cash and interviews could only be
+            reached by typing the URL. */}
+        <AdminNav className="mb-8" />
 
         {/* Upcoming Birthdays */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 mb-8">

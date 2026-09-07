@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import AdminNav from '../components/AdminNav';
 import {
   Calendar, Clock, Link as LinkIcon, Trash2, Users, Copy, CheckCircle, LogOut, X,
   Search, Download, CalendarDays, CalendarCheck, DoorOpen, Ban, MessageCircle, RefreshCw,
@@ -354,7 +355,9 @@ export default function InterviewAdmin() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 px-4">
         <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full border border-gray-100">
           <h2 className="text-2xl font-bold text-center mb-6 text-[#10243E]">HR Scheduler Login</h2>
-          {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
+          <AdminNav className="mb-6" />
+
+        {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">HR Email</label>
@@ -385,15 +388,6 @@ export default function InterviewAdmin() {
             </div>
           </div>
           <div className="flex gap-2">
-            <a href="/admin/leads" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100">
-              <Inbox size={16} /> Leads
-            </a>
-            <a href="/admin/attendance" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors">
-              <Users size={16} /> Attendance
-            </a>
-            <a href="/admin/expenses" className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors">
-              <Wallet size={16} /> Petty Cash
-            </a>
             <button onClick={() => window.print()} className="flex items-center gap-2 text-gray-600 hover:text-[#f26522] bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100 transition-colors" title="Print today's interview sheet">
               <Printer size={16} /> Day Sheet
             </button>
