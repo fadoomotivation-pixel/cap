@@ -6,13 +6,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 const departments = ['Sales', 'Marketing', 'Operations', 'Finance', 'HR', 'IT', 'Management', 'Telecalling', 'Field Sales', 'Other'];
 const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
-export default function EmployeeKYCForm({ session, onComplete }) {
+/**
+ * `existing` switches the form into correcting a record already submitted.
+ * People mistype a phone number or upload the wrong side of an Aadhaar, and
+ * until now the portal showed them a "KYC Completed" screen with no way back —
+ * the only fix was asking HR to edit the database.
+ *
+ * In edit mode the photo and documents already on file are kept unless a new
+ * one is chosen, so correcting a spelling does not mean re-uploading everything.
+ */
+export default function EmployeeKYCForm({ session, existing = null, onComplete, onCancel }) {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   
   // Photo
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(existing?.photo_url || null);
   const [photoFile, setPhotoFile] = useState(null);
   
   // Documents
@@ -26,11 +35,16 @@ export default function EmployeeKYCForm({ session, onComplete }) {
   const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
-    full_name: session?.user?.user_metadata?.full_name || '',
-    date_of_birth: '', date_of_joining: '', phone: '',
-    email: session?.user?.email || '', 
-    department: '', role_title: '', blood_group: '',
-    emergency_contact_name: '', emergency_contact_phone: '',
+    full_name: existing?.full_name || session?.user?.user_metadata?.full_name || '',
+    date_of_birth: existing?.date_of_birth || '',
+    date_of_joining: existing?.date_of_joining || '',
+    phone: existing?.phone || '',
+    email: existing?.email || session?.user?.email || '',
+    department: existing?.department || '',
+    role_title: existing?.role_title || '',
+    blood_group: existing?.blood_group || '',
+    emergency_contact_name: existing?.emergency_contact_name || '',
+    emergency_contact_phone: existing?.emergency_contact_phone || '',
   });
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -107,16 +121,24 @@ export default function EmployeeKYCForm({ session, onComplete }) {
     if (!form.full_name || !form.date_of_birth || !form.phone) {
       setError('Please fill Name, Date of Birth and Phone number.'); return;
     }
-    if (!photoFile) { setError('Please capture or upload your profile photo.'); return; }
-    
+    // A correction should not force a fresh selfie, so the photo is only
+    // required when there is not already one on the record.
+    if (!photoFile && !existing?.photo_url) {
+      setError('Please capture or upload your profile photo.'); return;
+    }
+
     setSubmitting(true); setError('');
 
     try {
-      // 1. Upload Profile Photo
-      const photoName = `${session.user.id}_photo_${Date.now()}.jpg`;
-      const { error: photoErr } = await supabase.storage.from('employee-photos').upload(photoName, photoFile, { contentType: 'image/jpeg' });
-      if (photoErr) throw photoErr;
-      const photo_url = supabase.storage.from('employee-photos').getPublicUrl(photoName).data.publicUrl;
+      // 1. Profile photo — a new upload replaces it, otherwise the one on file
+      //    stands. Uploads are timestamped, so nothing overwrites the old file.
+      let photo_url = existing?.photo_url || null;
+      if (photoFile) {
+        const photoName = `${session.user.id}_photo_${Date.now()}.jpg`;
+        const { error: photoErr } = await supabase.storage.from('employee-photos').upload(photoName, photoFile, { contentType: 'image/jpeg' });
+        if (photoErr) throw photoErr;
+        photo_url = supabase.storage.from('employee-photos').getPublicUrl(photoName).data.publicUrl;
+      }
 
       // 2. Upload Documents (Optional)
       const uploadDoc = async (file, type) => {
@@ -128,21 +150,24 @@ export default function EmployeeKYCForm({ session, onComplete }) {
         return supabase.storage.from('employee-photos').getPublicUrl(docName).data.publicUrl;
       };
 
-      const pan_url = await uploadDoc(docs.pan, 'pan');
-      const aadhaar_url = await uploadDoc(docs.aadhaar, 'aadhaar');
-      const marksheet_url = await uploadDoc(docs.marksheet, 'marksheet');
+      // Same rule for documents: uploading nothing keeps what is already there,
+      // so fixing a typo does not silently wipe an Aadhaar off the record.
+      const pan_url = (await uploadDoc(docs.pan, 'pan')) ?? existing?.pan_url ?? null;
+      const aadhaar_url = (await uploadDoc(docs.aadhaar, 'aadhaar')) ?? existing?.aadhaar_url ?? null;
+      const marksheet_url = (await uploadDoc(docs.marksheet, 'marksheet')) ?? existing?.marksheet_url ?? null;
 
       // 3. Save to Database
-      const { error: insertError } = await supabase
-        .from('employee_kyc')
-        .insert([{
-          ...form,
-          date_of_joining: form.date_of_joining || null,
-          photo_url, pan_url, aadhaar_url, marksheet_url,
-          user_id: session.user.id,
-        }]);
+      const payload = {
+        ...form,
+        date_of_joining: form.date_of_joining || null,
+        photo_url, pan_url, aadhaar_url, marksheet_url,
+      };
 
-      if (insertError) throw insertError;
+      const { error: saveError } = existing
+        ? await supabase.from('employee_kyc').update(payload).eq('id', existing.id)
+        : await supabase.from('employee_kyc').insert([{ ...payload, user_id: session.user.id }]);
+
+      if (saveError) throw saveError;
 
       onComplete();
     } catch (err) {
@@ -177,6 +202,15 @@ export default function EmployeeKYCForm({ session, onComplete }) {
         ))}
       </div>
       
+      {existing && (
+        <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 text-amber-900 text-sm px-4 py-3 rounded-xl mb-6">
+          <span>You are correcting details already submitted. Anything you leave alone stays as it is.</span>
+          {onCancel && (
+            <button onClick={onCancel} className="shrink-0 font-semibold hover:underline">Cancel</button>
+          )}
+        </div>
+      )}
+
       {error && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-50 text-red-600 border border-red-200 text-sm px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
           <AlertCircle size={16} /> {error}
@@ -240,7 +274,7 @@ export default function EmployeeKYCForm({ session, onComplete }) {
                   <div className="bg-gray-100 p-2 rounded-lg text-gray-500"><CreditCard size={20} /></div>
                   <div>
                     <p className="font-semibold text-sm text-[#10243E]">PAN Card</p>
-                    <p className="text-xs text-gray-400">{docs.pan ? docs.pan.name : 'Not uploaded'}</p>
+                    <p className="text-xs text-gray-400">{docs.pan ? docs.pan.name : existing?.pan_url ? 'Already on file — upload to replace' : 'Not uploaded'}</p>
                   </div>
                 </div>
                 <label className="bg-[#10243E] text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-800 transition">
@@ -255,7 +289,7 @@ export default function EmployeeKYCForm({ session, onComplete }) {
                   <div className="bg-gray-100 p-2 rounded-lg text-gray-500"><FileText size={20} /></div>
                   <div>
                     <p className="font-semibold text-sm text-[#10243E]">Aadhaar Card</p>
-                    <p className="text-xs text-gray-400">{docs.aadhaar ? docs.aadhaar.name : 'Not uploaded'}</p>
+                    <p className="text-xs text-gray-400">{docs.aadhaar ? docs.aadhaar.name : existing?.aadhaar_url ? 'Already on file — upload to replace' : 'Not uploaded'}</p>
                   </div>
                 </div>
                 <label className="bg-[#10243E] text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-800 transition">
@@ -270,7 +304,7 @@ export default function EmployeeKYCForm({ session, onComplete }) {
                   <div className="bg-gray-100 p-2 rounded-lg text-gray-500"><FileSignature size={20} /></div>
                   <div>
                     <p className="font-semibold text-sm text-[#10243E]">Last Marksheet</p>
-                    <p className="text-xs text-gray-400">{docs.marksheet ? docs.marksheet.name : 'Not uploaded'}</p>
+                    <p className="text-xs text-gray-400">{docs.marksheet ? docs.marksheet.name : existing?.marksheet_url ? 'Already on file — upload to replace' : 'Not uploaded'}</p>
                   </div>
                 </div>
                 <label className="bg-[#10243E] text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-800 transition">
@@ -334,10 +368,12 @@ export default function EmployeeKYCForm({ session, onComplete }) {
               <motion.button 
                 whileTap={{ scale: 0.97 }} 
                 onClick={handleSubmit} 
-                disabled={submitting || !photoFile} 
-                className={`flex-1 font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg ${submitting || !photoFile ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#f26522] hover:bg-orange-600 text-white shadow-orange-500/30'}`}
+                disabled={submitting || (!photoFile && !existing?.photo_url)}
+                className={`flex-1 font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg ${submitting || (!photoFile && !existing?.photo_url) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#f26522] hover:bg-orange-600 text-white shadow-orange-500/30'}`}
               >
-                {submitting ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</> : 'Submit Profile'}
+                {submitting
+                  ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
+                  : existing ? 'Save changes' : 'Submit Profile'}
               </motion.button>
             </div>
           </motion.div>
