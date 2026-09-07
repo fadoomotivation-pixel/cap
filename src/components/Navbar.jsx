@@ -40,13 +40,15 @@ const navLinks = [
   { name: 'Home', path: '/' },
   { 
     name: 'Dholera SIR', 
-    path: '#',
+    path: '/dholera',
     hasDropdown: true,
     dropdownType: 'simple',
     dropdownItems: [
+      { name: 'Dholera Hub', path: '/dholera' },
       { name: 'About Dholera SIR', path: '/dholera/about' },
-      { name: 'Overview', path: '/dholera/overview' },
-      { name: 'City Highlights', path: '/dholera/city-highlights' },
+      { name: 'Overview & Master Plan', path: '/dholera/overview' },
+      { name: 'City Highlights & Infra', path: '/dholera/city-highlights' },
+      { name: 'Official Virtual Tour (360°)', path: '/dholera/virtual-tour' },
       { name: 'Dholera International Airport', path: '/blog/dholera-international-airport' },
       { name: 'Dholera Solar & Power', path: '/dholera/renew-power' },
     ]

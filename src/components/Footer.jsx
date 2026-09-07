@@ -64,9 +64,11 @@ export default function Footer() {
               About Dholera SIR
             </h4>
             <ul className="space-y-3 text-sm">
+              <li><Link to="/dholera" className="hover:text-[#D4AF37] transition-colors">Dholera SIR Hub</Link></li>
               <li><Link to="/dholera/about" className="hover:text-[#D4AF37] transition-colors">About Dholera SIR</Link></li>
               <li><Link to="/dholera/overview" className="hover:text-[#D4AF37] transition-colors">Overview</Link></li>
               <li><Link to="/dholera/city-highlights" className="hover:text-[#D4AF37] transition-colors">City Highlights</Link></li>
+              <li><Link to="/dholera/virtual-tour" className="hover:text-[#D4AF37] transition-colors">Official Virtual Tour (360°)</Link></li>
               <li><Link to="/blog/dholera-international-airport" className="hover:text-[#D4AF37] transition-colors">Dholera International Airport</Link></li>
               <li><Link to="/dholera/renew-power" className="hover:text-[#D4AF37] transition-colors">Dholera Solar &amp; Power</Link></li>
             </ul>

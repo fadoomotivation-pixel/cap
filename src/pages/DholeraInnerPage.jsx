@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
-import { ChevronRight, Plus, Minus, ArrowRight, ShieldCheck, BadgeCheck, MapPin } from 'lucide-react';
+import { ChevronRight, Plus, Minus, ArrowRight, ShieldCheck, BadgeCheck, MapPin, ExternalLink, Compass, Eye } from 'lucide-react';
 import Seo from '../components/Seo';
 import LeadForm from '../components/LeadForm';
 import BlogArt from '../components/BlogArt';
@@ -99,6 +99,104 @@ export default function DholeraInnerPage() {
             <p className="text-lg lg:text-xl text-[#10243E] leading-relaxed font-light border-l-2 border-[#D4AF37] pl-6 mb-12">
               {page.intro}
             </p>
+
+            {slug === 'virtual-tour' && (
+              <div className="mb-14 rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+                <div className="relative h-64 sm:h-72 bg-[#0A1016] overflow-hidden flex items-center justify-center">
+                  <div className="absolute inset-0 opacity-40">
+                    <BlogArt tone="amber" label="Dholera 360 Virtual Tour" seed={42} className="w-full h-full" />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A1016] via-[#0A1016]/60 to-transparent" />
+                  <div className="relative z-10 text-center px-6 max-w-lg">
+                    <div className="inline-flex items-center gap-2 bg-[#0A1016]/90 border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wider mb-4">
+                      <Compass size={14} className="animate-spin" style={{ animationDuration: '10s' }} />
+                      Official 360° Panorama Viewer
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-heading text-white mb-2">
+                      Activation Area Ground Reality
+                    </h2>
+                    <p className="text-gray-300 text-xs sm:text-sm font-light">
+                      Photographic 360° panoramas capturing ABCD Building, CIOC, 72 km road network, and utility plants.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-6 sm:p-8">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-4 mb-6">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9C7C1C]">
+                        Statutory Sourcing &amp; Attribution
+                      </p>
+                      <p className="text-sm font-medium text-[#10243E]">
+                        Government of Gujarat · DICDL (Dholera Industrial City Development Ltd.)
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">
+                      <Eye size={13} /> Verified Official Resource
+                    </span>
+                  </div>
+
+                  <p className="text-gray-600 text-[15px] leading-relaxed mb-6">
+                    The official Dholera SIR virtual tour provides high-resolution, interactive 360° panoramic viewpoints across Town Planning Schemes 2A and 4A. Because the government web server enforces strict <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono text-gray-800">Content-Security-Policy: frame-ancestors 'self'</code> headers that disallow iframe embedding on external domains, the tour opens in a secure, full-screen dedicated window.
+                  </p>
+
+                  <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 mb-6">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#10243E] mb-3">
+                      Key Panoramas to Inspect Inside the Tour:
+                    </p>
+                    <ul className="grid sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        ABCD Building &amp; CIOC Command Room
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        72 km Internal Roads &amp; Cycle Tracks
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        50 MLD Water Treatment Plant (WTP)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        20 MLD Common Effluent Treatment Plant
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        Torrent Power 400/220 kV Substation
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        6.5 km Bunded Canal Front Corridor
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <a
+                      href="https://dholera.gujarat.gov.in/dholera_virtual_tours/static/src/DholeraSIR/index.htm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] px-6 py-3.5 rounded-sm font-semibold transition-colors shadow-sm text-sm"
+                    >
+                      Launch Official 360° Tour <ExternalLink size={16} />
+                    </a>
+                    <a
+                      href="https://dholera.gujarat.gov.in/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 border border-gray-300 hover:border-gray-500 text-[#10243E] px-5 py-3.5 rounded-sm font-medium transition-colors text-sm"
+                    >
+                      dholera.gujarat.gov.in <ExternalLink size={15} />
+                    </a>
+                  </div>
+
+                  <p className="mt-4 text-xs text-gray-500 leading-relaxed">
+                    <strong>Notice:</strong> Panoramic photography, krpano visual assets, and master plan maps are the statutory intellectual property of DICDL and the Government of Gujarat. Capital Brix references this public utility to help buyers verify trunk infrastructure before committing capital.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <ArticleBody sections={page.sections} />
 

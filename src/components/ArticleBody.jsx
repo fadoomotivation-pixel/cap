@@ -1,18 +1,44 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Lightbulb } from 'lucide-react';
 
-/** Bold spans written as **…** in the content data. Keeps the data files
- *  readable without pulling in a markdown dependency for one feature. */
+/** Bold spans written as **…** and links written as [label](url) in content data.
+ *  Keeps the data files readable without pulling in a heavy markdown dependency. */
 export function RichText({ children }) {
-  const parts = String(children).split(/(\*\*[^*]+\*\*)/g);
+  const parts = String(children).split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
   return (
     <>
-      {parts.map((p, i) =>
-        p.startsWith('**') && p.endsWith('**')
-          ? <strong key={i} className="font-semibold text-[#10243E]">{p.slice(2, -2)}</strong>
-          : <React.Fragment key={i}>{p}</React.Fragment>
-      )}
+      {parts.map((p, i) => {
+        if (p.startsWith('**') && p.endsWith('**')) {
+          return <strong key={i} className="font-semibold text-[#10243E]">{p.slice(2, -2)}</strong>;
+        }
+        if (p.startsWith('[') && p.endsWith(')') && p.includes('](')) {
+          const match = p.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+          if (match) {
+            const [, text, href] = match;
+            if (href.startsWith('http')) {
+              return (
+                <a
+                  key={i}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#9C7C1C] hover:underline font-medium"
+                >
+                  {text}
+                </a>
+              );
+            }
+            return (
+              <Link key={i} to={href} className="text-[#9C7C1C] hover:underline font-medium">
+                {text}
+              </Link>
+            );
+          }
+        }
+        return <React.Fragment key={i}>{p}</React.Fragment>;
+      })}
     </>
   );
 }
