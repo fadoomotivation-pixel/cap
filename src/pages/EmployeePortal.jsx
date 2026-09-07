@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
-import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard } from 'lucide-react';
+import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard, Pencil } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
 import AttendancePunch from '../components/AttendancePunch';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -184,21 +184,28 @@ export default function EmployeePortal() {
 
 function EmployeeDashboard({ session, onLogout }) {
   const [activeTab, setActiveTab] = useState('kyc');
-  const [kycStatus, setKycStatus] = useState('pending'); // pending, completed
+  const [kyc, setKyc] = useState(null);
+  const [kycLoading, setKycLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    // Check if KYC is already submitted
-    const checkKyc = async () => {
-      const { data } = await supabase
-        .from('employee_kyc')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-      
-      if (data) setKycStatus('completed');
-    };
-    checkKyc();
-  }, [session]);
+  // The whole row, not a boolean: the employee needs to see what they actually
+  // submitted before they can tell whether it is wrong. .single() also threw on
+  // nobody-has-submitted-yet, and there is no unique constraint on user_id, so
+  // this takes the latest row instead.
+  const loadKyc = useCallback(async () => {
+    const { data } = await supabase
+      .from('employee_kyc')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setKyc(data || null);
+    setKycLoading(false);
+  }, [session.user.id]);
+
+  useEffect(() => { loadKyc(); }, [loadKyc]);
 
   const userName = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
 
@@ -245,23 +252,33 @@ function EmployeeDashboard({ session, onLogout }) {
             <AnimatePresence mode="wait">
               {activeTab === 'kyc' && (
                 <motion.div key="kyc" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-white rounded-3xl shadow-sm p-6 md:p-8">
-                  {kycStatus === 'completed' ? (
-                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-16">
-                      <motion.div 
-                        initial={{ scale: 0 }} animate={{ scale: 1, rotate: 360 }} transition={{ type: 'spring', damping: 10, stiffness: 100 }}
-                        className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/20"
-                      >
-                        <CheckCircle className="text-green-500" size={48} />
-                      </motion.div>
-                      <h2 className="text-3xl font-bold text-[#10243E] mb-3">KYC Completed! 🎉</h2>
-                      <p className="text-gray-500 text-lg">Your profile has been successfully submitted.</p>
-                      <p className="text-gray-400 text-sm mt-2">You will be notified once your account is verified by Admin.</p>
-                    </motion.div>
-                  ) : (
+                  {kycLoading ? (
+                    <p className="text-gray-400 text-sm py-12 text-center">Loading your profile…</p>
+                  ) : editing || !kyc ? (
                     <div>
-                      <h2 className="text-2xl font-bold text-[#10243E] mb-8 border-b pb-4">Complete Your Profile (KYC)</h2>
-                      <EmployeeKYCForm session={session} onComplete={() => setKycStatus('completed')} />
+                      <h2 className="text-2xl font-bold text-[#10243E] mb-8 border-b pb-4">
+                        {kyc ? 'Correct your details' : 'Complete Your Profile (KYC)'}
+                      </h2>
+                      <EmployeeKYCForm
+                        session={session}
+                        existing={editing ? kyc : null}
+                        onCancel={() => setEditing(false)}
+                        onComplete={() => {
+                          setEditing(false);
+                          setSaved(true);
+                          setKycLoading(true);
+                          loadKyc();
+                          setTimeout(() => setSaved(false), 6000);
+                        }}
+                      />
                     </div>
+                  ) : (
+                    /* This screen used to be a "KYC Completed 🎉" dead end. A
+                       mistyped phone number or the wrong side of an Aadhaar had
+                       no route back — the only fix was asking HR to edit the
+                       database by hand. Now it shows what was submitted, so the
+                       employee can check it, and offers the way to change it. */
+                    <KycSummary kyc={kyc} saved={saved} onEdit={() => { setSaved(false); setEditing(true); }} />
                   )}
                 </motion.div>
               )}
@@ -302,6 +319,83 @@ function EmployeeDashboard({ session, onLogout }) {
             </AnimatePresence>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * What the employee actually submitted, laid out so they can check it against
+ * their own documents. Every field is shown even when blank — an empty
+ * "Emergency contact" is the thing worth noticing, and it disappears entirely
+ * if blanks are hidden.
+ */
+function KycSummary({ kyc, saved, onEdit }) {
+  const rows = [
+    ['Full name', kyc.full_name],
+    ['Date of birth', kyc.date_of_birth],
+    ['Phone', kyc.phone],
+    ['Email', kyc.email],
+    ['Blood group', kyc.blood_group],
+    ['Date of joining', kyc.date_of_joining],
+    ['Department', kyc.department],
+    ['Role', kyc.role_title],
+    ['Emergency contact', kyc.emergency_contact_name],
+    ['Emergency phone', kyc.emergency_contact_phone],
+  ];
+
+  return (
+    <div>
+      {saved && (
+        <p className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm mb-6">
+          <CheckCircle size={17} /> Saved. HR sees the corrected details now.
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4 mb-6">
+        <div className="flex items-center gap-4 min-w-0">
+          {kyc.photo_url ? (
+            <img src={kyc.photo_url} alt={kyc.full_name} className="w-16 h-16 rounded-2xl object-cover border border-gray-200" />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400"><User size={26} /></div>
+          )}
+          <div className="min-w-0">
+            <h2 className="text-2xl font-bold text-[#10243E] truncate">Your profile</h2>
+            <p className="text-sm text-gray-500">
+              Submitted {kyc.created_at ? new Date(kyc.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+              {kyc.updated_at && kyc.updated_at !== kyc.created_at && (
+                <> · last corrected {new Date(kyc.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</>
+              )}
+            </p>
+          </div>
+        </div>
+        <button onClick={onEdit}
+          className="flex items-center gap-2 bg-[#10243E] hover:bg-[#1a365d] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shrink-0">
+          <Pencil size={16} /> Correct my details
+        </button>
+      </div>
+
+      <p className="text-sm text-gray-500 mb-4">
+        Check this against your own documents. Anything wrong — a spelling, a phone number,
+        the wrong file uploaded — you can fix yourself.
+      </p>
+
+      <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 mb-8">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex justify-between gap-4 border-b border-gray-50 pb-2">
+            <dt className="text-sm text-gray-400 shrink-0">{label}</dt>
+            <dd className={`text-sm text-right break-words ${value ? 'text-[#10243E] font-medium' : 'text-gray-300'}`}>
+              {value || 'Not given'}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Documents</p>
+      <div className="flex flex-wrap gap-2">
+        <DocBadge label="PAN" url={kyc.pan_url} Icon={CreditCard} />
+        <DocBadge label="Aadhaar" url={kyc.aadhaar_url} Icon={FileText} />
+        <DocBadge label="Marksheet" url={kyc.marksheet_url} Icon={FileSignature} />
       </div>
     </div>
   );
@@ -604,7 +698,16 @@ function AdminDashboard({ session, onLogout }) {
                           <div>
                             <p className="font-semibold text-[#10243E]">{emp.full_name}</p>
                             {emp.hasKyc ? (
-                              <p className="text-xs text-gray-500">DOB: {emp.date_of_birth || '—'}</p>
+                              <p className="text-xs text-gray-500">
+                                DOB: {emp.date_of_birth || '—'}
+                                {/* Employees can correct their own KYC now, so a
+                                    record HR checked last week may have moved since. */}
+                                {emp.updated_at && emp.created_at && emp.updated_at !== emp.created_at && (
+                                  <span className="text-[#9C7C1C]">
+                                    {' · '}corrected {new Date(emp.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                  </span>
+                                )}
+                              </p>
                             ) : (
                               <p className="text-xs text-amber-700 font-medium">KYC pending</p>
                             )}
