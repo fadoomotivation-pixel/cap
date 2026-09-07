@@ -1,7 +1,9 @@
 export const CARD_TYPES = [
-  { value: 'visiting', label: 'Visiting card' },
+  { value: 'visiting', label: 'Visiting cards' },
   { value: 'id',       label: 'ID card' },
-  { value: 'both',     label: 'Both' },
+  // "Both" told HR nothing on its own — it reads as a quantity, not a
+  // description of what to hand the printer. Spell out the two items.
+  { value: 'both',     label: 'ID card + visiting cards' },
 ];
 
 // The order is the workflow. Admins move a request forward through it; an
@@ -21,3 +23,32 @@ export const cardTypeLabel = (v) => CARD_TYPES.find((c) => c.value === v)?.label
 
 /** Visiting cards are ordered in quantity; an ID card is one per person. */
 export const showsQuantity = (cardType) => cardType === 'visiting' || cardType === 'both';
+
+/** Visiting cards are ordered in boxes, so these are the amounts HR actually
+ *  places orders for. A free number field produced a request for 101 cards. */
+export const QUANTITY_PRESETS = [100, 200, 500, 1000];
+
+/**
+ * Requests that repeat one already open.
+ *
+ * The portal let an employee press Send twice — two identical rows landed two
+ * seconds apart — and the console showed them as two separate jobs, which is
+ * two cards printed and paid for. Returns the ids of the later copies, so the
+ * first one stays the live request and the duplicates are flagged rather than
+ * hidden: only HR can say whether a genuine second card is wanted.
+ */
+export function duplicateIds(rows) {
+  const seen = new Map();
+  const dupes = new Set();
+  // Oldest first, so the original is the one that keeps its clean row.
+  [...rows]
+    .filter((r) => !['delivered', 'rejected'].includes(r.status))
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    .forEach((r) => {
+      const key = [r.user_id, r.card_type, r.print_name, r.designation, r.print_phone, r.print_email, r.quantity]
+        .map((v) => String(v ?? '').trim().toLowerCase()).join('|');
+      if (seen.has(key)) dupes.add(r.id);
+      else seen.set(key, r.id);
+    });
+  return dupes;
+}
