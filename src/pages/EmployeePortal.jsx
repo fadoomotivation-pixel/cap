@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard } from 'lucide-react';
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { isAdminEmail } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
 import CardRequestForm from '../components/CardRequestForm';
+import OrphanKycResolver from '../components/OrphanKycResolver';
 
 export default function EmployeePortal() {
   const [session, setSession] = useState(null);
@@ -385,7 +386,9 @@ function ResubmitNudge({ name, phone, personalLogin, workEmail }) {
 
 function AdminDashboard({ session, onLogout }) {
   const [employees, setEmployees] = useState([]);
+  const [roster, setRoster] = useState([]);
   const [orphanKyc, setOrphanKyc] = useState([]);
+  const [resolving, setResolving] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // The directory used to read employee_kyc alone, so it listed only the people
@@ -407,12 +410,12 @@ function AdminDashboard({ session, onLogout }) {
   // A record reached that way still counts as KYC, but it is flagged: the file
   // is tied to an address the company does not control, so the row asks for a
   // resubmission from the work login rather than quietly accepting it.
-  useEffect(() => {
-    const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
       const [{ data: roster }, { data: kyc }] = await Promise.all([
         supabase.from('cb_employees').select('*').order('full_name'),
         supabase.from('employee_kyc').select('*').order('created_at', { ascending: false }),
       ]);
+      setRoster(roster || []);
 
       const kycByUser = new Map((kyc || []).filter((k) => k.user_id).map((k) => [k.user_id, k]));
       const kycByEmployee = new Map((kyc || []).filter((k) => k.employee_id).map((k) => [k.employee_id, k]));
@@ -439,9 +442,9 @@ function AdminDashboard({ session, onLogout }) {
       setEmployees(merged);
       setOrphanKyc((kyc || []).filter((k) => !used.has(k.id)));
       setLoading(false);
-    };
-    fetchEmployees();
   }, []);
+
+  useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
 
   const upcomingBirthdays = getUpcomingBirthdays(employees);
 
@@ -510,20 +513,37 @@ function AdminDashboard({ session, onLogout }) {
               <AlertCircle size={18} /> {orphanKyc.length} KYC record{orphanKyc.length === 1 ? '' : 's'} not linked to anyone on the roster
             </h2>
             <p className="text-sm text-amber-800/80 mb-4">
-              These belong to nobody on the roster — either the person was never added, or they
-              filled the form from an address HR has not attached yet. Add them in{' '}
-              <strong>Attendance → Employees</strong>, then link the record by setting
-              <code className="mx-1 bg-white/70 border border-amber-200 rounded px-1">employee_id</code>
-              on the KYC row. They do not appear in the directory until one of those happens.
+              These belong to nobody on the roster — either the person was never added, or
+              they filled the form from an address HR has not attached yet. They do not appear
+              in the directory until one of those is resolved. <strong>Click a name</strong> to
+              link it to someone already on the roster, or to add them.
             </p>
             <div className="flex flex-wrap gap-2">
               {orphanKyc.map((k) => (
-                <span key={k.id} className="bg-white border border-amber-200 rounded-lg px-3 py-2 text-sm">
-                  <strong className="text-[#10243E]">{k.full_name}</strong>
-                  <span className="text-gray-500"> · {k.email}</span>
-                </span>
+                <button
+                  key={k.id}
+                  onClick={() => setResolving(resolving?.id === k.id ? null : k)}
+                  aria-expanded={resolving?.id === k.id}
+                  className={`border rounded-lg px-3 py-2 text-sm text-left transition ${
+                    resolving?.id === k.id
+                      ? 'bg-[#10243E] border-[#10243E] text-white'
+                      : 'bg-white border-amber-200 hover:border-amber-400 hover:shadow-sm'
+                  }`}
+                >
+                  <strong className={resolving?.id === k.id ? 'text-white' : 'text-[#10243E]'}>{k.full_name}</strong>
+                  <span className={resolving?.id === k.id ? 'text-white/70' : 'text-gray-500'}> · {k.email}</span>
+                </button>
               ))}
             </div>
+
+            {resolving && (
+              <OrphanKycResolver
+                kyc={resolving}
+                roster={roster}
+                onCancel={() => setResolving(null)}
+                onDone={() => { setResolving(null); setLoading(true); fetchEmployees(); }}
+              />
+            )}
           </div>
         )}
 
