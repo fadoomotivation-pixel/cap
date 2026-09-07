@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import AdminNav from '../components/AdminNav';
+import { friendlyError } from '../lib/errors';
 import {
   Calendar, Clock, Link as LinkIcon, Trash2, Users, Copy, CheckCircle, LogOut, X,
   Search, Download, CalendarDays, CalendarCheck, DoorOpen, Ban, MessageCircle, RefreshCw,
@@ -137,7 +138,7 @@ export default function InterviewAdmin() {
     setLoading(true);
     setError('');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError(error.message);
+    if (error) setError(friendlyError(error));
     setLoading(false);
   };
 

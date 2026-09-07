@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import AdminNav from '../components/AdminNav';
+import { friendlyError } from '../lib/errors';
 import { ADMIN_EMAILS } from '../lib/admin';
 import {
   PAYMENT_MODES, SETTLE_MODES, inr, inrExact, fmtDate, backdatedDays,
@@ -358,7 +359,7 @@ export default function ExpenseAdmin() {
           <h2 className="text-2xl font-bold text-center mb-6 text-[#10243E]">Petty Cash Login</h2>
           {session && !isAdmin && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">This account is not authorised for HR access.</div>}
         {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
-          <form onSubmit={async (e) => { e.preventDefault(); setError(''); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setError(error.message); }} className="space-y-4">
+          <form onSubmit={async (e) => { e.preventDefault(); setError(''); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setError(friendlyError(error)); }} className="space-y-4">
             <input type="email" required placeholder="HR Email" value={email} onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md outline-none focus:border-[#f26522]" />
             <PasswordInput required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}

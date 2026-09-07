@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
-import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard, Pencil } from 'lucide-react';
+import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard, Pencil, Download } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
 import AttendancePunch from '../components/AttendancePunch';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +9,8 @@ import { isAdminEmail } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
 import CardRequestForm from '../components/CardRequestForm';
 import OrphanKycResolver from '../components/OrphanKycResolver';
+import { friendlyError } from '../lib/errors';
+import { downloadPhoto, downloadPhotos } from '../lib/downloadPhoto';
 
 export default function EmployeePortal() {
   const [session, setSession] = useState(null);
@@ -68,7 +70,9 @@ export default function EmployeePortal() {
         }
       }
     } catch (err) {
-      setError(err.message);
+      // A dropped signal used to surface as Safari's raw "Load failed", which
+      // reads as the portal being broken rather than the phone losing signal.
+      setError(friendlyError(err));
     } finally {
       setLoading(false);
     }
@@ -401,6 +405,24 @@ function KycSummary({ kyc, saved, onEdit }) {
   );
 }
 
+/** Saves one person's photo under their own name, for the birthday post. */
+function PhotoDownload({ emp, onMessage }) {
+  if (!emp.photo_url) return null;
+  return (
+    <button
+      onClick={() => downloadPhoto(emp.photo_url, emp.full_name).catch((err) => {
+        onMessage(friendlyError(err));
+        setTimeout(() => onMessage(''), 6000);
+      })}
+      title={`Download ${emp.full_name}'s photo`}
+      aria-label={`Download ${emp.full_name}'s photo`}
+      className="ml-1 shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-orange-500 hover:bg-orange-100 transition"
+    >
+      <Download size={15} />
+    </button>
+  );
+}
+
 function FeatureCard({ icon, title, desc }) {
   return (
     <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm relative overflow-hidden group">
@@ -483,6 +505,7 @@ function AdminDashboard({ session, onLogout }) {
   const [roster, setRoster] = useState([]);
   const [orphanKyc, setOrphanKyc] = useState([]);
   const [resolving, setResolving] = useState(null);
+  const [photoMsg, setPhotoMsg] = useState('');
   const [loading, setLoading] = useState(true);
 
   // The directory used to read employee_kyc alone, so it listed only the people
@@ -564,11 +587,35 @@ function AdminDashboard({ session, onLogout }) {
 
         {/* Upcoming Birthdays */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 mb-8">
-          <div className="p-6 border-b border-gray-100 flex items-center gap-2">
-            <Cake className="text-[#f26522]" size={20} />
-            <h2 className="text-lg font-bold text-[#10243E]">Upcoming Birthdays (Next 30 Days)</h2>
+          <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Cake className="text-[#f26522]" size={20} />
+              <h2 className="text-lg font-bold text-[#10243E]">Upcoming Birthdays (Next 30 Days)</h2>
+            </div>
+            {/* The photo is what the birthday post is made from, so getting it
+                out is part of the job — it was previously a right-click that
+                saved a storage id nobody could match to a person. */}
+            {upcomingBirthdays.some((e) => e.photo_url) && (
+              <button
+                onClick={async () => {
+                  const withPhoto = upcomingBirthdays.filter((e) => e.photo_url);
+                  setPhotoMsg(`Downloading ${withPhoto.length} photo${withPhoto.length === 1 ? '' : 's'}…`);
+                  const failed = await downloadPhotos(withPhoto);
+                  setPhotoMsg(failed.length
+                    ? `Saved ${withPhoto.length - failed.length}. Could not fetch: ${failed.join(', ')}.`
+                    : `Saved ${withPhoto.length} photo${withPhoto.length === 1 ? '' : 's'} to your Downloads.`);
+                  setTimeout(() => setPhotoMsg(''), 6000);
+                }}
+                className="flex items-center gap-2 text-sm font-medium text-[#9C7C1C] border border-[#EADFBF] bg-[#FAF6E9] hover:bg-[#f5edd6] rounded-lg px-3 py-2 transition"
+              >
+                <Download size={15} /> Download all photos
+              </button>
+            )}
           </div>
           <div className="p-6">
+            {photoMsg && (
+              <p className="text-sm text-[#9C7C1C] bg-[#FAF6E9] border border-[#EADFBF] rounded-lg px-3 py-2 mb-4">{photoMsg}</p>
+            )}
             {loading ? (
               <p className="text-gray-400 text-sm">Loading...</p>
             ) : upcomingBirthdays.length === 0 ? (
@@ -589,6 +636,7 @@ function AdminDashboard({ session, onLogout }) {
                         {' · '}{emp.nextBirthday.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                       </p>
                     </div>
+                    <PhotoDownload emp={emp} onMessage={setPhotoMsg} />
                   </div>
                 ))}
               </div>
@@ -691,9 +739,19 @@ function AdminDashboard({ session, onLogout }) {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           {emp.photo_url ? (
-                            <img src={emp.photo_url} alt={emp.full_name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                            <button
+                              onClick={() => downloadPhoto(emp.photo_url, emp.full_name)
+                                .catch((err) => { setPhotoMsg(friendlyError(err)); setTimeout(() => setPhotoMsg(''), 6000); })}
+                              title={`Download ${emp.full_name}'s photo`}
+                              className="relative w-10 h-10 rounded-full shrink-0 group"
+                            >
+                              <img src={emp.photo_url} alt={emp.full_name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                              <span className="absolute inset-0 rounded-full bg-black/55 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                <Download size={14} />
+                              </span>
+                            </button>
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><User size={20} /></div>
+                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"><User size={20} /></div>
                           )}
                           <div>
                             <p className="font-semibold text-[#10243E]">{emp.full_name}</p>
