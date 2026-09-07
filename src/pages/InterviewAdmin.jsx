@@ -355,8 +355,6 @@ export default function InterviewAdmin() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 px-4">
         <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full border border-gray-100">
           <h2 className="text-2xl font-bold text-center mb-6 text-[#10243E]">HR Scheduler Login</h2>
-          <AdminNav className="mb-6" />
-
         {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -399,6 +397,8 @@ export default function InterviewAdmin() {
             </button>
           </div>
         </div>
+
+        <AdminNav className="mb-6" />
 
         {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-6 text-sm no-print">{error}</div>}
 

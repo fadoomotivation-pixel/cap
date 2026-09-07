@@ -249,8 +249,6 @@ export default function AttendanceAdmin() {
           <img src="/logo-capital-brix.png" alt="Capital Brix" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain" />
           <h2 className="text-2xl font-bold text-center mb-6 text-[#10243E]">HR Attendance Login</h2>
           {session && !isAdmin && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">This account is not authorised for HR access.</div>}
-          <AdminNav className="mb-6" />
-
         {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">{error}</div>}
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="email" required placeholder="HR Email" value={email} onChange={(e) => setEmail(e.target.value)}
@@ -285,6 +283,8 @@ export default function AttendanceAdmin() {
             </button>
           </div>
         </div>
+
+        <AdminNav className="mb-6" />
 
         {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-4 text-sm flex justify-between gap-3">{error}<button onClick={() => setError('')}><X size={16} /></button></div>}
         {ok && <div className="bg-green-50 text-green-700 border border-green-100 p-4 rounded-lg mb-4 text-sm">{ok}</div>}

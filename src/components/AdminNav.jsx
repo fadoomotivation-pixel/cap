@@ -9,6 +9,11 @@ import { Users, Clock, Wallet, Inbox, IdCard, LayoutGrid } from 'lucide-react';
  * — and the Admin Command Center at /employee-kyc, which is where HR actually
  * lands after logging in, had no links at all. HR could reach attendance,
  * petty cash and leads only by typing the URL.
+ *
+ * It WRAPS rather than scrolling horizontally. An overflow-x row silently hid
+ * the last link or two below about 800px — measured, not guessed — and a link
+ * you have to discover by swiping sideways is a link HR will not find. Two
+ * short rows beat one row with the end cut off.
  */
 export const ADMIN_LINKS = [
   { to: '/employee-kyc',     label: 'Command Center', Icon: LayoutGrid },
@@ -25,7 +30,7 @@ export default function AdminNav({ className = '' }) {
   return (
     <nav
       aria-label="Admin consoles"
-      className={`flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 ${className}`}
+      className={`flex flex-wrap gap-2 ${className}`}
     >
       {ADMIN_LINKS.map(({ to, label, Icon }) => {
         const active = pathname === to;
@@ -34,7 +39,7 @@ export default function AdminNav({ className = '' }) {
             key={to}
             to={to}
             aria-current={active ? 'page' : undefined}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-sm font-medium border transition ${
               active
                 ? 'bg-[#10243E] text-white border-[#10243E]'
                 : 'bg-white text-gray-600 border-gray-200 hover:border-[#D4AF37] hover:text-[#9C7C1C]'
