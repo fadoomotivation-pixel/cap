@@ -17,15 +17,15 @@ export const absoluteUrl = (path = '/') => `${SITE_URL}${path.startsWith('/') ? 
 // pages don't compete with each other for the same query.
 export const pageSeo = {
   home: {
-    title: 'Dholera Smart City Plots | Capital Brix — Official Strategy Partner of Mirrikh Infratech',
+    title: 'Dholera Smart City Plots from ₹7,250/sq yd | Capital Brix',
     description:
-      'Buy NA-approved, title-clear plots in Dholera SIR from ₹7,250/sq yd at direct developer pricing. Capital Brix is the official strategy partner of Mirrikh Infratech. Near Dholera International Airport & the Ahmedabad–Dholera Expressway. Free site visit.',
+      'NA-approved, title-clear plots in Dholera SIR from ₹7,250/sq yd, in projects developed by Mirrikh Infratech. Capital Brix is an authorised sales channel partner. Near Dholera International Airport & the Ahmedabad–Dholera Expressway. Free site visit.',
     path: '/',
   },
   about: {
-    title: 'About Capital Brix | Official Strategy Partner of Mirrikh Infratech in Dholera',
+    title: 'About Capital Brix LLP | Dholera Plot Sales from Noida',
     description:
-      'Capital Brix LLP is the official strategy partner of Mirrikh Infratech, a Dholera developer with 8+ completed projects since 2012. Award-winning leadership, verified inventory and end-to-end buyer support.',
+      'Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., a Dholera developer with 8+ completed projects since 2012. Led by Jasvinder Singh, Founder & CEO of Capital Brix LLP, working from Sector 136, Noida.',
     path: '/about',
   },
   projects: {

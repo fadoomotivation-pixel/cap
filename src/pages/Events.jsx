@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { events } from '../data/events';
 import Seo from '../components/Seo';
+import BlogArt from '../components/BlogArt';
 import { pageSeo } from '../lib/seo';
 
 export default function Events() {
@@ -28,7 +29,9 @@ export default function Events() {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Events</h1>
           <p className="text-xl text-gray-300 max-w-2xl">
-            Success celebrations, awareness programs, and global exhibitions hosted by Mirrikh Infratech.
+            Success celebrations, awareness programmes and exhibitions hosted by
+            Mirrikh Infratech Pvt. Ltd., the developer whose Dholera projects Capital Brix
+            markets as an authorised sales channel partner.
           </p>
         </div>
       </div>
@@ -44,11 +47,15 @@ export default function Events() {
               className="w-full"
             >
               <div className="w-full relative shadow-sm border border-gray-100 hover:shadow-lg transition-all group overflow-hidden bg-white">
-                <img 
-                  src={event.img} 
-                  alt={event.title || 'Mirrikh Event'}
-                  className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                  onError={(e) => { e.target.src = 'https://mirrikh.com/wp-content/uploads/2025/01/banner-event-17-Sept-2023-1.jpg' }}
+                {/* The banners here were hotlinked from mirrikh.com — their
+                    images on their bandwidth, and material we are not
+                    authorised to use. Generated art until Capital Brix has
+                    photographs of its own. */}
+                <BlogArt
+                  tone="navy"
+                  label={`${event.title || 'Event'}${event.location ? ` · ${event.location}` : ''}`}
+                  seed={indexOfFirstEvent + i}
+                  className="w-full aspect-[16/7]"
                 />
               </div>
               {event.title && (

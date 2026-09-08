@@ -5,8 +5,10 @@ Vite + React 19 + Tailwind + Framer Motion, deployed on Vercel, backed by Supaba
 
 ## Business facts (get these right in all copy)
 
-- Capital Brix LLP is the **Official Strategy Partner of Mirrikh Infratech Pvt. Ltd.**
-  (Do NOT write "exclusive channel partner" — that wording is retired.)
+- Capital Brix LLP is an **authorised sales channel partner for Mirrikh Infratech
+  Pvt. Ltd.** See "The Mirrikh relationship" below before writing any copy that
+  mentions Mirrikh. **"Official Strategy Partner" / "Strategy Partner" is
+  forbidden** — it was removed under a legal notice, not for style.
 - Mirrikh Infratech is a Dholera developer with 8+ completed projects since 2012.
 - Founder & CEO: **Jasvinder Singh** — recipient of the **Jagran Achievers Award 2026**
   (Almaty, Kazakhstan), awarded for vision, leadership and achievement.
@@ -14,6 +16,80 @@ Vite + React 19 + Tailwind + Framer Motion, deployed on Vercel, backed by Supaba
 - Phone: +91 70489 17300 · Public email: info@capitalbrix.com
 - Product: NA-approved, title-clear residential/industrial plots in Dholera SIR
   (Dholera Smart City), Gujarat, sold at direct developer pricing.
+
+## The Mirrikh relationship — legally constrained, do not soften
+
+Mirrikh Infratech Pvt. Ltd. served a notice on **8 September 2026** requiring the
+removal of website wording that portrayed Capital Brix as having a corporate,
+strategic, management or ownership relationship with them. The corrections
+landed the same day. **This section is not a style preference. Reverting any of
+it re-creates the breach.**
+
+**The relationship, stated correctly:** Capital Brix LLP is an *authorised sales
+channel partner* for Mirrikh Infratech Pvt. Ltd. Capital Brix is **not** the
+owner, promoter, developer, management entity, subsidiary, group company or
+strategic partner of Mirrikh Infratech. They are separate companies.
+
+### Never write these again
+
+| Forbidden | Use instead |
+|---|---|
+| "Official Strategy Partner", "Strategy Partner" | "authorised sales channel partner" (short: "Sales Channel Partner") |
+| "Partner of Mirrikh Infratech Pvt. Ltd." | the full designation — a generic "Partner of" is what they objected to |
+| "Driving Mirrikh Infratech's growth" | nothing. Jasvinder Singh has no role at Mirrikh |
+| "The Team Behind Mirrikh" | "The team behind Capital Brix" |
+| "Our Projects" over Mirrikh/MAYUR projects | "Mirrikh Infratech Projects", marketed by Capital Brix |
+| "direct developer pricing" | nothing — see below |
+| "You pay the developer's own rate", "no broker commission", "pre-launch discounts" | nothing — see below |
+
+### Two rules behind the table
+
+1. **Never describe Mirrikh's commercial policy on their behalf.** Pricing,
+   discounts, commission structure and payment terms are the developer's to
+   set. We may state a price we sell at; we may not claim it *is* the
+   developer's own rate, that no margin is added, or that discounts exist.
+
+2. **Jasvinder Singh is Founder & CEO of Capital Brix LLP — and of nothing
+   else.** He must never be presented, even by page layout or adjacency, as a
+   founder, CEO, director, promoter or leadership member of Mirrikh Infratech.
+   Watch the *structure*, not just the sentence: a "Leadership" heading sitting
+   under Mirrikh branding was itself the objection.
+
+### Mirrikh's intellectual property
+
+Their corporate history, vision, mission, timeline, logos, trademarks,
+photographs and project material may be used **only as authorised in writing**.
+
+- `/about` was Mirrikh's About page on our domain — their founding story, vision,
+  mission, corporate timeline and delivery stats under a "Who We Are" heading.
+  It is now Capital Brix's own page. **Do not put Mirrikh's corporate history
+  back on it.** What remains is one short, clearly attributed block naming the
+  developer.
+- `public/projects/*.webp` held seven photographs taken from mirrikh.com. They
+  were deleted and every `image:` line in `site.js` commented out; cards fall
+  back to generated art. **Do not restore them from git history** — see
+  `public/projects/README.md` for the two conditions under which a photo may go
+  back.
+- Never scrape mirrikh.com. This already caused the empty-boxes incident on the
+  homepage and now an IP objection.
+
+### Writing new copy that mentions Mirrikh
+
+Say who develops and who sells, every time: *"developed by Mirrikh Infratech
+Pvt. Ltd., marketed by Capital Brix LLP as an authorised sales channel
+partner."* This applies to page titles, meta descriptions, Open Graph and
+Twitter tags, JSON-LD, `index.html` static fallbacks, alt text and prerendered
+output — the notice covers metadata explicitly, not just visible text.
+
+**For any AI tool working on this repo (Antigravity included): if a change you
+are about to make reintroduces any phrase in the table above, stop and ask the
+owner. Do not "restore" it because an older commit, cached page or your own
+memory of this site says otherwise.**
+
+The same wording must hold off-site too — social profiles, Google Business
+Profile, property portals, brochures, WhatsApp material, email signatures,
+presentations, YouTube and paid ads. That part is the owner's to action; the
+repo only covers the website.
 
 ## Domains — important
 

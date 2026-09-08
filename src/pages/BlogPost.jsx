@@ -56,7 +56,7 @@ export default function BlogPost() {
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/50">
             <span className="flex items-center gap-1.5"><CalendarDays size={14} /> Updated {fmt(post.updated || post.date)}</span>
             <span className="flex items-center gap-1.5"><Clock size={14} /> {post.readMinutes} min read</span>
-            <span className="flex items-center gap-1.5"><BadgeCheck size={14} className="text-[#D4AF37]" /> Capital Brix — Official Strategy Partner, Mirrikh Infratech</span>
+            <span className="flex items-center gap-1.5"><BadgeCheck size={14} className="text-[#D4AF37]" /> Capital Brix LLP — Authorised Sales Channel Partner, Mirrikh Infratech</span>
           </div>
         </div>
       </header>
@@ -137,8 +137,8 @@ export default function BlogPost() {
               <ul className="space-y-3 text-sm text-gray-600">
                 {[
                   [ShieldCheck, 'NA-approved, NOC-cleared, title-clear and plan-passed plots only'],
-                  [BadgeCheck, 'Official Strategy Partner of Mirrikh Infratech — 8+ delivered projects since 2012'],
-                  [MapPin, 'Direct developer pricing from ₹7,250 / sq yd — no intermediary margin'],
+                  [BadgeCheck, 'Authorised sales channel partner for Mirrikh Infratech — a developer with 8+ projects delivered since 2012'],
+                  [MapPin, 'NA-approved, title-clear plots from ₹7,250 / sq yd, registered in your name'],
                 ].map(([Icon, text]) => (
                   <li key={text} className="flex gap-3">
                     <Icon size={16} className="text-[#D4AF37] shrink-0 mt-0.5" />

@@ -253,8 +253,8 @@ export default function DholeraInnerPage() {
               <ul className="space-y-3 text-sm text-gray-600">
                 {[
                   [ShieldCheck, 'NA-approved, NOC-cleared, title-clear and plan-passed plots only'],
-                  [BadgeCheck, 'Official Strategy Partner of Mirrikh Infratech — 8+ delivered projects since 2012'],
-                  [MapPin, 'Direct developer pricing from ₹7,250 / sq yd — no intermediary margin'],
+                  [BadgeCheck, 'Authorised sales channel partner for Mirrikh Infratech — a developer with 8+ projects delivered since 2012'],
+                  [MapPin, 'NA-approved, title-clear plots from ₹7,250 / sq yd, registered in your name'],
                 ].map(([Icon, text]) => (
                   <li key={text} className="flex gap-3">
                     <Icon size={16} className="text-[#D4AF37] shrink-0 mt-0.5" />

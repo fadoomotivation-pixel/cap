@@ -33,7 +33,7 @@ export const blogs = [
     excerpt:
       'Residential plots in Dholera SIR run roughly ₹6,000–₹10,000 per sq yd in 2026, with entry pricing from ₹7,250. Here is what sets the rate, what the sticker price leaves out, and how to tell a fair quote from a padded one.',
     intro:
-      'In 2026, NA-approved residential plots inside and around Dholera SIR transact in a band of roughly ₹6,000 to ₹10,000 per square yard, with Capital Brix inventory starting at ₹7,250 per sq yd at direct developer pricing. That band is wide for a reason: two plots ten minutes apart can differ by 40% on rate alone. This guide breaks down what you are actually paying for, what the quoted price usually excludes, and the questions that separate a fair number from a padded one.',
+      'In 2026, NA-approved residential plots inside and around Dholera SIR transact in a band of roughly ₹6,000 to ₹10,000 per square yard, with plots marketed by Capital Brix starting at ₹7,250 per sq yd. That band is wide for a reason: two plots ten minutes apart can differ by 40% on rate alone. This guide breaks down what you are actually paying for, what the quoted price usually excludes, and the questions that separate a fair number from a padded one.',
     sections: [
       {
         h2: 'The price band, and why it is a band',
@@ -62,7 +62,7 @@ export const blogs = [
             '**Approval status.** An NA (Non-Agricultural) converted, NOC-cleared, plan-passed plot costs more than agricultural land sold on a promise of future conversion. That premium is the cheapest insurance you will ever buy.',
             '**Road frontage and plot geometry.** A corner plot or one on a 30-foot internal road commands more than an interior plot of identical area. On resale, that gap widens rather than narrows.',
             '**Township versus loose land.** A plot inside a developed township comes with laid roads, boundary walls, street lighting and a maintenance structure. Loose agricultural land does not, and the cost of creating those things later falls on you.',
-            '**Who you are buying from.** A plot passing through three intermediaries carries three margins. Direct developer pricing removes them.',
+            '**Who you are buying from.** A plot passing through three intermediaries carries three margins. Buying in a developer’s own project rather than through a resale chain avoids that stack — ask who you are contracting with, and get the current rate confirmed in writing.',
           ],
         },
       },
@@ -130,8 +130,8 @@ export const blogs = [
         a: 'On paper, yes. In practice the conversion process carries time, cost and outcome risk that most retail buyers are not equipped to absorb, and a failed conversion leaves you holding land you cannot build on or easily resell. The premium on an already NA-converted, plan-passed plot buys certainty.',
       },
       {
-        q: 'What does "direct developer pricing" actually mean?',
-        a: 'It means the price you pay is the developer\'s price, with no intermediary margin stacked on top. Capital Brix is the official strategy partner of Mirrikh Infratech, so inventory comes from the developer rather than through a resale chain.',
+        q: 'Does Capital Brix add a commission on top of the price?',
+        a: 'Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., so plots are booked in the developer\'s own projects rather than through a resale chain. Pricing, discounts and payment terms are set by the developer — ask us to confirm the current rate for the specific plot you are considering, in writing, before you pay anything.',
       },
     ],
     related: ['is-dholera-a-good-investment', 'how-to-verify-a-dholera-plot', 'dholera-land-vs-fd-gold-apartment'],
@@ -214,7 +214,7 @@ export const blogs = [
       {
         h2: 'Where Capital Brix sits in this',
         p: [
-          'We sell plots, so treat this section with appropriate scepticism and check what follows against documents. Capital Brix LLP is the official strategy partner of Mirrikh Infratech, a Dholera developer with 8+ completed projects since 2012. That matters for one narrow reason: a developer with delivered projects has a track record you can go and physically look at, which is not true of an entity formed last year.',
+          'We sell plots, so treat this section with appropriate scepticism and check what follows against documents. Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., a Dholera developer with 8+ completed projects since 2012 — we market their projects, we do not build them. That matters for one narrow reason: a developer with delivered projects has a track record you can go and physically look at, which is not true of an entity formed last year.',
           'What we will not do is quote you a return figure. What we will do is put the approvals, the title chain and the all-in cost in front of you before you commit, and take you to the site so you can stand on the plot you are buying.',
         ],
       },

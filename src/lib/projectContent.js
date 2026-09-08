@@ -46,7 +46,7 @@ export const projectIntro = (p) => {
       : 'an ongoing project';
 
   return `${p.name} is ${stage} offering ${what} at ${inDholera}, developed by Mirrikh Infratech and sold through ` +
-    `Capital Brix at direct developer pricing. ${p.size ? `The project covers ${p.size.toLowerCase()}. ` : ''}` +
+    `Capital Brix LLP as an authorised sales channel partner. ${p.size ? `The project covers ${p.size.toLowerCase()}. ` : ''}` +
     `Like every plot we sell, it is NA-converted, NOC-cleared, title-clear and plan-passed, and completes through a ` +
     `registered sale deed in your own name.`;
 };
@@ -63,7 +63,8 @@ export const projectSpecs = (p) => ({
     ['Approvals', 'NA converted · NOC cleared · title clear · plan passed'],
     ['Ownership', 'Registered sale deed in the buyer’s name'],
     ['Developer', 'Mirrikh Infratech Pvt. Ltd.'],
-    ['Sold by', 'Capital Brix LLP — Official Strategy Partner'],
+    ['Developed by', 'Mirrikh Infratech Pvt. Ltd.'],
+    ['Marketed by', 'Capital Brix LLP — authorised sales channel partner'],
   ],
 });
 
