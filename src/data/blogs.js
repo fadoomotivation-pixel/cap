@@ -19,6 +19,123 @@ export const blogCategories = ['All', 'Investment', 'Infrastructure', 'Legal & P
 
 export const blogs = [
   // ══════════════════════════════════════════════════════════════
+  // Sourced from DICDL's own quarterly newsletter (SPOTLIGHT, Jan–Apr 2026).
+  // Facts are the development authority's; every sentence here is written from
+  // scratch, and the source is named in the text rather than absorbed — a post
+  // built on someone's document should say whose document it is.
+  //
+  // Deliberately NOT included: the newsletter states the expressway cost at
+  // approximately ₹5,800 crore in its own article and reproduces a press
+  // headline saying ₹5,100 crore. Two figures, one document, no way to
+  // reconcile them from here — so the cost is left out rather than guessed at.
+  {
+    slug: 'dholera-sir-progress-2026',
+    category: 'Market Update',
+    keyword: 'Dholera latest news 2026',
+    date: '2026-09-08',
+    updated: '2026-09-08',
+    readMinutes: 7,
+    tone: 'teal',
+    title: 'Dholera SIR in 2026: What Actually Moved This Year',
+    h1: 'Dholera SIR in 2026: what actually moved between January and April',
+    seoTitle: 'Dholera Latest News 2026 | SEZ Notified, Expressway Open, Fab Rising',
+    excerpt:
+      'The SEZ for the Tata semiconductor plant was notified in April 2026. The Ahmedabad–Dholera Expressway opened. MeitY leadership and Japanese delegations visited the fab site. A plain reading of the development authority’s own quarterly record — and what it means for a plot buyer.',
+    intro:
+      'Dholera generates more forecasting than reporting. This piece does the opposite: it takes the January–April 2026 quarterly newsletter published by Dholera Industrial City Development Limited (DICDL) — the state-owned company that actually builds and runs the region — and reads what is recorded in it. Four things moved in that window, and one of them changes the legal status of the land the semiconductor plant sits on. If you are considering a plot here, these are the developments worth knowing, along with the honest note on which of them affect your purchase and which do not.',
+    sections: [
+      {
+        h2: 'The SEZ for the Tata fab was formally notified',
+        p: [
+          'On 9 April 2026, a Special Economic Zone of 66.16 hectares was notified in the Activation Area of Dholera SIR for Tata Semiconductor Manufacturing Private Limited. The sector recorded on the notification is electronic hardware and software, including IT and IT-enabled services.',
+          'The distinction between a plant being announced and its land carrying SEZ status is not a technicality. An announcement is an intention. A gazette notification is a legal designation that brings a distinct customs, regulatory and fiscal regime to a defined boundary — and it is the kind of step that happens when a project is being executed rather than considered. DICDL puts the proposed investment at ₹91,000 crore, with the potential to generate over 20,000 jobs once the ancillary supply chain forms around it.',
+        ],
+        callout: {
+          tone: 'info',
+          title: 'What this does and does not mean for a plot buyer',
+          text: 'It does not give your plot any SEZ benefit — those apply inside the notified 66.16 hectares, to the unit operating there. What it does is remove a category of risk from the region’s central anchor. The reason to care is second-order: an employer of that size, now legally embedded, is what turns a planned city into an occupied one over the following decade.',
+        },
+      },
+      {
+        h2: 'The Ahmedabad–Dholera Expressway is open',
+        p: [
+          'The 109 km access-controlled corridor was built by the National Highways Authority of India under the Bharatmala programme, in four packages running from the Sardar Patel Ring Road near Ahmedabad to Adhelai village in Bhavnagar district.',
+          'DICDL records the practical effect as a drop in travel time from close to two hours to about 45 minutes. Distance did not change; the number that governs behaviour did. Forty-five minutes is inside the range at which people will commute, freight operators will plan same-day cycles, and a buyer in Ahmedabad will visit a site on a weekday morning rather than surrendering a Sunday to it.',
+          'For anyone weighing a purchase, this is the single most testable claim in this article. You can drive it yourself, and we would rather you did.',
+        ],
+      },
+      {
+        h2: 'The fab site is drawing the people who decide these things',
+        p: [
+          'Between January and April, the Union Minister for Electronics and Information Technology visited Dholera and reviewed the under-construction fab, which Tata Electronics is developing in partnership with Taiwan’s Powerchip Semiconductor Manufacturing Corporation. The Secretary of MeitY and the CEO of the India Semiconductor Mission made a separate visit in the same month.',
+          'At the Gujarat SemiConnect Conference held at Gandhinagar on 1–2 March 2026, over 130 delegates travelled to Dholera on the second day for an on-ground tour of the Activation Area, hosted with Gujarat State Electronics Mission and Tata Electronics.',
+          'Site visits by ministers are ordinary politics. Site visits by the procurement and technical side of an industry are not — a semiconductor ecosystem is built by suppliers who need to see utility readiness and logistics before they commit, and that is who was walking the ground.',
+        ],
+      },
+      {
+        h2: 'Japanese interest is turning into presence',
+        p: [
+          'A 45-member Japanese delegation visited Dholera with the Japan Bank for International Cooperation, JETRO and NICDC, covering the expressway and the airport site as well as the region’s utilities and command centre. Separately, Japan’s former Ambassador to India visited with officials from JBIC and NICDC to review the semiconductor ecosystem.',
+          'The detail worth noting sits underneath the delegations: Nippon Express is establishing a presence at Dholera. A logistics operator committing physical infrastructure is a different signal from a delegation touring one — it is a company placing an asset where it expects volume.',
+        ],
+      },
+      {
+        h2: 'Social infrastructure is now on the list',
+        p: [
+          'DICDL records a multi-speciality hospital, a corporate hotel, a fire station, a Tent City, a guest house, a food court, a school, and residential and commercial developments as progressing.',
+          'This is the least glamorous item here and arguably the most important for a residential plot. Industrial land is bought on connectivity and power. Homes are bought on schools and hospitals. A region can have a semiconductor fab and still not be somewhere a family will move — the social infrastructure is what closes that gap, and it is the category to watch over the next two years.',
+        ],
+        table: {
+          head: ['What moved', 'When', 'Why it matters to a buyer'],
+          rows: [
+            ['SEZ notified for the Tata fab (66.16 ha)', '9 April 2026', 'The anchor employer’s land now has legal designation, not just an announcement'],
+            ['Ahmedabad–Dholera Expressway open', 'Operational', 'Ahmedabad to Dholera at about 45 minutes — verify it on your own site visit'],
+            ['MeitY and ISM leadership visits to the fab', 'March 2026', 'Central government attention is on execution, not planning'],
+            ['130+ delegates toured the Activation Area', '1–2 March 2026', 'Industry supply chain is assessing the region first-hand'],
+            ['45-member Japanese delegation; Nippon Express presence', 'Q1 2026', 'A logistics operator placing an asset is a commitment, not a visit'],
+            ['Hospital, school, hotel, fire station in progress', 'Ongoing', 'The category that decides whether families actually move in'],
+          ],
+        },
+      },
+      {
+        h2: 'What this does not tell you',
+        p: [
+          'A regional record is not a plot-level record. None of the above tells you whether the specific piece of land you are being shown is NA-converted, title-clear, plan-passed, or inside a notified Town Planning scheme. Those are questions about one survey number, and they are answered by documents, not by news.',
+          'It is also worth being precise about the direction of causation. Infrastructure and anchor investment raise the ceiling on what land in a region can be worth over time; they do not set the price of any individual plot, and they do not make a bad title good. Treat this article as the reason to look at Dholera seriously, and the verification guide below as the thing that decides whether you buy a particular plot in it.',
+        ],
+        callout: {
+          tone: 'warn',
+          title: 'Source',
+          text: 'Every figure and date in this article comes from the SPOTLIGHT quarterly newsletter for January–April 2026, published by Dholera Industrial City Development Limited, Government of Gujarat. We have summarised it in our own words; where a number matters to your decision, ask us for the source page and check it yourself.',
+        },
+      },
+    ],
+    faqs: [
+      {
+        q: 'When was the SEZ for the Tata semiconductor plant at Dholera notified?',
+        a: 'On 9 April 2026. The notification designates 66.16 hectares in the Activation Area of Dholera SIR for Tata Semiconductor Manufacturing Private Limited, in the electronic hardware and software sector including IT/ITES.',
+      },
+      {
+        q: 'How long does the Ahmedabad to Dholera drive take now?',
+        a: 'Dholera Industrial City Development Limited puts it at about 45 minutes on the Ahmedabad–Dholera Expressway, against close to two hours before the corridor opened. The expressway is 109 km, built by NHAI under the Bharatmala programme in four packages.',
+      },
+      {
+        q: 'Does the SEZ notification benefit my plot?',
+        a: 'No. SEZ benefits apply inside the notified 66.16 hectares to the unit operating there, not to plots elsewhere in the region. Its relevance to a plot buyer is indirect: it confirms that the region’s anchor investment has legal standing and is being executed.',
+      },
+      {
+        q: 'Is Dholera actually built, or is it still a plan?',
+        a: 'Both, depending on where you stand. The Activation Area has 72 km of internal roads, a 50 MLD water treatment plant, a 20 MLD common effluent treatment plant, a 10 MLD sewage treatment plant and the ABCD building with the city command centre. The wider 920 sq km region is largely undeveloped. This is exactly why the location of a specific plot matters more than the reputation of the region.',
+      },
+      {
+        q: 'What should I check before buying a plot in Dholera?',
+        a: 'NA conversion, NOC, a clear title chain, an approved layout plan, and which Town Planning scheme the land falls in. None of the regional progress described above substitutes for those documents on your specific survey number. Our verification guide walks through each one.',
+      },
+    ],
+    related: ['how-to-verify-a-dholera-plot', 'tata-semiconductor-plant-dholera', 'ahmedabad-dholera-expressway', 'dholera-plot-price-2026'],
+  },
+
+  // ══════════════════════════════════════════════════════════════
   {
     slug: 'dholera-plot-price-2026',
     category: 'Investment',
@@ -89,7 +206,7 @@ export const blogs = [
         h2: 'Why Dholera pricing is where it is',
         p: [
           'Dholera SIR is India\'s first greenfield smart city, planned under the Delhi–Mumbai Industrial Corridor and backed by the Government of Gujarat. Unlike a city that grew organically and is now retrofitting infrastructure, Dholera\'s trunk network was designed before the population arrived.',
-          'Three anchors underpin current demand. The Tata semiconductor fabrication plant, a project of roughly ₹91,000 crore, brings a manufacturing ecosystem rather than a single employer. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the drive from Ahmedabad to roughly an hour.',
+          'Three anchors underpin current demand. The Tata semiconductor fabrication plant, a project of roughly ₹91,000 crore, brings a manufacturing ecosystem rather than a single employer. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the drive from Ahmedabad to about 45 minutes, down from close to two hours.',
           'That combination is why land here trades above pure agricultural value and well below a functioning metro. You are pricing in execution risk on one side and a planned city on the other.',
         ],
       },
@@ -163,7 +280,7 @@ export const blogs = [
           items: [
             '**It is planned, not accreted.** Dholera SIR spans roughly 920 sq km with a trunk network — arterial roads, water, power, drainage, ICT — laid out before the population arrived. Most Indian cities are retrofitting infrastructure into places people already live, at multiples of the cost.',
             '**The anchor is industrial, not residential speculation.** The Tata semiconductor fabrication plant, around ₹91,000 crore, does not arrive alone. Fabs pull suppliers, testing, packaging, logistics and services. Employment of that kind creates housing demand that does not depend on the next investor buying from the last one.',
-            '**Connectivity is under construction, not under discussion.** The 109 km Ahmedabad–Dholera Expressway brings Ahmedabad to roughly an hour. Dholera International Airport is being built at Navagam.',
+            '**Connectivity is under construction, not under discussion.** The 109 km Ahmedabad–Dholera Expressway brings Ahmedabad to about 45 minutes. Dholera International Airport is being built at Navagam.',
             '**State and corridor backing.** Dholera sits within the Delhi–Mumbai Industrial Corridor and carries Government of Gujarat commitment. That does not guarantee timelines, but it does change the probability distribution compared with a private township betting on a road that may never be funded.',
             '**Entry pricing is still early-stage.** Land in the ₹6,000–₹10,000 per sq yd band is priced for a place that is being built, not one that is built.',
           ],
@@ -412,7 +529,7 @@ export const blogs = [
       {
         h2: 'Where this fits with the other two anchors',
         p: [
-          'Taken alone, an airport is a single point of failure. Taken with the 109 km Ahmedabad–Dholera Expressway — which brings the drive from Ahmedabad to roughly an hour — and the roughly ₹91,000 crore Tata semiconductor fabrication plant, it becomes part of a system where each element makes the others more useful.',
+          'Taken alone, an airport is a single point of failure. Taken with the 109 km Ahmedabad–Dholera Expressway — which brings the drive from Ahmedabad to about 45 minutes — and the roughly ₹91,000 crore Tata semiconductor fabrication plant, it becomes part of a system where each element makes the others more useful.',
           'That is the honest strength of the Dholera case: not any single project, but three of them pointing the same way, in a region planned to receive them. And it is also why a buyer should not let any one of them carry the entire argument.',
         ],
       },
@@ -491,7 +608,7 @@ export const blogs = [
       {
         h2: 'How this interacts with the rest of Dholera',
         p: [
-          'The fab is one of three anchors. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the Ahmedabad drive to roughly an hour. Beneath all of it sits a planned 920 sq km region with trunk infrastructure designed before occupancy — which is the reason a project of this scale could site here at all.',
+          'The fab is one of three anchors. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the Ahmedabad drive to about 45 minutes. Beneath all of it sits a planned 920 sq km region with trunk infrastructure designed before occupancy — which is the reason a project of this scale could site here at all.',
           'That sequencing is the actual story. Dholera did not attract a fab because the fab wanted a village; it attracted one because the land, power, water and connectivity were planned to industrial specification in advance.',
         ],
       },
@@ -534,12 +651,12 @@ export const blogs = [
     readMinutes: 6,
     tone: 'teal',
     title: 'The Ahmedabad–Dholera Expressway: An Hour That Changes Things',
-    h1: 'The Ahmedabad–Dholera Expressway: why one hour changes everything',
+    h1: 'The Ahmedabad–Dholera Expressway: why 45 minutes changes everything',
     seoTitle: 'Ahmedabad Dholera Expressway: Route, Distance & Impact',
     excerpt:
-      'A 109 km expressway that brings Dholera within roughly an hour of Ahmedabad. Why travel time, more than distance, decides whether a satellite region becomes part of a metro economy.',
+      'A 109 km expressway that brings Dholera within about 45 minutes of Ahmedabad. Why travel time, more than distance, decides whether a satellite region becomes part of a metro economy.',
     intro:
-      'Dholera sits roughly 100 km south-west of Ahmedabad. On its own, that distance would keep it a separate place. The 109 km Ahmedabad–Dholera Expressway changes the number that actually matters — travel time, brought down to around an hour — and travel time is what decides whether a region becomes part of a metropolitan economy or stays outside it.',
+      'Dholera sits roughly 100 km south-west of Ahmedabad. On its own, that distance would keep it a separate place. The 109 km Ahmedabad–Dholera Expressway changes the number that actually matters — travel time, which the development authority puts at about 45 minutes against close to two hours before — and travel time is what decides whether a region becomes part of a metropolitan economy or stays outside it.',
     sections: [
       {
         h2: 'Distance is not the variable; time is',
@@ -594,11 +711,11 @@ export const blogs = [
     faqs: [
       {
         q: 'How long is the Ahmedabad–Dholera Expressway?',
-        a: 'Approximately 109 km, connecting Ahmedabad to the Dholera Special Investment Region.',
+        a: 'Approximately 109 km, connecting Ahmedabad to the Dholera Special Investment Region. It was built by the National Highways Authority of India under Bharatmala, in four packages running from the Sardar Patel Ring Road near Ahmedabad to Adhelai village in Bhavnagar district.',
       },
       {
         q: 'How far is Dholera from Ahmedabad?',
-        a: 'Roughly 100 km south-west. The expressway brings the drive down to about an hour, which is the number that matters for commuting, freight and site visits.',
+        a: 'Roughly 100 km south-west. The expressway brings the drive down to about 45 minutes, which is the number that matters for commuting, freight and site visits.',
       },
       {
         q: 'Does being near the expressway guarantee a plot is well located?',
@@ -684,7 +801,7 @@ export const blogs = [
         callout: {
           tone: 'tip',
           title: 'One visit, well planned, beats three rushed ones',
-          text: 'With the Ahmedabad–Dholera Expressway bringing the drive to roughly an hour, a single trip can cover multiple site visits, the sub-registrar and a meeting at our Noida office. Tell us your dates and we will structure the visit around them.',
+          text: 'With the Ahmedabad–Dholera Expressway bringing the drive to about 45 minutes, a single trip can cover multiple site visits, the sub-registrar and a meeting at our Noida office. Tell us your dates and we will structure the visit around them.',
         },
       },
     ],
