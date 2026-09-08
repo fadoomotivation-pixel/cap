@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Seo from '../components/Seo';
 import BlogArt from '../components/BlogArt';
+import CountUp from '../components/CountUp';
 import DholeraInfrastructure from '../components/DholeraInfrastructure';
 import { pageSeo, absoluteUrl, SITE_URL, SITE_NAME } from '../lib/seo';
 import { site } from '../data/site';
@@ -148,7 +149,7 @@ export default function Dholera() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {officialStats.map((st) => (
               <div key={st.label} className="border-l-2 border-[#D4AF37] pl-4">
-                <p className="text-2xl sm:text-3xl font-bold text-[#10243E] font-heading">{st.value}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#10243E] font-heading"><CountUp value={st.value} /></p>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#9C7C1C] mt-1">{st.label}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{st.sub}</p>
               </div>

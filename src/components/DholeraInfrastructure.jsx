@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
+import CountUp from './CountUp';
 
 // ─────────────────────────────────────────────────────────────
 // What is actually built inside the Activation Area, with the official aerial
@@ -194,7 +195,7 @@ export default function DholeraInfrastructure() {
                   <h3 className="font-heading text-xl sm:text-2xl mb-3">{s.title}</h3>
                   <p className="text-gray-400 text-sm leading-relaxed mb-5">{s.body}</p>
                   <p className="inline-flex items-baseline gap-2 border-l-2 border-[#D4AF37] pl-3">
-                    <span className="text-2xl font-bold text-white font-heading">{s.stat}</span>
+                    <span className="text-2xl font-bold text-white font-heading"><CountUp key={s.title} value={s.stat} /></span>
                     <span className="text-xs text-gray-400">{s.statLabel}</span>
                   </p>
                 </motion.div>
