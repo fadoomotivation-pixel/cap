@@ -95,7 +95,7 @@ export default function LeadForm({ source = 'website', headline, sub, dark = fal
 
       <p className={`flex items-start gap-2 text-xs mt-4 ${dark ? 'text-white/50' : 'text-gray-400'}`}>
         <ShieldCheck size={14} className="shrink-0 mt-0.5 text-[#D4AF37]" />
-        NA-approved, title-clear plots · registered sale deed in your name · direct developer pricing.
+        NA-approved, title-clear plots · registered sale deed in your name · full documentation support.
         We do not share your number with anyone.
       </p>
     </div>

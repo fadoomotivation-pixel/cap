@@ -29,7 +29,7 @@ export default function Hero() {
             className="mb-8"
           >
             <p className="text-[#D4AF37] text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] mb-5">
-              Official Strategy Partner • Mirrikh Infratech
+              Authorised Sales Channel Partner • Mirrikh Infratech
             </p>
             <h1 className="text-white font-heading font-normal leading-[1.1] tracking-tight mb-6 text-4xl md:text-5xl lg:text-[4.25rem]">
               Plots in Dholera Smart City,<br/>where India&apos;s next city is being built.
@@ -40,7 +40,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl mb-12 font-light"
           >
-            NA-approved, title-clear plots in Dholera Smart City at direct developer pricing—from ₹7,250 / sq yd. Full documentation support from our Noida office.
+            NA-approved, title-clear plots in Dholera Smart City from ₹7,250 / sq yd, in projects developed by Mirrikh Infratech. Full documentation support from our Noida office.
           </motion.p>
 
           <motion.div

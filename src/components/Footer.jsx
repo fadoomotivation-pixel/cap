@@ -36,7 +36,7 @@ export default function Footer() {
               <img src="/logo-capital-brix.png" alt="Capital Brix" width="56" height="56" className="w-14 h-14 rounded-xl object-contain" />
               <span className="flex flex-col leading-none">
                 <span className="font-extrabold text-[24px] text-white tracking-tight">Capital Brix</span>
-                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-1">Strategy Partner</span>
+                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-1">Sales Channel Partner</span>
               </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
@@ -121,7 +121,14 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-gray-800 bg-[#070C11]">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>Copyright © {new Date().getFullYear()} Capital Brix LLP (Partner of Mirrikh Infratech Pvt. Ltd.). All Rights Reserved.</p>
+          <p>Copyright © {new Date().getFullYear()} Capital Brix LLP. All Rights Reserved.</p>
+          {/* The exact authorised designation, not a generic "Partner of". Capital
+              Brix is not the developer, owner or promoter of these projects. */}
+          <p className="mt-1">
+            Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd.
+            All projects are developed and owned by Mirrikh Infratech Pvt. Ltd.
+            Mirrikh Infratech and MAYUR are trademarks of their respective owner.
+          </p>
           <div className="flex gap-6">
             <Link to="/contact" className="hover:text-white transition-colors">Terms &amp; Conditions</Link>
             <Link to="/contact" className="hover:text-white transition-colors">Privacy Policy</Link>

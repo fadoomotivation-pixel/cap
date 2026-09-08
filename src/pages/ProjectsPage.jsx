@@ -14,15 +14,20 @@ export default function ProjectsPage() {
           backgroundSize: 'cover', backgroundPosition: 'center'
         }}/>
         <div className="relative z-10 max-w-3xl mx-auto px-6">
-          <p className="text-[#9C7C1C] font-bold uppercase tracking-[0.25em] text-sm mb-3">Mirrikh Infratech</p>
-          <h1 className="text-5xl md:text-6xl font-black mb-4 text-white">Our Projects</h1>
-          <p className="text-white/70 text-lg max-w-xl mx-auto">
-            Explore our complete portfolio of NA-approved, title-clear residential and industrial projects in Dholera Smart City.
+          {/* "Our Projects" under a "Mirrikh Infratech" eyebrow read as though
+              Capital Brix developed them. We are the sales channel partner, not
+              the developer, and the heading now says whose projects these are. */}
+          <p className="text-[#D4AF37] font-bold uppercase tracking-[0.25em] text-sm mb-3">Developed by Mirrikh Infratech Pvt. Ltd.</p>
+          <h1 className="text-4xl md:text-5xl font-black mb-4 text-white">Mirrikh Infratech Projects in Dholera</h1>
+          <p className="text-white/70 text-lg max-w-2xl mx-auto">
+            NA-approved, title-clear residential and industrial projects in Dholera Smart City,
+            developed by Mirrikh Infratech Pvt. Ltd. and marketed by Capital Brix LLP as an
+            authorised sales channel partner.
           </p>
           <div className="flex items-center justify-center gap-2 mt-4 text-white/50 text-sm">
             <a href="/" className="hover:text-[#9C7C1C]">Home</a>
             <span>/</span>
-            <span className="text-[#9C7C1C]">Our Projects</span>
+            <span className="text-[#9C7C1C]">Projects</span>
           </div>
         </div>
       </div>
