@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -7,13 +7,85 @@ import { site } from '../data/site';
 const wa = `https://wa.me/${site.phone}?text=${encodeURIComponent(site.whatsappMessage)}`;
 
 export default function Hero() {
+  const video = useRef(null);
+  const [ready, setReady] = useState(false);
+
+  // Deliberately starts false and is decided in the effect below, never in the
+  // initial state. Reading window during render makes the prerendered HTML and
+  // the first client render disagree — the server has no <video>, the browser
+  // does — and React throws a hydration mismatch (#418) on every homepage.
+  // That is precisely the bug the prerendering work exists to avoid.
+  const [showVideo, setShowVideo] = useState(false);
+
+  useEffect(() => {
+    // Two reasons to stay on the still image: the visitor asked their OS for
+    // less motion, or they are on a metered connection with Save-Data set.
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const saveData = navigator.connection?.saveData;
+    if (reduced || saveData) return undefined;
+    setShowVideo(true);
+    return undefined;
+  }, []);
+
+  useEffect(() => {
+    if (!showVideo) return undefined;
+    let cancelled = false;
+
+    // Deferred to idle so the fetch queues behind the fonts, CSS and JS the
+    // page actually needs to render. A hero video that delays first paint is
+    // worse than no hero video.
+    const attach = () => {
+      const el = video.current;
+      if (!el || cancelled || el.dataset.loaded) return;
+      el.dataset.loaded = '1';
+      [['/media/dholera-aerial.webm', 'video/webm'],
+       ['/media/dholera-aerial.mp4', 'video/mp4']].forEach(([src, type]) => {
+        const source = document.createElement('source');
+        source.src = src; source.type = type;
+        el.appendChild(source);
+      });
+      el.load();
+      // Rejection is fine and expected on some battery-saver settings — the
+      // poster stays, which is a perfectly good hero.
+      el.play().catch(() => {});
+    };
+
+    const id = 'requestIdleCallback' in window
+      ? window.requestIdleCallback(attach, { timeout: 2500 })
+      : window.setTimeout(attach, 1200);
+    return () => {
+      cancelled = true;
+      if ('cancelIdleCallback' in window) window.cancelIdleCallback(id);
+      else clearTimeout(id);
+    };
+  }, [showVideo]);
+
   return (
     <section className="relative w-full min-h-[90svh] flex items-end pb-16 lg:pb-24 overflow-hidden bg-[#0A1016]">
-      {/* Real photography background, gently dimmed */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+      {/* The hero was a stock skyline of a foreign city — impressive, and not
+          Dholera. This is aerial footage of the actual roads and utility
+          corridor built in the Activation Area, which is a stronger claim
+          precisely because it is the real place.
+
+          The poster paints first and is what the Largest Contentful Paint
+          measures; the clip is attached only after the page is interactive, so
+          a 1.2 MB download never sits in front of the headline. */}
+      <img
+        src="/media/dholera-aerial-poster.jpg"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover"
       />
+      {showVideo && (
+        <video
+          ref={video}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${ready ? 'opacity-100' : 'opacity-0'}`}
+          loop muted playsInline preload="none"
+          aria-hidden="true"
+          tabIndex={-1}
+          onPlaying={() => setReady(true)}
+        />
+      )}
       
       {/* Simple, elegant dark overlay for text readability, avoiding complicated arbitrary class gradients */}
       <div className="absolute inset-0 bg-black/40" />
@@ -31,7 +103,7 @@ export default function Hero() {
             <p className="text-[#D4AF37] text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] mb-5">
               Authorised Sales Channel Partner • Mirrikh Infratech
             </p>
-            <h1 className="text-white font-heading font-normal leading-[1.1] tracking-tight mb-6 text-4xl md:text-5xl lg:text-[4.25rem]">
+            <h1 className="text-white font-heading font-semibold leading-[1.08] tracking-[-0.02em] mb-6 text-[2.1rem] sm:text-4xl md:text-5xl lg:text-[4.25rem]">
               Plots in Dholera Smart City,<br/>where India&apos;s next city is being built.
             </h1>
           </motion.div>
@@ -63,6 +135,11 @@ export default function Hero() {
           </motion.div>
         </div>
       </div>
+    
+      {/* Same credit as the /dholera section — the footage is not ours. */}
+      <p className="absolute bottom-3 right-4 z-10 text-[10px] text-white/45 tracking-wide">
+        Footage: official Dholera SIR film · Government of Gujarat / DICDL
+      </p>
     </section>
   );
 }
