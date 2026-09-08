@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Seo from '../components/Seo';
 import BlogArt from '../components/BlogArt';
+import DholeraInfrastructure from '../components/DholeraInfrastructure';
 import { pageSeo, absoluteUrl, SITE_URL, SITE_NAME } from '../lib/seo';
 import { site } from '../data/site';
 
@@ -155,6 +156,10 @@ export default function Dholera() {
           </div>
         </div>
       </section>
+
+      {/* Built infrastructure with the official aerial film — the section a
+          buyer actually wants before a site visit. */}
+      <DholeraInfrastructure />
 
       {/* ── Five Pillar Routing Grid ────────────────────────── */}
       <section className="max-w-7xl mx-auto px-6 py-16 lg:py-24">
