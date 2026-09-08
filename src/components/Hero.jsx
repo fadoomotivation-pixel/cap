@@ -61,63 +61,76 @@ export default function Hero() {
   }, [showVideo]);
 
   return (
-    <section className="relative w-full min-h-[90svh] flex items-end pb-16 lg:pb-24 overflow-hidden bg-[#0A1016]">
-      {/* The hero was a stock skyline of a foreign city — impressive, and not
-          Dholera. This is aerial footage of the actual roads and utility
-          corridor built in the Activation Area, which is a stronger claim
-          precisely because it is the real place.
+    <section className="relative w-full bg-[#0A1016]">
 
-          The poster paints first and is what the Largest Contentful Paint
-          measures; the clip is attached only after the page is interactive, so
-          a 1.2 MB download never sits in front of the headline. */}
-      <img
-        src="/media/dholera-aerial-poster.jpg"
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      {showVideo && (
-        <video
-          ref={video}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${ready ? 'opacity-100' : 'opacity-0'}`}
-          loop muted playsInline preload="none"
-          aria-hidden="true"
-          tabIndex={-1}
-          onPlaying={() => setReady(true)}
-        />
-      )}
-      
-      {/* Simple, elegant dark overlay for text readability, avoiding complicated arbitrary class gradients */}
-      <div className="absolute inset-0 bg-black/40" />
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(to top, rgba(10,16,22,1) 0%, rgba(10,16,22,0.4) 50%, rgba(10,16,22,0) 100%)' }}
-      />
+      {/* The film gets a clean band of its own. Nothing is laid over it — the
+          headline used to sit on top, and a dark scrim plus white type across
+          the middle of the frame is exactly what stops aerial footage reading
+          as footage. The top padding clears the fixed navbar, so the video is
+          never behind it either.
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-12 pt-40">
-        <div className="max-w-4xl">
+          The poster paints first and is what Largest Contentful Paint
+          measures; the clip is attached at idle, after the page is
+          interactive, so 1.2 MB never sits in front of first render. */}
+      <div className="pt-[68px] lg:pt-[76px]">
+        <div className="relative w-full h-[42svh] sm:h-[52svh] lg:h-[64svh] overflow-hidden bg-[#141c26]">
+          <img
+            src="/media/dholera-aerial-poster.jpg"
+            alt="Aerial view of completed roads and utility infrastructure in the Dholera SIR Activation Area"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {showVideo && (
+            <video
+              ref={video}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${ready ? 'opacity-100' : 'opacity-0'}`}
+              loop muted playsInline preload="none"
+              aria-hidden="true"
+              tabIndex={-1}
+              onPlaying={() => setReady(true)}
+            />
+          )}
+        </div>
+
+        {/* Credit sits under the frame rather than on it, for the same reason. */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <p className="text-[10px] text-white/40 tracking-wide text-right pt-2">
+            Footage: official Dholera SIR film · Government of Gujarat / DICDL
+          </p>
+        </div>
+      </div>
+
+      {/* ── The words, on their own ground ───────────────── */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 pt-6 pb-16 lg:pt-10 lg:pb-24">
+        <div className="max-w-5xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }}
-            className="mb-8"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="mb-7"
           >
             <p className="text-[#D4AF37] text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] mb-5">
               Authorised Sales Channel Partner • Mirrikh Infratech
             </p>
-            <h1 className="text-white font-heading font-semibold leading-[1.08] tracking-[-0.02em] mb-6 text-[2.1rem] sm:text-4xl md:text-5xl lg:text-[4.25rem]">
-              Plots in Dholera Smart City,<br/>where India&apos;s next city is being built.
+            {/* No forced <br>: at 4rem the first clause did not fit the column
+                and "City," fell to a line of its own. text-wrap:balance lets the
+                browser even the lines out at whatever width it actually gets. */}
+            <h1
+              className="text-white font-heading font-semibold leading-[1.08] tracking-[-0.02em] text-[2rem] sm:text-4xl md:text-5xl lg:text-[3.5rem]"
+              style={{ textWrap: 'balance' }}
+            >
+              Plots in Dholera Smart City, where India&apos;s next city is being built.
             </h1>
           </motion.div>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl mb-12 font-light"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
+            className="text-gray-300 text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mb-10 font-light"
           >
-            NA-approved, title-clear plots in Dholera Smart City from ₹7,250 / sq yd, in projects developed by Mirrikh Infratech. Full documentation support from our Noida office.
+            NA-approved, title-clear plots in Dholera Smart City from ₹7,250 / sq yd, in projects
+            developed by Mirrikh Infratech. Full documentation support from our Noida office.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row gap-5"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+            className="flex flex-col sm:flex-row gap-4"
           >
             <a
               href={wa} target="_blank" rel="noreferrer"
@@ -135,11 +148,6 @@ export default function Hero() {
           </motion.div>
         </div>
       </div>
-    
-      {/* Same credit as the /dholera section — the footage is not ours. */}
-      <p className="absolute bottom-3 right-4 z-10 text-[10px] text-white/45 tracking-wide">
-        Footage: official Dholera SIR film · Government of Gujarat / DICDL
-      </p>
     </section>
   );
 }
