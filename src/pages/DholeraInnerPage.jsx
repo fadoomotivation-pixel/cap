@@ -5,6 +5,7 @@ import Seo from '../components/Seo';
 import LeadForm from '../components/LeadForm';
 import BlogArt from '../components/BlogArt';
 import ArticleBody from '../components/ArticleBody';
+import VirtualTourViewer from '../components/VirtualTourViewer';
 import { dholeraPages, dholeraPageBySlug } from '../data/dholera';
 import { absoluteUrl, SITE_URL, SITE_NAME } from '../lib/seo';
 import { site } from '../data/site';
@@ -101,27 +102,10 @@ export default function DholeraInnerPage() {
             </p>
 
             {slug === 'virtual-tour' && (
-              <div className="mb-14 rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
-                <div className="relative h-64 sm:h-72 bg-[#0A1016] overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 opacity-40">
-                    <BlogArt tone="amber" label="Dholera 360 Virtual Tour" seed={42} className="w-full h-full" />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A1016] via-[#0A1016]/60 to-transparent" />
-                  <div className="relative z-10 text-center px-6 max-w-lg">
-                    <div className="inline-flex items-center gap-2 bg-[#0A1016]/90 border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wider mb-4">
-                      <Compass size={14} className="animate-spin" style={{ animationDuration: '10s' }} />
-                      Official 360° Panorama Viewer
-                    </div>
-                    <h2 className="text-2xl sm:text-3xl font-heading text-white mb-2">
-                      Activation Area Ground Reality
-                    </h2>
-                    <p className="text-gray-300 text-xs sm:text-sm font-light">
-                      Photographic 360° panoramas capturing ABCD Building, CIOC, 72 km road network, and utility plants.
-                    </p>
-                  </div>
-                </div>
+              <div className="mb-14">
+                <VirtualTourViewer className="mb-8" />
 
-                <div className="p-6 sm:p-8">
+                <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm p-6 sm:p-8">
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-4 mb-6">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9C7C1C]">
@@ -137,7 +121,7 @@ export default function DholeraInnerPage() {
                   </div>
 
                   <p className="text-gray-600 text-[15px] leading-relaxed mb-6">
-                    The official Dholera SIR virtual tour provides high-resolution, interactive 360° panoramic viewpoints across Town Planning Schemes 2A and 4A. Because the government web server enforces strict <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono text-gray-800">Content-Security-Policy: frame-ancestors 'self'</code> headers that disallow iframe embedding on external domains, the tour opens in a secure, full-screen dedicated window.
+                    The official Dholera SIR virtual tour provides high-resolution, interactive 360° panoramic viewpoints across Town Planning Schemes 2A and 4A. Explore the activation area landmarks directly in the interactive viewer above or open in full-screen mode with device motion / VR support.
                   </p>
 
                   <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 mb-6">
@@ -174,12 +158,12 @@ export default function DholeraInnerPage() {
 
                   <div className="flex flex-wrap items-center gap-3">
                     <a
-                      href="https://dholera.gujarat.gov.in/dholera_virtual_tours/static/src/DholeraSIR/index.htm"
+                      href="/dholera-tour/index.htm"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] px-6 py-3.5 rounded-sm font-semibold transition-colors shadow-sm text-sm"
                     >
-                      Launch Official 360° Tour <ExternalLink size={16} />
+                      Open Dedicated Fullscreen Window <ExternalLink size={16} />
                     </a>
                     <a
                       href="https://dholera.gujarat.gov.in/"
@@ -192,7 +176,7 @@ export default function DholeraInnerPage() {
                   </div>
 
                   <p className="mt-4 text-xs text-gray-500 leading-relaxed">
-                    <strong>Notice:</strong> Panoramic photography, krpano visual assets, and master plan maps are the statutory intellectual property of DICDL and the Government of Gujarat. Capital Brix references this public utility to help buyers verify trunk infrastructure before committing capital.
+                    <strong>Notice:</strong> Panoramic photography, WebGL visual assets, and master plan maps are the statutory intellectual property of DICDL and the Government of Gujarat. Capital Brix references this public utility to help buyers verify trunk infrastructure before committing capital.
                   </p>
                 </div>
               </div>
