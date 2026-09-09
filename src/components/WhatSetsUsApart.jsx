@@ -9,74 +9,77 @@ import {
 // ─────────────────────────────────────────────────────────────
 // The twelve things Dholera SIR is planned around.
 //
-// Each tile carries a one-line explanation as well as a label. A grid of
-// twelve bare captions ("Technology", "Security") tells a buyer nothing and
-// gives Google nothing to index — the sentence is what makes the tile worth
-// its space on both counts.
+// Laid out to the reference the owner supplied: a tinted rounded tile per
+// icon, the name in navy, and a small uppercase line under it. Each tile
+// carries its own accent, which is what stops twelve items in one brand colour
+// reading as a wall.
+//
+// The icons themselves are still ours — hand-drawn strokes in DholeraIcons.jsx
+// rather than the reference PNGs, so they take colour from the tile, stay sharp
+// at any size, and raise no question about whose artwork is on our server.
 // ─────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  { Icon: IconInfrastructure, label: 'World-class infrastructure', text: 'Trunk roads, water, power and drainage laid before plots were sold, not after.' },
-  { Icon: IconGovernance,     label: 'Ease of governance',         text: 'One development authority for the whole region, under the Gujarat SIR Act.' },
-  { Icon: IconPlugPlay,       label: 'Plug and play',              text: 'Utilities already at the plot edge, so an occupier connects instead of building.' },
-  { Icon: IconSocial,         label: 'Social infrastructure',      text: 'Hospital, school, hotel and civic amenities planned into the Activation Area.' },
-  { Icon: IconBusiness,       label: 'Ease of business',           text: 'A single-window process for approvals rather than department-by-department.' },
-  { Icon: IconExternal,       label: 'External connectivity',      text: 'Expressway to Ahmedabad, an international airport and port access nearby.' },
-  { Icon: IconLiveWorkPlay,   label: 'Live, work and play',        text: 'Residential, industrial and recreation zones separated by plan, not by accident.' },
-  { Icon: IconTechnology,     label: 'Technology',                 text: 'A city command centre and an ICT backbone running under the roads.' },
-  { Icon: IconSustainability, label: 'Sustainability',             text: 'Treated water returned for re-use, and solar power generated in the region.' },
-  { Icon: IconApprovals,      label: 'Fast-track approvals',       text: 'Clearances handled inside the region rather than routed through the state.' },
-  { Icon: IconSecurity,       label: 'Security',                   text: 'Surveillance and emergency response coordinated from the operations centre.' },
-  { Icon: IconInternal,       label: 'Internal connectivity',      text: '18 m to 70 m roads on a grid, with utilities in a corridor beneath them.' },
+  { Icon: IconInfrastructure, label: 'World-Class Infrastructure', tag: 'Built for generations',        fg: '#3F6EA8', bg: '#EEF3FA' },
+  { Icon: IconGovernance,     label: 'Ease of Governance',         tag: 'Simple. Transparent. Efficient.', fg: '#9C7C1C', bg: '#FAF6E9' },
+  { Icon: IconPlugPlay,       label: 'Plug & Play',                tag: 'Ready for growth',             fg: '#1E8A72', bg: '#E9F6F2' },
+  { Icon: IconSocial,         label: 'Social Infrastructure',      tag: 'People at the core',           fg: '#D2653A', bg: '#FDF0E9' },
+  { Icon: IconBusiness,       label: 'Ease of Business',           tag: 'Opportunities without barriers', fg: '#6A5AA8', bg: '#F1EFFA' },
+  { Icon: IconExternal,       label: 'External Connectivity',      tag: 'Well connected to the world',  fg: '#2C7F8F', bg: '#E8F4F6' },
+  { Icon: IconLiveWorkPlay,   label: 'Live, Work and Play',        tag: 'A vibrant lifestyle',          fg: '#D08A2C', bg: '#FCF3E4' },
+  { Icon: IconTechnology,     label: 'Technology',                 tag: 'Enabling a smarter future',    fg: '#6A5AA8', bg: '#F1EFFA' },
+  { Icon: IconSustainability, label: 'Sustainability',             tag: 'A greener tomorrow',           fg: '#4A8A3C', bg: '#EDF6EA' },
+  { Icon: IconApprovals,      label: 'Fast Track Approvals',       tag: 'From vision to reality',       fg: '#3F6EA8', bg: '#EEF3FA' },
+  { Icon: IconSecurity,       label: 'Security',                   tag: 'A safer tomorrow',             fg: '#2F5C8A', bg: '#ECF1F8' },
+  { Icon: IconInternal,       label: 'Internal Connectivity',      tag: 'Seamlessly integrated',        fg: '#9C7C1C', bg: '#FAF6E9' },
 ];
 
 export default function WhatSetsUsApart() {
-  // A phone is where most of this traffic lands, and a twelve-tile grid that
-  // animates on every scroll is exhausting there — so the reveal runs once and
-  // is skipped entirely for anyone who asked the OS for less motion.
+  // A twelve-tile grid that re-animates on every scroll is punishing on a
+  // phone, so the reveal runs once — and not at all if the OS asked for less.
   const still = useReducedMotion();
 
   return (
-    <section className="py-16 lg:py-24 bg-white" aria-labelledby="sets-apart-heading">
+    <section className="py-14 lg:py-24 bg-white" aria-labelledby="sets-apart-heading">
       <div className="max-w-7xl mx-auto px-5 sm:px-6">
-        <div className="max-w-2xl mb-10 lg:mb-14">
-          <p className="text-[#9C7C1C] font-bold uppercase tracking-[0.2em] text-xs mb-3">
-            Dholera SIR
-          </p>
-          <h2 id="sets-apart-heading" className="font-heading text-2xl sm:text-3xl lg:text-4xl text-[#10243E] leading-tight mb-4">
-            What sets Dholera apart from every other plot you are shown
+
+        <div className="text-center mb-10 lg:mb-16">
+          <h2
+            id="sets-apart-heading"
+            className="font-heading font-semibold text-[#10243E] text-xl sm:text-3xl lg:text-[2.6rem] tracking-[0.14em] uppercase leading-tight"
+          >
+            A Smarter Tomorrow
           </h2>
-          <p className="text-gray-600 leading-relaxed">
-            Most land is sold on a promise that infrastructure will follow. Dholera was
-            planned the other way round — these twelve things were decided before the
-            first plot changed hands.
-          </p>
+          <div className="flex items-center justify-center gap-4 mt-3">
+            <span className="h-px w-10 sm:w-20 bg-gray-300" />
+            <span className="text-gray-500 tracking-[0.3em] uppercase text-[11px] sm:text-sm">Built Today</span>
+            <span className="h-px w-10 sm:w-20 bg-gray-300" />
+          </div>
         </div>
 
-        <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {FEATURES.map(({ Icon, label, text }, i) => (
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-3 gap-y-8 sm:gap-x-5 sm:gap-y-10">
+          {FEATURES.map(({ Icon, label, tag, fg, bg }, i) => (
             <motion.li
               key={label}
-              initial={still ? false : { opacity: 0, y: 18 }}
+              initial={still ? false : { opacity: 0, y: 16 }}
               whileInView={still ? {} : { opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.45, ease: 'easeOut', delay: still ? 0 : (i % 4) * 0.06 }}
-              // Touch has no hover, so the press state is what gives a phone
-              // user any feedback at all that the tile is a real element.
-              whileTap={still ? {} : { scale: 0.97 }}
-              className="group relative bg-white border border-gray-150 rounded-sm p-4 sm:p-5
-                         border-gray-200 hover:border-[#D4AF37] hover:shadow-[0_6px_24px_-12px_rgba(16,36,62,0.35)]
-                         transition-colors duration-300 active:border-[#D4AF37]"
+              transition={{ duration: 0.4, ease: 'easeOut', delay: still ? 0 : (i % 6) * 0.05 }}
+              className="group text-center"
             >
-              <span className="absolute left-0 top-0 h-full w-[3px] bg-[#D4AF37] scale-y-0 group-hover:scale-y-100 origin-top transition-transform duration-300" />
-              <div className="w-11 h-11 rounded-sm bg-[#FAF6E9] text-[#9C7C1C] flex items-center justify-center mb-3.5
-                              group-hover:bg-[#10243E] group-hover:text-[#D4AF37] transition-colors duration-300">
-                <Icon width={22} height={22} aria-hidden="true" />
+              <div
+                className="mx-auto w-[68px] h-[68px] sm:w-[84px] sm:h-[84px] rounded-2xl flex items-center justify-center
+                           transition-transform duration-300 group-hover:-translate-y-1"
+                style={{ backgroundColor: bg, color: fg }}
+              >
+                <Icon width={34} height={34} aria-hidden="true" />
               </div>
-              <h3 className="font-bold text-[#10243E] text-sm sm:text-[15px] leading-snug mb-1.5">
+              <h3 className="mt-3.5 font-semibold text-[#10243E] text-[13px] sm:text-[15px] leading-snug px-1">
                 {label}
               </h3>
-              <p className="text-gray-500 text-xs sm:text-[13px] leading-relaxed">{text}</p>
+              <p className="mt-1.5 text-[9px] sm:text-[10px] uppercase tracking-[0.12em] text-gray-400 leading-relaxed px-1">
+                {tag}
+              </p>
             </motion.li>
           ))}
         </ul>
