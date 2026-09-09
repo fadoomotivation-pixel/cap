@@ -3,7 +3,6 @@ import Hero from '../components/Hero';
 import Stats from '../components/Stats';
 import HomeAbout from '../components/HomeAbout';
 import WhatSetsUsApart from '../components/WhatSetsUsApart';
-import CinematicReveal from '../components/CinematicReveal';
 import Projects from '../components/Projects';
 import Partnership from '../components/Partnership';
 import Leadership from '../components/Leadership';
@@ -33,7 +32,6 @@ export default function Home() {
       <Hero />
       <Stats />
       <HomeAbout />
-      <CinematicReveal />
       <WhatSetsUsApart />
       <Projects />
       <Partnership />
