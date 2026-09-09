@@ -54,6 +54,10 @@ export default function VirtualTourViewer({ className = '' }) {
   const [ready, setReady] = useState(false);
   const [full, setFull] = useState(false);
   const [touching, setTouching] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const switchTimer = useRef(null);
+  const bar = useRef(null);
+  const [barH, setBarH] = useState(92);
   const shell = useRef(null);
   const frame = useRef(null);
   const chips = useRef(null);
@@ -70,9 +74,32 @@ export default function VirtualTourViewer({ className = '' }) {
     // Choosing a landmark is engagement — the "tap to explore" veil has done
     // its job and should not still be sitting over the panorama afterwards.
     setTouching(true);
+
+    // A panorama's tiles take seconds to arrive on mobile data, and the tour
+    // paints black while they do. Without this the button looks like it failed:
+    // the caption changes, the picture goes black, nothing else happens. The
+    // overlay names the place being loaded so the wait is legible.
+    setSwitching(true);
+    clearTimeout(switchTimer.current);
+    switchTimer.current = setTimeout(() => setSwitching(false), 4000);
+
     const t = tour();
     try {
-      if (t?.setMediaByName) { t.setMediaByName(s.name); return; }
+      if (t?.setMediaByName) {
+        t.setMediaByName(s.name);
+        // Clear as soon as the tour says the new media is up, rather than
+        // sitting out the whole fallback timeout on a fast connection.
+        try {
+          const EV = frame.current?.contentWindow?.TDV?.Tour;
+          if (EV && typeof t.bind === 'function') {
+            t.bind(EV.EVENT_TOUR_LOADED, () => {
+              clearTimeout(switchTimer.current);
+              setSwitching(false);
+            });
+          }
+        } catch { /* the timeout above is the fallback */ }
+        return;
+      }
     } catch { /* fall through to the reload below */ }
     // Only if the in-place swap is unavailable: a reload with the deep link.
     if (frame.current) frame.current.src = `${TOUR_SRC}#media-name=${s.id}`;
@@ -127,6 +154,23 @@ export default function VirtualTourViewer({ className = '' }) {
     };
   }, [full, closeFull]);
 
+  useEffect(() => () => clearTimeout(switchTimer.current), []);
+
+  // The zoom controls sit above the landmark bar, so they need its real
+  // height. A hardcoded offset drifts the moment the bar wraps to two lines or
+  // the label changes length, and the buttons end up behind it again — which
+  // is the bug this replaced.
+  useEffect(() => {
+    const el = bar.current;
+    if (!el) return undefined;
+    const measure = () => setBarH(el.offsetHeight || 92);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [full]);
+
   useEffect(() => {
     document.body.style.overflow = full ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
@@ -151,7 +195,7 @@ export default function VirtualTourViewer({ className = '' }) {
       className={
         full
           ? 'fixed inset-0 z-[9999] w-screen h-[100dvh] bg-[#0A1016]'
-          : 'relative w-full bg-[#0A1016] aspect-[4/3] sm:aspect-[16/10]'
+          : 'relative w-full bg-[#0A1016] h-[58svh] min-h-[320px] sm:h-auto sm:aspect-[16/10]'
       }
     >
       <iframe
@@ -187,8 +231,8 @@ export default function VirtualTourViewer({ className = '' }) {
       )}
 
       {/* ── Title ─────────────────────────────────────────── */}
-      <div className="absolute top-3 left-3 z-40 pointer-events-none">
-        <div className="inline-flex items-center gap-2 bg-[#0A1016]/85 backdrop-blur-md border border-white/10 text-white px-3 py-1.5 rounded-full text-[11px] shadow-lg max-w-[70vw]">
+      <div className="absolute top-3 left-3 right-[60px] z-40 pointer-events-none">
+        <div className="inline-flex max-w-full items-center gap-2 bg-[#0A1016]/85 backdrop-blur-md border border-white/10 text-white px-3 py-1.5 rounded-full text-[11px] shadow-lg">
           <span className="relative flex h-2 w-2 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -198,8 +242,22 @@ export default function VirtualTourViewer({ className = '' }) {
         </div>
       </div>
 
-      {/* ── Zoom / reset / fullscreen ─────────────────────── */}
-      <div className="absolute top-3 right-3 z-40 flex flex-col gap-2">
+      {/* Fullscreen sits alone at the top. A four-button column here was taller
+          than the picture on a phone, so its last button — fullscreen, the one
+          that matters most on a small screen — ended up behind the landmark
+          bar and could not be pressed at all. */}
+      <button
+        onClick={full ? closeFull : openFull}
+        className={`${ctrlBtn} absolute top-3 right-3 z-40`}
+        aria-label={full ? 'Exit fullscreen' : 'Fullscreen'}
+        title={full ? 'Exit fullscreen (Esc)' : 'Fullscreen'}
+      >
+        {full ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+      </button>
+
+      {/* Zoom and reset ride just above the landmark bar, in a row, so nothing
+          overlaps anything at any height. */}
+      <div className="absolute right-3 z-40 flex gap-2" style={{ bottom: barH + 12 }}>
         <button onClick={() => zoom('in')} className={ctrlBtn} aria-label="Zoom in" title="Zoom in">
           <ZoomIn className="w-4 h-4" />
         </button>
@@ -209,18 +267,20 @@ export default function VirtualTourViewer({ className = '' }) {
         <button onClick={resetView} className={ctrlBtn} aria-label="Reset view" title="Reset view">
           <RotateCcw className="w-4 h-4" />
         </button>
-        <button
-          onClick={full ? closeFull : openFull}
-          className={ctrlBtn}
-          aria-label={full ? 'Exit fullscreen' : 'Fullscreen'}
-          title={full ? 'Exit fullscreen (Esc)' : 'Fullscreen'}
-        >
-          {full ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </button>
       </div>
 
+      {/* Named, so the wait reads as "loading the airport" rather than as a
+          dead black rectangle. */}
+      {switching && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#0A1016]/75 backdrop-blur-[2px] pointer-events-none">
+          <Loader2 className="w-6 h-6 text-[#D4AF37] animate-spin mb-2.5" />
+          <p className="text-white text-sm font-semibold px-6 text-center">{scene.name}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Loading this landmark…</p>
+        </div>
+      )}
+
       {/* ── Landmarks ─────────────────────────────────────── */}
-      <div className="absolute bottom-0 inset-x-0 z-40 bg-gradient-to-t from-[#0A1016] via-[#0A1016]/85 to-transparent pt-8 pb-3 px-3">
+      <div ref={bar} className="absolute bottom-0 inset-x-0 z-40 bg-gradient-to-t from-[#0A1016] via-[#0A1016]/85 to-transparent pt-8 pb-3 px-3">
         <p className="text-[10px] uppercase tracking-[0.18em] text-[#D4AF37] font-bold mb-2 px-0.5">
           {TOUR_SCENES.length} landmarks — tap to jump
         </p>
