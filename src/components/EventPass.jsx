@@ -145,23 +145,45 @@ function drawPass(canvas, { ev, name, seats, ref }) {
   ctx.textAlign = 'left';
 }
 
-/** An .ics the phone's calendar app will open. Built by hand — a library for
+/** Start and end of the seminar as UTC stamps, which is what both Google
+ *  Calendar's URL and an .ics file want. 10:30–14:00 IST on the event date. */
+function stamps(ev) {
+  const at = (h, m) => new Date(`${ev.date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+05:30`)
+    .toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return { start: at(10, 30), end: at(14, 0) };
+}
+
+/** Google Calendar, which is what almost everyone here actually uses.
+ *
+ *  A downloaded .ics on Android is a file in Downloads that most people never
+ *  open; this opens Google Calendar with the event already filled in and one
+ *  Save button. The .ics stays as the second option for Apple and Outlook. */
+function googleCalendarUrl(ev) {
+  const { start, end } = stamps(ev);
+  const q = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: ev.title,
+    dates: `${start}/${end}`,
+    location: ev.venueFull,
+    details: `${ev.tagline}. Hosted by ${ev.hosts.join(' and ')}. Please carry a photo ID. Questions: https://wa.me/917048917300`,
+  });
+  return `https://calendar.google.com/calendar/render?${q.toString()}`;
+}
+
+/** An .ics for Apple Calendar and Outlook. Built by hand — a library for
  *  six lines of text is not worth the bytes. */
 function icsFile(ev) {
   // 10:30–14:00 IST on the event date, written as UTC.
   const day = ev.date.replace(/-/g, '');
-  const stamp = (h, m) => {
-    const d = new Date(`${ev.date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+05:30`);
-    return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-  };
+  const { start, end } = stamps(ev);
   const esc = (s) => String(s).replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
   return [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Capital Brix//Event//EN',
     'BEGIN:VEVENT',
     `UID:${ev.slug}-${day}@capitalbrix.co.in`,
-    `DTSTAMP:${stamp(10, 30)}`,
-    `DTSTART:${stamp(10, 30)}`,
-    `DTEND:${stamp(14, 0)}`,
+    `DTSTAMP:${start}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
     `SUMMARY:${esc(ev.title)}`,
     `LOCATION:${esc(ev.venueFull)}`,
     `DESCRIPTION:${esc(`${ev.tagline}. Hosted by ${ev.hosts.join(' and ')}. Please carry a photo ID.`)}`,
@@ -235,13 +257,19 @@ export default function EventPass({ ev, name, seats = 1, id }) {
         >
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Save pass
         </button>
-        <button
-          onClick={addToCalendar}
+        <a
+          href={googleCalendarUrl(ev)} target="_blank" rel="noreferrer"
           className="inline-flex items-center gap-2 text-sm font-semibold border border-gray-200 px-5 py-2.5 rounded-sm text-[#10243E] hover:border-[#D4AF37] transition-colors"
         >
-          <CalendarPlus size={15} /> Add to calendar
-        </button>
+          <CalendarPlus size={15} /> Google Calendar
+        </a>
       </div>
+      <button
+        onClick={addToCalendar}
+        className="mt-2 text-[11px] text-gray-400 hover:text-[#9C7C1C] underline underline-offset-2"
+      >
+        Apple Calendar / Outlook (.ics)
+      </button>
     </div>
   );
 }
