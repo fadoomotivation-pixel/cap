@@ -64,6 +64,31 @@ export default function VirtualTourViewer({ className = '' }) {
 
   const scene = TOUR_SCENES.find((s) => s.id === sceneId) || TOUR_SCENES[0];
 
+  // ── Why the panorama looked blurry, and what this fixes ─────────────────
+  //
+  // 3DVista sizes its WebGL canvas in CSS pixels and never multiplies by
+  // devicePixelRatio. Measured on a DPR-3 phone: the canvas backing store was
+  // 362x531 while the browser stretched it across 1086x1593 device pixels — a
+  // 3x upscale of a render that was never done at that size. That, not the
+  // source panorama, is the mush. The tiles are 512px in a 3x3 grid, so 1536px
+  // per cube face is available and plenty for this box; the player simply was
+  // not drawing at it.
+  //
+  // The player is not ours to patch, but the iframe is. Render it OVERSAMPLE
+  // times larger in CSS pixels and scale it back down: the tour believes it has
+  // a bigger viewport, sizes its canvas to match, and we display the result at
+  // the original size — now roughly 1:1 with the device's pixels.
+  //
+  // Capped at 2. Oversampling costs the square of the factor (2x is 4x the
+  // pixels to shade, 3x would be 9x), and 2x already lands within a hair of
+  // native on a DPR-3 screen. Decided in an effect, never in a useState
+  // initialiser: reading devicePixelRatio during render makes the server and
+  // the client disagree and React tears the tree down on hydration.
+  const [oversample, setOversample] = useState(1);
+  useEffect(() => {
+    setOversample(Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1))));
+  }, []);
+
   /** The tour object inside the iframe, or null if it has not booted. */
   const tour = () => {
     try { return frame.current?.contentWindow?.tour || null; } catch { return null; }
@@ -217,11 +242,21 @@ export default function VirtualTourViewer({ className = '' }) {
           : 'relative w-full bg-[#0A1016] h-[58svh] min-h-[320px] sm:h-auto sm:aspect-[16/10]'
       }
     >
+      {/* The iframe is laid out `oversample` times larger and scaled back down
+          from its top-left corner, so it still covers exactly the pane. See the
+          note on `oversample` above for why. At 1x the width/height are 100%
+          and the transform is the identity, so nothing changes on a
+          non-retina screen. */}
       <iframe
         ref={frame}
         src={TOUR_SRC}
         title="Dholera SIR official 360° virtual tour"
-        className="absolute inset-0 w-full h-full border-0"
+        className="absolute inset-0 border-0 origin-top-left"
+        style={{
+          width: `${oversample * 100}%`,
+          height: `${oversample * 100}%`,
+          transform: `scale(${1 / oversample})`,
+        }}
         allow="accelerometer; gyroscope; magnetometer; xr-spatial-tracking; fullscreen"
         allowFullScreen
         loading="lazy"
@@ -237,11 +272,19 @@ export default function VirtualTourViewer({ className = '' }) {
 
       {/* A phone scrolls the page when a finger lands on the panorama, so the
           tour steals the gesture and the page feels stuck. The pane stays
-          inert until it is deliberately tapped. */}
+          inert until it is deliberately tapped.
+          
+          The gate is right; how it looked was not. It carried
+          `bg-black/30 backdrop-blur-[1px]`, which greyed and softened the
+          panorama behind it — the one thing the section exists to show, and the
+          first thing anyone judges it on. A tap gate does not need to obscure
+          what it is gating: the pill already has a solid background and a
+          shadow, so it reads over a bright sky on its own. What is left is a
+          barely-there scrim, and no blur. */}
       {ready && !touching && !full && (
         <button
           onClick={() => setTouching(true)}
-          className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/30 backdrop-blur-[1px] sm:hidden"
+          className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/[0.06] sm:hidden"
         >
           <span className="bg-[#10243E]/95 border border-[#D4AF37]/50 text-white px-4 py-2.5 rounded-full text-xs font-semibold flex items-center gap-2 shadow-2xl">
             <Compass className="w-4 h-4 text-[#D4AF37]" /> Tap to explore in 360°

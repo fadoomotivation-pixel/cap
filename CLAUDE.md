@@ -519,6 +519,28 @@ so every homepage load dragged the visitor down to it. It now moves the strip's
 own `scrollLeft` and skips the first run. **Never use `scrollIntoView` to move a
 horizontal strip.**
 
+### The tour renders blurry unless the iframe is oversampled
+
+3DVista sizes its WebGL canvas in **CSS pixels and never multiplies by
+`devicePixelRatio`**. Measured on a DPR-3 phone: a 362×531 backing store
+stretched across 1086×1593 device pixels — a 3× upscale of a render that was
+never done at that size. That is the blur, not the panorama: tiles are 512px in
+a 3×3 grid, so 1536px per cube face is available and ample for that box.
+
+The player is not ours to patch, so `VirtualTourViewer` lays the iframe out
+`oversample` times larger in CSS pixels and scales it back down with a
+transform. The tour believes it has a bigger viewport, sizes its canvas to
+match, and the result is displayed at the original size. **Capped at 2** —
+oversampling costs the square of the factor — and decided in an effect, never a
+`useState` initialiser, or the server and client disagree on `devicePixelRatio`
+and hydration tears the tree down. Verified: backing store 362×531 → 724×1061
+with the on-screen size and the framing unchanged.
+
+The mobile "Tap to explore in 360°" gate also carried
+`bg-black/30 backdrop-blur-[1px]`, which greyed and softened the one thing the
+section exists to show. A tap gate does not need to obscure what it is gating;
+the pill has its own background and shadow. **Do not put a blur back there.**
+
 ## Website leads
 
 `cb_leads` — every enquiry from the site. Before this existed, `ContactForm`
