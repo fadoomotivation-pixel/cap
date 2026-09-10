@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { events } from '../data/events';
+import { Link } from 'react-router-dom';
+import { CalendarDays, MapPin, ArrowRight } from 'lucide-react';
+import { getEvent } from '../data/eventDetails';
 import Seo from '../components/Seo';
 import BlogArt from '../components/BlogArt';
 import { pageSeo } from '../lib/seo';
@@ -37,6 +40,11 @@ export default function Events() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8">
+        {/* The one event currently taking registrations sits above the archive
+            below — otherwise the live seminar is buried under years of past
+            ones and nobody signs up. */}
+        <UpcomingEvent />
+
         <div className="flex flex-col gap-12">
           {currentEvents.map((event, i) => (
             <motion.div 
@@ -96,5 +104,42 @@ export default function Events() {
         )}
       </div>
     </div>
+  );
+}
+
+/** The live, registerable event. Reads the same source of truth the
+ *  registration page and the admin console read, so the two can never
+ *  advertise different details. */
+function UpcomingEvent() {
+  const ev = getEvent('dholera-wealth-2026');
+  if (!ev) return null;
+
+  return (
+    <Link
+      to={`/events/${ev.slug}`}
+      className="group block relative overflow-hidden rounded-xl bg-[#0A1016] text-white p-7 sm:p-10 mb-12"
+    >
+      <div
+        aria-hidden
+        className="absolute -top-24 -right-16 w-[420px] h-[420px] rounded-full blur-[100px]"
+        style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.28) 0%, transparent 65%)' }}
+      />
+      <div className="relative">
+        <p className="inline-block text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] border border-[#D4AF37]/35 rounded-full px-3 py-1 mb-4">
+          Registrations open
+        </p>
+        <h2 className="font-heading text-white text-3xl sm:text-4xl lg:text-5xl leading-tight mb-3" style={{ textWrap: 'balance' }}>
+          {ev.title}
+        </h2>
+        <p className="text-white/70 max-w-xl mb-5">{ev.tagline}</p>
+        <p className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/80 mb-7">
+          <span className="flex items-center gap-2"><CalendarDays size={15} className="text-[#D4AF37]" /> {ev.dateLabel}</span>
+          <span className="flex items-center gap-2"><MapPin size={15} className="text-[#D4AF37]" /> {ev.venue}</span>
+        </p>
+        <span className="inline-flex items-center gap-2 bg-[#D4AF37] text-[#0A1016] font-bold px-6 py-3 rounded-sm group-hover:gap-3 transition-all">
+          Reserve a free seat <ArrowRight size={16} />
+        </span>
+      </div>
+    </Link>
   );
 }

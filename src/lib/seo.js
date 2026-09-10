@@ -61,7 +61,7 @@ export const pageSeo = {
 };
 
 // Private/utility routes must never be indexed.
-export const noIndexRoutes = ['/employee-kyc', '/admin/interviews', '/book'];
+export const noIndexRoutes = ['/employee-kyc', '/admin', '/book'];
 
 // ── Blog posts ───────────────────────────────────────────────
 // Each post owns one keyword cluster and gets its own canonical URL, so the

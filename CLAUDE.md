@@ -333,6 +333,37 @@ Cards tab; HR works it at `/admin/cards` through
 - "Print spec" copies a plain-text batch of every approved/printing request,
   formatted for the printer, so one order covers everyone.
 
+## Event registrations
+
+`cb_event_registrations` — sign-ups for a live event. The first one is
+**"How to Create Wealth in Dholera?"**, Sunday 13 September 2026 at Club GH-01,
+E Block, Gaur City 1, Sector 4, Greater Noida, hosted jointly by **Mirrikh Group
+and Capital Brix LLP** (two separate companies co-hosting — never one entity,
+and Capital Brix is still only an authorised sales channel partner).
+
+- Public page: `/events/dholera-wealth-2026` (in the sitemap, so it prerenders).
+  Event facts live in `src/data/eventDetails.js` — one entry per slug, keyed by
+  the same `event_slug` written to the table, so a row can always be traced back
+  to which event it was for. `time` is null until the organisers confirm it and
+  the page prints "Timing confirmed on WhatsApp" rather than guessing.
+- HR console: `/admin/events` (admin-only, `noindex`), in `ADMIN_LINKS`.
+- RLS mirrors `cb_leads`: **anon may INSERT, only admins may SELECT/UPDATE.**
+- **`src/lib/eventRegistration.js` mints the row id client-side and does NOT
+  call `.select()` after the insert.** `RETURNING` needs a SELECT policy, and
+  anon deliberately has none — an `.insert().select('id')` here fails every real
+  registration even though the insert itself is allowed. Verified against the
+  live policies, not assumed.
+- A unique index on `(event_slug, lower(email))` stops a double-tap creating two
+  seats. The client reads `23505` as "your seat is already held", not an error.
+- Confirmation email: the **`event-confirmation` Edge Function** (source in
+  `supabase/functions/`). It takes only a row id — never an address from the
+  browser — refuses to send twice, and returns `{ sent: false }` instead of
+  failing when `RESEND_API_KEY` is unset, because the registration is already
+  saved by then and a missing mail provider must not look like a failed sign-up.
+  `resend: true` bypasses the once-only rule and therefore requires an admin JWT.
+  **Needs the Supabase secrets `RESEND_API_KEY` and optionally
+  `EVENT_FROM_EMAIL`** or no confirmation mail is sent at all.
+
 ## Website leads
 
 `cb_leads` — every enquiry from the site. Before this existed, `ContactForm`
