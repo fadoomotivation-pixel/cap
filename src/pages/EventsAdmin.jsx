@@ -8,7 +8,7 @@ import { downloadCsv } from '../lib/expenses';
 import { events as EVENT_DETAILS } from '../data/eventDetails';
 import {
   CalendarDays, Phone, Mail, MessageCircle, RefreshCw, LogOut, Search,
-  Users, ArrowDownToLine, X, UserCheck, MapPin, Send, MailWarning,
+  Users, ArrowDownToLine, X, UserCheck, MapPin, Send, MailWarning, Tag,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -122,7 +122,7 @@ export default function EventsAdmin() {
       if (eventSlug !== 'all' && r.event_slug !== eventSlug) return false;
       if (status !== 'all' && r.status !== status) return false;
       if (!q) return true;
-      return [r.full_name, r.phone, r.email, r.city, r.invited_by, r.notes]
+      return [r.full_name, r.phone, r.email, r.city, r.invited_by, r.invite_code, r.notes]
         .filter(Boolean).some((v) => String(v).toLowerCase().includes(q));
     });
   }, [rows, eventSlug, status, search]);
@@ -140,6 +140,20 @@ export default function EventsAdmin() {
       m.set(k.toLowerCase(), prev);
     });
     return [...m.values()].sort((a, b) => b.seats - a.seats).slice(0, 10);
+  }, [shown]);
+
+  // Which code is actually working. Same shape as the inviter rollup: seats,
+  // not rows, because a code that brought one booking of four moved four chairs.
+  const byCode = useMemo(() => {
+    const m = new Map();
+    shown.forEach((r) => {
+      const k = (r.invite_code || '').trim();
+      if (!k) return;
+      const prev = m.get(k) || { label: k, seats: 0 };
+      prev.seats += r.guests || 1;
+      m.set(k, prev);
+    });
+    return [...m.values()].sort((a, b) => b.seats - a.seats);
   }, [shown]);
 
   const stats = useMemo(() => ({
@@ -248,6 +262,18 @@ export default function EventsAdmin() {
               <UserCheck size={17} className="text-[#f26522]" /> Who is filling the hall
             </h2>
             <p className="text-xs text-gray-500 mb-4">Seats brought in by each name people typed on the form.</p>
+            {byCode.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-gray-100">
+                {byCode.map((c) => (
+                  <span key={c.label} className="text-xs bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 text-emerald-900">
+                    <Tag size={11} className="inline mb-0.5 mr-1" />
+                    <span className="font-mono font-semibold">{c.label}</span>
+                    <strong className="ml-1.5">{c.seats}</strong>
+                    <span className="text-emerald-700/70"> seat{c.seats === 1 ? '' : 's'}</span>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               {byInviter.map((b) => (
                 <span key={b.label} className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600">
@@ -279,10 +305,10 @@ export default function EventsAdmin() {
                   className="pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#f26522] w-52" />
               </div>
               <button onClick={() => downloadCsv([
-                ['Registered', 'Event', 'Name', 'Phone', 'Email', 'City', 'Seats', 'Interest', 'Invited by', 'Notes', 'Status', 'Confirmation sent'],
+                ['Registered', 'Event', 'Name', 'Phone', 'Email', 'City', 'Seats', 'Interest', 'Invited by', 'Invite code', 'Notes', 'Status', 'Confirmation sent'],
                 ...shown.map((r) => [
                   format(new Date(r.created_at), 'yyyy-MM-dd HH:mm'), r.event_slug, r.full_name, r.phone,
-                  r.email, r.city, r.guests, r.interest, r.invited_by, r.notes, r.status,
+                  r.email, r.city, r.guests, r.interest, r.invited_by, r.invite_code, r.notes, r.status,
                   r.confirmation_sent_at ? format(new Date(r.confirmation_sent_at), 'yyyy-MM-dd HH:mm') : '',
                 ]),
               ], `event-registrations-${format(new Date(), 'yyyy-MM-dd')}.csv`)}
@@ -308,6 +334,15 @@ export default function EventsAdmin() {
                         <p className="font-semibold text-[#10243E]">
                           {r.full_name}
                           {r.guests > 1 && <span className="ml-2 text-xs font-medium bg-[#D4AF37]/15 text-[#9C7C1C] px-2 py-0.5 rounded">{r.guests} seats</span>}
+                          {/* The sign-up told this person we would hold them a
+                              priority seat. That promise is only real if it
+                              reaches whoever lays out the hall — so it is a
+                              badge, not a column buried in the CSV. */}
+                          {r.invite_code && (
+                            <span className="ml-2 text-xs font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                              <Tag size={11} /> PRIORITY · {r.invite_code}
+                            </span>
+                          )}
                         </p>
                         <p className="text-sm text-gray-500">{r.phone} · {r.email}{r.city ? ` · ${r.city}` : ''}</p>
                         {r.interest && <p className="text-sm text-gray-600 mt-1">Looking at: {r.interest.replace('-', ' ')}</p>}

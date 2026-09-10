@@ -380,6 +380,14 @@ and Capital Brix is still only an authorised sales channel partner).
   misleading-advertisement guidelines name directly. Removed 10 Sep 2026.
   **Never advertise a saving against a price Capital Brix did not charge.**
   "Free" needs no comparison.
+- **The invite code is not a coupon.** `invite_code` (`CAPITALBRIX`,
+  `DHOLERA2026`) does two real things: it flags the row **PRIORITY** in
+  `/admin/events` so somebody actually holds a seat, and it records which
+  handout or forward brought the person in. It must never be dressed up as
+  money off — entry is free, so there is nothing to discount, and a saving
+  against a price we never charged is what got the ₹2,500 removed. A promise
+  made on the form has to be one HR can keep, which is why the badge is on the
+  registration row and not only in the CSV.
 - **Do not say who is bearing the cost of the event.** The same block read
   "sponsored by Capital Brix & Mirrikh Infratech" — a statement about Mirrikh's
   commercial arrangements made on their behalf, which is rule 1 above. Say the
@@ -390,6 +398,12 @@ and Capital Brix is still only an authorised sales channel partner).
   fixed size that looks the same on every phone, and no external font or image
   to fail at the moment someone wants to save it. The `REF` on the pass is the
   last six characters of the row id, short enough to read out on a call.
+  "Add to calendar" is a **Google Calendar** link first — a downloaded `.ics` on
+  Android lands in Downloads and is never opened — with the `.ics` kept as a
+  quiet secondary link for Apple Calendar and Outlook.
+- **The sign-up fits one phone screen.** Three required fields, seats and the
+  code; city, referrer and plot interest sit behind "Add details". It also must
+  not promise "Instant confirmation" while no mail provider is configured.
 - **The phone field strips a pasted country code rather than truncating it.**
   "+91 98765 43210" is twelve digits; keeping the first ten gives 9198765432 —
   a plausible-looking number that is not theirs and cannot be dialled.

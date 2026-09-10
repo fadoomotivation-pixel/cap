@@ -53,6 +53,7 @@ export async function registerForEvent({
   guests = 1,
   interest,
   invited_by,
+  invite_code,
   notes,
   source_path,
 }) {
@@ -78,6 +79,9 @@ export async function registerForEvent({
       guests: Math.min(10, Math.max(1, Number(guests) || 1)),
       interest: interest || null,
       invited_by: (invited_by || '').trim() || null,
+      // Uppercased so 'capitalbrix' and 'CAPITALBRIX' count as one code in
+      // the console. The column check rejects anything else.
+      invite_code: (invite_code || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '') || null,
       notes: (notes || '').trim() || null,
       source_path: source_path || (typeof window !== 'undefined' ? window.location.pathname : null),
     }]);

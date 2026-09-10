@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   CalendarDays, MapPin, Ticket, ArrowRight, Check,
-  MessageCircle, Loader2, Sparkles, ChevronDown, Navigation, Tag,
+  MessageCircle, Loader2, Sparkles, ChevronDown, Navigation, Tag, Plus,
 } from 'lucide-react';
 import Seo from '../components/Seo';
 import { getEvent } from '../data/eventDetails';
@@ -50,7 +50,7 @@ export default function EventRegistration() {
   const left = useCountdown(ev?.date || '2099-01-01');
 
   const [form, setForm] = useState({
-    full_name: '', phone: '', email: '', city: '', guests: 1, interest: '', invited_by: '', notes: '',
+    full_name: '', phone: '', email: '', city: '', guests: 1, interest: '', invited_by: '', invite_code: '', notes: '',
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -70,6 +70,21 @@ export default function EventRegistration() {
   }
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const [showMore, setShowMore] = useState(false);
+
+  // The honest version of a coupon.
+  //
+  // Entry is free, so there is no discount to give and no saving to advertise —
+  // that is exactly what got the invented ₹2,500 "delegate fee" removed. But a
+  // code can still do two real things, and both are things HR can act on:
+  // it flags the seat as priority in /admin/events so someone actually holds
+  // one, and it records which handout, poster or WhatsApp forward brought the
+  // person in. Nothing here promises money off.
+  const PRIORITY_CODES = ['CAPITALBRIX', 'DHOLERA2026'];
+  const codeEntered = form.invite_code.trim().toUpperCase();
+  const codeValid = PRIORITY_CODES.includes(codeEntered);
+  const setCode = (e) =>
+    setForm((f) => ({ ...f, invite_code: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24) }));
 
   // Ten digits, and a pasted country code handled properly rather than cut off.
   //
@@ -133,126 +148,104 @@ export default function EventRegistration() {
         jsonLd={jsonLd}
       />
 
-      {/* ── Hero (Compact) ──────────────────────────────────────────────── */}
-      <header className="relative overflow-hidden bg-[#0A1016] text-white pt-24 pb-12 sm:pt-28 sm:pb-16 text-center">
+      {/* ── Hero ───────────────────────────────────────────────────────────
+          Deliberately quiet. The previous version stacked a pill, a headline, a
+          sub-line, a bordered facts bar, a bordered countdown with four boxed
+          digits and a ping dot, and a credit line — nine bordered objects in
+          one screen, all competing. Restraint is the whole point: one very
+          large sentence, one line of facts, one number, nothing boxed.
+          Everything that used to draw a border now uses space instead. */}
+      <header className="relative bg-[#0A1016] text-white pt-28 pb-16 sm:pt-36 sm:pb-24 text-center overflow-hidden">
+        {/* A single soft light behind the headline. No grid, no pulse — a
+            pulsing glow behind text is movement with nothing to say. */}
         <div
           aria-hidden
-          className="absolute inset-0 opacity-[0.16]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(212,175,55,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.45) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 78%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 78%)',
-          }}
-        />
-        <div
-          aria-hidden
-          className={`absolute -top-36 left-1/2 -translate-x-1/2 w-[540px] h-[540px] rounded-full blur-[100px] ${reduce ? '' : 'animate-pulse'}`}
-          style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.2) 0%, transparent 65%)' }}
+          className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] max-w-[150vw] h-[620px] rounded-full blur-[130px]"
+          style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.16) 0%, transparent 68%)' }}
         />
 
-        <div className="relative max-w-4xl mx-auto px-5">
+        <div className="relative max-w-3xl mx-auto px-6">
           <motion.div
-            initial={reduce ? false : { opacity: 0, y: 12 }}
+            initial={reduce ? false : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
           >
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] border border-[#D4AF37]/35 rounded-full px-3 py-1 mb-3">
-              <Sparkles size={12} /> Free investor seminar
-            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#D4AF37] mb-7">
+              Free investor seminar
+            </p>
 
+            {/* The one thing on the screen. Tight tracking and a light-ish
+                weight at this size — bold at 60px shouts; this speaks. */}
             <h1
-              className="font-heading text-white text-3xl sm:text-4xl lg:text-5xl leading-tight mb-2.5"
-              style={{ textWrap: 'balance' }}
+              className="font-heading text-white text-[2.35rem] leading-[1.04] sm:text-6xl lg:text-[4.25rem] mb-6"
+              style={{ textWrap: 'balance', letterSpacing: '-0.035em', fontWeight: 600 }}
             >
               {ev.title}
             </h1>
 
-            <p className="text-sm sm:text-base text-white/75 max-w-xl mx-auto mb-4" style={{ textWrap: 'balance' }}>
+            <p
+              className="text-lg sm:text-2xl text-white/55 max-w-xl mx-auto mb-12 leading-snug"
+              style={{ textWrap: 'balance', letterSpacing: '-0.01em' }}
+            >
               {ev.tagline}
             </p>
 
-            {/* Compact Key facts bar */}
-            <div className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-white/90 bg-white/10 backdrop-blur-sm rounded-lg px-3.5 py-2 mb-4 border border-white/10">
-              <span className="flex items-center gap-1.5">
-                <CalendarDays size={13} className="text-[#D4AF37]" /> {ev.dateLabel} ({ev.time || '10:30 AM'})
-              </span>
-              <span className="hidden sm:inline text-white/30">·</span>
-              <span className="flex items-center gap-1.5">
-                <MapPin size={13} className="text-[#D4AF37]" /> {ev.venue}, Greater Noida
-              </span>
-              <span className="hidden sm:inline text-white/30">·</span>
-              <span className="flex items-center gap-1.5">
-                <Ticket size={13} className="text-[#D4AF37]" /> Free VIP Entry ({ev.seats})
-              </span>
-            </div>
-
-            {/* Countdown timer with seconds */}
-            {left && (
-              <div className="flex items-center justify-center gap-2 sm:gap-2.5 text-white/80 mb-3">
-                <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#D4AF37] font-semibold flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                  </span>
-                  Starts in:
-                </span>
-                <div className="inline-flex items-center gap-1 bg-white/[0.08] border border-white/15 backdrop-blur-md rounded-lg p-1">
-                  {[
-                    [left.days, 'Days'],
-                    [left.hours, 'Hrs'],
-                    [left.mins, 'Min'],
-                    [left.secs, 'Sec'],
-                  ].map(([n, l], idx) => (
-                    <React.Fragment key={l}>
-                      {idx > 0 && <span className="text-[#D4AF37]/60 font-mono font-bold text-xs select-none">:</span>}
-                      <div className="flex flex-col items-center bg-[#0A1016]/95 border border-white/10 rounded px-1.5 py-0.5 min-w-[40px] sm:min-w-[44px]">
-                        <span className="font-heading text-base sm:text-lg text-white font-bold tabular-nums leading-none">
-                          {String(n).padStart(2, '0')}
-                        </span>
-                        <span className="text-[8px] font-medium text-white/60 tracking-wider uppercase">{l}</span>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <p className="text-[11px] text-white/45">
-              Hosted jointly by {ev.hosts.join(' & ')} · Capital Brix is an authorised sales channel partner for Mirrikh Infratech
+            {/* Facts as one quiet line, not a card. */}
+            <p className="text-[13px] sm:text-[15px] text-white/70 leading-relaxed mb-11">
+              {ev.dateLabel}
+              <span className="text-white/25"> · </span>
+              {ev.time}
+              <br className="sm:hidden" />
+              <span className="hidden sm:inline text-white/25"> · </span>
+              {ev.venue}, Greater Noida
             </p>
+
+            <a
+              href="#register"
+              className="inline-flex items-center gap-2 bg-white text-[#0A1016] px-8 py-3.5 rounded-full text-[15px] font-semibold hover:bg-[#D4AF37] transition-colors"
+            >
+              Reserve a free seat <ArrowRight size={16} />
+            </a>
+
+            {/* One number, no boxes. Days is the only unit anyone acts on;
+                the rest is detail, so it is sized as detail. */}
+            {left && (
+              <p className="mt-12 text-white/40 text-[13px] tracking-wide">
+                <span className="font-heading text-white/80 text-2xl tabular-nums align-middle mr-1.5" style={{ fontWeight: 600 }}>
+                  {left.days}
+                </span>
+                {left.days === 1 ? 'day' : 'days'}
+                <span className="text-white/20"> · </span>
+                <span className="tabular-nums">{String(left.hours).padStart(2, '0')}:{String(left.mins).padStart(2, '0')}:{String(left.secs).padStart(2, '0')}</span>
+                <span className="text-white/20"> · </span>
+                until doors open
+              </p>
+            )}
           </motion.div>
         </div>
+
+        <p className="relative mt-16 text-[11px] text-white/30 px-6 max-w-2xl mx-auto leading-relaxed">
+          Hosted jointly by {ev.hosts.join(' & ')}. Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd.
+        </p>
       </header>
 
       {/* ── The Sign-up Form (Directly below hero, compact 1-screen fit) ──── */}
       <section id="register" ref={formRef} className="relative z-10 -mt-6 sm:-mt-8 max-w-2xl mx-auto px-4">
         <div className="rounded-xl border border-gray-200 shadow-[0_15px_45px_-20px_rgba(16,36,62,0.35)] overflow-hidden bg-white">
-          <div className="bg-[#10243E] text-white px-5 py-3.5 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-            <div>
-              <h2 className="font-heading text-white text-xl sm:text-2xl leading-tight">
-                {done ? 'You’re on the list' : 'Reserve your seat'}
-              </h2>
-              <p className="text-white/60 text-xs mt-0.5">
-                {done ? 'Keep this page — the details are below.' : 'Takes ~30 seconds · Instant confirmation'}
-              </p>
-            </div>
-            {/* "₹0 (Was ₹2,500)" used to sit here, and a ₹2,500 delegate fee
-                struck through in the form below.
-                
-                No delegate fee was ever charged for this seminar, so ₹2,500 is
-                a reference price that never existed. A struck-through price the
-                seller never actually asked for is a misleading price claim
-                under the Consumer Protection Act, and the CCPA's misleading-
-                advertisement guidelines name exactly this pattern. It is not
-                worth the risk for a company that took a legal notice two days
-                ago, and "Free" reads perfectly well on its own. */}
-            {!done && (
-              <div className="inline-flex items-center gap-1.5 self-start sm:self-auto bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] px-2.5 py-1 rounded text-xs font-semibold">
-                <Sparkles size={12} /> Free entry · limited seats
-              </div>
-            )}
+          {/* Header. The gold "Free entry · limited seats" pill that sat here
+              repeated what the hero already says twice, and "Instant
+              confirmation" was a promise the site cannot currently keep — no
+              mail provider is configured, so nothing arrives instantly. Say
+              what is true: it is quick, and the seat is free. */}
+          <div className="bg-[#10243E] text-white px-5 py-4 sm:px-6">
+            <h2 className="font-heading text-white text-xl sm:text-2xl leading-tight">
+              {done ? 'You’re on the list' : 'Reserve your seat'}
+            </h2>
+            <p className="text-white/55 text-xs mt-1">
+              {done
+                ? 'Save your pass below — show it at the door.'
+                : 'Free · about 30 seconds · no payment at any point'}
+            </p>
           </div>
 
           {done ? (
@@ -295,7 +288,11 @@ export default function EventRegistration() {
                 <p role="alert" className="bg-red-50 border border-red-100 text-red-600 text-xs rounded-md p-2.5">{error}</p>
               )}
 
-              {/* Row 1: Name & Phone */}
+              {/* One screen, in order of what we actually need.
+                  Three required fields, a seat count and a code — everything
+                  else is behind a disclosure, because a city and a plot-type
+                  preference are not worth a taller form than the phone screen
+                  they are being filled in on. */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <Field label="Full name" required>
                   <input required value={form.full_name} onChange={set('full_name')} autoComplete="name"
@@ -308,79 +305,87 @@ export default function EventRegistration() {
                 </Field>
               </div>
 
-              {/* Row 2: Email & City */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <Field label="Email" required hint="Confirmation goes here">
-                  <input required type="email" value={form.email} onChange={set('email')}
-                    autoComplete="email" placeholder="you@example.com" className={INPUT} />
-                </Field>
+              <Field label="Email" required hint="Your pass and confirmation go here">
+                <input required type="email" value={form.email} onChange={set('email')}
+                  autoComplete="email" placeholder="you@example.com" className={INPUT} />
+              </Field>
 
-                <Field label="City">
-                  <input value={form.city} onChange={set('city')} autoComplete="address-level2"
-                    placeholder="e.g. Noida / Delhi" className={INPUT} />
-                </Field>
-              </div>
-
-              {/* Row 3: Seats & Who invited you */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-[auto_1fr] gap-2.5 items-end">
                 <Field label="Seats">
-                  <select value={form.guests} onChange={set('guests')} className={INPUT}>
-                    {[1, 2, 3, 4, 5, 6].map((n) => (
-                      <option key={n} value={n}>{n} {n === 1 ? 'person (Single Pass)' : 'people (Group Pass)'}</option>
-                    ))}
+                  <select value={form.guests} onChange={set('guests')} className={`${INPUT} w-auto pr-8`}>
+                    {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
                   </select>
                 </Field>
 
-                <Field label="Who invited you?" hint="Optional">
-                  <input value={form.invited_by} onChange={set('invited_by')}
-                    placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
+                <Field label="Invite code" hint={codeValid ? undefined : 'Optional'}>
+                  <input value={form.invite_code} onChange={setCode}
+                    placeholder="e.g. CAPITALBRIX"
+                    className={`${INPUT} font-mono tracking-wider ${codeValid ? 'border-emerald-400 bg-emerald-50/50' : ''}`} />
                 </Field>
               </div>
 
-              {/* Row 4: Interest Pills */}
-              <div>
-                <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
-                  What are you looking at?
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                  {INTERESTS.map((o) => {
-                    const on = form.interest === o.value;
-                    return (
-                      <button
-                        key={o.value} type="button"
-                        onClick={() => setForm((f) => ({ ...f, interest: on ? '' : o.value }))}
-                        aria-pressed={on}
-                        className={`text-xs py-1.5 px-2 rounded border text-center transition font-medium truncate ${
-                          on
-                            ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#10243E] font-semibold'
-                            : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
-                        }`}
-                      >
-                        {o.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Row 5: what the seat costs.
-                  This was a "Delegate Fee ₹2,500" struck through to ₹0 with a
-                  "CAPITALBRIX — 100% OFF" coupon chip. Both were invented: no
-                  fee was ever set and no coupon exists, so the discount was
-                  measured against a number that was never real. See the note
-                  on the header badge above. */}
-              <div className="rounded-md border border-emerald-200/80 bg-[#F7FBF9] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">
-                    Entry{Number(form.guests) > 1 ? ` (${form.guests} seats)` : ''}:
+              {/* Applied state. It promises a reserved seat and nothing about
+                  money, and /admin/events flags the row PRIORITY so the promise
+                  is one HR can actually keep. */}
+              {codeValid && (
+                <p className="flex items-center gap-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">
+                  <Tag size={13} className="text-emerald-600 shrink-0" />
+                  <span>
+                    <strong className="font-semibold">{codeEntered}</strong> applied —
+                    we&rsquo;ll hold a priority seat for you.
                   </span>
-                  <span className="text-base font-extrabold text-[#10243E] font-heading">Free</span>
+                </p>
+              )}
+
+              {/* Optional details, out of the way until asked for. */}
+              {!showMore ? (
+                <button type="button" onClick={() => setShowMore(true)}
+                  className="text-xs font-medium text-[#9C7C1C] hover:text-[#10243E] inline-flex items-center gap-1.5">
+                  <Plus size={13} /> Add city, referrer and what you&rsquo;re looking at
+                </button>
+              ) : (
+                <div className="space-y-2.5 pt-1 border-t border-gray-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2.5">
+                    <Field label="City">
+                      <input value={form.city} onChange={set('city')} autoComplete="address-level2"
+                        placeholder="e.g. Noida / Delhi" className={INPUT} />
+                    </Field>
+
+                    {/* Free text, not a dropdown of staff names — a dropdown
+                        silently drops the customer who referred a friend, which
+                        is the answer worth having. */}
+                    <Field label="Who invited you?">
+                      <input value={form.invited_by} onChange={set('invited_by')}
+                        placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
+                    </Field>
+                  </div>
+
+                  <div>
+                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                      What are you looking at?
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {INTERESTS.map((o) => {
+                        const on = form.interest === o.value;
+                        return (
+                          <button
+                            key={o.value} type="button"
+                            onClick={() => setForm((f) => ({ ...f, interest: on ? '' : o.value }))}
+                            aria-pressed={on}
+                            className={`text-xs py-1.5 px-2 rounded border text-center transition font-medium truncate ${
+                              on
+                                ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#10243E] font-semibold'
+                                : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
+                            }`}
+                          >
+                            {o.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-emerald-800 font-medium text-[11px]">
-                  <Tag size={12} className="text-emerald-600 shrink-0" />
-                  <span>No charge, and nothing to pay on the day</span>
-                </div>
-              </div>
+              )}
 
               {/* Row 6: Submit Button with Shake */}
               <motion.button
