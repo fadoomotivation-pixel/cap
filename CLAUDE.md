@@ -394,14 +394,16 @@ and Capital Brix is still only an authorised sales channel partner).
   number there as decoration.** Every surface that mentions price — hero facts
   bar, coupon card, FAQ, meta description, `Offer` in JSON-LD and the
   confirmation email — reads from this decision and must not drift apart.
-- **The invite code is not a coupon.** `invite_code` (`CAPITALBRIX`,
-  `DHOLERA2026`) does two real things: it flags the row **PRIORITY** in
-  `/admin/events` so somebody actually holds a seat, and it records which
-  handout or forward brought the person in. It must never be dressed up as
-  money off — entry is free, so there is nothing to discount, and a saving
-  against a price we never charged is what got the ₹2,500 removed. A promise
-  made on the form has to be one HR can keep, which is why the badge is on the
-  registration row and not only in the CSV.
+- **The coupon applies itself.** `DEFAULT_CODE` (`CAPITALBRIX`) is prefilled on
+  arrival, so the delegate-fee waiver is visibly applied before anyone types.
+  The field stays editable for campaign codes from a poster or a forward
+  (`PRIORITY_CODES`).
+
+  Because everyone now carries the default, **`/admin/events` badges PRIORITY
+  and counts a code in the rollup only when it is NOT the default** — a badge
+  on every row is a badge on none. `DEFAULT_CODE` is declared in both
+  `EventRegistration.jsx` and `EventsAdmin.jsx`; change it in both or the
+  console starts flagging every registration.
 - **Do not say who is bearing the cost of the event.** The same block read
   "sponsored by Capital Brix & Mirrikh Infratech" — a statement about Mirrikh's
   commercial arrangements made on their behalf, which is rule 1 above. Say the
@@ -415,11 +417,12 @@ and Capital Brix is still only an authorised sales channel partner).
   "Add to calendar" is a **Google Calendar** link first — a downloaded `.ics` on
   Android lands in Downloads and is never opened — with the `.ics` kept as a
   quiet secondary link for Apple Calendar and Outlook.
-- **Every field is on the form; nothing hides behind a disclosure.** City,
-  referrer and plot interest sat behind a "+ Add details" toggle and were
-  arriving empty — almost nobody opens a disclosure on a sign-up form, and those
-  are the three fields the sales team actually works from. They are visible and
-  marked Optional. The form must also not promise "Instant confirmation" while
+- **Every field is on the form; nothing hides behind a disclosure.** City and
+  referrer sat behind a "+ Add details" toggle and were arriving empty — almost
+  nobody opens a disclosure on a sign-up form. They are visible and marked
+  Optional. "What are you looking at?" was dropped entirely on 10 Sep 2026: the
+  `interest` column stays for existing rows and the console still shows it, but
+  nothing writes it. The form must also not promise "Instant confirmation" while
   no mail provider is configured.
 - **The hero keeps its boxes.** A weightless, Apple-style pass — no borders,
   huge type, one plain line of facts — was built and rejected by the owner: it

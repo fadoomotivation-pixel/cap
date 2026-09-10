@@ -12,12 +12,11 @@ import { absoluteUrl } from '../lib/seo';
 import { site } from '../data/site';
 import EventPass from '../components/EventPass';
 
-const INTERESTS = [
-  { value: 'residential',    label: 'Residential plot' },
-  { value: 'commercial',     label: 'Commercial plot' },
-  { value: 'industrial',     label: 'Industrial plot' },
-  { value: 'just-exploring', label: 'Just exploring' },
-];
+// The site-wide code, applied for anyone who reaches the page. PRIORITY_CODES
+// are the ones that mean something extra — a poster, a handout, a forward —
+// and only those earn the PRIORITY badge in /admin/events.
+const DEFAULT_CODE = 'CAPITALBRIX';
+const PRIORITY_CODES = ['CAPITALBRIX', 'DHOLERA2026'];
 
 /** Days / hours / minutes / seconds left, recomputed every second. Rendered only after
  *  mount — a countdown baked into prerendered HTML would ship a stale number
@@ -50,7 +49,7 @@ export default function EventRegistration() {
   const left = useCountdown(ev?.date || '2099-01-01');
 
   const [form, setForm] = useState({
-    full_name: '', phone: '', email: '', city: '', guests: 1, interest: '', invited_by: '', invite_code: '', notes: '',
+    full_name: '', phone: '', email: '', city: '', guests: 1, invited_by: '', invite_code: DEFAULT_CODE, notes: '',
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -79,9 +78,13 @@ export default function EventRegistration() {
   // On top of the waiver a code does two further things HR can act on: it flags
   // the seat as priority in /admin/events so someone actually holds one, and it
   // records which handout, poster or WhatsApp forward brought the person in.
-  const PRIORITY_CODES = ['CAPITALBRIX', 'DHOLERA2026'];
   const codeEntered = form.invite_code.trim().toUpperCase();
   const codeValid = PRIORITY_CODES.includes(codeEntered);
+  // Everyone arrives with the site-wide code already on. So a row only means
+  // something to HR when the code is NOT that default — a campaign code from a
+  // poster or a WhatsApp forward. Without this distinction every registration
+  // would be flagged PRIORITY, and a badge on every row is a badge on none.
+  const codeIsCampaign = codeValid && codeEntered !== DEFAULT_CODE;
   const setCode = (e) =>
     setForm((f) => ({ ...f, invite_code: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24) }));
 
@@ -392,7 +395,7 @@ export default function EventRegistration() {
                     applied
                   </span>
                   <span className="font-bold text-emerald-700 bg-emerald-100 px-1 py-0.5 rounded">
-                    {codeValid ? 'PRIORITY SEAT' : '100% OFF'}
+                    {codeIsCampaign ? 'PRIORITY SEAT' : '100% OFF'}
                   </span>
                 </div>
 
@@ -424,31 +427,6 @@ export default function EventRegistration() {
                   <input value={form.invited_by} onChange={set('invited_by')}
                     placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
                 </Field>
-              </div>
-
-              <div>
-                <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
-                  What are you looking at?
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                  {INTERESTS.map((o) => {
-                    const on = form.interest === o.value;
-                    return (
-                      <button
-                        key={o.value} type="button"
-                        onClick={() => setForm((f) => ({ ...f, interest: on ? '' : o.value }))}
-                        aria-pressed={on}
-                        className={`text-xs py-1.5 px-2 rounded border text-center transition font-medium truncate ${
-                          on
-                            ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#10243E] font-semibold'
-                            : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
-                        }`}
-                      >
-                        {o.label}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
               {/* Row 6: Submit Button with Shake */}

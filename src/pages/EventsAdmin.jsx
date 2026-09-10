@@ -23,6 +23,12 @@ import { format } from 'date-fns';
  * that matters to whoever books the hall is total seats, so both are shown and
  * never conflated.
  */
+// The site-wide code every visitor arrives with. A row carrying only this is
+// an ordinary registration; a row carrying anything else came through a poster,
+// a handout or a forward, and that is the one worth flagging. Badging every row
+// PRIORITY would be badging none.
+const DEFAULT_CODE = 'CAPITALBRIX';
+
 const STATUSES = ['registered', 'confirmed', 'attended', 'no-show', 'cancelled'];
 const STATUS_CLS = {
   registered: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -148,7 +154,7 @@ export default function EventsAdmin() {
     const m = new Map();
     shown.forEach((r) => {
       const k = (r.invite_code || '').trim();
-      if (!k) return;
+      if (!k || k === DEFAULT_CODE) return;
       const prev = m.get(k) || { label: k, seats: 0 };
       prev.seats += r.guests || 1;
       m.set(k, prev);
@@ -338,7 +344,7 @@ export default function EventsAdmin() {
                               priority seat. That promise is only real if it
                               reaches whoever lays out the hall — so it is a
                               badge, not a column buried in the CSV. */}
-                          {r.invite_code && (
+                          {r.invite_code && r.invite_code !== DEFAULT_CODE && (
                             <span className="ml-2 text-xs font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded inline-flex items-center gap-1">
                               <Tag size={11} /> PRIORITY · {r.invite_code}
                             </span>
