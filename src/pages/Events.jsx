@@ -2,39 +2,96 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { events } from '../data/events';
 import { Link } from 'react-router-dom';
-import { CalendarDays, MapPin, ArrowRight } from 'lucide-react';
+import { CalendarDays, MapPin, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { getEvent } from '../data/eventDetails';
 import Seo from '../components/Seo';
-import BlogArt from '../components/BlogArt';
 import { pageSeo } from '../lib/seo';
 
-const TONES = ['navy', 'gold', 'teal', 'indigo', 'green', 'violet'];
+function getEventMeta(event) {
+  const parts = (event.date || '').trim().split(/\s+/);
+  let dateInfo;
+  let year = '2024';
+
+  if (parts.length === 3) {
+    year = parts[2];
+    dateInfo = {
+      day: parts[0].padStart(2, '0'),
+      month: parts[1].toUpperCase(),
+      year: parts[2],
+    };
+  } else if (/^\d{4}$/.test(parts[0])) {
+    year = parts[0];
+    dateInfo = {
+      day: 'SUMMIT',
+      month: 'ANNUAL',
+      year: parts[0],
+    };
+  } else {
+    dateInfo = {
+      day: 'MEET',
+      month: 'EVENT',
+      year: event.date || 'ARCHIVE',
+    };
+  }
+
+  let categoryTag = 'Investor Meet';
+  let displayTitle = event.title;
+  let descriptionText = `Investor briefing on Dholera SIR infrastructure, master planning, and land opportunities in ${event.location}.`;
+
+  if (event.title === 'SPARK 2024') {
+    categoryTag = 'Annual Convention';
+    displayTitle = 'SPARK 2024 Investor Summit';
+    descriptionText = 'Annual channel partners & major investors meet in Delhi focusing on Dholera SIR project milestones.';
+  } else if (event.title === 'Vibrant Gujarat 2024') {
+    categoryTag = 'Global Summit';
+    displayTitle = 'Vibrant Gujarat Global Summit 2024';
+    descriptionText = 'Participation at Gandhinagar showcasing smart city industrial zoning and trunk infrastructure.';
+  } else if (event.title.startsWith('GPBS')) {
+    categoryTag = 'Trade Expo';
+    displayTitle = `${event.title} Business Summit`;
+    descriptionText = `Business convention delegation in ${event.location} presenting residential and industrial plots in Dholera SIR.`;
+  } else if (event.title === 'IVY 2024') {
+    categoryTag = 'Business Expo';
+    displayTitle = 'IVY 2024 Industry Expo';
+    descriptionText = 'Surat trade expo showcasing Dholera Special Investment Region masterplan and connectivity.';
+  } else if (event.title.includes('Awareness')) {
+    categoryTag = 'Awareness Seminar';
+    displayTitle = `Dholera SIR Awareness Seminar`;
+    descriptionText = `Public awareness programme in ${event.location} on town planning schemes, title verification, and NA plots.`;
+  } else if (event.title === 'Mirrikh Event') {
+    categoryTag = 'Investor Meet';
+    displayTitle = `Dholera Investor Meet — ${event.location}`;
+    descriptionText = `Executive investor meet in ${event.location} hosted by Mirrikh Infratech with ground development briefings.`;
+  }
+
+  return { dateInfo, categoryTag, displayTitle, descriptionText, year };
+}
 
 export default function Events() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const eventsPerPage = 12;
+  const [selectedYear, setSelectedYear] = useState('all');
   
   // Newest first. `sort` exists precisely because "2024" and "29 Dec 2024"
   // cannot be compared as text.
-  const ordered = useMemo(
-    () => [...events].sort((a, b) => (b.sort || '').localeCompare(a.sort || '')),
-    []
-  );
+  const ordered = useMemo(() => {
+    const list = [...events].map((e) => ({ ...e, meta: getEventMeta(e) }));
+    list.sort((a, b) => (b.sort || '').localeCompare(a.sort || ''));
+    return list;
+  }, []);
 
-  const totalPages = Math.ceil(ordered.length / eventsPerPage);
-  const indexOfLastEvent = currentPage * eventsPerPage;
-  const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
-  const currentEvents = ordered.slice(indexOfFirstEvent, indexOfLastEvent);
+  const years = useMemo(() => {
+    const set = new Set(ordered.map((e) => e.meta.year));
+    return ['all', ...Array.from(set).sort((a, b) => b.localeCompare(a))];
+  }, [ordered]);
 
-  const paginate = (pageNumber) => {
-    setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const filteredEvents = useMemo(() => {
+    if (selectedYear === 'all') return ordered;
+    return ordered.filter((e) => e.meta.year === selectedYear);
+  }, [ordered, selectedYear]);
 
   return (
     <div className="pt-24 pb-16 min-h-screen bg-gray-50 font-outfit">
+      <Seo {...pageSeo.events} />
 
-    <Seo {...pageSeo.events} />
       {/* Header */}
       <div className="bg-[#10243E] text-white py-16 mb-12">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
@@ -53,89 +110,108 @@ export default function Events() {
             ones and nobody signs up. */}
         <UpcomingEvent />
 
-        <div className="flex items-end justify-between gap-4 border-b border-gray-200 pb-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gray-200 pb-4 mb-8">
           <div>
-            <p className="text-[#9C7C1C] font-semibold tracking-[0.2em] uppercase text-xs mb-1.5">Archive</p>
+            <p className="text-[#9C7C1C] font-semibold tracking-[0.2em] uppercase text-xs mb-1.5">Archive Ledger</p>
             <h2 className="font-heading text-2xl sm:text-3xl text-[#10243E] leading-tight">Where we have been</h2>
           </div>
-          <p className="text-sm text-gray-400 shrink-0">{events.length} events</p>
-        </div>
-
-        {/* A grid, not a stack. Eighteen full-width banners was 9,000px of
-            scrolling to read eighteen place names. */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
-          {currentEvents.map((event, i) => (
-            <motion.article
-              key={`${currentPage}-${event.title}-${event.date}-${i}`}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.5, delay: (i % 3) * 0.07 }}
-            >
-              {/* A photograph when we host one ourselves, generated art
-                  otherwise. Never an <img src> pointing at someone else's
-                  server — that is what left seven empty boxes on the homepage
-                  and drew an IP objection. */}
-              <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-[#0A1016] border border-gray-100">
-                {event.image ? (
-                  <img
-                    src={event.image}
-                    alt={`${event.title}${event.location ? ` in ${event.location}` : ''}, ${event.date}`}
-                    loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : (
-                  <BlogArt
-                    tone={TONES[(indexOfFirstEvent + i) % TONES.length]}
-                    label={`${event.title}${event.location ? ` · ${event.location}` : ''}`}
-                    seed={indexOfFirstEvent + i}
-                    className="absolute inset-0 w-full h-full"
-                  />
-                )}
-                <span className="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-[0.14em] px-2.5 py-1 rounded-sm bg-[#0A1016]/85 text-white backdrop-blur-sm">
-                  {event.date}
-                </span>
-              </div>
-
-              <h3 className="font-heading text-lg text-[#10243E] leading-snug mt-3">{event.title}</h3>
-              {event.location && (
-                <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
-                  <MapPin size={13} className="text-[#9C7C1C] shrink-0" /> {event.location}
-                </p>
-              )}
-            </motion.article>
-          ))}
-        </div>
-
-        {/* Dynamic Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-20 flex items-center justify-center gap-2 text-base font-medium flex-wrap">
-            {[1, 2, 3].map((number) => (
-              number <= totalPages && (
+          
+          {/* Year Filter Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            {years.map((yr) => {
+              const count = yr === 'all' ? ordered.length : ordered.filter((e) => e.meta.year === yr).length;
+              const active = selectedYear === yr;
+              return (
                 <button
-                  key={number}
-                  onClick={() => paginate(number)}
-                  className={`w-10 h-10 flex items-center justify-center transition-colors rounded-sm ${
-                    currentPage === number
-                      ? 'bg-[#D4AF37] text-[#0A1016]'
-                      : 'text-[#10243E] hover:text-[#9C7C1C] hover:bg-gray-100 bg-white border border-gray-200'
+                  key={yr}
+                  onClick={() => setSelectedYear(yr)}
+                  className={`px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${
+                    active
+                      ? 'bg-[#10243E] text-[#D4AF37] shadow-sm'
+                      : 'bg-white text-gray-600 hover:text-[#10243E] border border-gray-200'
                   }`}
                 >
-                  {number}
+                  {yr === 'all' ? 'All' : yr} <span className="opacity-70">({count})</span>
                 </button>
-              )
-            ))}
-
-            {currentPage < totalPages && (
-              <button 
-                onClick={() => paginate(currentPage + 1)}
-                className="px-4 h-10 flex items-center justify-center text-[#10243E] bg-white border border-gray-200 hover:text-[#9C7C1C] hover:border-[#D4AF37] transition-colors ml-2 rounded-sm"
-              >
-                Next →
-              </button>
-            )}
+              );
+            })}
           </div>
-        )}
+        </div>
+
+        {/* Executive Conference Ledger Cards — Designed to look authoritative,
+            structured, and intentional without requiring any photos. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEvents.map((event, i) => {
+            const { meta } = event;
+            return (
+              <motion.article
+                key={`${event.title}-${event.location}-${event.date}-${i}`}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-30px' }}
+                transition={{ duration: 0.4, delay: (i % 3) * 0.05 }}
+                className="group relative bg-white rounded-xl border border-gray-200/90 hover:border-[#D4AF37] hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden"
+              >
+                {/* Top luxury accent stripe */}
+                <div className="h-1.5 w-full bg-gradient-to-r from-[#10243E] via-[#9C7C1C] to-[#D4AF37]" />
+
+                <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    {/* Date badge & Status pill */}
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3">
+                        {/* Executive Calendar Stamp */}
+                        <div className="shrink-0 w-14 h-14 rounded-lg bg-[#10243E] text-white flex flex-col items-center justify-center shadow-inner border border-white/10">
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#D4AF37] leading-none">
+                            {meta.dateInfo.month}
+                          </span>
+                          <span className="font-heading text-lg font-bold leading-tight my-0.5 text-white">
+                            {meta.dateInfo.day}
+                          </span>
+                          <span className="text-[9px] text-gray-300 leading-none">
+                            {meta.dateInfo.year}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-[#9C7C1C] bg-[#9C7C1C]/10 px-2 py-0.5 rounded">
+                            {meta.categoryTag}
+                          </span>
+                          <p className="text-xs text-gray-500 font-medium mt-1">
+                            {event.date}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/70 px-2.5 py-0.5 rounded-full shrink-0">
+                        <CheckCircle2 size={11} className="text-emerald-600" /> Concluded
+                      </span>
+                    </div>
+
+                    {/* Title & Description */}
+                    <h3 className="font-heading text-lg font-bold text-[#10243E] group-hover:text-[#9C7C1C] transition-colors leading-snug">
+                      {meta.displayTitle}
+                    </h3>
+                    <p className="text-xs text-gray-600 mt-2 leading-relaxed">
+                      {meta.descriptionText}
+                    </p>
+                  </div>
+
+                  {/* Location & Host Footer */}
+                  <div className="mt-5 pt-3.5 border-t border-gray-100 flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-semibold text-gray-800 bg-gray-50 border border-gray-100 rounded-md px-2.5 py-1">
+                      <MapPin size={13} className="text-[#9C7C1C] shrink-0" />
+                      {event.location}
+                    </span>
+                    <span className="text-[11px] text-gray-400 font-medium">
+                      Mirrikh × Capital Brix
+                    </span>
+                  </div>
+                </div>
+              </motion.article>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
