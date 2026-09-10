@@ -10,6 +10,7 @@ import { getEvent } from '../data/eventDetails';
 import { registerForEvent } from '../lib/eventRegistration';
 import { absoluteUrl } from '../lib/seo';
 import { site } from '../data/site';
+import EventPass from '../components/EventPass';
 
 const INTERESTS = [
   { value: 'residential',    label: 'Residential plot' },
@@ -69,6 +70,22 @@ export default function EventRegistration() {
   }
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  // Ten digits, and a pasted country code handled properly rather than cut off.
+  //
+  // "+91 98765 43210" is twelve digits. Keeping the first ten gives 9198765432
+  // — a plausible-looking number that is not theirs, saved with no warning and
+  // impossible to dial. So an over-long value has a leading 91 or 0 stripped
+  // first, falling back to a plain trim when stripping does not leave ten
+  // digits, which is the typed-an-11th-character case.
+  const setPhone = (e) => {
+    let d = e.target.value.replace(/\D/g, '');
+    if (d.length > 10) {
+      const stripped = d.replace(/^(?:91|0+)/, '');
+      d = stripped.length >= 10 ? stripped : d;
+    }
+    setForm((f) => ({ ...f, phone: d.slice(0, 10) }));
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -221,9 +238,19 @@ export default function EventRegistration() {
                 {done ? 'Keep this page — the details are below.' : 'Takes ~30 seconds · Instant confirmation'}
               </p>
             </div>
+            {/* "₹0 (Was ₹2,500)" used to sit here, and a ₹2,500 delegate fee
+                struck through in the form below.
+                
+                No delegate fee was ever charged for this seminar, so ₹2,500 is
+                a reference price that never existed. A struck-through price the
+                seller never actually asked for is a misleading price claim
+                under the Consumer Protection Act, and the CCPA's misleading-
+                advertisement guidelines name exactly this pattern. It is not
+                worth the risk for a company that took a legal notice two days
+                ago, and "Free" reads perfectly well on its own. */}
             {!done && (
               <div className="inline-flex items-center gap-1.5 self-start sm:self-auto bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] px-2.5 py-1 rounded text-xs font-semibold">
-                <Sparkles size={12} /> VIP Pass · ₹0 (Was ₹2,500)
+                <Sparkles size={12} /> Free entry · limited seats
               </div>
             )}
           </div>
@@ -244,9 +271,14 @@ export default function EventRegistration() {
                   : 'Our team will confirm your seat on WhatsApp. '}
                 {ev.dateLabel}{ev.time ? `, ${ev.time}` : ''} — {ev.venue}.
               </p>
-              <div className="flex flex-wrap gap-2">
+              {/* The pass, as an image they can save and show at the door.
+                  Otherwise the thing people actually do is screenshot this
+                  panel, which comes out cropped and half-scrolled. */}
+              <EventPass ev={ev} name={form.full_name} seats={Number(form.guests) || 1} id={done.id} />
+
+              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
                 <a href={ev.mapsUrl} target="_blank" rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold bg-[#D4AF37] text-[#0A1016] px-4 py-2 rounded-sm">
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold border border-gray-200 px-4 py-2 rounded-sm text-[#10243E] hover:border-[#D4AF37]">
                   <MapPin size={14} /> Directions
                 </a>
                 <a
@@ -271,7 +303,7 @@ export default function EventRegistration() {
                 </Field>
 
                 <Field label="Mobile number" required>
-                  <input required type="tel" inputMode="numeric" value={form.phone} onChange={set('phone')}
+                  <input required type="tel" inputMode="numeric" value={form.phone} onChange={setPhone}
                     autoComplete="tel" placeholder="10-digit mobile" className={INPUT} />
                 </Field>
               </div>
@@ -331,23 +363,22 @@ export default function EventRegistration() {
                 </div>
               </div>
 
-              {/* Row 5: VIP Pricing card */}
-              <div className="rounded-md border border-amber-200/80 bg-gradient-to-r from-[#FFFDF7] via-[#FFFDF7] to-[#F7FBF9] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+              {/* Row 5: what the seat costs.
+                  This was a "Delegate Fee ₹2,500" struck through to ₹0 with a
+                  "CAPITALBRIX — 100% OFF" coupon chip. Both were invented: no
+                  fee was ever set and no coupon exists, so the discount was
+                  measured against a number that was never real. See the note
+                  on the header badge above. */}
+              <div className="rounded-md border border-emerald-200/80 bg-[#F7FBF9] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500 text-xs">Delegate Fee {Number(form.guests) > 1 ? `(${form.guests} seats)` : ''}:</span>
-                  <span className="text-xs line-through text-gray-400 font-semibold decoration-red-500/80">
-                    ₹{(2500 * (Number(form.guests) || 1)).toLocaleString('en-IN')}
+                  <span className="text-gray-500">
+                    Entry{Number(form.guests) > 1 ? ` (${form.guests} seats)` : ''}:
                   </span>
-                  <span className="text-base font-extrabold text-[#10243E] font-heading">
-                    ₹0
-                  </span>
-                  <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">FREE</span>
+                  <span className="text-base font-extrabold text-[#10243E] font-heading">Free</span>
                 </div>
-
                 <div className="flex items-center gap-1.5 text-emerald-800 font-medium text-[11px]">
                   <Tag size={12} className="text-emerald-600 shrink-0" />
-                  <span>Coupon <strong className="font-mono font-bold bg-emerald-100 px-1 py-0.5 rounded text-emerald-900">CAPITALBRIX</strong> applied</span>
-                  <span className="font-bold text-emerald-700 bg-emerald-100 px-1 py-0.5 rounded">100% OFF</span>
+                  <span>No charge, and nothing to pay on the day</span>
                 </div>
               </div>
 
@@ -373,7 +404,12 @@ export default function EventRegistration() {
               </motion.button>
 
               <p className="text-[10px] text-gray-400 text-center leading-tight">
-                ✨ 100% complimentary VIP invitation sponsored by Capital Brix & Mirrikh Infratech. No charge, no obligation to buy.
+                {/* "sponsored by Capital Brix & Mirrikh Infratech" said who is
+                    bearing the cost of the event — a statement about Mirrikh's
+                    commercial arrangements, made on their behalf, which is the
+                    first of the two rules in CLAUDE.md. What we can say is that
+                    the seat is free and nothing is being sold. */}
+                Entry is free and there is no obligation to buy anything on the day.
               </p>
             </form>
           )}

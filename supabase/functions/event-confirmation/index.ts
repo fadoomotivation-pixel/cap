@@ -76,22 +76,46 @@ Deno.serve(async (req) => {
     new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
   try {
-    const { registration_id, resend } = await req.json();
-    if (!registration_id || typeof registration_id !== "string") {
-      return json({ error: "registration_id required" }, 400);
-    }
+    const { registration_id, resend, probe } = await req.json();
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const isCallerAdmin = async () => {
+      const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+      if (!jwt) return false;
+      const { data: u } = await admin.auth.getUser(jwt);
+      return !!u?.user?.email && ADMIN_EMAILS.includes(u.user.email.toLowerCase());
+    };
+
+    // `probe` answers one question for the admin console: is a mail provider
+    // configured at all? Without it the only way to find out is to register
+    // someone and see whether they got an email, which is a terrible way to
+    // discover that a secret was never set. Admin-only, because which provider
+    // an installation uses is not the public's business.
+    if (probe) {
+      if (!await isCallerAdmin()) return json({ error: "not authorised" }, 403);
+      const provider = Deno.env.get("SMTP_PASSWORD")
+        ? "smtp"
+        : Deno.env.get("RESEND_API_KEY") ? "resend" : null;
+      return json({
+        provider,
+        from: Deno.env.get("EVENT_FROM_EMAIL") ??
+          (provider === "smtp" ? Deno.env.get("SMTP_USER") ?? "hr@capitalbrix.co.in" : null),
+        host: provider === "smtp" ? Deno.env.get("SMTP_HOST") ?? "smtp.zoho.in" : null,
+      });
+    }
+
+    if (!registration_id || typeof registration_id !== "string") {
+      return json({ error: "registration_id required" }, 400);
+    }
+
     // Only an admin may force a repeat send.
     let isAdmin = false;
     if (resend) {
-      const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-      const { data: u } = jwt ? await admin.auth.getUser(jwt) : { data: { user: null } };
-      isAdmin = !!u?.user?.email && ADMIN_EMAILS.includes(u.user.email.toLowerCase());
+      isAdmin = await isCallerAdmin();
       if (!isAdmin) return json({ sent: false, reason: "not authorised to resend" }, 403);
     }
 

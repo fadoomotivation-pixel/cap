@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
 
 // ─────────────────────────────────────────────────────────────
@@ -43,12 +43,34 @@ const fmt = (n, decimals, grouped) =>
 // like a loading spinner; this reads like a number arriving.
 const ease = (t) => 1 - Math.pow(1 - t, 3);
 
+// useLayoutEffect does not exist on the server and React warns if you call it
+// there. This component is rendered by scripts/prerender.mjs, so it needs the
+// layout timing on the client and the plain effect on the server.
+const useBeforePaint = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
 export default function CountUp({ value, duration = 1600, className = '', style }) {
   const parsed = parseFigure(value);
   const still = useReducedMotion();
   const ref = useRef(null);
-  const [shown, setShown] = useState(() => (parsed ? 0 : null));
-  const [lifted, setLifted] = useState(false);
+
+  // Starts at the FINISHED figure, not at zero.
+  //
+  // Every public route is prerendered to real HTML at build time, and starting
+  // at zero baked "₹0 Cr" into that HTML where "₹91,000 Cr" belongs — so the
+  // one reader the prerender exists for, a crawler that does not run JS, was
+  // told the Tata fab is worth nothing. The same HTML is also what a human
+  // sees for the moment before hydration.
+  //
+  // The client resets to zero below, before the browser paints, so nothing
+  // flashes and the animation is unchanged.
+  const [shown, setShown] = useState(() => (parsed ? parsed.value : null));
+  const [lifted, setLifted] = useState(true);
+
+  useBeforePaint(() => {
+    if (!parsed || still) return;
+    setShown(0);
+    setLifted(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // No number to animate, or the visitor asked for less motion — in both

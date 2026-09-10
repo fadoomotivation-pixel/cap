@@ -8,7 +8,7 @@ import { downloadCsv } from '../lib/expenses';
 import { events as EVENT_DETAILS } from '../data/eventDetails';
 import {
   CalendarDays, Phone, Mail, MessageCircle, RefreshCw, LogOut, Search,
-  Users, ArrowDownToLine, X, UserCheck, MapPin, Send,
+  Users, ArrowDownToLine, X, UserCheck, MapPin, Send, MailWarning,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -75,6 +75,18 @@ export default function EventsAdmin() {
   }, [isAdmin]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Is a mail provider actually configured? Without asking, the only way to
+  // find out is to register someone and notice they never got an email — which
+  // is how you discover a missing secret a week after the invitations went out.
+  const [mail, setMail] = useState(undefined);
+  useEffect(() => {
+    if (!isAdmin) return;
+    supabase.functions
+      .invoke('event-confirmation', { body: { probe: true } })
+      .then(({ data }) => setMail(data ?? null))
+      .catch(() => setMail(null));
+  }, [isAdmin]);
 
   const setRowStatus = async (row, next) => {
     const { error } = await supabase.from('cb_event_registrations')
@@ -188,6 +200,30 @@ export default function EventsAdmin() {
         <AdminNav className="mb-6" />
 
         {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-4 text-sm flex justify-between gap-3">{error}<button onClick={() => setError('')}><X size={16} /></button></div>}
+
+        {mail && mail.provider === null && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 mb-6 flex gap-3">
+            <MailWarning size={20} className="shrink-0 mt-0.5 text-amber-600" />
+            <div className="text-sm leading-relaxed">
+              <strong>Confirmation emails are not going out.</strong> Registrations are being
+              saved normally, but no mail provider is configured, so nobody is receiving a
+              confirmation — the page tells them your team will confirm on WhatsApp instead.
+              <br />
+              To switch it on: generate an app-specific password in Zoho Accounts → Security →
+              App Passwords, then add <code className="bg-amber-100 px-1 rounded">SMTP_PASSWORD</code> (and{' '}
+              <code className="bg-amber-100 px-1 rounded">SMTP_USER</code> = hr@capitalbrix.co.in)
+              under Supabase → Project Settings → Edge Functions → Secrets.
+            </div>
+          </div>
+        )}
+
+        {mail && mail.provider && (
+          <p className="text-xs text-gray-500 mb-6 flex items-center gap-2">
+            <Send size={13} className="text-green-600" />
+            Confirmation emails are on, sending from <strong className="text-[#10243E]">{mail.from}</strong>
+            {mail.host ? ` via ${mail.host}` : ''}.
+          </p>
+        )}
 
         {activeEvent && (
           <div className="bg-[#10243E] text-white rounded-xl p-5 mb-6">

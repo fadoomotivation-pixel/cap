@@ -308,6 +308,14 @@ An earlier attempt added shared "how to verify a plot" prose to all 22, which
 raised word count and left them 90% identical. Don't do that: link the guide
 that owns the query instead.
 
+### Animated figures start at the finished number
+
+`src/components/CountUp.jsx` used to initialise at zero, which baked **"₹0 Cr"**
+into the prerendered HTML where "₹91,000 Cr" belongs — telling the one reader
+prerendering exists for, a crawler that does not run JS, that the Tata fab is
+worth nothing. It is also what a human sees before hydration. It now renders the
+finished figure and the client resets to zero in a layout effect, before paint.
+
 ### Heading semantics
 
 Several sections marked the tiny uppercase eyebrow label as the `<h2>` and the
@@ -364,6 +372,27 @@ and Capital Brix is still only an authorised sales channel partner).
   name to come off, delete the entry rather than rewording it. This is the one
   narrow exception to "never name Mirrikh Infratech's founder on the site": it
   applies to a jointly hosted event's own platform, not to marketing copy.
+- **No invented reference price.** The sign-up briefly carried "VIP Pass · ₹0
+  (Was ₹2,500)" with a struck-through ₹2,500 delegate fee and a "CAPITALBRIX —
+  100% OFF" coupon chip. No fee was ever set and no coupon exists, so the
+  discount was measured against a number that never existed — a misleading
+  price claim under the Consumer Protection Act, and the pattern the CCPA's
+  misleading-advertisement guidelines name directly. Removed 10 Sep 2026.
+  **Never advertise a saving against a price Capital Brix did not charge.**
+  "Free" needs no comparison.
+- **Do not say who is bearing the cost of the event.** The same block read
+  "sponsored by Capital Brix & Mirrikh Infratech" — a statement about Mirrikh's
+  commercial arrangements made on their behalf, which is rule 1 above. Say the
+  seat is free and nothing is being sold.
+- On success the registrant gets a **downloadable pass**
+  (`src/components/EventPass.jsx`): a 1080×1350 PNG drawn on a canvas, plus an
+  `.ics` calendar file. Canvas rather than html2canvas — no 200KB dependency, a
+  fixed size that looks the same on every phone, and no external font or image
+  to fail at the moment someone wants to save it. The `REF` on the pass is the
+  last six characters of the row id, short enough to read out on a call.
+- **The phone field strips a pasted country code rather than truncating it.**
+  "+91 98765 43210" is twelve digits; keeping the first ten gives 9198765432 —
+  a plausible-looking number that is not theirs and cannot be dialled.
 - `invited_by` records who brought this person — free text, deliberately not a
   dropdown of staff names, because a dropdown silently drops the existing
   customer who referred a friend, which is the answer worth having. The console
