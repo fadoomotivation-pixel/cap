@@ -54,7 +54,7 @@ export default function ProjectDetail() {
   const seoTitle = `${project.name} Dholera | ${project.type} in ${project.location} — Capital Brix`;
   const seoDescription = `${project.name} — ${project.type} at ${project.location}. ${project.size}. ${
     project.price === 'On Request' ? 'Pricing on request' : `Starting ${project.price}`
-  }. NA/NOC approved, title-clear plots via Capital Brix, official strategy partner of Mirrikh Infratech.`;
+  }. NA/NOC approved, title-clear plots. Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.`;
 
   const faqs = projectFaqs(project);
   const sections = projectSections(project);

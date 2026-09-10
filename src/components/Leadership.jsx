@@ -9,7 +9,10 @@ import { Award, Globe, Handshake } from 'lucide-react';
 const CREDENTIALS = [
   { Icon: Award, title: 'Jagran Achievers Award 2026', desc: 'For vision, leadership and achievement in real estate.' },
   { Icon: Globe, title: 'Honoured at Almaty, Kazakhstan', desc: 'Presented among global business leaders.' },
-  { Icon: Handshake, title: 'Official Strategy Partner', desc: "Driving Mirrikh Infratech's growth across Dholera." },
+  // Was "Official Strategy Partner — Driving Mirrikh Infratech's growth across
+  // Dholera", which read as an executive role inside Mirrikh. This section is
+  // about Capital Brix's own founder, so the credential is his own company.
+  { Icon: Handshake, title: 'Founder & CEO, Capital Brix LLP', desc: 'Leads the Capital Brix sales and advisory team from Noida.' },
 ];
 
 export default function Leadership() {

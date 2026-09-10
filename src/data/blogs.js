@@ -19,6 +19,125 @@ export const blogCategories = ['All', 'Investment', 'Infrastructure', 'Legal & P
 
 export const blogs = [
   // ══════════════════════════════════════════════════════════════
+  // Sourced from DICDL's own quarterly newsletter (SPOTLIGHT, Jan–Apr 2026).
+  // Facts are the development authority's; every sentence here is written from
+  // scratch, and the source is named in the text rather than absorbed — a post
+  // built on someone's document should say whose document it is.
+  //
+  // Deliberately NOT included: the newsletter states the expressway cost at
+  // approximately ₹5,800 crore in its own article and reproduces a press
+  // headline saying ₹5,100 crore. Two figures, one document, no way to
+  // reconcile them from here — so the cost is left out rather than guessed at.
+  {
+    slug: 'dholera-sir-progress-2026',
+    category: 'Market Update',
+    keyword: 'Dholera latest news 2026',
+    date: '2026-09-08',
+    updated: '2026-09-08',
+    readMinutes: 7,
+    tone: 'teal',
+    image: '/blog/dholera-sir-progress-2026.webp',
+    imageAlt: 'Architectural horizontal timeline axis with progressive milestone pillars and node markers in gold and navy',
+    title: 'Dholera SIR in 2026: What Actually Moved This Year',
+    h1: 'Dholera SIR in 2026: what actually moved between January and April',
+    seoTitle: 'Dholera Latest News 2026 | SEZ Notified, Expressway Open, Fab Rising',
+    excerpt:
+      'The SEZ for the Tata semiconductor plant was notified in April 2026. The Ahmedabad–Dholera Expressway opened. MeitY leadership and Japanese delegations visited the fab site. A plain reading of the development authority’s own quarterly record — and what it means for a plot buyer.',
+    intro:
+      'Dholera generates more forecasting than reporting. This piece does the opposite: it takes the January–April 2026 quarterly newsletter published by Dholera Industrial City Development Limited (DICDL) — the state-owned company that actually builds and runs the region — and reads what is recorded in it. Four things moved in that window, and one of them changes the legal status of the land the semiconductor plant sits on. If you are considering a plot here, these are the developments worth knowing, along with the honest note on which of them affect your purchase and which do not.',
+    sections: [
+      {
+        h2: 'The SEZ for the Tata fab was formally notified',
+        p: [
+          'On 9 April 2026, a Special Economic Zone of 66.16 hectares was notified in the Activation Area of Dholera SIR for Tata Semiconductor Manufacturing Private Limited. The sector recorded on the notification is electronic hardware and software, including IT and IT-enabled services.',
+          'The distinction between a plant being announced and its land carrying SEZ status is not a technicality. An announcement is an intention. A gazette notification is a legal designation that brings a distinct customs, regulatory and fiscal regime to a defined boundary — and it is the kind of step that happens when a project is being executed rather than considered. DICDL puts the proposed investment at ₹91,000 crore, with the potential to generate over 20,000 jobs once the ancillary supply chain forms around it.',
+        ],
+        callout: {
+          tone: 'info',
+          title: 'What this does and does not mean for a plot buyer',
+          text: 'It does not give your plot any SEZ benefit — those apply inside the notified 66.16 hectares, to the unit operating there. What it does is remove a category of risk from the region’s central anchor. The reason to care is second-order: an employer of that size, now legally embedded, is what turns a planned city into an occupied one over the following decade.',
+        },
+      },
+      {
+        h2: 'The Ahmedabad–Dholera Expressway is open',
+        p: [
+          'The 109 km access-controlled corridor was built by the National Highways Authority of India under the Bharatmala programme, in four packages running from the Sardar Patel Ring Road near Ahmedabad to Adhelai village in Bhavnagar district.',
+          'DICDL records the practical effect as a drop in travel time from close to two hours to about 45 minutes. Distance did not change; the number that governs behaviour did. Forty-five minutes is inside the range at which people will commute, freight operators will plan same-day cycles, and a buyer in Ahmedabad will visit a site on a weekday morning rather than surrendering a Sunday to it.',
+          'For anyone weighing a purchase, this is the single most testable claim in this article. You can drive it yourself, and we would rather you did.',
+        ],
+      },
+      {
+        h2: 'The fab site is drawing the people who decide these things',
+        p: [
+          'Between January and April, the Union Minister for Electronics and Information Technology visited Dholera and reviewed the under-construction fab, which Tata Electronics is developing in partnership with Taiwan’s Powerchip Semiconductor Manufacturing Corporation. The Secretary of MeitY and the CEO of the India Semiconductor Mission made a separate visit in the same month.',
+          'At the Gujarat SemiConnect Conference held at Gandhinagar on 1–2 March 2026, over 130 delegates travelled to Dholera on the second day for an on-ground tour of the Activation Area, hosted with Gujarat State Electronics Mission and Tata Electronics.',
+          'Site visits by ministers are ordinary politics. Site visits by the procurement and technical side of an industry are not — a semiconductor ecosystem is built by suppliers who need to see utility readiness and logistics before they commit, and that is who was walking the ground.',
+        ],
+      },
+      {
+        h2: 'Japanese interest is turning into presence',
+        p: [
+          'A 45-member Japanese delegation visited Dholera with the Japan Bank for International Cooperation, JETRO and NICDC, covering the expressway and the airport site as well as the region’s utilities and command centre. Separately, Japan’s former Ambassador to India visited with officials from JBIC and NICDC to review the semiconductor ecosystem.',
+          'The detail worth noting sits underneath the delegations: Nippon Express is establishing a presence at Dholera. A logistics operator committing physical infrastructure is a different signal from a delegation touring one — it is a company placing an asset where it expects volume.',
+        ],
+      },
+      {
+        h2: 'Social infrastructure is now on the list',
+        p: [
+          'DICDL records a multi-speciality hospital, a corporate hotel, a fire station, a Tent City, a guest house, a food court, a school, and residential and commercial developments as progressing.',
+          'This is the least glamorous item here and arguably the most important for a residential plot. Industrial land is bought on connectivity and power. Homes are bought on schools and hospitals. A region can have a semiconductor fab and still not be somewhere a family will move — the social infrastructure is what closes that gap, and it is the category to watch over the next two years.',
+        ],
+        table: {
+          head: ['What moved', 'When', 'Why it matters to a buyer'],
+          rows: [
+            ['SEZ notified for the Tata fab (66.16 ha)', '9 April 2026', 'The anchor employer’s land now has legal designation, not just an announcement'],
+            ['Ahmedabad–Dholera Expressway open', 'Operational', 'Ahmedabad to Dholera at about 45 minutes — verify it on your own site visit'],
+            ['MeitY and ISM leadership visits to the fab', 'March 2026', 'Central government attention is on execution, not planning'],
+            ['130+ delegates toured the Activation Area', '1–2 March 2026', 'Industry supply chain is assessing the region first-hand'],
+            ['45-member Japanese delegation; Nippon Express presence', 'Q1 2026', 'A logistics operator placing an asset is a commitment, not a visit'],
+            ['Hospital, school, hotel, fire station in progress', 'Ongoing', 'The category that decides whether families actually move in'],
+          ],
+        },
+      },
+      {
+        h2: 'What this does not tell you',
+        p: [
+          'A regional record is not a plot-level record. None of the above tells you whether the specific piece of land you are being shown is NA-converted, title-clear, plan-passed, or inside a notified Town Planning scheme. Those are questions about one survey number, and they are answered by documents, not by news.',
+          'It is also worth being precise about the direction of causation. Infrastructure and anchor investment raise the ceiling on what land in a region can be worth over time; they do not set the price of any individual plot, and they do not make a bad title good. Treat this article as the reason to look at Dholera seriously, and the verification guide below as the thing that decides whether you buy a particular plot in it.',
+        ],
+        callout: {
+          tone: 'warn',
+          title: 'Source',
+          text: 'Every figure and date in this article comes from the SPOTLIGHT quarterly newsletter for January–April 2026, published by Dholera Industrial City Development Limited, Government of Gujarat. We have summarised it in our own words; where a number matters to your decision, ask us for the source page and check it yourself.',
+        },
+      },
+    ],
+    faqs: [
+      {
+        q: 'When was the SEZ for the Tata semiconductor plant at Dholera notified?',
+        a: 'On 9 April 2026. The notification designates 66.16 hectares in the Activation Area of Dholera SIR for Tata Semiconductor Manufacturing Private Limited, in the electronic hardware and software sector including IT/ITES.',
+      },
+      {
+        q: 'How long does the Ahmedabad to Dholera drive take now?',
+        a: 'Dholera Industrial City Development Limited puts it at about 45 minutes on the Ahmedabad–Dholera Expressway, against close to two hours before the corridor opened. The expressway is 109 km, built by NHAI under the Bharatmala programme in four packages.',
+      },
+      {
+        q: 'Does the SEZ notification benefit my plot?',
+        a: 'No. SEZ benefits apply inside the notified 66.16 hectares to the unit operating there, not to plots elsewhere in the region. Its relevance to a plot buyer is indirect: it confirms that the region’s anchor investment has legal standing and is being executed.',
+      },
+      {
+        q: 'Is Dholera actually built, or is it still a plan?',
+        a: 'Both, depending on where you stand. The Activation Area has 72 km of internal roads, a 50 MLD water treatment plant, a 20 MLD common effluent treatment plant, a 10 MLD sewage treatment plant and the ABCD building with the city command centre. The wider 920 sq km region is largely undeveloped. This is exactly why the location of a specific plot matters more than the reputation of the region.',
+      },
+      {
+        q: 'What should I check before buying a plot in Dholera?',
+        a: 'NA conversion, NOC, a clear title chain, an approved layout plan, and which Town Planning scheme the land falls in. None of the regional progress described above substitutes for those documents on your specific survey number. Our verification guide walks through each one.',
+      },
+    ],
+    related: ['how-to-verify-a-dholera-plot', 'tata-semiconductor-plant-dholera', 'ahmedabad-dholera-expressway', 'dholera-plot-price-2026'],
+  },
+
+  // ══════════════════════════════════════════════════════════════
   {
     slug: 'dholera-plot-price-2026',
     category: 'Investment',
@@ -35,7 +154,7 @@ export const blogs = [
     excerpt:
       'Residential plots in Dholera SIR run roughly ₹6,000–₹10,000 per sq yd in 2026, with entry pricing from ₹7,250. Here is what sets the rate, what the sticker price leaves out, and how to tell a fair quote from a padded one.',
     intro:
-      'In 2026, NA-approved residential plots inside and around Dholera SIR transact in a band of roughly ₹6,000 to ₹10,000 per square yard, with Capital Brix inventory starting at ₹7,250 per sq yd at direct developer pricing. That band is wide for a reason: two plots ten minutes apart can differ by 40% on rate alone. This guide breaks down what you are actually paying for, what the quoted price usually excludes, and the questions that separate a fair number from a padded one.',
+      'In 2026, NA-approved residential plots inside and around Dholera SIR transact in a band of roughly ₹6,000 to ₹10,000 per square yard, with plots marketed by Capital Brix starting at ₹7,250 per sq yd. That band is wide for a reason: two plots ten minutes apart can differ by 40% on rate alone. This guide breaks down what you are actually paying for, what the quoted price usually excludes, and the questions that separate a fair number from a padded one.',
     sections: [
       {
         h2: 'The price band, and why it is a band',
@@ -64,7 +183,7 @@ export const blogs = [
             '**Approval status.** An NA (Non-Agricultural) converted, NOC-cleared, plan-passed plot costs more than agricultural land sold on a promise of future conversion. That premium is the cheapest insurance you will ever buy.',
             '**Road frontage and plot geometry.** A corner plot or one on a 30-foot internal road commands more than an interior plot of identical area. On resale, that gap widens rather than narrows.',
             '**Township versus loose land.** A plot inside a developed township comes with laid roads, boundary walls, street lighting and a maintenance structure. Loose agricultural land does not, and the cost of creating those things later falls on you.',
-            '**Who you are buying from.** A plot passing through three intermediaries carries three margins. Direct developer pricing removes them.',
+            '**Who you are buying from.** A plot passing through three intermediaries carries three margins. Buying in a developer’s own project rather than through a resale chain avoids that stack — ask who you are contracting with, and get the current rate confirmed in writing.',
           ],
         },
       },
@@ -91,7 +210,7 @@ export const blogs = [
         h2: 'Why Dholera pricing is where it is',
         p: [
           'Dholera SIR is India\'s first greenfield smart city, planned under the Delhi–Mumbai Industrial Corridor and backed by the Government of Gujarat. Unlike a city that grew organically and is now retrofitting infrastructure, Dholera\'s trunk network was designed before the population arrived.',
-          'Three anchors underpin current demand. The Tata semiconductor fabrication plant, a project of roughly ₹91,000 crore, brings a manufacturing ecosystem rather than a single employer. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the drive from Ahmedabad to roughly an hour.',
+          'Three anchors underpin current demand. The Tata semiconductor fabrication plant, a project of roughly ₹91,000 crore, brings a manufacturing ecosystem rather than a single employer. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the drive from Ahmedabad to about 45 minutes, down from close to two hours.',
           'That combination is why land here trades above pure agricultural value and well below a functioning metro. You are pricing in execution risk on one side and a planned city on the other.',
         ],
       },
@@ -132,8 +251,8 @@ export const blogs = [
         a: 'On paper, yes. In practice the conversion process carries time, cost and outcome risk that most retail buyers are not equipped to absorb, and a failed conversion leaves you holding land you cannot build on or easily resell. The premium on an already NA-converted, plan-passed plot buys certainty.',
       },
       {
-        q: 'What does "direct developer pricing" actually mean?',
-        a: 'It means the price you pay is the developer\'s price, with no intermediary margin stacked on top. Capital Brix is the official strategy partner of Mirrikh Infratech, so inventory comes from the developer rather than through a resale chain.',
+        q: 'Does Capital Brix add a commission on top of the price?',
+        a: 'Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., so plots are booked in the developer\'s own projects rather than through a resale chain. Pricing, discounts and payment terms are set by the developer — ask us to confirm the current rate for the specific plot you are considering, in writing, before you pay anything.',
       },
     ],
     related: ['is-dholera-a-good-investment', 'how-to-verify-a-dholera-plot', 'dholera-land-vs-fd-gold-apartment'],
@@ -167,7 +286,7 @@ export const blogs = [
           items: [
             '**It is planned, not accreted.** Dholera SIR spans roughly 920 sq km with a trunk network — arterial roads, water, power, drainage, ICT — laid out before the population arrived. Most Indian cities are retrofitting infrastructure into places people already live, at multiples of the cost.',
             '**The anchor is industrial, not residential speculation.** The Tata semiconductor fabrication plant, around ₹91,000 crore, does not arrive alone. Fabs pull suppliers, testing, packaging, logistics and services. Employment of that kind creates housing demand that does not depend on the next investor buying from the last one.',
-            '**Connectivity is under construction, not under discussion.** The 109 km Ahmedabad–Dholera Expressway brings Ahmedabad to roughly an hour. Dholera International Airport is being built at Navagam.',
+            '**Connectivity is under construction, not under discussion.** The 109 km Ahmedabad–Dholera Expressway brings Ahmedabad to about 45 minutes. Dholera International Airport is being built at Navagam.',
             '**State and corridor backing.** Dholera sits within the Delhi–Mumbai Industrial Corridor and carries Government of Gujarat commitment. That does not guarantee timelines, but it does change the probability distribution compared with a private township betting on a road that may never be funded.',
             '**Entry pricing is still early-stage.** Land in the ₹6,000–₹10,000 per sq yd band is priced for a place that is being built, not one that is built.',
           ],
@@ -218,7 +337,7 @@ export const blogs = [
       {
         h2: 'Where Capital Brix sits in this',
         p: [
-          'We sell plots, so treat this section with appropriate scepticism and check what follows against documents. Capital Brix LLP is the official strategy partner of Mirrikh Infratech, a Dholera developer with 8+ completed projects since 2012. That matters for one narrow reason: a developer with delivered projects has a track record you can go and physically look at, which is not true of an entity formed last year.',
+          'We sell plots, so treat this section with appropriate scepticism and check what follows against documents. Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., a Dholera developer with 8+ completed projects since 2012 — we market their projects, we do not build them. That matters for one narrow reason: a developer with delivered projects has a track record you can go and physically look at, which is not true of an entity formed last year.',
           'What we will not do is quote you a return figure. What we will do is put the approvals, the title chain and the all-in cost in front of you before you commit, and take you to the site so you can stand on the plot you are buying.',
         ],
       },
@@ -307,7 +426,7 @@ export const blogs = [
         list: {
           ordered: true,
           items: [
-            '**Confirm the survey number and physically locate the plot.** Stand on it. Match the boundaries against the layout. A surprising number of disputes begin with a buyer who never visited the land they bought.',
+            '**Confirm the survey number and physically locate the plot.** Stand on it and match the boundaries against the layout. Before visiting in person, inspect the [official Dholera 360° virtual tour](/dholera/virtual-tour) to verify the ABCD Building, internal road network, and activation area grid. A surprising number of disputes begin with a buyer who never verified the land.',
             '**Verify NA conversion and plan approval for that survey number.** If this fails, stop. Nothing further is worth your time.',
             '**Pull the 7/12 extract and read the names.** Ask about anyone you do not recognise.',
             '**Trace the title chain.** Have a lawyer do this if you are not confident; the fee is trivial against the exposure.',
@@ -420,7 +539,7 @@ export const blogs = [
       {
         h2: 'Where this fits with the other two anchors',
         p: [
-          'Taken alone, an airport is a single point of failure. Taken with the 109 km Ahmedabad–Dholera Expressway — which brings the drive from Ahmedabad to roughly an hour — and the roughly ₹91,000 crore Tata semiconductor fabrication plant, it becomes part of a system where each element makes the others more useful.',
+          'Taken alone, an airport is a single point of failure. Taken with the 109 km Ahmedabad–Dholera Expressway — which brings the drive from Ahmedabad to about 45 minutes — and the roughly ₹91,000 crore Tata semiconductor fabrication plant, it becomes part of a system where each element makes the others more useful.',
           'That is the honest strength of the Dholera case: not any single project, but three of them pointing the same way, in a region planned to receive them. And it is also why a buyer should not let any one of them carry the entire argument.',
         ],
       },
@@ -501,7 +620,7 @@ export const blogs = [
       {
         h2: 'How this interacts with the rest of Dholera',
         p: [
-          'The fab is one of three anchors. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the Ahmedabad drive to roughly an hour. Beneath all of it sits a planned 920 sq km region with trunk infrastructure designed before occupancy — which is the reason a project of this scale could site here at all.',
+          'The fab is one of three anchors. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the Ahmedabad drive to about 45 minutes. Beneath all of it sits a planned 920 sq km region with trunk infrastructure designed before occupancy — which is the reason a project of this scale could site here at all.',
           'That sequencing is the actual story. Dholera did not attract a fab because the fab wanted a village; it attracted one because the land, power, water and connectivity were planned to industrial specification in advance.',
         ],
       },
@@ -546,12 +665,12 @@ export const blogs = [
     image: '/blog/ahmedabad-dholera-expressway.webp',
     imageAlt: 'Isometric regional master plan traversed by an illuminated gold highway corridor and interchange loops on navy background',
     title: 'The Ahmedabad–Dholera Expressway: An Hour That Changes Things',
-    h1: 'The Ahmedabad–Dholera Expressway: why one hour changes everything',
+    h1: 'The Ahmedabad–Dholera Expressway: why 45 minutes changes everything',
     seoTitle: 'Ahmedabad Dholera Expressway: Route, Distance & Impact',
     excerpt:
-      'A 109 km expressway that brings Dholera within roughly an hour of Ahmedabad. Why travel time, more than distance, decides whether a satellite region becomes part of a metro economy.',
+      'A 109 km expressway that brings Dholera within about 45 minutes of Ahmedabad. Why travel time, more than distance, decides whether a satellite region becomes part of a metro economy.',
     intro:
-      'Dholera sits roughly 100 km south-west of Ahmedabad. On its own, that distance would keep it a separate place. The 109 km Ahmedabad–Dholera Expressway changes the number that actually matters — travel time, brought down to around an hour — and travel time is what decides whether a region becomes part of a metropolitan economy or stays outside it.',
+      'Dholera sits roughly 100 km south-west of Ahmedabad. On its own, that distance would keep it a separate place. The 109 km Ahmedabad–Dholera Expressway changes the number that actually matters — travel time, which the development authority puts at about 45 minutes against close to two hours before — and travel time is what decides whether a region becomes part of a metropolitan economy or stays outside it.',
     sections: [
       {
         h2: 'Distance is not the variable; time is',
@@ -606,11 +725,11 @@ export const blogs = [
     faqs: [
       {
         q: 'How long is the Ahmedabad–Dholera Expressway?',
-        a: 'Approximately 109 km, connecting Ahmedabad to the Dholera Special Investment Region.',
+        a: 'Approximately 109 km, connecting Ahmedabad to the Dholera Special Investment Region. It was built by the National Highways Authority of India under Bharatmala, in four packages running from the Sardar Patel Ring Road near Ahmedabad to Adhelai village in Bhavnagar district.',
       },
       {
         q: 'How far is Dholera from Ahmedabad?',
-        a: 'Roughly 100 km south-west. The expressway brings the drive down to about an hour, which is the number that matters for commuting, freight and site visits.',
+        a: 'Roughly 100 km south-west. The expressway brings the drive down to about 45 minutes, which is the number that matters for commuting, freight and site visits.',
       },
       {
         q: 'Does being near the expressway guarantee a plot is well located?',
@@ -698,7 +817,7 @@ export const blogs = [
         callout: {
           tone: 'tip',
           title: 'One visit, well planned, beats three rushed ones',
-          text: 'With the Ahmedabad–Dholera Expressway bringing the drive to roughly an hour, a single trip can cover multiple site visits, the sub-registrar and a meeting at our Noida office. Tell us your dates and we will structure the visit around them.',
+          text: 'With the Ahmedabad–Dholera Expressway bringing the drive to about 45 minutes, a single trip can cover multiple site visits, the sub-registrar and a meeting at our Noida office. Tell us your dates and we will structure the visit around them.',
         },
       },
     ],
@@ -809,130 +928,6 @@ export const blogs = [
       },
     ],
     related: ['is-dholera-a-good-investment', 'dholera-plot-price-2026', 'how-to-verify-a-dholera-plot'],
-  },
-
-  // ══════════════════════════════════════════════════════════════
-  {
-    slug: 'dholera-sir-progress-2026',
-    category: 'Infrastructure',
-    keyword: 'Dholera SIR progress',
-    date: '2026-08-28',
-    updated: '2026-09-02',
-    readMinutes: 9,
-    tone: 'gold',
-    image: '/blog/dholera-sir-progress-2026.webp',
-    imageAlt: 'Architectural horizontal timeline axis with progressive milestone pillars and node markers in gold and navy',
-    title: 'Dholera SIR Progress in 2026: On-Ground Milestones & Real Timelines',
-    h1: 'Dholera SIR progress in 2026: what is built, what is under construction, and the realistic timeline',
-    seoTitle: 'Dholera SIR Progress 2026 | On-Ground Milestones & Infrastructure Status',
-    excerpt:
-      'From the ABCD building and 22.5 sq km Activation Zone to the Tata semiconductor fab, expressway and airport, here is the verified on-ground progress of Dholera SIR in 2026.',
-    intro:
-      'Separating real on-ground engineering from marketing hype is the first duty of any Dholera land investor. In 2026, the Dholera Special Investment Region (SIR) has moved decisively past the master-planning stage: trunk infrastructure across the 22.5 sq km Activation Zone (TP2A) is energised and operational, administrative functions operate from the landmark ABCD building, construction on the ₹91,000-crore Tata-PSMC semiconductor fabrication facility is actively advancing, and both the Ahmedabad–Dholera Expressway and international airport are in advanced execution. This guide presents an unvarnished, milestone-by-milestone audit of what is completed, what is under active construction, and what timelines a prudent buyer should factor into their holding horizon.',
-    sections: [
-      {
-        h2: 'The 22.5 sq km Activation Zone: what is operational today',
-        p: [
-          'The Dholera Special Investment Region spans an immense 920 sq km, but development is intentionally phased. The primary focus of Phase 1 trunk infrastructure is the 22.5 sq km Activation Zone, located inside Town Planning Scheme 2 (TP2A).',
-          'Unlike speculative greenfield projects where land is demarcated on paper before services arrive, the Activation Zone followed an infrastructure-first mandate. Key facilities completed and operational on site include:',
-        ],
-        list: {
-          items: [
-            '**The ABCD Building (Administrative and Business Centre for Dholera):** A multi-storey smart administrative hub housing the Dholera Industrial City Development Limited (DICDL) offices, regional development authorities, and the Central Command and Control Centre (CCCC) managing municipal telemetry.',
-            '**72 kilometres of internal road network:** Multi-tier asphalt roads featuring dedicated cycle tracks, pedestrian footpaths, utility corridors, and LED smart street lighting.',
-            '**Underground utility ducting:** Power cables, telecom optic-fibre lines, potable water pipes, recycled industrial water lines, and effluent discharge pipelines are housed entirely inside subterranean utility conduits, eliminating future surface excavation.',
-            '**50 MLD Water Treatment Plant & 10 MLD Sewage Treatment Plant:** Supplying industrial and potable grade water sourced from the Narmada canal network, paired with automated recycling systems where treated wastewater is re-routed for landscaping and industrial cooling.',
-            '**400/220 kV sub-station:** Energised by GETCO (Gujarat Energy Transmission Corporation), feeding dedicated power directly into the internal distribution network with automated SCADA switching.',
-          ],
-        },
-      },
-      {
-        h2: 'The connectivity triad: Expressway, Airport, and Transit Corridor',
-        p: [
-          'Three macro connectivity projects link Dholera to Gujarat’s broader economic corridor. Their delivery timelines decide when Dholera shifts from a regional construction site to an active satellite industrial hub.',
-        ],
-        table: {
-          head: ['Corridor', 'Project scope', 'On-ground status (2026)', 'Operational window'],
-          rows: [
-            ['Ahmedabad–Dholera Expressway (NH-751)', '109 km 4-lane access-controlled greenfield expressway', 'Flyovers, culverts, and asphalt paving across all 4 civil packages near completion', 'Late 2026 / Early 2027 opening'],
-            ['Dholera International Airport (Navagam)', 'Phase 1 3,200 m runway, passenger terminal, air cargo complex, and MRO facility', 'Runway grading, earthwork and terminal foundation civil works under active execution', '2026–2027 commercial cargo and initial passenger operations'],
-            ['Ahmedabad–Dholera Semi High-Speed Rail (MRTS)', 'Dedicated suburban metro / rail link running parallel to NH-751 alignment', 'Route alignment surveyed and right-of-way reserved under DMIC master plan', 'Phased post-2027 implementation following road activation'],
-          ],
-        },
-      },
-      {
-        h2: 'The industrial anchor: Tata semiconductor fabrication facility',
-        p: [
-          'The decisive structural catalyst for Dholera SIR is the ₹91,000-crore semiconductor fabrication facility established by Tata Electronics in technical partnership with Taiwan’s Powerchip Semiconductor Manufacturing Corporation (PSMC).',
-          'Approved under the India Semiconductor Mission (ISM) with combined central and state capital support, the mega-fab is sited in Dholera’s high-tech manufacturing zone. The facility is designed to deliver up to 50,000 wafer starts per month across 28nm, 40nm, 55nm, and 90nm nodes, catering to automotive, computing, communications, and power management electronics.',
-          'For real estate investors, the significance of a fab lies in the ecosystem density it commands. A semiconductor cleanroom cannot operate in isolation: it requires an immediate perimeter of chemical suppliers, ultra-pure specialty gas producers, testing and packaging facilities, precision equipment maintenance specialists, and specialized logistics operators. This cluster effect creates sticky, high-earning engineering employment that drives real residential rental and housing demand over the coming decade.',
-        ],
-        callout: {
-          tone: 'tip',
-          title: 'Ecosystem effect vs. isolated factories',
-          text: 'A conventional assembly warehouse creates low-density transitory labor. A commercial semiconductor fab anchors a high-wage supplier supply chain spanning hundreds of companies. That dynamic underpins enduring civic expansion.',
-        },
-      },
-      {
-        h2: 'Town Planning (TP) breakdown: Where individual plots sit',
-        p: [
-          'Dholera SIR is divided into 6 Town Planning Schemes. Knowing which scheme your prospective land falls within is critical to evaluating its development horizon:',
-        ],
-        list: {
-          items: [
-            '**TP1 (153 sq km) and TP2 (102 sq km):** Form Phase 1 of Dholera SIR. These schemes receive the highest government allocation, immediate trunk road connectivity, and priority zoning. Residential townships launched by private developers around TP1 and TP2 are closest to operational infrastructure.',
-            '**TP2A (Activation Zone - 22.5 sq km):** The core industrial seed within TP2 where government-built infrastructure is already live and operational.',
-            '**TP3, TP4, TP5, and TP6:** Form Phase 2 and Phase 3 of the master plan, covering future logistics, maritime, and solar park expansions over the 2030s.',
-          ],
-        },
-        callout: {
-          tone: 'warn',
-          title: 'Check the TP scheme and land zoning',
-          text: 'Land advertised vaguely as "in Dholera" may sit 25 kilometres away in Phase 3 zones with no road network scheduled this decade. Always verify whether a plot lies within or adjacent to Phase 1 (TP1/TP2) and holds valid NA conversion.',
-        },
-      },
-      {
-        h2: 'The realistic investor horizon: What to expect between 2026 and 2032',
-        p: [
-          'A greenfield smart city does not sprout overnight, and anyone promising immediate rental yields or explosive two-year flipping gains is doing you a disservice. A rational holding thesis follows four progressive stages:',
-        ],
-        list: {
-          ordered: true,
-          items: [
-            '**2026–2027 (Infrastructure Convergence):** Commissioning of the Ahmedabad–Dholera Expressway and initial runway testing at Dholera International Airport. Travel time from Ahmedabad drops to ~60 minutes, enabling effortless site visits and corporate transit.',
-            '**2027–2029 (Industrial Commissioning):** First tool-in and trial wafer runs at the Tata fab, concurrent with construction of vendor facilities and ancillary engineering plants.',
-            '**2029–2032 (Workforce Inhabitation):** Transition from construction labor to permanent technical operations workforce. Onset of genuine residential end-use, retail services, and commercial leasing.',
-            '**Post-2032 (Mature Urban Density):** Expansion of Phase 2 zones and secondary economic activities across the wider SIR region.',
-          ],
-        },
-      },
-      {
-        h2: 'The investment verdict: Aligning capital with execution reality',
-        p: [
-          'If your financial horizon matches this timeline (5 to 8+ years) and your purchase is legally secured with an NA-converted, plan-passed layout and clear registered title, Dholera offers one of India\'s most compelling infrastructure-backed land value growth profiles.',
-          'The discipline that separates successful land investors from disappointed speculators is simple: do not buy promises of future zoning, do not deploy emergency funds into illiquid assets, and verify that the layout roads and approvals physically exist before parting with capital.',
-        ],
-      },
-    ],
-    faqs: [
-      {
-        q: 'What infrastructure is already operational in Dholera SIR in 2026?',
-        a: 'The 22.5 sq km Activation Zone (TP2A) is operational with 72 km of multi-lane internal roads, underground utility ducting, 400 kV power sub-station, 50 MLD water treatment plant, 10 MLD sewage treatment plant, and the ABCD building hosting the smart city command center.',
-      },
-      {
-        q: 'When will the Ahmedabad–Dholera Expressway open for traffic?',
-        a: 'The 109 km 4-lane expressway (NH-751) is in the final stages of civil paving and bridge construction across its four packages, with commercial traffic opening targeted for late 2026 / early 2027.',
-      },
-      {
-        q: 'What is the current construction status of the Tata semiconductor fab?',
-        a: 'Land handover and foundational ground preparation in Dholera SIR have been executed, with structural engineering and cleanroom design work actively underway following central cabinet and ISM approvals.',
-      },
-      {
-        q: 'Which Town Planning (TP) scheme should residential plot buyers target?',
-        a: 'Investors should focus on approved residential layouts within or immediately bordering Phase 1 schemes — specifically Town Planning 1 (TP1) and Town Planning 2 (TP2) — because trunk infrastructure, expressway links, and industrial hubs are concentrated there.',
-      },
-    ],
-    related: ['dholera-plot-price-2026', 'ahmedabad-dholera-expressway', 'tata-semiconductor-plant-dholera'],
   },
 ];
 

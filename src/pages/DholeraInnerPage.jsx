@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
-import { ChevronRight, Plus, Minus, ArrowRight, ShieldCheck, BadgeCheck, MapPin } from 'lucide-react';
+import { ChevronRight, Plus, Minus, ArrowRight, ShieldCheck, BadgeCheck, MapPin, ExternalLink, Compass, Eye } from 'lucide-react';
 import Seo from '../components/Seo';
 import LeadForm from '../components/LeadForm';
 import BlogArt from '../components/BlogArt';
 import ArticleBody from '../components/ArticleBody';
+import VirtualTourViewer from '../components/VirtualTourViewer';
 import { dholeraPages, dholeraPageBySlug } from '../data/dholera';
 import { absoluteUrl, SITE_URL, SITE_NAME } from '../lib/seo';
 import { site } from '../data/site';
@@ -100,6 +101,87 @@ export default function DholeraInnerPage() {
               {page.intro}
             </p>
 
+            {slug === 'virtual-tour' && (
+              <div className="mb-14">
+                <VirtualTourViewer className="mb-8" />
+
+                <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm p-6 sm:p-8">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-4 mb-6">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9C7C1C]">
+                        Statutory Sourcing &amp; Attribution
+                      </p>
+                      <p className="text-sm font-medium text-[#10243E]">
+                        Government of Gujarat · DICDL (Dholera Industrial City Development Ltd.)
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">
+                      <Eye size={13} /> Verified Official Resource
+                    </span>
+                  </div>
+
+                  <p className="text-gray-600 text-[15px] leading-relaxed mb-6">
+                    The official Dholera SIR virtual tour provides high-resolution, interactive 360° panoramic viewpoints across Town Planning Schemes 2A and 4A. Explore the activation area landmarks directly in the interactive viewer above or open in full-screen mode with device motion / VR support.
+                  </p>
+
+                  <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 mb-6">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#10243E] mb-3">
+                      Key Panoramas to Inspect Inside the Tour:
+                    </p>
+                    <ul className="grid sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        ABCD Building &amp; CIOC Command Room
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        72 km Internal Roads &amp; Cycle Tracks
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        50 MLD Water Treatment Plant (WTP)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        20 MLD Common Effluent Treatment Plant
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        Torrent Power 400/220 kV Substation
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                        6.5 km Bunded Canal Front Corridor
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <a
+                      href="/dholera-tour/index.htm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] px-6 py-3.5 rounded-sm font-semibold transition-colors shadow-sm text-sm"
+                    >
+                      Open Dedicated Fullscreen Window <ExternalLink size={16} />
+                    </a>
+                    <a
+                      href="https://dholera.gujarat.gov.in/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 border border-gray-300 hover:border-gray-500 text-[#10243E] px-5 py-3.5 rounded-sm font-medium transition-colors text-sm"
+                    >
+                      dholera.gujarat.gov.in <ExternalLink size={15} />
+                    </a>
+                  </div>
+
+                  <p className="mt-4 text-xs text-gray-500 leading-relaxed">
+                    <strong>Notice:</strong> Panoramic photography, WebGL visual assets, and master plan maps are the statutory intellectual property of DICDL and the Government of Gujarat. Capital Brix references this public utility to help buyers verify trunk infrastructure before committing capital.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <ArticleBody sections={page.sections} />
 
             <div className="my-14 rounded-2xl bg-[#10243E] text-white p-8 lg:p-10">
@@ -155,8 +237,8 @@ export default function DholeraInnerPage() {
               <ul className="space-y-3 text-sm text-gray-600">
                 {[
                   [ShieldCheck, 'NA-approved, NOC-cleared, title-clear and plan-passed plots only'],
-                  [BadgeCheck, 'Official Strategy Partner of Mirrikh Infratech — 8+ delivered projects since 2012'],
-                  [MapPin, 'Direct developer pricing from ₹7,250 / sq yd — no intermediary margin'],
+                  [BadgeCheck, 'Authorised sales channel partner for Mirrikh Infratech — a developer with 8+ projects delivered since 2012'],
+                  [MapPin, 'NA-approved, title-clear plots from ₹7,250 / sq yd, registered in your name'],
                 ].map(([Icon, text]) => (
                   <li key={text} className="flex gap-3">
                     <Icon size={16} className="text-[#D4AF37] shrink-0 mt-0.5" />

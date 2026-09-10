@@ -86,9 +86,9 @@ export const dholeraPages = [
       { q: 'What does Dholera SIR stand for?', a: 'Special Investment Region — a designation under Gujarat state law that gives a defined area its own development authority, statutory master plan and mandate to attract industrial investment.' },
       { q: 'How big is Dholera SIR?', a: 'Approximately 920 sq km, which makes it larger in planned area than most existing Indian cities.' },
       { q: 'Is Dholera a government project or a private one?', a: 'The region, its master plan and its trunk infrastructure are government-led, under the Government of Gujarat and the Delhi–Mumbai Industrial Corridor. Individual townships within it are built by private developers working inside that framework.' },
-      { q: 'How far is Dholera from Ahmedabad?', a: 'Roughly 100 km south-west. The 109 km Ahmedabad–Dholera Expressway brings the drive to about an hour.' },
+      { q: 'How far is Dholera from Ahmedabad?', a: 'Roughly 100 km south-west. The 109 km Ahmedabad–Dholera Expressway brings the drive to about 45 minutes, against close to two hours before it opened.' },
     ],
-    related: ['overview', 'city-highlights', 'renew-power'],
+    related: ['overview', 'city-highlights', 'renew-power', 'virtual-tour'],
   },
 
   // ══════════════════════════════════════════════════════════════
@@ -165,7 +165,7 @@ export const dholeraPages = [
       { q: 'Does being inside Dholera SIR mean a plot is approved for building?', a: 'No. The region’s designation says nothing about a specific plot. NA conversion, NOC and plan approval belong to the survey number and must be checked separately.' },
       { q: 'How long will Dholera take to complete?', a: 'It is a multi-decade, phased programme, and published timelines for individual components have moved before. Plan your purchase so that a delay of a few years is an inconvenience rather than a problem.' },
     ],
-    related: ['about', 'city-highlights', 'renew-power'],
+    related: ['about', 'city-highlights', 'renew-power', 'virtual-tour'],
   },
 
   // ══════════════════════════════════════════════════════════════
@@ -225,7 +225,7 @@ export const dholeraPages = [
         h2: 'Why this matters more than the amenity list',
         p: [
           'Amenity lists are easy to write and hard to verify. Infrastructure is the opposite: you can stand on the plot and see whether the road exists.',
-          'For a buyer, the practical test is simple — visit. Dholera is roughly an hour from Ahmedabad on the expressway, so a site visit fits inside a morning. What you see on that visit is worth more than any specification sheet, and any seller reluctant to arrange one has told you something.',
+          'For a buyer, the practical test is simple — visit. Dholera is about 45 minutes from Ahmedabad on the expressway, so a site visit fits inside a morning. What you see on that visit is worth more than any specification sheet, and any seller reluctant to arrange one has told you something.',
         ],
       },
     ],
@@ -233,9 +233,9 @@ export const dholeraPages = [
       { q: 'Is Dholera’s infrastructure actually built or just planned?', a: 'Both, depending on where you stand. Trunk infrastructure is delivered in phases, starting with the activation area. The correct question is never "is Dholera built" but "what is built at this specific plot today" — which a site visit answers.' },
       { q: 'What makes Dholera a “smart” city?', a: 'Chiefly that utilities, road hierarchy and a data backbone were designed together before occupancy, with city systems intended to be monitored centrally — rather than services being retrofitted into a place people already live.' },
       { q: 'Does a plot come with a water and power connection?', a: 'Availability depends on the township and the phase. Ask specifically whether a connection exists at the plot boundary today or whether there is a committed date, and get the answer in writing.' },
-      { q: 'Can I visit and see the infrastructure myself?', a: 'Yes, and you should. Capital Brix arranges free site visits; the drive from Ahmedabad is about an hour on the expressway.' },
+      { q: 'Can I visit and see the infrastructure myself?', a: 'Yes, and you should. Capital Brix arranges free site visits; the drive from Ahmedabad is about 45 minutes on the expressway.' },
     ],
-    related: ['about', 'overview', 'renew-power'],
+    related: ['about', 'overview', 'renew-power', 'virtual-tour'],
   },
 
   // ══════════════════════════════════════════════════════════════
@@ -295,7 +295,144 @@ export const dholeraPages = [
       { q: 'Why does a semiconductor plant need so much power?', a: 'Fabrication runs continuously and cannot tolerate interruption — a momentary outage during a process step can ruin work in progress. That makes large, reliable and nearby supply a siting requirement rather than a preference.' },
       { q: 'Is Dholera’s development environmentally planned?', a: 'The master plan allocates green and recreational land, treats waste water rather than discharging it, and builds storm water drainage into the layout — which matters in a low-lying coastal region where retrofitting drainage later is close to impossible.' },
     ],
-    related: ['about', 'overview', 'city-highlights'],
+    related: ['about', 'overview', 'city-highlights', 'virtual-tour'],
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  {
+    slug: 'virtual-tour',
+    tone: 'amber',
+    keyword: 'Dholera virtual tour 360',
+    title: 'Official Dholera Virtual Tour: 360° Ground Reality & Sourcing',
+    seoTitle: 'Dholera Virtual Tour 360°: Official Ground Reality & Guide',
+    h1: 'Dholera SIR 360° virtual tour: explore what is built on the ground',
+    excerpt:
+      'Explore the official Government of Gujarat 360° virtual tour of Dholera SIR. Verify the ABCD Building, 72 km road network, water treatment plants, and activation area infrastructure before you visit.',
+    intro:
+      'The Government of Gujarat and DICDL maintain an official 360-degree interactive virtual tour documenting trunk infrastructure across the Dholera Activation Area. For any plot buyer or industrial investor, this official resource provides verifiable ground evidence before booking a site visit: the completed arterial roads, underground utility ducts, the Administrative and Business Centre for Dholera (ABCD Building), water treatment facilities, and power substations. Here is what the official tour shows, how to interpret its panoramic nodes, and how to verify on-site reality against master plan commitments.',
+    sections: [
+      {
+        h2: 'What the official 360° virtual tour captures',
+        p: [
+          'The official virtual tour—published by [Dholera Industrial City Development Limited (DICDL)](https://dholera.gujarat.gov.in/)—is an immersive 360-degree panoramic walkthrough covering key nodes of the 22.54 sq km Activation Area.',
+          'Unlike artist impressions or marketing animations, the government tour captures photographic panoramas of physical trunk infrastructure executed on the ground. Key locations mapped inside the tour include:',
+        ],
+        list: {
+          items: [
+            '**The ABCD Building & CIOC.** The Administrative and Business Centre for Dholera, housing the City Integrated Operations Centre, administrative wings of DSIRDA, and visitor experience zones.',
+            '**Multi-lane arterial and sub-arterial roads.** Panoramic views along the completed 72 km road network (widths from 18m to 70m) featuring cycle tracks, pedestrian footpaths, and street lighting.',
+            '**Underground utility corridors.** Concrete multi-service ducts beneath the road berms carrying potable water, recycled water, power cables, telecom ducts, and effluent lines.',
+            '**Trunk utility plants.** Aerial and ground viewpoints of the 50 MLD Water Treatment Plant (WTP), the 20 MLD Common Effluent Treatment Plant (CETP), and the 10 MLD Sewage Treatment Plant (STP).',
+            '**The 6.5 km Canal Front.** Visual evidence of the engineered bunds and stormwater canal running through the Activation Area for flood protection and recreational frontage.',
+          ],
+        },
+      },
+      {
+        h2: 'Official Activation Area metrics: what is built',
+        p: [
+          'The figures below represent trunk infrastructure officially commissioned by DICDL inside Town Planning Schemes 2A and 4A (the 22.54 sq km Activation Area), sourced directly from statutory project records on dholera.gujarat.gov.in:',
+        ],
+        table: {
+          head: ['Trunk Infrastructure Component', 'Official Commissioned Capacity / Scope', 'Statutory / Master Plan Context'],
+          rows: [
+            ['Activation Area size', '22.54 sq km', 'Prioritised zone within TP 2A and TP 4A'],
+            ['Total DSIR Area', '≈ 920 sq km (92,000 hectares)', 'Encompasses 22 villages in Ahmedabad district'],
+            ['Town Planning (TP) Schemes', '6 Schemes / 27 Sub-Schemes', '422 sq km total developable area sanctioned'],
+            ['Internal Road Network', '72 km operational roads', '18m to 70m Right of Way (ROW) with utility ducts'],
+            ['Water Treatment Plant (WTP)', '50 MLD initial capacity', 'Scalable up to 150 MLD master plan capacity'],
+            ['Common Effluent Treatment (CETP)', '20 MLD initial capacity', 'Scalable up to 60 MLD for industrial discharge'],
+            ['Sewage Treatment Plant (STP)', '10 MLD initial capacity', 'Scalable up to 30 MLD with tertiary re-use'],
+            ['Power Distribution & Substation', '400/220 kV Gas-Insulated Substation', '500 MVA capacity by Torrent Power (scalable to 1500 MVA)'],
+            ['Stormwater Canal Front', '6.5 km bunded canal', 'Flood defence and recreational water corridor'],
+            ['Administrative Headquarters', 'ABCD Building (LEED Gold rated)', 'Houses CIOC unified command & control centre'],
+          ],
+        },
+        callout: {
+          tone: 'tip',
+          title: 'Frame-ancestors restriction note',
+          text: 'The Government of Gujarat serves its virtual tour with strict Content-Security-Policy headers restricting embedding outside official government portals. We provide direct outbound launch access so you can explore the full high-resolution krpano viewer with complete controls.',
+        },
+      },
+      {
+        h2: 'Who governs what: DSIRDA vs DICDL vs GIDB',
+        p: [
+          'A recurring point of confusion for investors is distinguishing who plans Dholera from who builds it. The official statutory framework separates regulatory authority from corporate execution:',
+        ],
+        list: {
+          items: [
+            '**Gujarat Infrastructure Development Board (GIDB):** The apex statutory planning board for the state, chaired by the Hon’ble Chief Minister of Gujarat. GIDB oversees state-level infrastructure policy and concession agreements.',
+            '**Dholera Special Investment Region Development Authority (DSIRDA):** The statutory regional authority constituted under the Gujarat Special Investment Region Act, 2009. DSIRDA exercises town planning powers, prepares and sanctions the Master Plan and Town Planning (TP) schemes, handles land pooling, and enforces building regulations.',
+            '**Dholera Industrial City Development Limited (DICDL):** The Special Purpose Vehicle (SPV) formed to execute, operate, and manage trunk infrastructure and land allotments. DICDL is a joint venture owned 51% by the Government of Gujarat (via DSIRDA) and 49% by the Government of India (via NICDIT under the National Industrial Corridor Development Programme).',
+          ],
+        },
+      },
+      {
+        h2: 'Official land allotment pricing & procedures',
+        p: [
+          'Land in Dholera SIR is allotted by DICDL on a 99-year leasehold basis through an online application and single-window clearance portal. Base rates published by DICDL reflect statutory valuations across designated land-use categories.',
+          'The official rates are published per square metre. Retail plots — including ours — are quoted per square yard, and the two are not comparable until one is converted into the other. Both are shown below so the comparison can be made honestly rather than by unit confusion (1 sq m ≈ 1.196 sq yd).',
+        ],
+        table: {
+          head: ['Land-Use Category', 'Official Base Rate (₹ / sq m)', 'Same rate (₹ / sq yd)', 'Leasehold Terms'],
+          rows: [
+            ['Industrial & Utilities', '₹4,000 / sq m', '≈ ₹3,345 / sq yd', '99-year leasehold via DICDL single-window portal'],
+            ['Residential', '₹6,000 / sq m', '≈ ₹5,015 / sq yd', 'Designated residential zones in TP 1 & TP 2'],
+            ['High Access Corridor (HAC)', '₹6,000 / sq m', '≈ ₹5,015 / sq yd', 'Mixed-use frontage along major transit corridors'],
+            ['City Centre / Commercial (CBD)', '₹8,000 / sq m', '≈ ₹6,690 / sq yd', 'Central business district core parcels'],
+            ['Knowledge & IT', '₹4,000 / sq m', '≈ ₹3,345 / sq yd', 'Institutional, universities, and research facilities'],
+            ['Tourism & Hospitality', '₹8,000 / sq m', '≈ ₹6,690 / sq yd', 'Hotel, resort, and commercial hospitality parcels'],
+            ['Solar Park', '₹400 / sq m', '≈ ₹335 / sq yd', '5,000 MW Ultra Mega Solar Power Park zone'],
+          ],
+        },
+        callout: {
+          tone: 'warn',
+          title: 'Why our plots cost more than the official base rate — and what the difference buys',
+          text: 'The residential base rate above works out to roughly ₹5,015 per sq yd. Plots on this site start at ₹7,250 per sq yd. That gap is real, and it is worth understanding rather than glossing over: the two numbers describe two different things. A DICDL base rate is the statutory floor price for a 99-year **leasehold** allotment of a parcel in a designated zone, applied for through the government single-window portal. What is sold here is a **freehold** plot — land already converted to Non-Agricultural use, inside a plan-passed layout with roads and demarcation in place, transferred to you by registered sale deed. One is a lease you apply for; the other is title you own. Before you compare the two figures, get it in writing which of the two your agreement actually is.',
+        },
+      },
+      {
+        h2: 'How to use the 360° tour alongside a site visit',
+        p: [
+          'A virtual tour is a powerful verification tool, but it should precede your physical inspection rather than replace it. Here is the recommended sequence for buyers:',
+        ],
+        list: {
+          ordered: true,
+          items: [
+            '**Launch the official tour to inspect trunk infrastructure.** Verify the quality of roads, streetlights, drainage gullies, and the ABCD building in the Activation Area.',
+            '**Compare the tour panoramas against the statutory Master Plan.** Check where your target TP scheme and village boundary sit relative to the completed 72 km road grid.',
+            '**Cross-reference developer plot coordinates.** Confirm that private township projects have clear motorable connectivity back to the arterial expressway corridors.',
+            '**Inspect on-site in person.** Travel from Ahmedabad via the expressway route to physically walk the boundary markers, inspect internal township roads, and verify the NA conversion order and plan approval documents.',
+          ],
+        },
+      },
+    ],
+    faqs: [
+      {
+        q: 'Where can I access the official Dholera 360° virtual tour?',
+        a: 'The official 360-degree virtual tour is hosted by the Government of Gujarat and DICDL at dholera.gujarat.gov.in. It provides interactive panoramic views across the Activation Area, ABCD Building, and arterial roads.',
+      },
+      {
+        q: 'Can the official Dholera virtual tour be embedded on external websites?',
+        a: 'No. The official portal enforces Content-Security-Policy (CSP) with frame-ancestors restrictions that disallow framing on external third-party domains. Visitors can launch and explore it directly in a dedicated tab via official government links.',
+      },
+      {
+        q: 'What is the Dholera Activation Area?',
+        a: 'The Activation Area is a 22.54 sq km zone within Town Planning Schemes 2A and 4A where DICDL has fully completed trunk infrastructure, including 72 km of roads, underground utility ducts, water treatment plants, and power substations.',
+      },
+      {
+        q: 'What is the ABCD Building in Dholera?',
+        a: 'The Administrative and Business Centre for Dholera (ABCD) is a LEED Gold certified building housing the City Integrated Operations Centre (CIOC), administrative offices of DSIRDA and DICDL, and investor exhibition galleries.',
+      },
+      {
+        q: 'What is the difference between DSIRDA and DICDL?',
+        a: 'DSIRDA is the statutory planning and regulatory authority established under Gujarat law that creates the master plan. DICDL is the Special Purpose Vehicle (owned 51% by the state and 49% by the central government) that builds trunk infrastructure and manages land allotments.',
+      },
+      {
+        q: 'Does seeing infrastructure in the virtual tour mean my plot is ready?',
+        a: 'Trunk infrastructure shown in the tour is delivered to the edge of the zone by DICDL. The internal roads, boundary walls, demarcation, and NA-approvals for a specific residential plot belong to the developer’s layout and must be verified independently on site.',
+      },
+    ],
+    related: ['about', 'overview', 'city-highlights', 'renew-power'],
   },
 ];
 

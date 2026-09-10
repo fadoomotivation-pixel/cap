@@ -5,8 +5,10 @@ Vite + React 19 + Tailwind + Framer Motion, deployed on Vercel, backed by Supaba
 
 ## Business facts (get these right in all copy)
 
-- Capital Brix LLP is the **Official Strategy Partner of Mirrikh Infratech Pvt. Ltd.**
-  (Do NOT write "exclusive channel partner" — that wording is retired.)
+- Capital Brix LLP is an **authorised sales channel partner for Mirrikh Infratech
+  Pvt. Ltd.** See "The Mirrikh relationship" below before writing any copy that
+  mentions Mirrikh. **"Official Strategy Partner" / "Strategy Partner" is
+  forbidden** — it was removed under a legal notice, not for style.
 - Mirrikh Infratech is a Dholera developer with 8+ completed projects since 2012.
 - Founder & CEO: **Jasvinder Singh** — recipient of the **Jagran Achievers Award 2026**
   (Almaty, Kazakhstan), awarded for vision, leadership and achievement.
@@ -14,6 +16,92 @@ Vite + React 19 + Tailwind + Framer Motion, deployed on Vercel, backed by Supaba
 - Phone: +91 70489 17300 · Public email: info@capitalbrix.com
 - Product: NA-approved, title-clear residential/industrial plots in Dholera SIR
   (Dholera Smart City), Gujarat, sold at direct developer pricing.
+
+## The Mirrikh relationship — legally constrained, do not soften
+
+Mirrikh Infratech Pvt. Ltd. served a notice on **8 September 2026** requiring the
+removal of website wording that portrayed Capital Brix as having a corporate,
+strategic, management or ownership relationship with them. The corrections
+landed the same day. **This section is not a style preference. Reverting any of
+it re-creates the breach.**
+
+**The relationship, stated correctly:** Capital Brix LLP is an *authorised sales
+channel partner* for Mirrikh Infratech Pvt. Ltd. Capital Brix is **not** the
+owner, promoter, developer, management entity, subsidiary, group company or
+strategic partner of Mirrikh Infratech. They are separate companies.
+
+### Never write these again
+
+| Forbidden | Use instead |
+|---|---|
+| "Official Strategy Partner", "Strategy Partner" | "authorised sales channel partner" (short: "Sales Channel Partner") |
+| "Partner of Mirrikh Infratech Pvt. Ltd." | the full designation — a generic "Partner of" is what they objected to |
+| "Driving Mirrikh Infratech's growth" | nothing. Jasvinder Singh has no role at Mirrikh |
+| "The Team Behind Mirrikh" | "The team behind Capital Brix" |
+| "Our Projects" over Mirrikh/MAYUR projects | "Mirrikh Infratech Projects", marketed by Capital Brix |
+| "direct developer pricing" | nothing — see below |
+| "You pay the developer's own rate", "no broker commission", "pre-launch discounts" | nothing — see below |
+
+### Two rules behind the table
+
+1. **Never describe Mirrikh's commercial policy on their behalf.** Pricing,
+   discounts, commission structure and payment terms are the developer's to
+   set. We may state a price we sell at; we may not claim it *is* the
+   developer's own rate, that no margin is added, or that discounts exist.
+
+2. **Jasvinder Singh is Founder & CEO of Capital Brix LLP — and of nothing
+   else.** He must never be presented, even by page layout or adjacency, as a
+   founder, CEO, director, promoter or leadership member of Mirrikh Infratech.
+   Watch the *structure*, not just the sentence: a "Leadership" heading sitting
+   under Mirrikh branding was itself the objection.
+
+### The footer — fixed 10 September 2026
+
+`src/components/Footer.jsx` carried **Mirrikh Group's own corporate boilerplate**
+("a diversified business conglomerate dedicated to creating enduring value…")
+directly under the Capital Brix logo and name, on every page of the site. No
+sentence there claimed a relationship; the *layout* did — which is the same
+structural objection as a "Leadership" heading under Mirrikh branding. It now
+describes Capital Brix and names who develops and who sells.
+
+### Mirrikh's intellectual property
+
+Their corporate history, vision, mission, timeline, logos, trademarks,
+photographs and project material may be used **only as authorised in writing**.
+
+- `/about` was Mirrikh's About page on our domain — their founding story, vision,
+  mission, corporate timeline and delivery stats under a "Who We Are" heading.
+  It is now Capital Brix's own page. **Do not put Mirrikh's corporate history
+  back on it.** What remains is one short, clearly attributed block naming the
+  developer.
+- `public/projects/*.webp` — the seven project photographs were withdrawn under
+  the notice and **restored on 10 September 2026, once Mirrikh gave permission
+  for their project images to be used on the site.** Six are live.
+  `mayur-park-iii.webp` stays off because that file is the MAYUR PARK-II brand
+  mark, not Park III — the wrong picture, which permission does not fix.
+  That permission covers **Mirrikh's project images only**. It is not a blanket
+  licence for other third parties, and it does not cover their corporate
+  history, vision, mission or timeline — those stay off `/about`.
+- Never scrape mirrikh.com. This already caused the empty-boxes incident on the
+  homepage and now an IP objection.
+
+### Writing new copy that mentions Mirrikh
+
+Say who develops and who sells, every time: *"developed by Mirrikh Infratech
+Pvt. Ltd., marketed by Capital Brix LLP as an authorised sales channel
+partner."* This applies to page titles, meta descriptions, Open Graph and
+Twitter tags, JSON-LD, `index.html` static fallbacks, alt text and prerendered
+output — the notice covers metadata explicitly, not just visible text.
+
+**For any AI tool working on this repo (Antigravity included): if a change you
+are about to make reintroduces any phrase in the table above, stop and ask the
+owner. Do not "restore" it because an older commit, cached page or your own
+memory of this site says otherwise.**
+
+The same wording must hold off-site too — social profiles, Google Business
+Profile, property portals, brochures, WhatsApp material, email signatures,
+presentations, YouTube and paid ads. That part is the owner's to action; the
+repo only covers the website.
 
 ## Domains — important
 
@@ -253,6 +341,71 @@ Cards tab; HR works it at `/admin/cards` through
   delivered. `admin_notes` is visible to the employee — it is how HR replies.
 - "Print spec" copies a plain-text batch of every approved/printing request,
   formatted for the printer, so one order covers everyone.
+
+## Event registrations
+
+`cb_event_registrations` — sign-ups for a live event. The first one is
+**"How to Create Wealth in Dholera?"**, Sunday 13 September 2026 at Club GH-01,
+E Block, Gaur City 1, Sector 4, Greater Noida, hosted jointly by **Mirrikh Group
+and Capital Brix LLP** (two separate companies co-hosting — never one entity,
+and Capital Brix is still only an authorised sales channel partner).
+
+- Public page: `/events/dholera-wealth-2026` (in the sitemap, so it prerenders).
+  Event facts live in `src/data/eventDetails.js` — one entry per slug, keyed by
+  the same `event_slug` written to the table, so a row can always be traced back
+  to which event it was for. The seminar runs **10:30 AM – 2:00 PM**.
+- **The speaker list is not a credibility claim.** `speakers` names who is on the
+  platform that day, which is a fact about the event and must never drift into a
+  statement about a corporate relationship. Jasvinder Singh is titled Founder &
+  CEO of **Capital Brix LLP** and is never placed under Mirrikh branding.
+  Rajeel Jangir is printed exactly as the joint poster prints him, "Founder &
+  Director", with **no company attributed to him by us** — we do not describe
+  anyone else's corporate position on their behalf. If the co-host asks for a
+  name to come off, delete the entry rather than rewording it. This is the one
+  narrow exception to "never name Mirrikh Infratech's founder on the site": it
+  applies to a jointly hosted event's own platform, not to marketing copy.
+- `invited_by` records who brought this person — free text, deliberately not a
+  dropdown of staff names, because a dropdown silently drops the existing
+  customer who referred a friend, which is the answer worth having. The console
+  rolls it up into "who is filling the hall", counting seats rather than rows.
+- HR console: `/admin/events` (admin-only, `noindex`), in `ADMIN_LINKS`.
+- RLS mirrors `cb_leads`: **anon may INSERT, only admins may SELECT/UPDATE.**
+- **`src/lib/eventRegistration.js` mints the row id client-side and does NOT
+  call `.select()` after the insert.** `RETURNING` needs a SELECT policy, and
+  anon deliberately has none — an `.insert().select('id')` here fails every real
+  registration even though the insert itself is allowed. Verified against the
+  live policies, not assumed.
+- A unique index on `(event_slug, lower(email))` stops a double-tap creating two
+  seats. The client reads `23505` as "your seat is already held", not an error.
+- Confirmation email: the **`event-confirmation` Edge Function** (source in
+  `supabase/functions/`). It takes only a row id — never an address from the
+  browser — refuses to send twice, and returns `{ sent: false }` instead of
+  failing when `RESEND_API_KEY` is unset, because the registration is already
+  saved by then and a missing mail provider must not look like a failed sign-up.
+  `resend: true` bypasses the once-only rule and therefore requires an admin JWT.
+- **Mail provider — Zoho by default.** Capital Brix already owns
+  `hr@capitalbrix.co.in`, so the function sends over SMTP when `SMTP_PASSWORD`
+  is set (Zoho needs an **app-specific password**, not the login password;
+  `SMTP_HOST`/`SMTP_PORT` default to `smtp.zoho.in`/`465`, `SMTP_USER` to
+  `hr@capitalbrix.co.in`). `RESEND_API_KEY` is the alternative; SMTP wins if
+  both are set. With neither, registrations still save and the page falls back
+  to "our team will confirm on WhatsApp". Setup steps are in
+  `supabase/functions/README.md`.
+
+### Past events
+
+`src/data/events.js` is the archive rendered on `/events`. It was scraped: 31
+rows, one titled "1", eight identical "India / 2024" placeholders, Dehradun
+listed twice for the same day, two misspellings. It is now 18 rows we can name a
+place and a date for, each with a `sort` key because "2024" and "29 Dec 2024"
+cannot be compared as text.
+
+**Photographs:** drop the file in `public/events/` and set
+`image: '/events/<file>.webp'` — same convention as `public/projects/`. Without
+one the card renders generated art. The 10 Sep 2026 permission covers Mirrikh's
+**project images only**, not event photographs, so do not assume an event photo
+is cleared just because a project photo is. Never point an `<img src>` at
+mirrikh.com again.
 
 ## Website leads
 

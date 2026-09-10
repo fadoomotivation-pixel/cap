@@ -40,19 +40,21 @@ const navLinks = [
   { name: 'Home', path: '/' },
   { 
     name: 'Dholera SIR', 
-    path: '#',
+    path: '/dholera',
     hasDropdown: true,
     dropdownType: 'simple',
     dropdownItems: [
+      { name: 'Dholera Hub', path: '/dholera' },
       { name: 'About Dholera SIR', path: '/dholera/about' },
-      { name: 'Overview', path: '/dholera/overview' },
-      { name: 'City Highlights', path: '/dholera/city-highlights' },
+      { name: 'Overview & Master Plan', path: '/dholera/overview' },
+      { name: 'City Highlights & Infra', path: '/dholera/city-highlights' },
+      { name: 'Official Virtual Tour (360°)', path: '/dholera/virtual-tour' },
       { name: 'Dholera International Airport', path: '/blog/dholera-international-airport' },
       { name: 'Dholera Solar & Power', path: '/dholera/renew-power' },
     ]
   },
   { name: 'About Us', path: '/about' },
-  { name: 'Our Projects', path: '/projects', hasDropdown: true, dropdownType: 'mega' },
+  { name: 'Projects', path: '/projects', hasDropdown: true, dropdownType: 'mega' },
   { name: 'Events', path: '/events' },
   { name: 'Our Blog', path: '/blog' },
   { name: 'Contact', path: '/contact' },
@@ -102,7 +104,7 @@ export default function Navbar() {
           <img src="/logo-capital-brix.png" alt="Capital Brix" width="44" height="44" className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-contain" />
           <span className="flex flex-col leading-none">
             <span className={`font-extrabold text-[20px] sm:text-[22px] leading-none tracking-tight ${transparent ? 'text-white' : 'text-[#10243E]'}`}>Capital Brix</span>
-            <span className="text-[9px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-0.5">Strategy Partner</span>
+            <span className="text-[9px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-0.5">Sales Channel Partner</span>
           </span>
         </Link>
 

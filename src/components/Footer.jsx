@@ -36,11 +36,24 @@ export default function Footer() {
               <img src="/logo-capital-brix.png" alt="Capital Brix" width="56" height="56" className="w-14 h-14 rounded-xl object-contain" />
               <span className="flex flex-col leading-none">
                 <span className="font-extrabold text-[24px] text-white tracking-tight">Capital Brix</span>
-                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-1">Strategy Partner</span>
+                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-1">Sales Channel Partner</span>
               </span>
             </div>
+            {/* This block sits directly under the Capital Brix logo and name,
+                on every page of the site. It carried MIRRIKH GROUP's corporate
+                boilerplate — "a diversified business conglomerate dedicated to
+                creating enduring value…" — which is another company describing
+                itself, presented here as ours.
+
+                That is the structural version of exactly what the 8 Sep 2026
+                notice objected to: not a sentence claiming a relationship, but
+                a layout that implies one. See "The Mirrikh relationship" in
+                CLAUDE.md before touching this paragraph. It describes Capital
+                Brix, and it names who develops and who sells. */}
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Mirrikh Group is a diversified business conglomerate dedicated to creating enduring value, fostering growth, and elevating lifestyles.
+              Capital Brix LLP sells NA-approved, title-clear plots in Dholera SIR
+              as an authorised sales channel partner for Mirrikh Infratech Pvt.
+              Ltd., who develop them. We work out of Sector 136, Noida.
             </p>
             <div className="flex items-center gap-3">
               {socials.map((s) => (
@@ -64,9 +77,11 @@ export default function Footer() {
               About Dholera SIR
             </h4>
             <ul className="space-y-3 text-sm">
+              <li><Link to="/dholera" className="hover:text-[#D4AF37] transition-colors">Dholera SIR Hub</Link></li>
               <li><Link to="/dholera/about" className="hover:text-[#D4AF37] transition-colors">About Dholera SIR</Link></li>
               <li><Link to="/dholera/overview" className="hover:text-[#D4AF37] transition-colors">Overview</Link></li>
               <li><Link to="/dholera/city-highlights" className="hover:text-[#D4AF37] transition-colors">City Highlights</Link></li>
+              <li><Link to="/dholera/virtual-tour" className="hover:text-[#D4AF37] transition-colors">Official Virtual Tour (360°)</Link></li>
               <li><Link to="/blog/dholera-international-airport" className="hover:text-[#D4AF37] transition-colors">Dholera International Airport</Link></li>
               <li><Link to="/dholera/renew-power" className="hover:text-[#D4AF37] transition-colors">Dholera Solar &amp; Power</Link></li>
             </ul>
@@ -119,7 +134,14 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-gray-800 bg-[#070C11]">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>Copyright © {new Date().getFullYear()} Capital Brix LLP (Partner of Mirrikh Infratech Pvt. Ltd.). All Rights Reserved.</p>
+          <p>Copyright © {new Date().getFullYear()} Capital Brix LLP. All Rights Reserved.</p>
+          {/* The exact authorised designation, not a generic "Partner of". Capital
+              Brix is not the developer, owner or promoter of these projects. */}
+          <p className="mt-1">
+            Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd.
+            All projects are developed and owned by Mirrikh Infratech Pvt. Ltd.
+            Mirrikh Infratech and MAYUR are trademarks of their respective owner.
+          </p>
           <div className="flex gap-6">
             <Link to="/contact" className="hover:text-white transition-colors">Terms &amp; Conditions</Link>
             <Link to="/contact" className="hover:text-white transition-colors">Privacy Policy</Link>

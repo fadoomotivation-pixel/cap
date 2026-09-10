@@ -1,6 +1,7 @@
 import React from 'react';
 import { stats } from '../data/site';
 import { motion } from 'framer-motion';
+import CountUp from './CountUp';
 
 export default function Stats() {
   return (
@@ -25,8 +26,8 @@ export default function Stats() {
               transition={{ duration: 0.8, delay: i * 0.1, ease: "easeOut" }}
               className="text-center pt-8 lg:pt-0 px-4 flex flex-col items-center justify-center first:pt-0"
             >
-              <p className="text-4xl md:text-5xl font-heading text-[#1A1A1A] mb-3">
-                {stat.value}
+              <p className="text-4xl md:text-5xl font-heading font-semibold text-[#1A1A1A] mb-3">
+                <CountUp value={stat.value} />
               </p>
               <p className="text-xs text-gray-500 uppercase tracking-widest leading-relaxed max-w-[180px]">
                 {stat.label}

@@ -1,18 +1,44 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Lightbulb } from 'lucide-react';
 
-/** Bold spans written as **…** in the content data. Keeps the data files
- *  readable without pulling in a markdown dependency for one feature. */
+/** Bold spans written as **…** and links written as [label](url) in content data.
+ *  Keeps the data files readable without pulling in a heavy markdown dependency. */
 export function RichText({ children }) {
-  const parts = String(children).split(/(\*\*[^*]+\*\*)/g);
+  const parts = String(children).split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
   return (
     <>
-      {parts.map((p, i) =>
-        p.startsWith('**') && p.endsWith('**')
-          ? <strong key={i} className="font-semibold text-[#10243E]">{p.slice(2, -2)}</strong>
-          : <React.Fragment key={i}>{p}</React.Fragment>
-      )}
+      {parts.map((p, i) => {
+        if (p.startsWith('**') && p.endsWith('**')) {
+          return <strong key={i} className="font-semibold text-[#10243E]">{p.slice(2, -2)}</strong>;
+        }
+        if (p.startsWith('[') && p.endsWith(')') && p.includes('](')) {
+          const match = p.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+          if (match) {
+            const [, text, href] = match;
+            if (href.startsWith('http')) {
+              return (
+                <a
+                  key={i}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#9C7C1C] hover:underline font-medium"
+                >
+                  {text}
+                </a>
+              );
+            }
+            return (
+              <Link key={i} to={href} className="text-[#9C7C1C] hover:underline font-medium">
+                {text}
+              </Link>
+            );
+          }
+        }
+        return <React.Fragment key={i}>{p}</React.Fragment>;
+      })}
     </>
   );
 }
@@ -69,8 +95,15 @@ export default function ArticleBody({ sections }) {
           )}
 
           {s.table && (
+            /* min-width was sized when every table had three columns. The
+               pricing table has four, and at 560px the last column wrapped to
+               three lines per row. The container scrolls either way; this just
+               stops it scrolling into an unreadable squeeze. */
             <div className="overflow-x-auto my-7 -mx-6 px-6 lg:mx-0 lg:px-0">
-              <table className="w-full text-sm border border-gray-200 min-w-[560px]">
+              <table
+                className="w-full text-sm border border-gray-200"
+                style={{ minWidth: `${Math.max(560, s.table.head.length * 180)}px` }}
+              >
                 <thead>
                   <tr className="bg-[#10243E] text-white text-left">
                     {s.table.head.map((h, j) => (
@@ -104,7 +137,10 @@ export default function ArticleBody({ sections }) {
               </span>
               <div>
                 <p className="font-semibold text-[#10243E] mb-1">{s.callout.title}</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{s.callout.text}</p>
+                {/* Callout text was the one content field rendered raw, so a
+                    **bold** span in it shipped as literal asterisks. It now goes
+                    through the same parser as paragraphs and list items. */}
+                <p className="text-sm text-gray-700 leading-relaxed"><RichText>{s.callout.text}</RichText></p>
               </div>
             </aside>
           )}

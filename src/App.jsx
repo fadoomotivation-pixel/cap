@@ -15,12 +15,14 @@ import Contact from './pages/Contact';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import Events from './pages/Events';
+import EventRegistration from './pages/EventRegistration';
 import EmployeePortal from './pages/EmployeePortal';
 import InterviewAdmin from './pages/InterviewAdmin';
 import AttendanceAdmin from './pages/AttendanceAdmin';
 import ExpenseAdmin from './pages/ExpenseAdmin';
 import LeadsAdmin from './pages/LeadsAdmin';
 import CardsAdmin from './pages/CardsAdmin';
+import EventsAdmin from './pages/EventsAdmin';
 import InterviewBooking from './pages/InterviewBooking';
 import InterviewConfirmation from './pages/InterviewConfirmation';
 
@@ -60,6 +62,7 @@ export function AppContent() {
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/events" element={<Events />} />
+        <Route path="/events/:slug" element={<EventRegistration />} />
         <Route path="/employee-kyc" element={<PrivateRoute title="Employee Portal | Capital Brix"><EmployeePortal /></PrivateRoute>} />
 
         {/* Interview Scheduler Routes */}
@@ -68,6 +71,7 @@ export function AppContent() {
         <Route path="/admin/expenses" element={<PrivateRoute title="Petty Cash | Capital Brix"><ExpenseAdmin /></PrivateRoute>} />
         <Route path="/admin/leads" element={<PrivateRoute title="Website Leads | Capital Brix"><LeadsAdmin /></PrivateRoute>} />
         <Route path="/admin/cards" element={<PrivateRoute title="Card Requests | Capital Brix"><CardsAdmin /></PrivateRoute>} />
+        <Route path="/admin/events" element={<PrivateRoute title="Event Registrations | Capital Brix"><EventsAdmin /></PrivateRoute>} />
         <Route path="/book/:token" element={<PrivateRoute title="Schedule Your Interview | Capital Brix"><InterviewBooking /></PrivateRoute>} />
         <Route path="/book/confirm/:bookingId" element={<PrivateRoute title="Interview Confirmed | Capital Brix"><InterviewConfirmation /></PrivateRoute>} />
       </Routes>
