@@ -64,6 +64,11 @@ export async function registerForEvent({
   if (name.length < 2) return { error: 'Please enter your full name.' };
   if (digits.length < 10) return { error: 'Please enter a 10-digit mobile number.' };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) return { error: 'Please enter a valid email address — the confirmation goes there.' };
+  // Required, not optional. Every seat should be attributable to whoever brought
+  // that person. The rule is here as well as on the form so it survives a
+  // submit that skipped the markup — there is no NOT NULL on the column,
+  // because rows registered before this rule existed would fail it.
+  if ((invited_by || '').trim().length < 2) return { error: 'Please tell us who invited you.' };
 
   const id = newId();
 

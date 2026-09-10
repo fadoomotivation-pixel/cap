@@ -49,7 +49,7 @@ export default function EventRegistration() {
   const left = useCountdown(ev?.date || '2099-01-01');
 
   const [form, setForm] = useState({
-    full_name: '', phone: '', email: '', city: '', guests: 1, invited_by: '', invite_code: DEFAULT_CODE, notes: '',
+    full_name: '', phone: '', email: '', city: '', invited_by: '', invite_code: DEFAULT_CODE, notes: '',
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -108,7 +108,7 @@ export default function EventRegistration() {
     e.preventDefault();
     if (busy) return;
     setBusy(true); setError('');
-    const res = await registerForEvent({ ...form, event_slug: ev.slug });
+    const res = await registerForEvent({ ...form, guests: 1, event_slug: ev.slug });
     setBusy(false);
     if (res.error) return setError(res.error);
     setDone(res);
@@ -198,31 +198,19 @@ export default function EventRegistration() {
               {ev.title}
             </h1>
 
-            <p className="text-sm sm:text-base text-white/70 max-w-xl mx-auto mb-5" style={{ textWrap: 'balance' }}>
-              {ev.tagline}
-            </p>
-
-            {/* Compact Key facts bar */}
-            <div className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-white/90 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2.5 mb-5 border border-white/10">
-              <span className="flex items-center gap-1.5">
-                <CalendarDays size={13} className="text-[#D4AF37]" /> {ev.dateLabel} ({ev.time || '10:30 AM'})
-              </span>
-              <span className="hidden sm:inline text-white/30">·</span>
-              <span className="flex items-center gap-1.5">
-                <MapPin size={13} className="text-[#D4AF37]" /> {ev.venue}, Greater Noida
-              </span>
-              <span className="hidden sm:inline text-white/30">·</span>
-              <span className="flex items-center gap-1.5">
-                <Ticket size={13} className="text-[#D4AF37]" />{' '}
-                {ev.delegateFee
-                  ? <>₹{ev.delegateFee.toLocaleString('en-IN')} delegate fee, waived online · {ev.seats}</>
-                  : <>Free entry · {ev.seats}</>}
-              </span>
-            </div>
-
+            {/* The facts bar used to sit here and it has moved BELOW the
+                submit button on purpose.
+                
+                Reading order is the funnel: hook, urgency, action,
+                reassurance. Date, venue and fee are reassurance — they answer
+                "should I commit?" for somebody already leaning in. Putting them
+                above the form makes a reader evaluate the event before they
+                have been asked for anything, and every line they read there is
+                a chance to decide no. So the headline is followed straight by
+                the clock, and the clock by the form. */}
             {/* Countdown timer with seconds */}
             {left && (
-              <div className="flex items-center justify-center gap-2 sm:gap-2.5 text-white/80 mb-3">
+              <div className="flex items-center justify-center gap-2 sm:gap-2.5 text-white/80 mt-6 mb-3">
                 <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#D4AF37] font-semibold flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -292,7 +280,7 @@ export default function EventRegistration() {
               <p className="text-[#10243E] font-semibold text-base mb-1.5">
                 {done.already
                   ? 'You had already registered with that email — your seat is held.'
-                  : `Seat${form.guests > 1 ? 's' : ''} held for ${form.full_name.trim()}.`}
+                  : `Seat held for ${form.full_name.trim()}.`}
               </p>
               <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4">
                 {done.emailed
@@ -303,7 +291,7 @@ export default function EventRegistration() {
               {/* The pass, as an image they can save and show at the door.
                   Otherwise the thing people actually do is screenshot this
                   panel, which comes out cropped and half-scrolled. */}
-              <EventPass ev={ev} name={form.full_name} seats={Number(form.guests) || 1} id={done.id} />
+              <EventPass ev={ev} name={form.full_name} seats={1} id={done.id} />
 
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
                 <a href={ev.mapsUrl} target="_blank" rel="noreferrer"
@@ -346,19 +334,16 @@ export default function EventRegistration() {
                   autoComplete="email" placeholder="you@example.com" className={INPUT} />
               </Field>
 
-              <div className="grid grid-cols-[auto_1fr] gap-2.5 items-end">
-                <Field label="Seats">
-                  <select value={form.guests} onChange={set('guests')} className={`${INPUT} w-auto pr-8`}>
-                    {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </Field>
-
-                <Field label="Invite code" hint={codeValid ? undefined : 'Optional'}>
-                  <input value={form.invite_code} onChange={setCode}
-                    placeholder="e.g. DHOLERA2026"
-                    className={`${INPUT} font-mono tracking-wider ${codeValid ? 'border-emerald-400 bg-emerald-50/50' : ''}`} />
-                </Field>
-              </div>
+              {/* No seat picker. One registration is one seat, so there is no
+                  choice to offer — and a droppicker is a micro-decision on the
+                  way to the button, plus a second way for the hall count to be
+                  wrong. Someone bringing a guest registers them separately,
+                  which is also how we get their name and number. */}
+              <Field label="Invite code" hint={codeIsCampaign ? undefined : 'Applied automatically'}>
+                <input value={form.invite_code} onChange={setCode}
+                  placeholder="e.g. DHOLERA2026"
+                  className={`${INPUT} font-mono tracking-wider ${codeValid ? 'border-emerald-400 bg-emerald-50/50' : ''}`} />
+              </Field>
 
               {/* The coupon card.
                   ₹2,500 is the seminar's stated delegate fee (src/data/
@@ -372,11 +357,11 @@ export default function EventRegistration() {
               <div className="rounded-md border border-emerald-200/80 bg-[#F7FBF9] px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500">
-                    Delegate fee{Number(form.guests) > 1 ? ` (${form.guests} seats)` : ''}:
+                    Delegate fee:
                   </span>
                   {ev.delegateFee && (
                     <span className="text-xs line-through text-gray-400 font-semibold decoration-red-500/80">
-                      ₹{(ev.delegateFee * (Number(form.guests) || 1)).toLocaleString('en-IN')}
+                      ₹{ev.delegateFee.toLocaleString('en-IN')}
                     </span>
                   )}
                   <span className="text-base font-extrabold text-[#10243E] font-heading">₹0</span>
@@ -423,8 +408,15 @@ export default function EventRegistration() {
                 {/* Free text, not a dropdown of staff names — a dropdown
                     silently drops the customer who referred a friend, which is
                     the answer worth having. */}
-                <Field label="Who invited you?" hint="Optional">
-                  <input value={form.invited_by} onChange={set('invited_by')}
+                {/* Required, unlike City. Every seat in the hall should be
+                    attributable to whoever brought that person — it is how the
+                    team gets credit and how we know which channel filled the
+                    room. Left optional it was simply skipped. Still free text,
+                    never a dropdown of staff names: a dropdown silently drops
+                    the existing customer who referred a friend, which is the
+                    most valuable answer of all. */}
+                <Field label="Who invited you?" required>
+                  <input required value={form.invited_by} onChange={set('invited_by')}
                     placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
                 </Field>
               </div>
@@ -449,6 +441,36 @@ export default function EventRegistration() {
                 {busy ? <><Loader2 size={16} className="animate-spin" /> Holding your seat…</>
                       : <>Reserve my seat <ArrowRight size={16} /></>}
               </motion.button>
+
+              {/* The event, immediately under the button.
+                  This is the reassurance layer — where, when, how much — and it
+                  belongs to the reader who has already decided to act and wants
+                  one last check before typing. Above the form it would just be
+                  three more chances to decide no. */}
+              <div className="pt-3 mt-1 border-t border-gray-100 space-y-2">
+                <p className="flex items-start gap-2 text-xs text-gray-600">
+                  <CalendarDays size={14} className="text-[#9C7C1C] shrink-0 mt-0.5" />
+                  <span><strong className="text-[#10243E]">{ev.dateLabel}</strong>{ev.time ? ` · ${ev.time}` : ''}</span>
+                </p>
+                <p className="flex items-start gap-2 text-xs text-gray-600">
+                  <MapPin size={14} className="text-[#9C7C1C] shrink-0 mt-0.5" />
+                  <span>
+                    {ev.venue}, Greater Noida
+                    <a href={ev.mapsUrl} target="_blank" rel="noreferrer"
+                      className="ml-1.5 font-semibold text-[#9C7C1C] hover:text-[#10243E] underline underline-offset-2">
+                      Map
+                    </a>
+                  </span>
+                </p>
+                <p className="flex items-start gap-2 text-xs text-gray-600">
+                  <Ticket size={14} className="text-[#9C7C1C] shrink-0 mt-0.5" />
+                  <span>
+                    {ev.delegateFee
+                      ? <>₹{ev.delegateFee.toLocaleString('en-IN')} delegate fee, waived online · {ev.seats}</>
+                      : <>Free entry · {ev.seats}</>}
+                  </span>
+                </p>
+              </div>
 
               <p className="text-[10px] text-gray-400 text-center leading-tight">
                 {/* "sponsored by Capital Brix & Mirrikh Infratech" said who is
