@@ -32,7 +32,16 @@ export default function BlogPost() {
       {/* ── Hero ─────────────────────────────────────────────── */}
       <header className="relative bg-[#0A1016] overflow-hidden">
         <div className="absolute inset-0">
-          <BlogArt tone={post.tone} label={post.title} seed={idx} className="w-full h-full" />
+          {post.image ? (
+            <img
+              src={post.image}
+              alt={post.imageAlt || post.title}
+              loading="eager"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <BlogArt tone={post.tone} label={post.title} seed={idx} className="w-full h-full" />
+          )}
         </div>
         <div
           className="absolute inset-0"

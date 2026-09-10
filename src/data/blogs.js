@@ -27,6 +27,8 @@ export const blogs = [
     updated: '2026-09-01',
     readMinutes: 8,
     tone: 'gold',
+    image: '/blog/dholera-plot-price-2026.webp',
+    imageAlt: 'Abstract isometric rate ladder with stepped geometric platforms and gold accents on navy grid',
     title: 'Dholera Plot Price in 2026: What Land Actually Costs',
     h1: 'Dholera plot price in 2026: what land actually costs, and why',
     seoTitle: 'Dholera Plot Price 2026 | Rate Per Sq Yd & What Drives It',
@@ -146,6 +148,8 @@ export const blogs = [
     updated: '2026-09-01',
     readMinutes: 9,
     tone: 'navy',
+    image: '/blog/is-dholera-a-good-investment.webp',
+    imageAlt: 'Abstract geometric illustration of dual divergent pathways and a stylized balance scale in gold and deep navy',
     title: 'Is Dholera a Good Investment in 2026? An Honest Look',
     h1: 'Is Dholera a good investment in 2026? An honest look at both sides',
     seoTitle: 'Is Dholera a Good Investment in 2026? Honest Analysis',
@@ -249,6 +253,8 @@ export const blogs = [
     updated: '2026-09-01',
     readMinutes: 10,
     tone: 'green',
+    image: '/blog/how-to-verify-a-dholera-plot.webp',
+    imageAlt: 'Stylized isometric blueprint drafting layers and document checklist vectors in gold on navy',
     title: 'How to Verify a Dholera Plot Before You Pay Anything',
     h1: 'How to verify a Dholera plot before you pay a single rupee',
     seoTitle: 'Verify a Dholera Plot: NA, NOC, Title Clear Checklist',
@@ -360,6 +366,8 @@ export const blogs = [
     updated: '2026-09-01',
     readMinutes: 7,
     tone: 'sky',
+    image: '/blog/dholera-international-airport.webp',
+    imageAlt: 'Orthographic top-down vector geometry of intersecting airfield runways and navigational lines in gold and navy',
     title: 'Dholera International Airport and the Land Around It',
     h1: 'Dholera International Airport: what it is, and what it does to land nearby',
     seoTitle: 'Dholera International Airport: Status & Impact on Land',
@@ -447,6 +455,8 @@ export const blogs = [
     updated: '2026-09-01',
     readMinutes: 8,
     tone: 'violet',
+    image: '/blog/tata-semiconductor-plant-dholera.webp',
+    imageAlt: 'Abstract circular silicon wafer micro-architecture lattice and gold circuit traces on dark navy',
     title: 'The Tata Semiconductor Fab in Dholera: Why It Matters',
     h1: 'The Tata semiconductor fab in Dholera: why one factory changes a region',
     seoTitle: 'Tata Semiconductor Plant Dholera: Impact on the Region',
@@ -533,6 +543,8 @@ export const blogs = [
     updated: '2026-09-01',
     readMinutes: 6,
     tone: 'teal',
+    image: '/blog/ahmedabad-dholera-expressway.webp',
+    imageAlt: 'Isometric regional master plan traversed by an illuminated gold highway corridor and interchange loops on navy background',
     title: 'The Ahmedabad–Dholera Expressway: An Hour That Changes Things',
     h1: 'The Ahmedabad–Dholera Expressway: why one hour changes everything',
     seoTitle: 'Ahmedabad Dholera Expressway: Route, Distance & Impact',
@@ -621,6 +633,8 @@ export const blogs = [
     updated: '2026-09-01',
     readMinutes: 9,
     tone: 'indigo',
+    image: '/blog/nri-guide-buying-land-in-dholera.webp',
+    imageAlt: 'Minimalist wireframe globe with an arched golden orbital transit trajectory joining two global locations',
     title: 'NRI Guide: Buying Land in Dholera from Abroad',
     h1: 'NRI guide: buying land in Dholera without flying back twice',
     seoTitle: 'NRI Buying Land in Dholera: Rules, Process & Checklist',
@@ -718,6 +732,8 @@ export const blogs = [
     updated: '2026-09-01',
     readMinutes: 8,
     tone: 'amber',
+    image: '/blog/dholera-land-vs-fd-gold-apartment.webp',
+    imageAlt: 'Four abstract geometric forms representing asset classes including land grid cube, gold bar, cylinder prism, and architectural tower',
     title: 'Land vs FD vs Gold vs an Apartment: An Honest Comparison',
     h1: 'Land, FD, gold or an apartment: comparing them honestly',
     seoTitle: 'Land vs FD vs Gold vs Flat: Which Suits Your Money?',
@@ -793,6 +809,130 @@ export const blogs = [
       },
     ],
     related: ['is-dholera-a-good-investment', 'dholera-plot-price-2026', 'how-to-verify-a-dholera-plot'],
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  {
+    slug: 'dholera-sir-progress-2026',
+    category: 'Infrastructure',
+    keyword: 'Dholera SIR progress',
+    date: '2026-08-28',
+    updated: '2026-09-02',
+    readMinutes: 9,
+    tone: 'gold',
+    image: '/blog/dholera-sir-progress-2026.webp',
+    imageAlt: 'Architectural horizontal timeline axis with progressive milestone pillars and node markers in gold and navy',
+    title: 'Dholera SIR Progress in 2026: On-Ground Milestones & Real Timelines',
+    h1: 'Dholera SIR progress in 2026: what is built, what is under construction, and the realistic timeline',
+    seoTitle: 'Dholera SIR Progress 2026 | On-Ground Milestones & Infrastructure Status',
+    excerpt:
+      'From the ABCD building and 22.5 sq km Activation Zone to the Tata semiconductor fab, expressway and airport, here is the verified on-ground progress of Dholera SIR in 2026.',
+    intro:
+      'Separating real on-ground engineering from marketing hype is the first duty of any Dholera land investor. In 2026, the Dholera Special Investment Region (SIR) has moved decisively past the master-planning stage: trunk infrastructure across the 22.5 sq km Activation Zone (TP2A) is energised and operational, administrative functions operate from the landmark ABCD building, construction on the ₹91,000-crore Tata-PSMC semiconductor fabrication facility is actively advancing, and both the Ahmedabad–Dholera Expressway and international airport are in advanced execution. This guide presents an unvarnished, milestone-by-milestone audit of what is completed, what is under active construction, and what timelines a prudent buyer should factor into their holding horizon.',
+    sections: [
+      {
+        h2: 'The 22.5 sq km Activation Zone: what is operational today',
+        p: [
+          'The Dholera Special Investment Region spans an immense 920 sq km, but development is intentionally phased. The primary focus of Phase 1 trunk infrastructure is the 22.5 sq km Activation Zone, located inside Town Planning Scheme 2 (TP2A).',
+          'Unlike speculative greenfield projects where land is demarcated on paper before services arrive, the Activation Zone followed an infrastructure-first mandate. Key facilities completed and operational on site include:',
+        ],
+        list: {
+          items: [
+            '**The ABCD Building (Administrative and Business Centre for Dholera):** A multi-storey smart administrative hub housing the Dholera Industrial City Development Limited (DICDL) offices, regional development authorities, and the Central Command and Control Centre (CCCC) managing municipal telemetry.',
+            '**72 kilometres of internal road network:** Multi-tier asphalt roads featuring dedicated cycle tracks, pedestrian footpaths, utility corridors, and LED smart street lighting.',
+            '**Underground utility ducting:** Power cables, telecom optic-fibre lines, potable water pipes, recycled industrial water lines, and effluent discharge pipelines are housed entirely inside subterranean utility conduits, eliminating future surface excavation.',
+            '**50 MLD Water Treatment Plant & 10 MLD Sewage Treatment Plant:** Supplying industrial and potable grade water sourced from the Narmada canal network, paired with automated recycling systems where treated wastewater is re-routed for landscaping and industrial cooling.',
+            '**400/220 kV sub-station:** Energised by GETCO (Gujarat Energy Transmission Corporation), feeding dedicated power directly into the internal distribution network with automated SCADA switching.',
+          ],
+        },
+      },
+      {
+        h2: 'The connectivity triad: Expressway, Airport, and Transit Corridor',
+        p: [
+          'Three macro connectivity projects link Dholera to Gujarat’s broader economic corridor. Their delivery timelines decide when Dholera shifts from a regional construction site to an active satellite industrial hub.',
+        ],
+        table: {
+          head: ['Corridor', 'Project scope', 'On-ground status (2026)', 'Operational window'],
+          rows: [
+            ['Ahmedabad–Dholera Expressway (NH-751)', '109 km 4-lane access-controlled greenfield expressway', 'Flyovers, culverts, and asphalt paving across all 4 civil packages near completion', 'Late 2026 / Early 2027 opening'],
+            ['Dholera International Airport (Navagam)', 'Phase 1 3,200 m runway, passenger terminal, air cargo complex, and MRO facility', 'Runway grading, earthwork and terminal foundation civil works under active execution', '2026–2027 commercial cargo and initial passenger operations'],
+            ['Ahmedabad–Dholera Semi High-Speed Rail (MRTS)', 'Dedicated suburban metro / rail link running parallel to NH-751 alignment', 'Route alignment surveyed and right-of-way reserved under DMIC master plan', 'Phased post-2027 implementation following road activation'],
+          ],
+        },
+      },
+      {
+        h2: 'The industrial anchor: Tata semiconductor fabrication facility',
+        p: [
+          'The decisive structural catalyst for Dholera SIR is the ₹91,000-crore semiconductor fabrication facility established by Tata Electronics in technical partnership with Taiwan’s Powerchip Semiconductor Manufacturing Corporation (PSMC).',
+          'Approved under the India Semiconductor Mission (ISM) with combined central and state capital support, the mega-fab is sited in Dholera’s high-tech manufacturing zone. The facility is designed to deliver up to 50,000 wafer starts per month across 28nm, 40nm, 55nm, and 90nm nodes, catering to automotive, computing, communications, and power management electronics.',
+          'For real estate investors, the significance of a fab lies in the ecosystem density it commands. A semiconductor cleanroom cannot operate in isolation: it requires an immediate perimeter of chemical suppliers, ultra-pure specialty gas producers, testing and packaging facilities, precision equipment maintenance specialists, and specialized logistics operators. This cluster effect creates sticky, high-earning engineering employment that drives real residential rental and housing demand over the coming decade.',
+        ],
+        callout: {
+          tone: 'tip',
+          title: 'Ecosystem effect vs. isolated factories',
+          text: 'A conventional assembly warehouse creates low-density transitory labor. A commercial semiconductor fab anchors a high-wage supplier supply chain spanning hundreds of companies. That dynamic underpins enduring civic expansion.',
+        },
+      },
+      {
+        h2: 'Town Planning (TP) breakdown: Where individual plots sit',
+        p: [
+          'Dholera SIR is divided into 6 Town Planning Schemes. Knowing which scheme your prospective land falls within is critical to evaluating its development horizon:',
+        ],
+        list: {
+          items: [
+            '**TP1 (153 sq km) and TP2 (102 sq km):** Form Phase 1 of Dholera SIR. These schemes receive the highest government allocation, immediate trunk road connectivity, and priority zoning. Residential townships launched by private developers around TP1 and TP2 are closest to operational infrastructure.',
+            '**TP2A (Activation Zone - 22.5 sq km):** The core industrial seed within TP2 where government-built infrastructure is already live and operational.',
+            '**TP3, TP4, TP5, and TP6:** Form Phase 2 and Phase 3 of the master plan, covering future logistics, maritime, and solar park expansions over the 2030s.',
+          ],
+        },
+        callout: {
+          tone: 'warn',
+          title: 'Check the TP scheme and land zoning',
+          text: 'Land advertised vaguely as "in Dholera" may sit 25 kilometres away in Phase 3 zones with no road network scheduled this decade. Always verify whether a plot lies within or adjacent to Phase 1 (TP1/TP2) and holds valid NA conversion.',
+        },
+      },
+      {
+        h2: 'The realistic investor horizon: What to expect between 2026 and 2032',
+        p: [
+          'A greenfield smart city does not sprout overnight, and anyone promising immediate rental yields or explosive two-year flipping gains is doing you a disservice. A rational holding thesis follows four progressive stages:',
+        ],
+        list: {
+          ordered: true,
+          items: [
+            '**2026–2027 (Infrastructure Convergence):** Commissioning of the Ahmedabad–Dholera Expressway and initial runway testing at Dholera International Airport. Travel time from Ahmedabad drops to ~60 minutes, enabling effortless site visits and corporate transit.',
+            '**2027–2029 (Industrial Commissioning):** First tool-in and trial wafer runs at the Tata fab, concurrent with construction of vendor facilities and ancillary engineering plants.',
+            '**2029–2032 (Workforce Inhabitation):** Transition from construction labor to permanent technical operations workforce. Onset of genuine residential end-use, retail services, and commercial leasing.',
+            '**Post-2032 (Mature Urban Density):** Expansion of Phase 2 zones and secondary economic activities across the wider SIR region.',
+          ],
+        },
+      },
+      {
+        h2: 'The investment verdict: Aligning capital with execution reality',
+        p: [
+          'If your financial horizon matches this timeline (5 to 8+ years) and your purchase is legally secured with an NA-converted, plan-passed layout and clear registered title, Dholera offers one of India\'s most compelling infrastructure-backed land value growth profiles.',
+          'The discipline that separates successful land investors from disappointed speculators is simple: do not buy promises of future zoning, do not deploy emergency funds into illiquid assets, and verify that the layout roads and approvals physically exist before parting with capital.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'What infrastructure is already operational in Dholera SIR in 2026?',
+        a: 'The 22.5 sq km Activation Zone (TP2A) is operational with 72 km of multi-lane internal roads, underground utility ducting, 400 kV power sub-station, 50 MLD water treatment plant, 10 MLD sewage treatment plant, and the ABCD building hosting the smart city command center.',
+      },
+      {
+        q: 'When will the Ahmedabad–Dholera Expressway open for traffic?',
+        a: 'The 109 km 4-lane expressway (NH-751) is in the final stages of civil paving and bridge construction across its four packages, with commercial traffic opening targeted for late 2026 / early 2027.',
+      },
+      {
+        q: 'What is the current construction status of the Tata semiconductor fab?',
+        a: 'Land handover and foundational ground preparation in Dholera SIR have been executed, with structural engineering and cleanroom design work actively underway following central cabinet and ISM approvals.',
+      },
+      {
+        q: 'Which Town Planning (TP) scheme should residential plot buyers target?',
+        a: 'Investors should focus on approved residential layouts within or immediately bordering Phase 1 schemes — specifically Town Planning 1 (TP1) and Town Planning 2 (TP2) — because trunk infrastructure, expressway links, and industrial hubs are concentrated there.',
+      },
+    ],
+    related: ['dholera-plot-price-2026', 'ahmedabad-dholera-expressway', 'tata-semiconductor-plant-dholera'],
   },
 ];
 
