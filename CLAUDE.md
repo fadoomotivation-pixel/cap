@@ -404,6 +404,16 @@ and Capital Brix is still only an authorised sales channel partner).
 - **The sign-up fits one phone screen.** Three required fields, seats and the
   code; city, referrer and plot interest sit behind "Add details". It also must
   not promise "Instant confirmation" while no mail provider is configured.
+- **The hero keeps its boxes.** A weightless, Apple-style pass — no borders,
+  huge type, one plain line of facts — was built and rejected by the owner: it
+  read as a poster rather than as an event you can sign up to. The boxed facts
+  bar and the ticking countdown earn their place. Refine spacing and type scale
+  there; do not strip the structure again.
+- **The coupon card is Antigravity's and stays.** "Entry: Free / NO CHARGE" on
+  the left, an applied-coupon chip on the right. An already-applied code reads
+  as a small win before anyone has typed. Only two things were changed and must
+  not come back: the struck-through ₹2,500, and "100% OFF" — a discount off a
+  price that was never charged.
 - **The phone field strips a pasted country code rather than truncating it.**
   "+91 98765 43210" is twelve digits; keeping the first ten gives 9198765432 —
   a plausible-looking number that is not theirs and cannot be dialled.
