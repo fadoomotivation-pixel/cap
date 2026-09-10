@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
-  CalendarDays, MapPin, Ticket, Users, ArrowRight, Check, Phone,
+  CalendarDays, MapPin, Ticket, ArrowRight, Check,
   MessageCircle, Loader2, Sparkles, ChevronDown, Navigation, Tag,
 } from 'lucide-react';
 import Seo from '../components/Seo';
@@ -116,125 +116,272 @@ export default function EventRegistration() {
         jsonLd={jsonLd}
       />
 
-      {/* ── Hero ───────────────────────────────────────────────────────────
-          Dark, one message, and the register button never more than a thumb
-          away. The animated field is CSS-only so it costs nothing on a phone
-          and disappears entirely under prefers-reduced-motion. */}
-      <header className="relative overflow-hidden bg-[#0A1016] text-white pt-28 pb-16 sm:pt-32 sm:pb-24">
+      {/* ── Hero (Compact) ──────────────────────────────────────────────── */}
+      <header className="relative overflow-hidden bg-[#0A1016] text-white pt-24 pb-12 sm:pt-28 sm:pb-16 text-center">
         <div
           aria-hidden
-          className="absolute inset-0 opacity-[0.18]"
+          className="absolute inset-0 opacity-[0.16]"
           style={{
             backgroundImage:
-              'linear-gradient(rgba(212,175,55,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.5) 1px, transparent 1px)',
-            backgroundSize: '64px 64px',
+              'linear-gradient(rgba(212,175,55,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.45) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
             maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 78%)',
             WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 78%)',
           }}
         />
         <div
           aria-hidden
-          className={`absolute -top-40 left-1/2 -translate-x-1/2 w-[680px] h-[680px] rounded-full blur-[120px] ${reduce ? '' : 'animate-pulse'}`}
-          style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.22) 0%, transparent 65%)' }}
+          className={`absolute -top-36 left-1/2 -translate-x-1/2 w-[540px] h-[540px] rounded-full blur-[100px] ${reduce ? '' : 'animate-pulse'}`}
+          style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.2) 0%, transparent 65%)' }}
         />
 
-        <div className="relative max-w-5xl mx-auto px-6">
+        <div className="relative max-w-4xl mx-auto px-5">
           <motion.div
-            initial={reduce ? false : { opacity: 0, y: 18 }}
+            initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
           >
-            <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#D4AF37] border border-[#D4AF37]/35 rounded-full px-3.5 py-1.5 mb-6">
-              <Sparkles size={13} /> Free investor seminar
-            </p>
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] border border-[#D4AF37]/35 rounded-full px-3 py-1 mb-3">
+              <Sparkles size={12} /> Free investor seminar
+            </div>
 
             <h1
-              className="font-heading text-white text-[2.6rem] leading-[1.05] sm:text-6xl lg:text-7xl mb-5"
+              className="font-heading text-white text-3xl sm:text-4xl lg:text-5xl leading-tight mb-2.5"
               style={{ textWrap: 'balance' }}
             >
               {ev.title}
             </h1>
 
-            <p className="text-lg sm:text-xl text-white/70 max-w-2xl mb-8" style={{ textWrap: 'balance' }}>
+            <p className="text-sm sm:text-base text-white/75 max-w-xl mx-auto mb-4" style={{ textWrap: 'balance' }}>
               {ev.tagline}
             </p>
 
-            {/* Facts, not adjectives. Someone deciding whether to give up a
-                Saturday needs when, where and what it costs — in that order. */}
-            <dl className="grid sm:grid-cols-3 gap-px bg-white/10 rounded-lg overflow-hidden mb-8 max-w-3xl">
-              <Fact Icon={CalendarDays} label="When" value={ev.dateLabel} sub={ev.time || 'Timing confirmed on WhatsApp'} />
-              <Fact Icon={MapPin} label="Where" value={ev.venue} sub="Greater Noida" />
-              <Fact Icon={Ticket} label="Entry" value="Free" sub={ev.seats} />
-            </dl>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <a
-                href="#register"
-                className="inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#E5C158] text-[#0A1016] px-7 py-3.5 rounded-sm font-bold transition-colors"
-              >
-                Reserve my seat <ArrowRight size={17} />
-              </a>
-              <a
-                href={`tel:+${site.phone}`}
-                className="inline-flex items-center gap-2 border border-white/25 hover:border-[#D4AF37] px-6 py-3.5 rounded-sm font-semibold text-sm transition-colors"
-              >
-                <Phone size={16} /> Call the team
-              </a>
+            {/* Compact Key facts bar */}
+            <div className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-white/90 bg-white/10 backdrop-blur-sm rounded-lg px-3.5 py-2 mb-4 border border-white/10">
+              <span className="flex items-center gap-1.5">
+                <CalendarDays size={13} className="text-[#D4AF37]" /> {ev.dateLabel} ({ev.time || '10:30 AM'})
+              </span>
+              <span className="hidden sm:inline text-white/30">·</span>
+              <span className="flex items-center gap-1.5">
+                <MapPin size={13} className="text-[#D4AF37]" /> {ev.venue}, Greater Noida
+              </span>
+              <span className="hidden sm:inline text-white/30">·</span>
+              <span className="flex items-center gap-1.5">
+                <Ticket size={13} className="text-[#D4AF37]" /> Free VIP Entry ({ev.seats})
+              </span>
             </div>
 
+            {/* Countdown timer with seconds */}
             {left && (
-              <div className="mt-10">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-[#D4AF37] font-semibold mb-3 flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2 sm:gap-2.5 text-white/80 mb-3">
+                <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#D4AF37] font-semibold flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                   </span>
-                  Closing soon · Seminar starts in:
-                </p>
-                <div className="inline-flex items-center gap-1.5 sm:gap-2.5 bg-white/[0.08] border border-white/15 backdrop-blur-md rounded-lg p-2 sm:p-2.5">
+                  Starts in:
+                </span>
+                <div className="inline-flex items-center gap-1 bg-white/[0.08] border border-white/15 backdrop-blur-md rounded-lg p-1">
                   {[
                     [left.days, 'Days'],
-                    [left.hours, 'Hours'],
-                    [left.mins, 'Mins'],
-                    [left.secs, 'Secs'],
+                    [left.hours, 'Hrs'],
+                    [left.mins, 'Min'],
+                    [left.secs, 'Sec'],
                   ].map(([n, l], idx) => (
                     <React.Fragment key={l}>
-                      {idx > 0 && (
-                        <span className="text-[#D4AF37]/60 font-mono font-bold text-lg sm:text-xl -mt-3.5 select-none">:</span>
-                      )}
-                      <div className="flex flex-col items-center bg-[#0A1016]/95 border border-white/10 rounded-md px-2.5 sm:px-3 py-1.5 min-w-[50px] sm:min-w-[58px]">
-                        <span className="font-heading text-xl sm:text-2xl lg:text-3xl text-white font-bold tabular-nums leading-tight">
+                      {idx > 0 && <span className="text-[#D4AF37]/60 font-mono font-bold text-xs select-none">:</span>}
+                      <div className="flex flex-col items-center bg-[#0A1016]/95 border border-white/10 rounded px-1.5 py-0.5 min-w-[40px] sm:min-w-[44px]">
+                        <span className="font-heading text-base sm:text-lg text-white font-bold tabular-nums leading-none">
                           {String(n).padStart(2, '0')}
                         </span>
-                        <span className="text-[9px] sm:text-[10px] font-medium text-white/60 tracking-wider mt-0.5 uppercase">
-                          {l}
-                        </span>
+                        <span className="text-[8px] font-medium text-white/60 tracking-wider uppercase">{l}</span>
                       </div>
                     </React.Fragment>
                   ))}
                 </div>
               </div>
             )}
-          </motion.div>
-        </div>
 
-        {/* Hosts. Named as two separate companies co-hosting — never as one
-            organisation, and never with Capital Brix described as anything
-            other than an authorised sales channel partner. */}
-        <div className="relative max-w-5xl mx-auto px-6 mt-12 pt-8 border-t border-white/10">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-3">Hosted by</p>
-          <p className="font-heading text-xl sm:text-2xl text-white/90">
-            {ev.hosts.join('  ·  ')}
-          </p>
-          <p className="text-xs text-white/45 mt-2 max-w-xl">
-            Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd.
-          </p>
+            <p className="text-[11px] text-white/45">
+              Hosted jointly by {ev.hosts.join(' & ')} · Capital Brix is an authorised sales channel partner for Mirrikh Infratech
+            </p>
+          </motion.div>
         </div>
       </header>
 
-      {/* ── Agenda + form ─────────────────────────────────────────────────── */}
-      <main className="max-w-6xl mx-auto px-6 py-16 lg:py-24 grid lg:grid-cols-[1fr_minmax(360px,420px)] gap-12 lg:gap-16 items-start">
+      {/* ── The Sign-up Form (Directly below hero, compact 1-screen fit) ──── */}
+      <section id="register" ref={formRef} className="relative z-10 -mt-6 sm:-mt-8 max-w-2xl mx-auto px-4">
+        <div className="rounded-xl border border-gray-200 shadow-[0_15px_45px_-20px_rgba(16,36,62,0.35)] overflow-hidden bg-white">
+          <div className="bg-[#10243E] text-white px-5 py-3.5 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+            <div>
+              <h2 className="font-heading text-white text-xl sm:text-2xl leading-tight">
+                {done ? 'You’re on the list' : 'Reserve your seat'}
+              </h2>
+              <p className="text-white/60 text-xs mt-0.5">
+                {done ? 'Keep this page — the details are below.' : 'Takes ~30 seconds · Instant confirmation'}
+              </p>
+            </div>
+            {!done && (
+              <div className="inline-flex items-center gap-1.5 self-start sm:self-auto bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] px-2.5 py-1 rounded text-xs font-semibold">
+                <Sparkles size={12} /> VIP Pass · ₹0 (Was ₹2,500)
+              </div>
+            )}
+          </div>
 
+          {done ? (
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center mb-3">
+                <Check size={22} />
+              </div>
+              <p className="text-[#10243E] font-semibold text-base mb-1.5">
+                {done.already
+                  ? 'You had already registered with that email — your seat is held.'
+                  : `Seat${form.guests > 1 ? 's' : ''} held for ${form.full_name.trim()}.`}
+              </p>
+              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4">
+                {done.emailed
+                  ? `A confirmation is on its way to ${form.email.trim()}. `
+                  : 'Our team will confirm your seat on WhatsApp. '}
+                {ev.dateLabel}{ev.time ? `, ${ev.time}` : ''} — {ev.venue}.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <a href={ev.mapsUrl} target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold bg-[#D4AF37] text-[#0A1016] px-4 py-2 rounded-sm">
+                  <MapPin size={14} /> Directions
+                </a>
+                <a
+                  href={`https://wa.me/${site.phone}?text=${encodeURIComponent(`Hi Capital Brix, I have registered for "${ev.title}" on ${ev.dateLabel}.`)}`}
+                  target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold border border-gray-200 px-4 py-2 rounded-sm text-[#10243E] hover:border-[#D4AF37]">
+                  <MessageCircle size={14} /> WhatsApp us
+                </a>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={submit} className="p-4 sm:p-5 space-y-3">
+              {error && (
+                <p role="alert" className="bg-red-50 border border-red-100 text-red-600 text-xs rounded-md p-2.5">{error}</p>
+              )}
+
+              {/* Row 1: Name & Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <Field label="Full name" required>
+                  <input required value={form.full_name} onChange={set('full_name')} autoComplete="name"
+                    placeholder="Your name" className={INPUT} />
+                </Field>
+
+                <Field label="Mobile number" required>
+                  <input required type="tel" inputMode="numeric" value={form.phone} onChange={set('phone')}
+                    autoComplete="tel" placeholder="10-digit mobile" className={INPUT} />
+                </Field>
+              </div>
+
+              {/* Row 2: Email & City */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <Field label="Email" required hint="Confirmation goes here">
+                  <input required type="email" value={form.email} onChange={set('email')}
+                    autoComplete="email" placeholder="you@example.com" className={INPUT} />
+                </Field>
+
+                <Field label="City">
+                  <input value={form.city} onChange={set('city')} autoComplete="address-level2"
+                    placeholder="e.g. Noida / Delhi" className={INPUT} />
+                </Field>
+              </div>
+
+              {/* Row 3: Seats & Who invited you */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <Field label="Seats">
+                  <select value={form.guests} onChange={set('guests')} className={INPUT}>
+                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                      <option key={n} value={n}>{n} {n === 1 ? 'person (Single Pass)' : 'people (Group Pass)'}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Who invited you?" hint="Optional">
+                  <input value={form.invited_by} onChange={set('invited_by')}
+                    placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
+                </Field>
+              </div>
+
+              {/* Row 4: Interest Pills */}
+              <div>
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                  What are you looking at?
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {INTERESTS.map((o) => {
+                    const on = form.interest === o.value;
+                    return (
+                      <button
+                        key={o.value} type="button"
+                        onClick={() => setForm((f) => ({ ...f, interest: on ? '' : o.value }))}
+                        aria-pressed={on}
+                        className={`text-xs py-1.5 px-2 rounded border text-center transition font-medium truncate ${
+                          on
+                            ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#10243E] font-semibold'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        {o.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Row 5: VIP Pricing card */}
+              <div className="rounded-md border border-amber-200/80 bg-gradient-to-r from-[#FFFDF7] via-[#FFFDF7] to-[#F7FBF9] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 text-xs">Delegate Fee {Number(form.guests) > 1 ? `(${form.guests} seats)` : ''}:</span>
+                  <span className="text-xs line-through text-gray-400 font-semibold decoration-red-500/80">
+                    ₹{(2500 * (Number(form.guests) || 1)).toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-base font-extrabold text-[#10243E] font-heading">
+                    ₹0
+                  </span>
+                  <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">FREE</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-emerald-800 font-medium text-[11px]">
+                  <Tag size={12} className="text-emerald-600 shrink-0" />
+                  <span>Coupon <strong className="font-mono font-bold bg-emerald-100 px-1 py-0.5 rounded text-emerald-900">CAPITALBRIX</strong> applied</span>
+                  <span className="font-bold text-emerald-700 bg-emerald-100 px-1 py-0.5 rounded">100% OFF</span>
+                </div>
+              </div>
+
+              {/* Row 6: Submit Button with Shake */}
+              <motion.button
+                type="submit" disabled={busy}
+                initial={{ x: 0 }}
+                whileInView={reduce ? {} : {
+                  x: [0, -6, 6, -5, 5, -3, 3, -1, 1, 0],
+                  transition: {
+                    duration: 0.7,
+                    delay: 0.3,
+                    ease: 'easeInOut',
+                  }
+                }}
+                viewport={{ once: true, amount: 0.7 }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className="w-full inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] font-bold py-3 rounded-sm transition-colors shadow-md hover:shadow-lg disabled:opacity-60 text-sm"
+              >
+                {busy ? <><Loader2 size={16} className="animate-spin" /> Holding your seat…</>
+                      : <>Reserve my seat <ArrowRight size={16} /></>}
+              </motion.button>
+
+              <p className="text-[10px] text-gray-400 text-center leading-tight">
+                ✨ 100% complimentary VIP invitation sponsored by Capital Brix & Mirrikh Infratech. No charge, no obligation to buy.
+              </p>
+            </form>
+          )}
+        </div>
+      </section>
+
+      {/* ── Agenda & Details (Follows the form) ───────────────────────────── */}
+      <main className="max-w-4xl mx-auto px-6 py-16 sm:py-20 space-y-16">
         <section>
           <p className="text-[#9C7C1C] font-semibold tracking-[0.2em] uppercase text-xs mb-3">What we will cover</p>
           <h2 className="font-heading text-3xl sm:text-4xl text-[#10243E] leading-tight mb-8" style={{ textWrap: 'balance' }}>
@@ -262,15 +409,13 @@ export default function EventRegistration() {
             ))}
           </ol>
 
-          {/* Who is on the platform that day. Each person is titled exactly as
-              src/data/eventDetails.js has them — read the note there before
-              editing either name or role. */}
+          {/* Speakers */}
           {ev.speakers?.length > 0 && (
-            <div className="mt-12">
+            <div className="mt-14">
               <p className="text-[#9C7C1C] font-semibold tracking-[0.2em] uppercase text-xs mb-3">On the platform</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 {ev.speakers.map((sp) => (
-                  <div key={sp.name} className="flex items-center gap-4 border border-gray-200 rounded-lg p-4">
+                  <div key={sp.name} className="flex items-center gap-4 border border-gray-200 rounded-lg p-4 bg-gray-50/50">
                     <span
                       aria-hidden
                       className="shrink-0 w-12 h-12 rounded-full bg-[#10243E] text-[#D4AF37] font-heading text-base flex items-center justify-center"
@@ -287,7 +432,8 @@ export default function EventRegistration() {
             </div>
           )}
 
-          <div className="mt-12 border border-gray-200 rounded-lg p-6 bg-gray-50">
+          {/* Venue / Getting there */}
+          <div className="mt-14 border border-gray-200 rounded-lg p-6 bg-gray-50">
             <h3 className="font-heading text-lg text-[#10243E] mb-1 flex items-center gap-2">
               <Navigation size={17} className="text-[#9C7C1C]" /> Getting there
             </h3>
@@ -300,7 +446,8 @@ export default function EventRegistration() {
             </a>
           </div>
 
-          <div className="mt-12">
+          {/* FAQs */}
+          <div className="mt-14">
             <h2 className="font-heading text-2xl text-[#10243E] mb-5">Before you ask</h2>
             <div className="divide-y divide-gray-200 border-y border-gray-200">
               {ev.faqs.map((f) => (
@@ -314,176 +461,19 @@ export default function EventRegistration() {
               ))}
             </div>
           </div>
-        </section>
 
-        {/* ── The sign-up ────────────────────────────────────────────────
-            Sticky on desktop so the form is on screen wherever the reader
-            has got to; static on a phone, where sticky would eat the view. */}
-        <section id="register" ref={formRef} className="lg:sticky lg:top-24 scroll-mt-24">
-          <div className="rounded-xl border border-gray-200 shadow-[0_20px_60px_-30px_rgba(16,36,62,0.5)] overflow-hidden bg-white">
-            <div className="bg-[#10243E] text-white px-6 py-5">
-              <h2 className="font-heading text-white text-2xl leading-tight">
-                {done ? 'You’re on the list' : 'Reserve your seat'}
-              </h2>
-              <p className="text-white/60 text-sm mt-1">
-                {done ? 'Keep this page — the details are below.' : 'VIP Pass · ₹0 (Standard ₹2,500 waived) · 30 seconds'}
-              </p>
-            </div>
-
-            {done ? (
-              <div className="p-6">
-                <div className="w-14 h-14 rounded-full bg-green-50 text-green-600 flex items-center justify-center mb-4">
-                  <Check size={26} />
-                </div>
-                <p className="text-[#10243E] font-semibold mb-2">
-                  {done.already
-                    ? 'You had already registered with that email — your seat is held.'
-                    : `Seat${form.guests > 1 ? 's' : ''} held for ${form.full_name.trim()}.`}
-                </p>
-                <p className="text-gray-600 text-sm leading-relaxed mb-5">
-                  {done.emailed
-                    ? `A confirmation is on its way to ${form.email.trim()}. `
-                    : 'Our team will confirm your seat on WhatsApp. '}
-                  {ev.dateLabel}{ev.time ? `, ${ev.time}` : ''} — {ev.venue}.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <a href={ev.mapsUrl} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold bg-[#D4AF37] text-[#0A1016] px-5 py-2.5 rounded-sm">
-                    <MapPin size={15} /> Directions
-                  </a>
-                  <a
-                    href={`https://wa.me/${site.phone}?text=${encodeURIComponent(`Hi Capital Brix, I have registered for "${ev.title}" on ${ev.dateLabel}.`)}`}
-                    target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold border border-gray-200 px-5 py-2.5 rounded-sm text-[#10243E] hover:border-[#D4AF37]">
-                    <MessageCircle size={15} /> WhatsApp us
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={submit} className="p-6 space-y-4">
-                {error && (
-                  <p role="alert" className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-md p-3">{error}</p>
-                )}
-
-                <Field label="Full name" required>
-                  <input required value={form.full_name} onChange={set('full_name')} autoComplete="name"
-                    placeholder="Your name" className={INPUT} />
-                </Field>
-
-                <Field label="Mobile number" required>
-                  <input required type="tel" inputMode="numeric" value={form.phone} onChange={set('phone')}
-                    autoComplete="tel" placeholder="10-digit mobile" className={INPUT} />
-                </Field>
-
-                <Field label="Email" required hint="Your confirmation goes here">
-                  <input required type="email" value={form.email} onChange={set('email')}
-                    autoComplete="email" placeholder="you@example.com" className={INPUT} />
-                </Field>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="City">
-                    <input value={form.city} onChange={set('city')} autoComplete="address-level2"
-                      placeholder="Noida" className={INPUT} />
-                  </Field>
-                  <Field label="Seats">
-                    <select value={form.guests} onChange={set('guests')} className={INPUT}>
-                      {[1, 2, 3, 4, 5, 6].map((n) => (
-                        <option key={n} value={n}>{n} {n === 1 ? 'person' : 'people'}</option>
-                      ))}
-                    </select>
-                  </Field>
-                </div>
-
-                <Field label="What are you looking at?">
-                  <div className="grid grid-cols-2 gap-2">
-                    {INTERESTS.map((o) => {
-                      const on = form.interest === o.value;
-                      return (
-                        <button
-                          key={o.value} type="button"
-                          onClick={() => setForm((f) => ({ ...f, interest: on ? '' : o.value }))}
-                          aria-pressed={on}
-                          className={`text-sm rounded-md border px-3 py-2.5 text-left transition ${
-                            on
-                              ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#10243E] font-medium'
-                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                          }`}
-                        >
-                          {o.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </Field>
-
-                {/* Free text, not a dropdown of staff names. The seminar is
-                    filled by the team AND by word of mouth, and a dropdown
-                    would silently drop the customer who referred a friend —
-                    which is exactly the answer worth having. */}
-                <Field label="Who invited you?" hint="Name of the person who told you about this event">
-                  <input value={form.invited_by} onChange={set('invited_by')}
-                    placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
-                </Field>
-
-                {/* Auto-applied coupon & pricing breakdown */}
-                <div className="rounded-lg border border-amber-200/80 bg-gradient-to-br from-[#FFFDF7] to-[#F7FBF9] p-3.5 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2 border-b border-gray-200/60 pb-2">
-                    <div className="flex items-center gap-1.5">
-                      <Ticket size={15} className="text-[#9C7C1C]" />
-                      <span className="text-xs font-semibold text-[#10243E]">
-                        Delegate Fee {Number(form.guests) > 1 ? `(${form.guests} seats)` : ''}
-                      </span>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xs sm:text-sm line-through text-gray-400 font-semibold decoration-red-500/80">
-                        ₹{(2500 * (Number(form.guests) || 1)).toLocaleString('en-IN')}
-                      </span>
-                      <span className="text-xl font-extrabold text-[#10243E] font-heading">
-                        ₹0
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs bg-emerald-50 border border-emerald-200/80 rounded-md px-2.5 py-1.5">
-                    <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
-                      <Tag size={13} className="text-emerald-600 shrink-0" />
-                      <span>Coupon <strong className="font-mono font-bold tracking-wide text-emerald-900 bg-emerald-100/80 px-1 py-0.5 rounded">CAPITALBRIX</strong> applied</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">100% OFF</span>
-                  </div>
-
-                  <p className="text-[10px] text-gray-500 leading-tight flex items-center gap-1">
-                    <Check size={12} className="text-emerald-600 shrink-0" />
-                    <span>Complimentary VIP pass sponsored by Capital Brix & Mirrikh Infratech.</span>
-                  </p>
-                </div>
-
-                <motion.button
-                  type="submit" disabled={busy}
-                  initial={{ x: 0 }}
-                  whileInView={reduce ? {} : {
-                    x: [0, -6, 6, -5, 5, -3, 3, -1, 1, 0],
-                    transition: {
-                      duration: 0.7,
-                      delay: 0.3,
-                      ease: 'easeInOut',
-                    }
-                  }}
-                  viewport={{ once: true, amount: 0.7 }}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] font-bold py-3.5 rounded-sm transition-colors shadow-md hover:shadow-lg disabled:opacity-60"
-                >
-                  {busy ? <><Loader2 size={17} className="animate-spin" /> Holding your seat…</>
-                        : <>Reserve my seat <ArrowRight size={17} /></>}
-                </motion.button>
-
-                <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
-                  <Users size={13} className="shrink-0 mt-0.5" />
-                  We use your details only to confirm this seminar and to reach you about Dholera. No charge, no obligation to buy.
-                </p>
-              </form>
-            )}
+          {/* Bottom Back-to-Form CTA */}
+          <div className="mt-14 text-center pt-8 border-t border-gray-200">
+            <a
+              href="#register"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: formRef.current?.offsetTop - 80 || 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] font-bold px-7 py-3.5 rounded-sm transition-colors shadow-md text-sm"
+            >
+              Reserve your free seat <ArrowRight size={16} />
+            </a>
           </div>
         </section>
       </main>
@@ -492,28 +482,18 @@ export default function EventRegistration() {
 }
 
 const INPUT =
-  'w-full px-3.5 py-2.5 border border-gray-200 rounded-md text-[#10243E] outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition';
+  'w-full px-3 py-2 border border-gray-200 rounded-md text-[#10243E] text-sm outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition bg-white';
 
 function Field({ label, required, hint, children }) {
   return (
     <label className="block">
-      <span className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-        {label}{required && <span className="text-[#9C7C1C]"> *</span>}
-      </span>
+      <div className="flex items-center justify-between mb-1">
+        <span className="block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+          {label}{required && <span className="text-[#9C7C1C]"> *</span>}
+        </span>
+        {hint && <span className="text-[10px] text-gray-400 font-normal">{hint}</span>}
+      </div>
       {children}
-      {hint && <span className="block text-[11px] text-gray-400 mt-1">{hint}</span>}
     </label>
-  );
-}
-
-function Fact({ Icon, label, value, sub }) {
-  return (
-    <div className="bg-[#0A1016] px-5 py-4">
-      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-[#D4AF37] mb-2">
-        <Icon size={12} /> {label}
-      </p>
-      <p className="font-heading text-lg leading-snug text-white">{value}</p>
-      <p className="text-xs text-white/50 mt-0.5">{sub}</p>
-    </div>
   );
 }
