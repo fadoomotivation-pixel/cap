@@ -14,20 +14,19 @@ bandwidth, and it tells a crawler the content is theirs, not ours.
 
 Aim for roughly 1600×1200 (4:3), WebP, under ~200 KB each.
 
-## Why this folder is empty (8 September 2026)
+## Permission (10 September 2026)
 
-It previously held seven photographs taken from mirrikh.com. Mirrikh Infratech's
-notice of that date requires the removal of any of their photographs,
-trademarks, logos or other material that Capital Brix is not authorised to use,
-so the files were deleted and the `image:` lines in `site.js` commented out.
-The cards fall back to generated art, which is why nothing looks broken.
+Mirrikh Infratech has given permission for their project images to be used on
+this website. The six photographs withdrawn under their notice of 8 September
+2026 are restored and live again.
 
-**Hosting them here does not make them ours.** Do not restore them from git
-history. Put a photo back only when it is one of these:
+`mayur-park-iii.webp` stays disabled, and permission does not change that: the
+file supplied for that slug carries the **MAYUR PARK-II** brand mark, not Park
+III. It is the wrong picture, not an unlicensed one. Ask Mirrikh for the
+correct Park III image, save it as `mayur-park-iii.webp`, and uncomment the
+`image:` line for that project in `src/data/site.js`.
 
-- a photograph Capital Brix took, or paid to have taken; or
-- a file Mirrikh Infratech has supplied to us in writing for website use.
-
-Ask for the written permission before the file goes back in the folder, and note
-which project it covers. Re-enabling is then one edit: uncomment the `image:`
-line for that project.
+The permission on record covers Mirrikh's **project images**. It is not a
+blanket licence for any other third party's material, and it does not cover
+Mirrikh's corporate history, vision, mission or timeline — those stay off
+`/about` per their notice.

@@ -21,8 +21,12 @@ export default function Hero() {
     // Two reasons to stay on the still image: the visitor asked their OS for
     // less motion, or they are on a metered connection with Save-Data set.
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const saveData = navigator.connection?.saveData;
-    if (reduced || saveData) return undefined;
+    const conn = navigator.connection;
+    // The full film is 5.6 MB. That is a fair price on wifi and an unfair one
+    // on a 2G/3G connection or with Save-Data set, where the poster is the
+    // whole hero and nothing looks broken.
+    const slow = conn?.saveData || /(^|-)([23]g)$/.test(conn?.effectiveType || '');
+    if (reduced || slow) return undefined;
     setShowVideo(true);
     return undefined;
   }, []);
@@ -38,12 +42,14 @@ export default function Hero() {
       const el = video.current;
       if (!el || cancelled || el.dataset.loaded) return;
       el.dataset.loaded = '1';
-      [['/media/dholera-aerial.webm', 'video/webm'],
-       ['/media/dholera-aerial.mp4', 'video/mp4']].forEach(([src, type]) => {
-        const source = document.createElement('source');
-        source.src = src; source.type = type;
-        el.appendChild(source);
-      });
+      // The whole 123-second film, not a clipped loop. It carries the film's
+      // own titles from about the 65-second mark, which is fine here because
+      // nothing of ours is laid over the picture any more — the headline sits
+      // on solid ground below it.
+      const source = document.createElement('source');
+      source.src = '/media/dholera-film.mp4';
+      source.type = 'video/mp4';
+      el.appendChild(source);
       el.load();
       // Rejection is fine and expected on some battery-saver settings — the
       // poster stays, which is a perfectly good hero.
@@ -75,7 +81,7 @@ export default function Hero() {
       <div className="pt-[68px] lg:pt-[76px]">
         <div className="relative w-full h-[42svh] sm:h-[52svh] lg:h-[64svh] overflow-hidden bg-[#141c26]">
           <img
-            src="/media/dholera-aerial-poster.jpg"
+            src="/media/dholera-film-poster.jpg"
             alt="Aerial view of completed roads and utility infrastructure in the Dholera SIR Activation Area"
             className="absolute inset-0 w-full h-full object-cover"
           />
