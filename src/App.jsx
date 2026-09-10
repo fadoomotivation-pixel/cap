@@ -5,6 +5,7 @@ import Seo from './components/Seo';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppFloat from './components/WhatsAppFloat';
+import ScrollToTop from './components/ScrollToTop';
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -47,6 +48,7 @@ const PrivateRoute = ({ title, children }) => (
 export function AppContent() {
   return (
     <>
+      <ScrollToTop />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

@@ -496,6 +496,29 @@ one the card renders generated art. The 10 Sep 2026 permission covers Mirrikh's
 is cleared just because a project photo is. Never point an `<img src>` at
 mirrikh.com again.
 
+## Scroll behaviour
+
+`src/components/ScrollToTop.jsx` runs inside the router and puts every new page
+at the top. React Router does not touch scroll on navigation, so before this
+existed, tapping an event from two-thirds down `/events` landed the visitor a
+quarter of the way into the sign-up page, and going Home from anywhere deep
+landed them around the virtual tour with no idea they were mid-page. Only
+`ProjectDetail` had noticed and fixed it locally for itself, which is why the
+bug survived everywhere else.
+
+Three cases, in this order: a **`#hash`** wins outright (checked first, because
+React Router reports the initial page load as POP and a shared `…#register`
+link would otherwise be swallowed); **POP** — back/forward — is left alone, so
+the browser's restored position survives; everything else goes to the top
+instantly, never smoothly.
+
+**A second cause of the same symptom** was `VirtualTourViewer`, which called
+`el.scrollIntoView({ block: 'nearest', inline: 'center' })` to centre the active
+landmark chip. That scrolls the *whole page*, and the tour sits below the fold —
+so every homepage load dragged the visitor down to it. It now moves the strip's
+own `scrollLeft` and skips the first run. **Never use `scrollIntoView` to move a
+horizontal strip.**
+
 ## Website leads
 
 `cb_leads` — every enquiry from the site. Before this existed, `ContactForm`

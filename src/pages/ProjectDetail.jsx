@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { projects, site } from '../data/site';
 import Seo from '../components/Seo';
@@ -34,7 +34,7 @@ export default function ProjectDetail() {
   const [openFaq, setOpenFaq] = useState(0);
   const project = projects.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === id);
 
-  useEffect(() => { window.scrollTo(0, 0); }, [id]);
+  // Scroll reset now lives in <ScrollToTop /> for every route, not just this one.
   if (!project) return <Navigate to="/projects" replace />;
 
   const wa = `https://wa.me/${site.phone}?text=${encodeURIComponent(
