@@ -127,9 +127,28 @@ export default function VirtualTourViewer({ className = '' }) {
 
   // Keep the active chip in view — on a phone the row is scrolled, and an
   // active pill off-screen is the same as no feedback at all.
+  //
+  // This used to call el.scrollIntoView({ block: 'nearest', inline: 'center' }),
+  // which scrolled the WHOLE PAGE: the tour sits below the fold, so on every
+  // single homepage load the browser smoothly dragged the visitor down to it,
+  // past the hero they had not read yet. `block: 'nearest'` does not save you
+  // when the element starts entirely outside the viewport.
+  //
+  // Scrolling the strip's own scrollLeft moves the strip and nothing else. The
+  // first run is skipped outright — the opening chip is already at the start,
+  // so there is nothing to bring into view and no reason to animate.
+  const chipsSettled = useRef(false);
   useEffect(() => {
-    const el = chips.current?.querySelector('[data-active="true"]');
-    el?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    const row = chips.current;
+    const el = row?.querySelector('[data-active="true"]');
+    if (!row || !el) return;
+
+    const left = el.offsetLeft - (row.clientWidth - el.clientWidth) / 2;
+    row.scrollTo({
+      left: Math.max(0, left),
+      behavior: chipsSettled.current ? 'smooth' : 'auto',
+    });
+    chipsSettled.current = true;
   }, [sceneId]);
 
   // Real fullscreen where the browser allows it, so mobile chrome gets out of
