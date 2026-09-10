@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   CalendarDays, MapPin, Ticket, Users, ArrowRight, Check, Phone,
-  MessageCircle, Loader2, Sparkles, ChevronDown, Navigation,
+  MessageCircle, Loader2, Sparkles, ChevronDown, Navigation, Tag,
 } from 'lucide-react';
 import Seo from '../components/Seo';
 import { getEvent } from '../data/eventDetails';
@@ -18,14 +18,14 @@ const INTERESTS = [
   { value: 'just-exploring', label: 'Just exploring' },
 ];
 
-/** Days / hours / minutes left, recomputed on a timer. Rendered only after
+/** Days / hours / minutes / seconds left, recomputed every second. Rendered only after
  *  mount — a countdown baked into prerendered HTML would ship a stale number
  *  and mismatch on hydration. */
 function useCountdown(dateIso) {
   const [now, setNow] = useState(null);
   useEffect(() => {
     setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 30000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
   return useMemo(() => {
@@ -36,6 +36,7 @@ function useCountdown(dateIso) {
       days: Math.floor(ms / 864e5),
       hours: Math.floor((ms % 864e5) / 36e5),
       mins: Math.floor((ms % 36e5) / 6e4),
+      secs: Math.floor((ms % 6e4) / 1000),
     };
   }, [now, dateIso]);
 }
@@ -182,14 +183,36 @@ export default function EventRegistration() {
             </div>
 
             {left && (
-              <div className="mt-10 flex items-end gap-3 text-white/60">
-                <span className="text-[11px] uppercase tracking-[0.2em] pb-1">Starts in</span>
-                {[[left.days, 'days'], [left.hours, 'hrs'], [left.mins, 'min']].map(([n, l]) => (
-                  <span key={l} className="flex items-baseline gap-1">
-                    <span className="font-heading text-3xl sm:text-4xl text-white tabular-nums">{n}</span>
-                    <span className="text-xs">{l}</span>
+              <div className="mt-10">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-[#D4AF37] font-semibold mb-3 flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                   </span>
-                ))}
+                  Closing soon · Seminar starts in:
+                </p>
+                <div className="inline-flex items-center gap-1.5 sm:gap-2.5 bg-white/[0.08] border border-white/15 backdrop-blur-md rounded-lg p-2 sm:p-2.5">
+                  {[
+                    [left.days, 'Days'],
+                    [left.hours, 'Hours'],
+                    [left.mins, 'Mins'],
+                    [left.secs, 'Secs'],
+                  ].map(([n, l], idx) => (
+                    <React.Fragment key={l}>
+                      {idx > 0 && (
+                        <span className="text-[#D4AF37]/60 font-mono font-bold text-lg sm:text-xl -mt-3.5 select-none">:</span>
+                      )}
+                      <div className="flex flex-col items-center bg-[#0A1016]/95 border border-white/10 rounded-md px-2.5 sm:px-3 py-1.5 min-w-[50px] sm:min-w-[58px]">
+                        <span className="font-heading text-xl sm:text-2xl lg:text-3xl text-white font-bold tabular-nums leading-tight">
+                          {String(n).padStart(2, '0')}
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] font-medium text-white/60 tracking-wider mt-0.5 uppercase">
+                          {l}
+                        </span>
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
@@ -303,7 +326,7 @@ export default function EventRegistration() {
                 {done ? 'You’re on the list' : 'Reserve your seat'}
               </h2>
               <p className="text-white/60 text-sm mt-1">
-                {done ? 'Keep this page — the details are below.' : 'Free · takes about 30 seconds'}
+                {done ? 'Keep this page — the details are below.' : 'VIP Pass · ₹0 (Standard ₹2,500 waived) · 30 seconds'}
               </p>
             </div>
 
@@ -402,13 +425,58 @@ export default function EventRegistration() {
                     placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
                 </Field>
 
-                <button
+                {/* Auto-applied coupon & pricing breakdown */}
+                <div className="rounded-lg border border-amber-200/80 bg-gradient-to-br from-[#FFFDF7] to-[#F7FBF9] p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 border-b border-gray-200/60 pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <Ticket size={15} className="text-[#9C7C1C]" />
+                      <span className="text-xs font-semibold text-[#10243E]">
+                        Delegate Fee {Number(form.guests) > 1 ? `(${form.guests} seats)` : ''}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs sm:text-sm line-through text-gray-400 font-semibold decoration-red-500/80">
+                        ₹{(2500 * (Number(form.guests) || 1)).toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-xl font-extrabold text-[#10243E] font-heading">
+                        ₹0
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs bg-emerald-50 border border-emerald-200/80 rounded-md px-2.5 py-1.5">
+                    <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
+                      <Tag size={13} className="text-emerald-600 shrink-0" />
+                      <span>Coupon <strong className="font-mono font-bold tracking-wide text-emerald-900 bg-emerald-100/80 px-1 py-0.5 rounded">CAPITALBRIX</strong> applied</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">100% OFF</span>
+                  </div>
+
+                  <p className="text-[10px] text-gray-500 leading-tight flex items-center gap-1">
+                    <Check size={12} className="text-emerald-600 shrink-0" />
+                    <span>Complimentary VIP pass sponsored by Capital Brix & Mirrikh Infratech.</span>
+                  </p>
+                </div>
+
+                <motion.button
                   type="submit" disabled={busy}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] font-bold py-3.5 rounded-sm transition-colors disabled:opacity-60"
+                  initial={{ x: 0 }}
+                  whileInView={reduce ? {} : {
+                    x: [0, -6, 6, -5, 5, -3, 3, -1, 1, 0],
+                    transition: {
+                      duration: 0.7,
+                      delay: 0.3,
+                      ease: 'easeInOut',
+                    }
+                  }}
+                  viewport={{ once: true, amount: 0.7 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] font-bold py-3.5 rounded-sm transition-colors shadow-md hover:shadow-lg disabled:opacity-60"
                 >
                   {busy ? <><Loader2 size={17} className="animate-spin" /> Holding your seat…</>
                         : <>Reserve my seat <ArrowRight size={17} /></>}
-                </button>
+                </motion.button>
 
                 <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
                   <Users size={13} className="shrink-0 mt-0.5" />
