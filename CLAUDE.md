@@ -55,6 +55,15 @@ strategic partner of Mirrikh Infratech. They are separate companies.
    Watch the *structure*, not just the sentence: a "Leadership" heading sitting
    under Mirrikh branding was itself the objection.
 
+### The footer — fixed 10 September 2026
+
+`src/components/Footer.jsx` carried **Mirrikh Group's own corporate boilerplate**
+("a diversified business conglomerate dedicated to creating enduring value…")
+directly under the Capital Brix logo and name, on every page of the site. No
+sentence there claimed a relationship; the *layout* did — which is the same
+structural objection as a "Leadership" heading under Mirrikh branding. It now
+describes Capital Brix and names who develops and who sells.
+
 ### Mirrikh's intellectual property
 
 Their corporate history, vision, mission, timeline, logos, trademarks,
@@ -355,6 +364,10 @@ and Capital Brix is still only an authorised sales channel partner).
   name to come off, delete the entry rather than rewording it. This is the one
   narrow exception to "never name Mirrikh Infratech's founder on the site": it
   applies to a jointly hosted event's own platform, not to marketing copy.
+- `invited_by` records who brought this person — free text, deliberately not a
+  dropdown of staff names, because a dropdown silently drops the existing
+  customer who referred a friend, which is the answer worth having. The console
+  rolls it up into "who is filling the hall", counting seats rather than rows.
 - HR console: `/admin/events` (admin-only, `noindex`), in `ADMIN_LINKS`.
 - RLS mirrors `cb_leads`: **anon may INSERT, only admins may SELECT/UPDATE.**
 - **`src/lib/eventRegistration.js` mints the row id client-side and does NOT

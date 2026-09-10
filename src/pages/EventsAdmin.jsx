@@ -110,10 +110,25 @@ export default function EventsAdmin() {
       if (eventSlug !== 'all' && r.event_slug !== eventSlug) return false;
       if (status !== 'all' && r.status !== status) return false;
       if (!q) return true;
-      return [r.full_name, r.phone, r.email, r.city, r.notes]
+      return [r.full_name, r.phone, r.email, r.city, r.invited_by, r.notes]
         .filter(Boolean).some((v) => String(v).toLowerCase().includes(q));
     });
   }, [rows, eventSlug, status, search]);
+
+  // Who is actually filling the hall. This is the reason the field exists —
+  // a list of names with no count next to them tells nobody anything.
+  const byInviter = useMemo(() => {
+    const m = new Map();
+    shown.forEach((r) => {
+      const k = (r.invited_by || '').trim();
+      if (!k) return;
+      const prev = m.get(k.toLowerCase()) || { label: k, people: 0, seats: 0 };
+      prev.people += 1;
+      prev.seats += r.guests || 1;
+      m.set(k.toLowerCase(), prev);
+    });
+    return [...m.values()].sort((a, b) => b.seats - a.seats).slice(0, 10);
+  }, [shown]);
 
   const stats = useMemo(() => ({
     people: shown.length,
@@ -191,6 +206,23 @@ export default function EventsAdmin() {
           <Stat icon={<CalendarDays size={20} />} label="Attended" value={stats.attended} />
         </div>
 
+        {byInviter.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+            <h2 className="font-bold text-[#10243E] flex items-center gap-2 mb-1">
+              <UserCheck size={17} className="text-[#f26522]" /> Who is filling the hall
+            </h2>
+            <p className="text-xs text-gray-500 mb-4">Seats brought in by each name people typed on the form.</p>
+            <div className="flex flex-wrap gap-2">
+              {byInviter.map((b) => (
+                <span key={b.label} className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600">
+                  {b.label} <strong className="text-[#10243E] ml-1">{b.seats}</strong>
+                  <span className="text-gray-400"> seat{b.seats === 1 ? '' : 's'}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex flex-wrap gap-3 justify-between items-center mb-5">
             <h2 className="text-xl font-semibold text-[#10243E]">{shown.length} registrations</h2>
@@ -207,14 +239,14 @@ export default function EventsAdmin() {
               </select>
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name / phone / city"
+                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name / phone / invited by"
                   className="pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#f26522] w-52" />
               </div>
               <button onClick={() => downloadCsv([
-                ['Registered', 'Event', 'Name', 'Phone', 'Email', 'City', 'Seats', 'Interest', 'Notes', 'Status', 'Confirmation sent'],
+                ['Registered', 'Event', 'Name', 'Phone', 'Email', 'City', 'Seats', 'Interest', 'Invited by', 'Notes', 'Status', 'Confirmation sent'],
                 ...shown.map((r) => [
                   format(new Date(r.created_at), 'yyyy-MM-dd HH:mm'), r.event_slug, r.full_name, r.phone,
-                  r.email, r.city, r.guests, r.interest, r.notes, r.status,
+                  r.email, r.city, r.guests, r.interest, r.invited_by, r.notes, r.status,
                   r.confirmation_sent_at ? format(new Date(r.confirmation_sent_at), 'yyyy-MM-dd HH:mm') : '',
                 ]),
               ], `event-registrations-${format(new Date(), 'yyyy-MM-dd')}.csv`)}
@@ -243,6 +275,11 @@ export default function EventsAdmin() {
                         </p>
                         <p className="text-sm text-gray-500">{r.phone} · {r.email}{r.city ? ` · ${r.city}` : ''}</p>
                         {r.interest && <p className="text-sm text-gray-600 mt-1">Looking at: {r.interest.replace('-', ' ')}</p>}
+                        {r.invited_by && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Invited by <strong className="text-[#10243E]">{r.invited_by}</strong>
+                          </p>
+                        )}
                         {r.notes && <p className="text-sm text-gray-600 mt-1">{r.notes}</p>}
                         <p className="text-xs text-gray-400 mt-2">
                           {format(new Date(r.created_at), 'd MMM yyyy, hh:mm a')}

@@ -52,6 +52,7 @@ export async function registerForEvent({
   city,
   guests = 1,
   interest,
+  invited_by,
   notes,
   source_path,
 }) {
@@ -76,6 +77,7 @@ export async function registerForEvent({
       city: (city || '').trim() || null,
       guests: Math.min(10, Math.max(1, Number(guests) || 1)),
       interest: interest || null,
+      invited_by: (invited_by || '').trim() || null,
       notes: (notes || '').trim() || null,
       source_path: source_path || (typeof window !== 'undefined' ? window.location.pathname : null),
     }]);

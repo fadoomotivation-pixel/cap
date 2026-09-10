@@ -48,7 +48,7 @@ export default function EventRegistration() {
   const left = useCountdown(ev?.date || '2099-01-01');
 
   const [form, setForm] = useState({
-    full_name: '', phone: '', email: '', city: '', guests: 1, interest: '', notes: '',
+    full_name: '', phone: '', email: '', city: '', guests: 1, interest: '', invited_by: '', notes: '',
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -391,6 +391,15 @@ export default function EventRegistration() {
                       );
                     })}
                   </div>
+                </Field>
+
+                {/* Free text, not a dropdown of staff names. The seminar is
+                    filled by the team AND by word of mouth, and a dropdown
+                    would silently drop the customer who referred a friend —
+                    which is exactly the answer worth having. */}
+                <Field label="Who invited you?" hint="Name of the person who told you about this event">
+                  <input value={form.invited_by} onChange={set('invited_by')}
+                    placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
                 </Field>
 
                 <button
