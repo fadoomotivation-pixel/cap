@@ -55,6 +55,15 @@ strategic partner of Mirrikh Infratech. They are separate companies.
    Watch the *structure*, not just the sentence: a "Leadership" heading sitting
    under Mirrikh branding was itself the objection.
 
+### The footer — fixed 10 September 2026
+
+`src/components/Footer.jsx` carried **Mirrikh Group's own corporate boilerplate**
+("a diversified business conglomerate dedicated to creating enduring value…")
+directly under the Capital Brix logo and name, on every page of the site. No
+sentence there claimed a relationship; the *layout* did — which is the same
+structural objection as a "Leadership" heading under Mirrikh branding. It now
+describes Capital Brix and names who develops and who sells.
+
 ### Mirrikh's intellectual property
 
 Their corporate history, vision, mission, timeline, logos, trademarks,
@@ -332,6 +341,71 @@ Cards tab; HR works it at `/admin/cards` through
   delivered. `admin_notes` is visible to the employee — it is how HR replies.
 - "Print spec" copies a plain-text batch of every approved/printing request,
   formatted for the printer, so one order covers everyone.
+
+## Event registrations
+
+`cb_event_registrations` — sign-ups for a live event. The first one is
+**"How to Create Wealth in Dholera?"**, Sunday 13 September 2026 at Club GH-01,
+E Block, Gaur City 1, Sector 4, Greater Noida, hosted jointly by **Mirrikh Group
+and Capital Brix LLP** (two separate companies co-hosting — never one entity,
+and Capital Brix is still only an authorised sales channel partner).
+
+- Public page: `/events/dholera-wealth-2026` (in the sitemap, so it prerenders).
+  Event facts live in `src/data/eventDetails.js` — one entry per slug, keyed by
+  the same `event_slug` written to the table, so a row can always be traced back
+  to which event it was for. The seminar runs **10:30 AM – 2:00 PM**.
+- **The speaker list is not a credibility claim.** `speakers` names who is on the
+  platform that day, which is a fact about the event and must never drift into a
+  statement about a corporate relationship. Jasvinder Singh is titled Founder &
+  CEO of **Capital Brix LLP** and is never placed under Mirrikh branding.
+  Rajeel Jangir is printed exactly as the joint poster prints him, "Founder &
+  Director", with **no company attributed to him by us** — we do not describe
+  anyone else's corporate position on their behalf. If the co-host asks for a
+  name to come off, delete the entry rather than rewording it. This is the one
+  narrow exception to "never name Mirrikh Infratech's founder on the site": it
+  applies to a jointly hosted event's own platform, not to marketing copy.
+- `invited_by` records who brought this person — free text, deliberately not a
+  dropdown of staff names, because a dropdown silently drops the existing
+  customer who referred a friend, which is the answer worth having. The console
+  rolls it up into "who is filling the hall", counting seats rather than rows.
+- HR console: `/admin/events` (admin-only, `noindex`), in `ADMIN_LINKS`.
+- RLS mirrors `cb_leads`: **anon may INSERT, only admins may SELECT/UPDATE.**
+- **`src/lib/eventRegistration.js` mints the row id client-side and does NOT
+  call `.select()` after the insert.** `RETURNING` needs a SELECT policy, and
+  anon deliberately has none — an `.insert().select('id')` here fails every real
+  registration even though the insert itself is allowed. Verified against the
+  live policies, not assumed.
+- A unique index on `(event_slug, lower(email))` stops a double-tap creating two
+  seats. The client reads `23505` as "your seat is already held", not an error.
+- Confirmation email: the **`event-confirmation` Edge Function** (source in
+  `supabase/functions/`). It takes only a row id — never an address from the
+  browser — refuses to send twice, and returns `{ sent: false }` instead of
+  failing when `RESEND_API_KEY` is unset, because the registration is already
+  saved by then and a missing mail provider must not look like a failed sign-up.
+  `resend: true` bypasses the once-only rule and therefore requires an admin JWT.
+- **Mail provider — Zoho by default.** Capital Brix already owns
+  `hr@capitalbrix.co.in`, so the function sends over SMTP when `SMTP_PASSWORD`
+  is set (Zoho needs an **app-specific password**, not the login password;
+  `SMTP_HOST`/`SMTP_PORT` default to `smtp.zoho.in`/`465`, `SMTP_USER` to
+  `hr@capitalbrix.co.in`). `RESEND_API_KEY` is the alternative; SMTP wins if
+  both are set. With neither, registrations still save and the page falls back
+  to "our team will confirm on WhatsApp". Setup steps are in
+  `supabase/functions/README.md`.
+
+### Past events
+
+`src/data/events.js` is the archive rendered on `/events`. It was scraped: 31
+rows, one titled "1", eight identical "India / 2024" placeholders, Dehradun
+listed twice for the same day, two misspellings. It is now 18 rows we can name a
+place and a date for, each with a `sort` key because "2024" and "29 Dec 2024"
+cannot be compared as text.
+
+**Photographs:** drop the file in `public/events/` and set
+`image: '/events/<file>.webp'` — same convention as `public/projects/`. Without
+one the card renders generated art. The 10 Sep 2026 permission covers Mirrikh's
+**project images only**, not event photographs, so do not assume an event photo
+is cleared just because a project photo is. Never point an `<img src>` at
+mirrikh.com again.
 
 ## Website leads
 

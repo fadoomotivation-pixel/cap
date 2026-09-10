@@ -39,8 +39,21 @@ export default function Footer() {
                 <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-1">Sales Channel Partner</span>
               </span>
             </div>
+            {/* This block sits directly under the Capital Brix logo and name,
+                on every page of the site. It carried MIRRIKH GROUP's corporate
+                boilerplate — "a diversified business conglomerate dedicated to
+                creating enduring value…" — which is another company describing
+                itself, presented here as ours.
+
+                That is the structural version of exactly what the 8 Sep 2026
+                notice objected to: not a sentence claiming a relationship, but
+                a layout that implies one. See "The Mirrikh relationship" in
+                CLAUDE.md before touching this paragraph. It describes Capital
+                Brix, and it names who develops and who sells. */}
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Mirrikh Group is a diversified business conglomerate dedicated to creating enduring value, fostering growth, and elevating lifestyles.
+              Capital Brix LLP sells NA-approved, title-clear plots in Dholera SIR
+              as an authorised sales channel partner for Mirrikh Infratech Pvt.
+              Ltd., who develop them. We work out of Sector 136, Noida.
             </p>
             <div className="flex items-center gap-3">
               {socials.map((s) => (
