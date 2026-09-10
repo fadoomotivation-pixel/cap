@@ -65,11 +65,14 @@ photographs and project material may be used **only as authorised in writing**.
   It is now Capital Brix's own page. **Do not put Mirrikh's corporate history
   back on it.** What remains is one short, clearly attributed block naming the
   developer.
-- `public/projects/*.webp` held seven photographs taken from mirrikh.com. They
-  were deleted and every `image:` line in `site.js` commented out; cards fall
-  back to generated art. **Do not restore them from git history** — see
-  `public/projects/README.md` for the two conditions under which a photo may go
-  back.
+- `public/projects/*.webp` — the seven project photographs were withdrawn under
+  the notice and **restored on 10 September 2026, once Mirrikh gave permission
+  for their project images to be used on the site.** Six are live.
+  `mayur-park-iii.webp` stays off because that file is the MAYUR PARK-II brand
+  mark, not Park III — the wrong picture, which permission does not fix.
+  That permission covers **Mirrikh's project images only**. It is not a blanket
+  licence for other third parties, and it does not cover their corporate
+  history, vision, mission or timeline — those stay off `/about`.
 - Never scrape mirrikh.com. This already caused the empty-boxes incident on the
   homepage and now an IP objection.
 
