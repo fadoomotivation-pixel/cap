@@ -424,6 +424,22 @@ and Capital Brix is still only an authorised sales channel partner).
   `interest` column stays for existing rows and the console still shows it, but
   nothing writes it. The form must also not promise "Instant confirmation" while
   no mail provider is configured.
+- **The page is ordered as a funnel, not as a brochure.** Headline → countdown
+  → form → details. Date, venue and fee are the *reassurance* layer and sit
+  **below the Reserve my seat button**, for the reader who has already decided
+  to act and wants one last check. Above the form they are three more chances
+  to decide no, so do not move them back up. The tagline was removed from the
+  hero for the same reason — it delayed the clock.
+- **One registration is one seat.** No seat picker: it is a micro-decision on
+  the way to the button and a second way for the hall count to be wrong.
+  Someone bringing a guest registers them separately, which is also how we get
+  that guest's name and number. `guests` is written as 1.
+- **"Who invited you?" is required.** Every seat should be attributable to
+  whoever brought that person — it is how the team gets credit and how we know
+  which channel filled the room. Left optional it was simply skipped. Enforced
+  on the form and again in `src/lib/eventRegistration.js`; deliberately **not**
+  a NOT NULL on the column, because rows registered before this rule would fail
+  it. Still free text, never a dropdown of staff names.
 - **The hero keeps its boxes.** A weightless, Apple-style pass — no borders,
   huge type, one plain line of facts — was built and rejected by the owner: it
   read as a poster rather than as an event you can sign up to. The boxed facts
