@@ -344,8 +344,17 @@ and Capital Brix is still only an authorised sales channel partner).
 - Public page: `/events/dholera-wealth-2026` (in the sitemap, so it prerenders).
   Event facts live in `src/data/eventDetails.js` — one entry per slug, keyed by
   the same `event_slug` written to the table, so a row can always be traced back
-  to which event it was for. `time` is null until the organisers confirm it and
-  the page prints "Timing confirmed on WhatsApp" rather than guessing.
+  to which event it was for. The seminar runs **10:30 AM – 2:00 PM**.
+- **The speaker list is not a credibility claim.** `speakers` names who is on the
+  platform that day, which is a fact about the event and must never drift into a
+  statement about a corporate relationship. Jasvinder Singh is titled Founder &
+  CEO of **Capital Brix LLP** and is never placed under Mirrikh branding.
+  Rajeel Jangir is printed exactly as the joint poster prints him, "Founder &
+  Director", with **no company attributed to him by us** — we do not describe
+  anyone else's corporate position on their behalf. If the co-host asks for a
+  name to come off, delete the entry rather than rewording it. This is the one
+  narrow exception to "never name Mirrikh Infratech's founder on the site": it
+  applies to a jointly hosted event's own platform, not to marketing copy.
 - HR console: `/admin/events` (admin-only, `noindex`), in `ADMIN_LINKS`.
 - RLS mirrors `cb_leads`: **anon may INSERT, only admins may SELECT/UPDATE.**
 - **`src/lib/eventRegistration.js` mints the row id client-side and does NOT
@@ -361,8 +370,29 @@ and Capital Brix is still only an authorised sales channel partner).
   failing when `RESEND_API_KEY` is unset, because the registration is already
   saved by then and a missing mail provider must not look like a failed sign-up.
   `resend: true` bypasses the once-only rule and therefore requires an admin JWT.
-  **Needs the Supabase secrets `RESEND_API_KEY` and optionally
-  `EVENT_FROM_EMAIL`** or no confirmation mail is sent at all.
+- **Mail provider — Zoho by default.** Capital Brix already owns
+  `hr@capitalbrix.co.in`, so the function sends over SMTP when `SMTP_PASSWORD`
+  is set (Zoho needs an **app-specific password**, not the login password;
+  `SMTP_HOST`/`SMTP_PORT` default to `smtp.zoho.in`/`465`, `SMTP_USER` to
+  `hr@capitalbrix.co.in`). `RESEND_API_KEY` is the alternative; SMTP wins if
+  both are set. With neither, registrations still save and the page falls back
+  to "our team will confirm on WhatsApp". Setup steps are in
+  `supabase/functions/README.md`.
+
+### Past events
+
+`src/data/events.js` is the archive rendered on `/events`. It was scraped: 31
+rows, one titled "1", eight identical "India / 2024" placeholders, Dehradun
+listed twice for the same day, two misspellings. It is now 18 rows we can name a
+place and a date for, each with a `sort` key because "2024" and "29 Dec 2024"
+cannot be compared as text.
+
+**Photographs:** drop the file in `public/events/` and set
+`image: '/events/<file>.webp'` — same convention as `public/projects/`. Without
+one the card renders generated art. The 10 Sep 2026 permission covers Mirrikh's
+**project images only**, not event photographs, so do not assume an event photo
+is cleared just because a project photo is. Never point an `<img src>` at
+mirrikh.com again.
 
 ## Website leads
 

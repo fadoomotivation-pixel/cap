@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { events } from '../data/events';
 import { Link } from 'react-router-dom';
@@ -8,15 +8,23 @@ import Seo from '../components/Seo';
 import BlogArt from '../components/BlogArt';
 import { pageSeo } from '../lib/seo';
 
+const TONES = ['navy', 'gold', 'teal', 'indigo', 'green', 'violet'];
+
 export default function Events() {
   const [currentPage, setCurrentPage] = useState(1);
-  const eventsPerPage = 10;
+  const eventsPerPage = 12;
   
-  const totalPages = Math.ceil(events.length / eventsPerPage);
-  
+  // Newest first. `sort` exists precisely because "2024" and "29 Dec 2024"
+  // cannot be compared as text.
+  const ordered = useMemo(
+    () => [...events].sort((a, b) => (b.sort || '').localeCompare(a.sort || '')),
+    []
+  );
+
+  const totalPages = Math.ceil(ordered.length / eventsPerPage);
   const indexOfLastEvent = currentPage * eventsPerPage;
   const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
-  const currentEvents = events.slice(indexOfFirstEvent, indexOfLastEvent);
+  const currentEvents = ordered.slice(indexOfFirstEvent, indexOfLastEvent);
 
   const paginate = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -45,31 +53,57 @@ export default function Events() {
             ones and nobody signs up. */}
         <UpcomingEvent />
 
-        <div className="flex flex-col gap-12">
+        <div className="flex items-end justify-between gap-4 border-b border-gray-200 pb-4 mb-8">
+          <div>
+            <p className="text-[#9C7C1C] font-semibold tracking-[0.2em] uppercase text-xs mb-1.5">Archive</p>
+            <h2 className="font-heading text-2xl sm:text-3xl text-[#10243E] leading-tight">Where we have been</h2>
+          </div>
+          <p className="text-sm text-gray-400 shrink-0">{events.length} events</p>
+        </div>
+
+        {/* A grid, not a stack. Eighteen full-width banners was 9,000px of
+            scrolling to read eighteen place names. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
           {currentEvents.map((event, i) => (
-            <motion.div 
-              key={`${currentPage}-${i}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="w-full"
+            <motion.article
+              key={`${currentPage}-${event.title}-${event.date}-${i}`}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.5, delay: (i % 3) * 0.07 }}
             >
-              <div className="w-full relative shadow-sm border border-gray-100 hover:shadow-lg transition-all group overflow-hidden bg-white">
-                {/* The banners here were hotlinked from mirrikh.com — their
-                    images on their bandwidth, and material we are not
-                    authorised to use. Generated art until Capital Brix has
-                    photographs of its own. */}
-                <BlogArt
-                  tone="navy"
-                  label={`${event.title || 'Event'}${event.location ? ` · ${event.location}` : ''}`}
-                  seed={indexOfFirstEvent + i}
-                  className="w-full aspect-[16/7]"
-                />
+              {/* A photograph when we host one ourselves, generated art
+                  otherwise. Never an <img src> pointing at someone else's
+                  server — that is what left seven empty boxes on the homepage
+                  and drew an IP objection. */}
+              <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-[#0A1016] border border-gray-100">
+                {event.image ? (
+                  <img
+                    src={event.image}
+                    alt={`${event.title}${event.location ? ` in ${event.location}` : ''}, ${event.date}`}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <BlogArt
+                    tone={TONES[(indexOfFirstEvent + i) % TONES.length]}
+                    label={`${event.title}${event.location ? ` · ${event.location}` : ''}`}
+                    seed={indexOfFirstEvent + i}
+                    className="absolute inset-0 w-full h-full"
+                  />
+                )}
+                <span className="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-[0.14em] px-2.5 py-1 rounded-sm bg-[#0A1016]/85 text-white backdrop-blur-sm">
+                  {event.date}
+                </span>
               </div>
-              {event.title && (
-                <p className="text-center text-sm font-semibold text-gray-500 mt-3">{event.title}</p>
+
+              <h3 className="font-heading text-lg text-[#10243E] leading-snug mt-3">{event.title}</h3>
+              {event.location && (
+                <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
+                  <MapPin size={13} className="text-[#9C7C1C] shrink-0" /> {event.location}
+                </p>
               )}
-            </motion.div>
+            </motion.article>
           ))}
         </div>
 

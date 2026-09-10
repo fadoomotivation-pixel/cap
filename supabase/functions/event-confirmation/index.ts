@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 // ─────────────────────────────────────────────────────────────
 // Sends the confirmation email for an event registration and stamps
@@ -18,9 +19,20 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // email is on ADMIN_EMAILS, which is what the /admin/events console sends.
 // Keep this list in step with src/lib/admin.js and the SQL policies.
 //
-// If RESEND_API_KEY is not configured it returns { sent: false } rather than
-// failing. The registration is already saved by then; a missing mail provider
-// must never look to the visitor like a failed sign-up.
+// ── How the mail actually goes out ───────────────────────────────────────────
+// Two providers, tried in this order:
+//
+//   1. SMTP, when SMTP_PASSWORD is set. This is the Zoho path: Capital Brix
+//      already owns hr@capitalbrix.co.in, so the confirmation goes out from the
+//      real company address with no third-party signup and no domain to verify.
+//      Zoho does NOT accept the account login password over SMTP — it needs an
+//      app-specific password generated under Zoho Accounts › Security.
+//      Defaults are Zoho India (smtp.zoho.in:465, implicit TLS).
+//   2. Resend, when RESEND_API_KEY is set instead.
+//
+// If neither is configured it returns { sent: false } rather than failing. The
+// registration is already saved by then; a missing mail provider must never
+// look to the visitor like a failed sign-up.
 // ─────────────────────────────────────────────────────────────
 
 const ADMIN_EMAILS = [
@@ -43,11 +55,12 @@ const esc = (s: string) =>
 // sent once and cannot be corrected afterwards, so the copy that goes out is
 // pinned in the function rather than taken from whatever the caller passes.
 const EVENTS: Record<string, {
-  title: string; dateLabel: string; venueLines: string[]; subject: string;
+  title: string; dateLabel: string; time: string; venueLines: string[]; subject: string;
 }> = {
   "dholera-wealth-2026": {
     title: "How to Create Wealth in Dholera",
     dateLabel: "Sunday, 13 September 2026",
+    time: "10:30 AM \u2013 2:00 PM",
     venueLines: [
       "The Gaurs Sarovar Premiere",
       "Club GH-01, E Block, Gaur City 1, Sector 4",
@@ -94,11 +107,15 @@ Deno.serve(async (req) => {
 
     const ev = EVENTS[reg.event_slug] ?? EVENTS["dholera-wealth-2026"];
 
+    const smtpPass = Deno.env.get("SMTP_PASSWORD");
+    const smtpUser = Deno.env.get("SMTP_USER") ?? "hr@capitalbrix.co.in";
     const key = Deno.env.get("RESEND_API_KEY");
-    const from = Deno.env.get("EVENT_FROM_EMAIL") ?? "Capital Brix <onboarding@resend.dev>";
-    if (!key) {
+    const from = Deno.env.get("EVENT_FROM_EMAIL") ??
+      (smtpPass ? `Capital Brix <${smtpUser}>` : "Capital Brix <onboarding@resend.dev>");
+
+    if (!smtpPass && !key) {
       // Registration stands; only the email is missing.
-      return json({ sent: false, reason: "RESEND_API_KEY not configured" });
+      return json({ sent: false, reason: "No mail provider configured — set SMTP_PASSWORD (Zoho) or RESEND_API_KEY" });
     }
 
     const name = esc(reg.full_name);
@@ -118,6 +135,7 @@ Deno.serve(async (req) => {
        <table role="presentation" width="100%" style="border:1px solid #E6EAF0;border-radius:8px;padding:16px 18px;margin:0 0 18px">
          <tr><td style="font-size:14px;line-height:1.7">
            <strong style="color:#10243E">${esc(ev.dateLabel)}</strong><br/>
+           <strong style="color:#10243E">${esc(ev.time)}</strong><br/>
            ${ev.venueLines.map(esc).join("<br/>")}
          </td></tr>
        </table>
@@ -134,16 +152,40 @@ Deno.serve(async (req) => {
    </td></tr>
   </table></body></html>`;
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [reg.email], subject: ev.subject, html }),
-    });
+    if (smtpPass) {
+      const client = new SMTPClient({
+        connection: {
+          hostname: Deno.env.get("SMTP_HOST") ?? "smtp.zoho.in",
+          port: Number(Deno.env.get("SMTP_PORT") ?? 465),
+          tls: true,
+          auth: { username: smtpUser, password: smtpPass },
+        },
+      });
+      try {
+        // "auto" makes denomailer derive a plain-text alternative from the HTML,
+        // so the message is multipart and does not look like a bare HTML blob
+        // to spam filters.
+        await client.send({ from, to: reg.email, subject: ev.subject, html, content: "auto" });
+      } catch (e) {
+        // Deliberately not a 500: the caller's registration succeeded.
+        return json({ sent: false, reason: `smtp: ${String(e).slice(0, 200)}` });
+      } finally {
+        // Zoho drops the connection itself if we do not; closing failures are
+        // not the caller's problem once the message is accepted.
+        try { await client.close(); } catch { /* ignore */ }
+      }
+    } else {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to: [reg.email], subject: ev.subject, html }),
+      });
 
-    if (!res.ok) {
-      const detail = await res.text();
-      // Deliberately not a 500: the caller's registration succeeded.
-      return json({ sent: false, reason: `provider ${res.status}`, detail: detail.slice(0, 300) });
+      if (!res.ok) {
+        const detail = await res.text();
+        // Deliberately not a 500: the caller's registration succeeded.
+        return json({ sent: false, reason: `provider ${res.status}`, detail: detail.slice(0, 300) });
+      }
     }
 
     await admin

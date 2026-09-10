@@ -94,6 +94,9 @@ export default function EventRegistration() {
       address: { '@type': 'PostalAddress', streetAddress: ev.venueFull, addressCountry: 'IN' },
     },
     organizer: ev.hosts.map((h) => ({ '@type': 'Organization', name: h })),
+    ...(ev.speakers?.length
+      ? { performer: ev.speakers.map((sp) => ({ '@type': 'Person', name: sp.name, jobTitle: sp.role })) }
+      : {}),
     offers: {
       '@type': 'Offer',
       price: '0', priceCurrency: 'INR',
@@ -235,6 +238,31 @@ export default function EventRegistration() {
               </motion.li>
             ))}
           </ol>
+
+          {/* Who is on the platform that day. Each person is titled exactly as
+              src/data/eventDetails.js has them — read the note there before
+              editing either name or role. */}
+          {ev.speakers?.length > 0 && (
+            <div className="mt-12">
+              <p className="text-[#9C7C1C] font-semibold tracking-[0.2em] uppercase text-xs mb-3">On the platform</p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {ev.speakers.map((sp) => (
+                  <div key={sp.name} className="flex items-center gap-4 border border-gray-200 rounded-lg p-4">
+                    <span
+                      aria-hidden
+                      className="shrink-0 w-12 h-12 rounded-full bg-[#10243E] text-[#D4AF37] font-heading text-base flex items-center justify-center"
+                    >
+                      {sp.name.split(' ').map((w) => w[0]).join('').slice(0, 2)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-heading text-lg text-[#10243E] leading-tight">{sp.name}</p>
+                      <p className="text-sm text-gray-500 leading-snug">{sp.role}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-12 border border-gray-200 rounded-lg p-6 bg-gray-50">
             <h3 className="font-heading text-lg text-[#10243E] mb-1 flex items-center gap-2">

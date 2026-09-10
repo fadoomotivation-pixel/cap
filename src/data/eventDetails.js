@@ -7,9 +7,14 @@
  * next one.
  *
  * ── Editing checklist ──────────────────────────────────────────────────────
- * `time`      is null until the organisers confirm it. The page prints
- *             "Timing confirmed on WhatsApp" while it is null rather than
- *             guessing — a wrong time on a live invite is worse than none.
+ * `time`      may be null. The page prints "Timing confirmed on WhatsApp"
+ *             while it is, rather than guessing — a wrong time on a live
+ *             invite is worse than none.
+ * `speakers`  is the platform for this event only. Jasvinder Singh is Founder
+ *             & CEO of Capital Brix LLP and of nothing else; anyone from the
+ *             co-host is listed exactly as the joint poster prints them, with
+ *             no company attributed to them by us. See the note on the array
+ *             itself before editing it.
  * Adding an event: give it a slug, add the route to src/App.jsx AND to
  * public/sitemap.xml (routes come from the sitemap, so a page missing there is
  * never prerendered and a crawler sees an empty div).
@@ -29,7 +34,7 @@ export const events = {
     tagline: 'A free investor seminar on India’s first greenfield smart city',
     date: '2026-09-13',
     dateLabel: 'Sunday, 13 September 2026',
-    time: null,
+    time: '10:30 AM – 2:00 PM',
     venue: 'Club GH-01, E Block, Gaur City 1, Sector 4',
     venueFull:
       'The Gaurs Sarovar Premiere, Club GH-01, E Block, Gaur City 1, Sector 4, Noida Extension, Greater Noida, Uttar Pradesh 201309',
@@ -37,6 +42,26 @@ export const events = {
     hosts: ['Mirrikh Group', 'Capital Brix LLP'],
     price: 'Free entry · registration required',
     seats: 'Limited seats',
+
+    // ── Speaking ────────────────────────────────────────────────────────
+    // A speaker list for a jointly hosted event is a statement about who is on
+    // the platform that day. It is NOT a credibility claim about a corporate
+    // relationship, which is what Mirrikh's notice of 8 Sep 2026 was about, and
+    // it must never become one:
+    //
+    //   • Jasvinder Singh is titled Founder & CEO of Capital Brix LLP — our own
+    //     leadership, always nameable, and never placed under Mirrikh branding
+    //     or implied to hold any role there.
+    //   • Rajeel Jangir is printed exactly as the joint poster prints him,
+    //     "Founder & Director", with NO company attributed to him by us. We do
+    //     not describe anyone else's corporate position on their behalf.
+    //
+    // Keep the written approval of the joint poster on file. If the co-host
+    // ever asks for a name to come off, delete the entry — do not reword it.
+    speakers: [
+      { name: 'Jasvinder Singh', role: 'Founder & CEO, Capital Brix LLP' },
+      { name: 'Rajeel Jangir', role: 'Founder & Director' },
+    ],
 
     // What someone actually gets for giving up a Saturday. Every line here is
     // something the seminar covers — nothing about pricing policy, discounts
@@ -72,6 +97,10 @@ export const events = {
       {
         q: 'Do I have to buy anything?',
         a: 'No. It is an information seminar. If you want to see the land afterwards, the team will arrange a site visit — that is your choice, not a condition of attending.',
+      },
+      {
+        q: 'What time should I reach?',
+        a: 'The seminar runs from 10:30 AM to 2:00 PM. Come a few minutes early so registration at the desk does not eat into the session.',
       },
       {
         q: 'Can I bring my family?',
