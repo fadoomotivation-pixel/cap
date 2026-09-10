@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
    <tr><td align="center">
     <table role="presentation" width="100%" style="max-width:560px;background:#fff;border-radius:10px;overflow:hidden">
      <tr><td style="background:#0A1016;padding:26px 28px">
-       <p style="margin:0;color:#D4AF37;font-size:11px;letter-spacing:.18em;text-transform:uppercase">Free investor seminar</p>
+       <p style="margin:0;color:#D4AF37;font-size:11px;letter-spacing:.18em;text-transform:uppercase">Investor seminar</p>
        <h1 style="margin:8px 0 0;color:#fff;font-size:23px;line-height:1.25">You're registered.</h1>
      </td></tr>
      <tr><td style="padding:26px 28px;color:#334155;font-size:15px;line-height:1.65">
@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
            ${ev.venueLines.map(esc).join("<br/>")}
          </td></tr>
        </table>
-       <p style="margin:0 0 18px">Please carry a photo ID. Entry is free, and there is no obligation to buy anything on the day.</p>
+       <p style="margin:0 0 18px">Please carry a photo ID. The ₹2,500 delegate fee has been waived on your online registration, so there is nothing to pay on the day and no obligation to buy anything.</p>
        <p style="margin:0 0 6px">Questions, or need to change your booking?</p>
        <p style="margin:0 0 22px"><a href="https://wa.me/917048917300" style="color:#9C7C1C">WhatsApp +91 70489 17300</a></p>
        <p style="margin:0;color:#64748B;font-size:13px">See you there,<br/>Capital Brix LLP</p>

@@ -31,7 +31,7 @@ export const events = {
   'dholera-wealth-2026': {
     slug: 'dholera-wealth-2026',
     title: 'How to Create Wealth in Dholera?',
-    tagline: 'A free investor seminar on India’s first greenfield smart city',
+    tagline: 'An investor seminar on India’s first greenfield smart city — free when you register online',
     date: '2026-09-13',
     dateLabel: 'Sunday, 13 September 2026',
     time: '10:30 AM – 2:00 PM',
@@ -40,7 +40,28 @@ export const events = {
       'The Gaurs Sarovar Premiere, Club GH-01, E Block, Gaur City 1, Sector 4, Noida Extension, Greater Noida, Uttar Pradesh 201309',
     mapsUrl: 'https://maps.google.com/?q=Gaur+City+1+Club+GH-01+Sector+4+Noida+Extension+Greater+Noida',
     hosts: ['Mirrikh Group', 'Capital Brix LLP'],
-    price: 'Free entry · registration required',
+    // ── The delegate fee ────────────────────────────────────────────────
+    // ₹2,500 per seat is the seminar's stated delegate fee, set by the owner on
+    // 10 September 2026, and it is waived for anyone who registers online
+    // before the day.
+    //
+    // The number lives here, once, because the moment it is shown struck
+    // through it stops being decoration and becomes a price claim. Two things
+    // therefore have to stay true, and only the business can keep them true:
+    //
+    //   1. ₹2,500 must be the fee actually charged to anyone who does NOT
+    //      register online — a walk-in at the door. If nobody is ever asked for
+    //      it, it is a reference price that does not exist, and showing a
+    //      saving against it is a misleading price claim under the Consumer
+    //      Protection Act. That is why the earlier version of this was removed.
+    //   2. The waiver must be stated as a condition, not implied. The page says
+    //      "waived when you register online", never "was ₹2,500" on its own.
+    //
+    // If the fee is dropped, set `delegateFee: null` and the whole strike-through
+    // disappears on its own. Do not leave the number here as decoration.
+    delegateFee: 2500,
+    delegateFeeNote: 'Waived when you register online before the day',
+    price: 'Delegate fee ₹2,500 · waived on online registration',
     seats: 'Limited seats',
 
     // ── Speaking ────────────────────────────────────────────────────────
@@ -92,7 +113,7 @@ export const events = {
     faqs: [
       {
         q: 'Is there any charge to attend?',
-        a: 'No. Entry is free, but seats are limited and allocated by registration, so please register before you travel.',
+        a: 'The seminar carries a ₹2,500 delegate fee per seat, and it is waived in full when you register online before the day — so your seat costs you nothing. The fee applies to walk-ins arriving without a registration. Seats are limited and allocated by registration, so please register before you travel.',
       },
       {
         q: 'Do I have to buy anything?',

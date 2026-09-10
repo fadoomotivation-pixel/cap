@@ -70,16 +70,15 @@ export default function EventRegistration() {
   }
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const [showMore, setShowMore] = useState(false);
 
-  // The honest version of a coupon.
+  // The seminar carries a ₹2,500 delegate fee, waived for online registrations
+  // (see src/data/eventDetails.js — the fee is declared there once, and it has
+  // to be the fee walk-ins are genuinely asked for, or the strike-through is a
+  // price claim with nothing behind it).
   //
-  // Entry is free, so there is no discount to give and no saving to advertise —
-  // that is exactly what got the invented ₹2,500 "delegate fee" removed. But a
-  // code can still do two real things, and both are things HR can act on:
-  // it flags the seat as priority in /admin/events so someone actually holds
-  // one, and it records which handout, poster or WhatsApp forward brought the
-  // person in. Nothing here promises money off.
+  // On top of the waiver a code does two further things HR can act on: it flags
+  // the seat as priority in /admin/events so someone actually holds one, and it
+  // records which handout, poster or WhatsApp forward brought the person in.
   const PRIORITY_CODES = ['CAPITALBRIX', 'DHOLERA2026'];
   const codeEntered = form.invite_code.trim().toUpperCase();
   const codeValid = PRIORITY_CODES.includes(codeEntered);
@@ -130,11 +129,19 @@ export default function EventRegistration() {
     ...(ev.speakers?.length
       ? { performer: ev.speakers.map((sp) => ({ '@type': 'Person', name: sp.name, jobTitle: sp.role })) }
       : {}),
+    // The offer has to match what the page says. The seat costs ₹0 when booked
+    // here — that is the price of THIS offer — and the delegate fee is named
+    // separately in the description rather than smuggled in as a fake
+    // highPrice, which would be a price claim in structured data.
     offers: {
       '@type': 'Offer',
       price: '0', priceCurrency: 'INR',
       availability: 'https://schema.org/InStock',
+      validFrom: '2026-09-10',
       url: absoluteUrl(`/events/${ev.slug}`),
+      description: ev.delegateFee
+        ? `Delegate fee ₹${ev.delegateFee.toLocaleString('en-IN')} per seat, waived on online registration.`
+        : 'Free entry.',
     },
     url: absoluteUrl(`/events/${ev.slug}`),
   };
@@ -143,7 +150,7 @@ export default function EventRegistration() {
     <div className="font-outfit bg-white">
       <Seo
         title={`${ev.title} | Free Seminar, 13 Sept 2026, Greater Noida`}
-        description={`${ev.tagline}. ${ev.dateLabel} at ${ev.venue}, Greater Noida. Hosted by Mirrikh Group and Capital Brix LLP. Free entry, limited seats — register online.`}
+        description={`${ev.tagline}. ${ev.dateLabel} at ${ev.venue}, Greater Noida. Hosted by Mirrikh Group and Capital Brix LLP. ₹2,500 delegate fee waived on online registration — limited seats.`}
         path={`/events/${ev.slug}`}
         jsonLd={jsonLd}
       />
@@ -178,7 +185,7 @@ export default function EventRegistration() {
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
             <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] border border-[#D4AF37]/35 rounded-full px-3 py-1 mb-4">
-              <Sparkles size={12} /> Free investor seminar
+              <Sparkles size={12} /> Investor seminar · free online
             </div>
 
             <h1
@@ -203,7 +210,10 @@ export default function EventRegistration() {
               </span>
               <span className="hidden sm:inline text-white/30">·</span>
               <span className="flex items-center gap-1.5">
-                <Ticket size={13} className="text-[#D4AF37]" /> Free VIP Entry ({ev.seats})
+                <Ticket size={13} className="text-[#D4AF37]" />{' '}
+                {ev.delegateFee
+                  ? <>₹{ev.delegateFee.toLocaleString('en-IN')} delegate fee, waived online · {ev.seats}</>
+                  : <>Free entry · {ev.seats}</>}
               </span>
             </div>
 
@@ -248,13 +258,11 @@ export default function EventRegistration() {
       {/* ── The Sign-up Form (Directly below hero, compact 1-screen fit) ──── */}
       <section id="register" ref={formRef} className="relative z-10 -mt-6 sm:-mt-8 max-w-2xl mx-auto px-4">
         <div className="rounded-xl border border-gray-200 shadow-[0_15px_45px_-20px_rgba(16,36,62,0.35)] overflow-hidden bg-white">
-          {/* Header. The gold coupon chip is Antigravity's and it works — a
-              code that is already applied reads as a small win before anyone
-              has typed anything. What is NOT here is the "(Was ₹2,500)" it used
-              to carry: no delegate fee was ever charged, so that saving was
-              measured against a number that never existed, which is a
-              misleading price claim. The chip keeps the coupon language and
-              drops the invented price. */}
+          {/* Header. The applied-coupon chip is Antigravity's and it works — a
+              code already applied reads as a small win before anyone has typed
+              anything. It says "₹0 today" rather than "was ₹2,500": the fee is
+              real and named in full in the card below, with the condition that
+              makes the waiver true, which a bare "was" would not carry. */}
           <div className="bg-[#10243E] text-white px-5 py-3.5 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 className="font-heading text-white text-xl sm:text-2xl leading-tight">
@@ -268,7 +276,7 @@ export default function EventRegistration() {
             </div>
             {!done && (
               <div className="inline-flex items-center gap-1.5 self-start sm:self-auto bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] px-2.5 py-1 rounded text-xs font-semibold">
-                <Sparkles size={12} /> VIP Pass · Free entry
+                <Sparkles size={12} /> VIP Pass · ₹0 today
               </div>
             )}
           </div>
@@ -349,24 +357,28 @@ export default function EventRegistration() {
                 </Field>
               </div>
 
-              {/* Antigravity's coupon card, kept. The layout is theirs — entry
-                  on the left, an applied-coupon chip on the right — and it does
-                  read well. Two things are different: the struck-through
-                  ₹2,500 is gone, because no fee was ever charged and a saving
-                  against a price we never asked for is a misleading price
-                  claim; and the chip now promises a held seat rather than
-                  "100% OFF", which is a discount off nothing.
-
-                  /admin/events flags the row PRIORITY so the promise is one HR
-                  can actually keep. */}
-              <div className="rounded-md border border-emerald-200/80 bg-[#F7FBF9] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+              {/* The coupon card.
+                  ₹2,500 is the seminar's stated delegate fee (src/data/
+                  eventDetails.js), waived for online registrations. It is shown
+                  struck through only because a real fee exists to strike — and
+                  the waiver is printed as a condition ("waived when you register
+                  online"), not left as a bare "was ₹2,500", because a saving
+                  against a price nobody is ever asked for is a misleading price
+                  claim. Set `delegateFee: null` in the data and this whole row
+                  falls back to plain "Free" with no strike-through. */}
+              <div className="rounded-md border border-emerald-200/80 bg-[#F7FBF9] px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500">
-                    Entry{Number(form.guests) > 1 ? ` (${form.guests} seats)` : ''}:
+                    Delegate fee{Number(form.guests) > 1 ? ` (${form.guests} seats)` : ''}:
                   </span>
-                  <span className="text-base font-extrabold text-[#10243E] font-heading">Free</span>
+                  {ev.delegateFee && (
+                    <span className="text-xs line-through text-gray-400 font-semibold decoration-red-500/80">
+                      ₹{(ev.delegateFee * (Number(form.guests) || 1)).toLocaleString('en-IN')}
+                    </span>
+                  )}
+                  <span className="text-base font-extrabold text-[#10243E] font-heading">₹0</span>
                   <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
-                    NO CHARGE
+                    WAIVED
                   </span>
                 </div>
 
@@ -380,60 +392,64 @@ export default function EventRegistration() {
                     applied
                   </span>
                   <span className="font-bold text-emerald-700 bg-emerald-100 px-1 py-0.5 rounded">
-                    {codeValid ? 'PRIORITY SEAT' : 'FREE ENTRY'}
+                    {codeValid ? 'PRIORITY SEAT' : '100% OFF'}
                   </span>
                 </div>
+
+                {/* The condition. Without this line the strike-through is just
+                    a bigger number next to a smaller one. */}
+                {ev.delegateFeeNote && (
+                  <p className="w-full text-[10px] text-gray-500 leading-snug">
+                    {ev.delegateFeeNote}. Payable at the door for walk-ins without a registration.
+                  </p>
+                )}
               </div>
 
-              {/* Optional details, out of the way until asked for. */}
-              {!showMore ? (
-                <button type="button" onClick={() => setShowMore(true)}
-                  className="text-xs font-medium text-[#9C7C1C] hover:text-[#10243E] inline-flex items-center gap-1.5">
-                  <Plus size={13} /> Add city, referrer and what you&rsquo;re looking at
-                </button>
-              ) : (
-                <div className="space-y-2.5 pt-1 border-t border-gray-100">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2.5">
-                    <Field label="City">
-                      <input value={form.city} onChange={set('city')} autoComplete="address-level2"
-                        placeholder="e.g. Noida / Delhi" className={INPUT} />
-                    </Field>
+              {/* These used to sit behind a "+ Add city, referrer and what
+                  you're looking at" toggle. Almost nobody opens a disclosure on
+                  a sign-up form, so the three fields the sales team actually
+                  works from — which city, who referred them, what they want —
+                  were arriving empty. They are on the form now, plainly marked
+                  optional so the form still does not feel like a demand. */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <Field label="City" hint="Optional">
+                  <input value={form.city} onChange={set('city')} autoComplete="address-level2"
+                    placeholder="e.g. Noida / Delhi" className={INPUT} />
+                </Field>
 
-                    {/* Free text, not a dropdown of staff names — a dropdown
-                        silently drops the customer who referred a friend, which
-                        is the answer worth having. */}
-                    <Field label="Who invited you?">
-                      <input value={form.invited_by} onChange={set('invited_by')}
-                        placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
-                    </Field>
-                  </div>
+                {/* Free text, not a dropdown of staff names — a dropdown
+                    silently drops the customer who referred a friend, which is
+                    the answer worth having. */}
+                <Field label="Who invited you?" hint="Optional">
+                  <input value={form.invited_by} onChange={set('invited_by')}
+                    placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
+                </Field>
+              </div>
 
-                  <div>
-                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
-                      What are you looking at?
-                    </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                      {INTERESTS.map((o) => {
-                        const on = form.interest === o.value;
-                        return (
-                          <button
-                            key={o.value} type="button"
-                            onClick={() => setForm((f) => ({ ...f, interest: on ? '' : o.value }))}
-                            aria-pressed={on}
-                            className={`text-xs py-1.5 px-2 rounded border text-center transition font-medium truncate ${
-                              on
-                                ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#10243E] font-semibold'
-                                : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
-                            }`}
-                          >
-                            {o.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+              <div>
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                  What are you looking at?
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {INTERESTS.map((o) => {
+                    const on = form.interest === o.value;
+                    return (
+                      <button
+                        key={o.value} type="button"
+                        onClick={() => setForm((f) => ({ ...f, interest: on ? '' : o.value }))}
+                        aria-pressed={on}
+                        className={`text-xs py-1.5 px-2 rounded border text-center transition font-medium truncate ${
+                          on
+                            ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#10243E] font-semibold'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        {o.label}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
               {/* Row 6: Submit Button with Shake */}
               <motion.button
@@ -462,7 +478,7 @@ export default function EventRegistration() {
                     commercial arrangements, made on their behalf, which is the
                     first of the two rules in CLAUDE.md. What we can say is that
                     the seat is free and nothing is being sold. */}
-                Entry is free and there is no obligation to buy anything on the day.
+                Your seat costs nothing when you register here, and there is no obligation to buy anything on the day.
               </p>
             </form>
           )}

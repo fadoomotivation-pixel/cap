@@ -372,14 +372,28 @@ and Capital Brix is still only an authorised sales channel partner).
   name to come off, delete the entry rather than rewording it. This is the one
   narrow exception to "never name Mirrikh Infratech's founder on the site": it
   applies to a jointly hosted event's own platform, not to marketing copy.
-- **No invented reference price.** The sign-up briefly carried "VIP Pass · ₹0
-  (Was ₹2,500)" with a struck-through ₹2,500 delegate fee and a "CAPITALBRIX —
-  100% OFF" coupon chip. No fee was ever set and no coupon exists, so the
-  discount was measured against a number that never existed — a misleading
-  price claim under the Consumer Protection Act, and the pattern the CCPA's
-  misleading-advertisement guidelines name directly. Removed 10 Sep 2026.
-  **Never advertise a saving against a price Capital Brix did not charge.**
-  "Free" needs no comparison.
+- **The ₹2,500 delegate fee is now a real, declared price.** It first appeared
+  as an invented struck-through number with nothing behind it, which is a
+  misleading price claim under the Consumer Protection Act and the pattern the
+  CCPA's misleading-advertisement guidelines name directly; it was removed for
+  that reason. The owner then **set ₹2,500 as the seminar's actual delegate fee
+  on 10 September 2026**, waived for online registrations, and it is shown
+  struck through again on that basis.
+
+  It lives in **one** place — `delegateFee` / `delegateFeeNote` in
+  `src/data/eventDetails.js` — and two things must stay true or it goes back to
+  being a fabricated reference price:
+
+  1. **₹2,500 has to be what a walk-in without a registration is actually
+     asked for.** A fee nobody is ever charged is not a fee.
+  2. **The waiver is always printed as a condition** ("waived when you register
+     online before the day"), never as a bare "was ₹2,500".
+
+  Set `delegateFee: null` and the strike-through, the hero line and the schema
+  description all fall back to plain "free" on their own. **Never leave the
+  number there as decoration.** Every surface that mentions price — hero facts
+  bar, coupon card, FAQ, meta description, `Offer` in JSON-LD and the
+  confirmation email — reads from this decision and must not drift apart.
 - **The invite code is not a coupon.** `invite_code` (`CAPITALBRIX`,
   `DHOLERA2026`) does two real things: it flags the row **PRIORITY** in
   `/admin/events` so somebody actually holds a seat, and it records which
@@ -401,9 +415,12 @@ and Capital Brix is still only an authorised sales channel partner).
   "Add to calendar" is a **Google Calendar** link first — a downloaded `.ics` on
   Android lands in Downloads and is never opened — with the `.ics` kept as a
   quiet secondary link for Apple Calendar and Outlook.
-- **The sign-up fits one phone screen.** Three required fields, seats and the
-  code; city, referrer and plot interest sit behind "Add details". It also must
-  not promise "Instant confirmation" while no mail provider is configured.
+- **Every field is on the form; nothing hides behind a disclosure.** City,
+  referrer and plot interest sat behind a "+ Add details" toggle and were
+  arriving empty — almost nobody opens a disclosure on a sign-up form, and those
+  are the three fields the sales team actually works from. They are visible and
+  marked Optional. The form must also not promise "Instant confirmation" while
+  no mail provider is configured.
 - **The hero keeps its boxes.** A weightless, Apple-style pass — no borders,
   huge type, one plain line of facts — was built and rejected by the owner: it
   read as a poster rather than as an event you can sign up to. The boxed facts
