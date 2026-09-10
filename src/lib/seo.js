@@ -71,6 +71,7 @@ export const blogPostSeo = (post) => ({
   title: post.seoTitle || post.title,
   description: post.excerpt,
   path: `/blog/${post.slug}`,
+  ...(post.image ? { image: absoluteUrl(post.image) } : {}),
 });
 
 /** BlogPosting + FAQPage + BreadcrumbList for a post. Only marks up content
@@ -83,6 +84,7 @@ export const blogPostJsonLd = (post) => ({
       '@type': 'BlogPosting',
       headline: post.title,
       description: post.excerpt,
+      ...(post.image ? { image: absoluteUrl(post.image) } : {}),
       datePublished: post.date,
       dateModified: post.updated || post.date,
       inLanguage: 'en-IN',

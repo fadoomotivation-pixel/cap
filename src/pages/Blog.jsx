@@ -76,9 +76,18 @@ export default function Blog() {
             className="mb-16"
           >
             <Link to={`/blog/${lead.slug}`} className="group grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-              <div className="aspect-[16/10] overflow-hidden rounded-sm">
-                <BlogArt tone={lead.tone} label={lead.title} seed={0}
-                  className="w-full h-full group-hover:scale-105 transition-transform duration-700" />
+              <div className="aspect-[16/10] overflow-hidden rounded-sm bg-[#0A1016]">
+                {lead.image ? (
+                  <img
+                    src={lead.image}
+                    alt={lead.imageAlt || lead.title}
+                    loading="eager"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                ) : (
+                  <BlogArt tone={lead.tone} label={lead.title} seed={0}
+                    className="w-full h-full group-hover:scale-105 transition-transform duration-700" />
+                )}
               </div>
               <div>
                 <p className="text-[#9C7C1C] text-xs font-semibold uppercase tracking-[0.2em] mb-3">{lead.category}</p>
@@ -109,9 +118,18 @@ export default function Blog() {
               transition={{ duration: 0.5, delay: (i % 3) * 0.08 }}
             >
               <Link to={`/blog/${post.slug}`} className="group block">
-                <div className="aspect-[16/10] overflow-hidden rounded-sm mb-5">
-                  <BlogArt tone={post.tone} label={post.title} seed={i + 1}
-                    className="w-full h-full group-hover:scale-105 transition-transform duration-700" />
+                <div className="aspect-[16/10] overflow-hidden rounded-sm mb-5 bg-[#0A1016]">
+                  {post.image ? (
+                    <img
+                      src={post.image}
+                      alt={post.imageAlt || post.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                  ) : (
+                    <BlogArt tone={post.tone} label={post.title} seed={i + 1}
+                      className="w-full h-full group-hover:scale-105 transition-transform duration-700" />
+                  )}
                 </div>
                 <p className="text-[#9C7C1C] text-[11px] font-semibold uppercase tracking-[0.18em] mb-2">{post.category}</p>
                 <h3 className="text-xl font-heading text-[#10243E] leading-snug mb-3 group-hover:text-[#9C7C1C] transition-colors">

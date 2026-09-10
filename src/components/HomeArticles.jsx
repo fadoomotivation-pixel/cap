@@ -28,9 +28,18 @@ export default function HomeArticles() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="bg-white rounded-sm overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-shadow group flex flex-col"
             >
-              <div className="overflow-hidden aspect-video">
-                <BlogArt tone={blog.tone} label={blog.title} seed={index}
-                  className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
+              <div className="overflow-hidden aspect-video bg-[#0A1016]">
+                {blog.image ? (
+                  <img
+                    src={blog.image}
+                    alt={blog.imageAlt || blog.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <BlogArt tone={blog.tone} label={blog.title} seed={index}
+                    className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
+                )}
               </div>
               
               <div className="p-5 lg:p-6 flex flex-col flex-grow">
