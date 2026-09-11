@@ -468,6 +468,15 @@ and Capital Brix is still only an authorised sales channel partner).
   dropdown of staff names, because a dropdown silently drops the existing
   customer who referred a friend, which is the answer worth having. The console
   rolls it up into "who is filling the hall", counting seats rather than rows.
+- **HR can add a seat by hand** from `/admin/events`. Registrations were lost
+  twice — to a unique index that refused people, and to a form that failed
+  quietly — and each time the only way to put someone back was a developer
+  running SQL, which is no answer two days before an event. Bookings also come
+  in by phone and at the desk. Only name and mobile are required; a seat with
+  no email gets `no-email-<digits>@capitalbrix.invalid`, which keeps the NOT
+  NULL column valid, is obviously not real to anyone reading it, and cannot
+  collide. Every such row is stamped in `notes`, so a seat HR typed is never
+  mistaken for one the person filled in themselves.
 - HR console: `/admin/events` (admin-only, `noindex`), in `ADMIN_LINKS`. The
   headline figure is a **server-side `count`**, not the length of the loaded
   and filtered array — a filter left on used to make the hall look emptier than

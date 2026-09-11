@@ -9,6 +9,7 @@ import { events as EVENT_DETAILS } from '../data/eventDetails';
 import {
   CalendarDays, Phone, Mail, MessageCircle, RefreshCw, LogOut, Search,
   Users, ArrowDownToLine, X, UserCheck, MapPin, Send, MailWarning, Tag, AlertTriangle,
+  UserPlus, Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -28,6 +29,9 @@ import { format } from 'date-fns';
 // a handout or a forward, and that is the one worth flagging. Badging every row
 // PRIORITY would be badging none.
 const DEFAULT_CODE = 'CAPITALBRIX';
+
+const ADD_INPUT =
+  'w-full px-3 py-2 border border-gray-200 rounded-md text-sm text-[#10243E] outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition';
 
 const STATUSES = ['registered', 'confirmed', 'attended', 'no-show', 'cancelled'];
 const STATUS_CLS = {
@@ -71,6 +75,52 @@ export default function EventsAdmin() {
   const [eventSlug, setEventSlug] = useState('all');
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
+
+  // Adding a registration by hand.
+  //
+  // Registrations have been lost twice — once to a unique index that refused
+  // people, once to a form that failed quietly — and each time the only way to
+  // put someone back was for a developer to run SQL. Two days before the event
+  // that is not a workable answer. HR takes bookings on the phone and at the
+  // desk anyway, so the console needs to be able to add a seat itself.
+  //
+  // Every row added here is stamped in `notes`, so a seat HR typed is never
+  // mistaken for one the person filled in themselves.
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState({ full_name: '', phone: '', email: '', city: '', invited_by: '' });
+  const [addError, setAddError] = useState('');
+
+  const addByHand = async (e) => {
+    e.preventDefault();
+    const name = draft.full_name.trim();
+    const digits = draft.phone.replace(/\D/g, '');
+    if (name.length < 2) return setAddError('Enter the full name.');
+    if (digits.length < 10) return setAddError('Enter a 10-digit mobile number.');
+
+    setAddError(''); setBusy(true);
+    // The email column is NOT NULL, and a seat taken over the phone often has
+    // no email at all. A placeholder keyed to their number keeps the row valid,
+    // is obviously not a real address to anyone reading it, and cannot collide
+    // with a real one.
+    const email = draft.email.trim().toLowerCase() || `no-email-${digits}@capitalbrix.invalid`;
+    const { error } = await supabase.from('cb_event_registrations').insert([{
+      event_slug: eventSlug !== 'all' ? eventSlug : 'dholera-wealth-2026',
+      full_name: name,
+      phone: draft.phone.trim(),
+      email,
+      city: draft.city.trim() || null,
+      guests: 1,
+      invited_by: draft.invited_by.trim() || 'Capital Brix team',
+      invite_code: DEFAULT_CODE,
+      notes: `Added by hand in /admin/events on ${format(new Date(), 'd MMM yyyy, hh:mm a')}.`,
+      source_path: '/admin/events (added by hand)',
+    }]);
+    setBusy(false);
+    if (error) return setAddError(friendlyError(error));
+    setDraft({ full_name: '', phone: '', email: '', city: '', invited_by: '' });
+    setAdding(false);
+    load();
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -377,6 +427,59 @@ export default function EventsAdmin() {
             </div>
           </div>
         )}
+
+        {/* Add a seat by hand — for a booking taken on the phone, at the desk,
+            or one the site lost. */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+          {!adding ? (
+            <button onClick={() => { setAdding(true); setAddError(''); }}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#10243E] border border-gray-200 rounded-lg px-4 py-2.5 hover:border-[#D4AF37] hover:text-[#9C7C1C] transition">
+              <UserPlus size={16} /> Add a registration by hand
+            </button>
+          ) : (
+            <form onSubmit={addByHand} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-[#10243E] flex items-center gap-2">
+                  <UserPlus size={17} className="text-[#f26522]" /> Add a registration
+                </h2>
+                <button type="button" onClick={() => { setAdding(false); setAddError(''); }}
+                  className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+              </div>
+              <p className="text-xs text-gray-500">
+                For a seat booked on the phone or at the desk. Only the name and number are
+                required — email is optional, and the row is tagged so it is never mistaken for a
+                sign-up the person filled in themselves.
+              </p>
+
+              {addError && (
+                <p role="alert" className="bg-red-50 border border-red-100 text-red-600 text-xs rounded-md p-2.5">{addError}</p>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <input autoFocus required value={draft.full_name}
+                  onChange={(e) => setDraft((d) => ({ ...d, full_name: e.target.value }))}
+                  placeholder="Full name *" className={ADD_INPUT} />
+                <input required type="tel" inputMode="numeric" value={draft.phone}
+                  onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                  placeholder="10-digit mobile *" className={ADD_INPUT} />
+                <input type="email" value={draft.email}
+                  onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+                  placeholder="Email (optional)" className={ADD_INPUT} />
+                <input value={draft.city}
+                  onChange={(e) => setDraft((d) => ({ ...d, city: e.target.value }))}
+                  placeholder="City (optional)" className={ADD_INPUT} />
+                <input value={draft.invited_by}
+                  onChange={(e) => setDraft((d) => ({ ...d, invited_by: e.target.value }))}
+                  placeholder="Who invited them" className={`${ADD_INPUT} sm:col-span-2`} />
+              </div>
+
+              <button type="submit" disabled={busy}
+                className="inline-flex items-center gap-2 bg-[#10243E] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#1a365d] disabled:opacity-60">
+                {busy ? <Loader2 size={15} className="animate-spin" /> : <UserPlus size={15} />} Add the seat
+              </button>
+            </form>
+          )}
+        </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex flex-wrap gap-3 justify-between items-center mb-5">
