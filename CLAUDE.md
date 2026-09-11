@@ -434,6 +434,17 @@ and Capital Brix is still only an authorised sales channel partner).
   the way to the button and a second way for the hall count to be wrong.
   Someone bringing a guest registers them separately, which is also how we get
   that guest's name and number. `guests` is written as 1.
+- **The form does its own validation, loudly.** It used to lean on the
+  browser's `required`, which blocks the submit and shows a small native
+  tooltip. On the first day the event page was live, the API received **eight**
+  POSTs all day against far more people who said they had registered — somebody
+  taps Reserve, the native bubble is missed, nothing seems to happen and they
+  walk away believing they are on the list. Errors are now rendered in the
+  layout with a red border, and the first bad field is scrolled to and focused.
+  **Do not go back to bare `required`.** If sign-ups ever look short again,
+  check the count of POSTs to `/rest/v1/cb_event_registrations` in the edge
+  logs first — it separates "the form is turning people away" from "nobody
+  came".
 - **"Who invited you?" is required.** Every seat should be attributable to
   whoever brought that person — it is how the team gets credit and how we know
   which channel filled the room. Left optional it was simply skipped. Enforced
@@ -457,27 +468,28 @@ and Capital Brix is still only an authorised sales channel partner).
   dropdown of staff names, because a dropdown silently drops the existing
   customer who referred a friend, which is the answer worth having. The console
   rolls it up into "who is filling the hall", counting seats rather than rows.
-- HR console: `/admin/events` (admin-only, `noindex`), in `ADMIN_LINKS`.
+- HR console: `/admin/events` (admin-only, `noindex`), in `ADMIN_LINKS`. The
+  headline figure is a **server-side `count`**, not the length of the loaded
+  and filtered array — a filter left on used to make the hall look emptier than
+  it was. When the two disagree the console says so and offers to clear the
+  filters.
 - RLS mirrors `cb_leads`: **anon may INSERT, only admins may SELECT/UPDATE.**
 - **`src/lib/eventRegistration.js` mints the row id client-side and does NOT
   call `.select()` after the insert.** `RETURNING` needs a SELECT policy, and
   anon deliberately has none — an `.insert().select('id')` here fails every real
   registration even though the insert itself is allowed. Verified against the
   live policies, not assumed.
-- **One email is not one person — this cost us a real attendee.** The unique
-  index was on `(event_slug, lower(email))`, so the *second* real person
-  registered from any address already used was rejected — a salesperson signing
-  up walk-ins from their own inbox, a couple sharing an inbox, a parent
-  registering a son. And because the client reads `23505` as "your seat is
-  already held", every one of them was shown a **success screen** for a seat
-  that did not exist. Confirmed in the Postgres log, 11 Sep 2026 12:30:21 UTC.
+- **This table refuses nobody. There is no unique constraint and there must
+  never be one again.** It went through three states in two days:
+  unique on `(event_slug, lower(email))`, which rejected the second real person
+  on any shared address and showed them a **success screen** anyway; then
+  unique on `(event, name, phone, email)`, narrower but still a refusal; now
+  none. A duplicate row costs HR ten seconds to spot. A rejected row costs a
+  person who thinks they have a seat and does not. `cb_event_reg_person_lookup`
+  is a plain index so HR can find a repeat fast — it does not reject.
 
-  The index is now `cb_event_reg_unique_person` on
-  `(event_slug, name, phone, email)` — an exact repeat of one person is still
-  blocked, a different human on a shared address gets in. The double tap was
-  never the database's job anyway: the submit handler already refuses to run
-  while a request is in flight. **Do not put a unique constraint back on email
-  alone.**
+  The double tap is handled where it belongs: the submit handler will not fire
+  while a request is in flight.
 - **A failed insert is never silently swallowed.** Any error that is not a
   genuine duplicate writes the attempt to `cb_leads` with
   `source = 'event-registration-failed'`, and `/admin/events` shows those at the

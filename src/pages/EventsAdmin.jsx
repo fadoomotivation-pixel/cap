@@ -85,12 +85,27 @@ export default function EventsAdmin() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // The true number of rows in the table, asked for separately.
+  //
+  // Every figure on this page is computed from `shown`, which is the loaded
+  // rows after the event filter, the status filter and the search box. That is
+  // right for the list and wrong for "how many people are coming" — a filter
+  // left on, or a page cap reached, and the headline quietly under-reports the
+  // hall. So the total comes from a count on the server and is displayed even
+  // when it disagrees with what is on screen, because a disagreement is
+  // exactly the thing worth seeing.
+  const [totalInDb, setTotalInDb] = useState(null);
+
   const load = useCallback(async () => {
     if (!isAdmin) return;
     setBusy(true);
-    const { data, error } = await supabase.from('cb_event_registrations').select('*')
-      .order('created_at', { ascending: false }).limit(1000);
+    const [{ data, error }, { count }] = await Promise.all([
+      supabase.from('cb_event_registrations').select('*')
+        .order('created_at', { ascending: false }).limit(2000),
+      supabase.from('cb_event_registrations').select('id', { count: 'exact', head: true }),
+    ]);
     setBusy(false);
+    setTotalInDb(typeof count === 'number' ? count : null);
     if (error) setError(friendlyError(error)); else setRows(data || []);
   }, [isAdmin]);
 
@@ -326,8 +341,10 @@ export default function EventsAdmin() {
         )}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Stat accent icon={<Users size={20} />} label="Seats booked" value={stats.seats} />
-          <Stat icon={<UserCheck size={20} />} label="Registrations" value={stats.people} />
+          <Stat accent icon={<Users size={20} />}
+            label={totalInDb !== null && totalInDb !== stats.people ? `Total registrations (${stats.people} shown)` : 'Total registrations'}
+            value={totalInDb ?? stats.people} />
+          <Stat icon={<UserCheck size={20} />} label="Matching the filters" value={stats.people} />
           <Stat icon={<MessageCircle size={20} />} label="Confirmed" value={stats.confirmed} />
           <Stat icon={<CalendarDays size={20} />} label="Attended" value={stats.attended} />
         </div>
@@ -363,7 +380,17 @@ export default function EventsAdmin() {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex flex-wrap gap-3 justify-between items-center mb-5">
-            <h2 className="text-xl font-semibold text-[#10243E]">{shown.length} registrations</h2>
+            <h2 className="text-xl font-semibold text-[#10243E]">
+              {shown.length} registration{shown.length === 1 ? '' : 's'}
+              {totalInDb !== null && totalInDb > shown.length && (
+                <button
+                  onClick={() => { setEventSlug('all'); setStatus('all'); setSearch(''); }}
+                  className="ml-2 align-middle text-xs font-medium text-[#9C7C1C] underline underline-offset-2 hover:text-[#10243E]"
+                >
+                  {totalInDb - shown.length} hidden by a filter — show all
+                </button>
+              )}
+            </h2>
             <div className="flex flex-wrap gap-2">
               <select value={eventSlug} onChange={(e) => setEventSlug(e.target.value)}
                 className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]">
