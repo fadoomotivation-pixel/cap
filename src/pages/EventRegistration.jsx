@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   CalendarDays, MapPin, Ticket, ArrowRight, Check,
-  MessageCircle, Loader2, Sparkles, ChevronDown, Navigation, Tag, Plus,
+  MessageCircle, Loader2, Sparkles, ChevronDown, Navigation, Tag, Plus, AlertCircle,
 } from 'lucide-react';
 import Seo from '../components/Seo';
 import { getEvent } from '../data/eventDetails';
@@ -54,6 +54,11 @@ export default function EventRegistration() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(null);
+  // Declared here, with the rest of the state, and NOT next to the validator
+  // that uses it: there is an early return for an unknown slug just below, and
+  // a useState after it changes the hook order the moment someone navigates
+  // from a real event to a missing one.
+  const [problems, setProblems] = useState({});
 
   if (!ev) {
     return (
@@ -104,9 +109,41 @@ export default function EventRegistration() {
     setForm((f) => ({ ...f, phone: d.slice(0, 10) }));
   };
 
+  // Validation we control, because the browser's own is too quiet.
+  //
+  // Only 8 sign-ups ever reached the API on the day of the first push, against
+  // far more people who said they had registered. The form was relying on the
+  // browser's `required`: it blocks the submit and shows a small native tooltip
+  // beside the offending field. On a phone that tooltip is easy to miss —
+  // somebody taps Reserve, sees nothing obvious happen, and walks away
+  // believing they are on the list. A form that fails quietly loses people just
+  // as surely as one that throws them away.
+  //
+  // So: nothing is hidden, the first problem field is focused and scrolled to,
+  // and the message stays on screen until it is fixed.
+  const fieldProblems = () => ({
+    full_name: form.full_name.trim().length < 2 ? 'Please enter your full name.' : '',
+    phone: form.phone.replace(/\D/g, '').length !== 10 ? 'Please enter a 10-digit mobile number.' : '',
+    email: !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim()) ? 'Please check this email address.' : '',
+    invited_by: form.invited_by.trim().length < 2 ? 'Please tell us who invited you.' : '',
+  });
+
   const submit = async (e) => {
     e.preventDefault();
     if (busy) return;
+
+    const found = fieldProblems();
+    const firstBad = Object.keys(found).find((k) => found[k]);
+    if (firstBad) {
+      setProblems(found);
+      setError('');
+      const el = document.getElementById(`f-${firstBad}`);
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el?.focus({ preventScroll: true });
+      return;
+    }
+    setProblems({});
+
     setBusy(true); setError('');
     const res = await registerForEvent({ ...form, guests: 1, event_slug: ev.slug });
     setBusy(false);
@@ -307,7 +344,7 @@ export default function EventRegistration() {
               </div>
             </div>
           ) : (
-            <form onSubmit={submit} className="p-4 sm:p-5 space-y-3">
+            <form onSubmit={submit} noValidate className="p-4 sm:p-5 space-y-3">
               {error && (
                 <p role="alert" className="bg-red-50 border border-red-100 text-red-600 text-xs rounded-md p-2.5">{error}</p>
               )}
@@ -318,20 +355,20 @@ export default function EventRegistration() {
                   preference are not worth a taller form than the phone screen
                   they are being filled in on. */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <Field label="Full name" required>
-                  <input required value={form.full_name} onChange={set('full_name')} autoComplete="name"
-                    placeholder="Your name" className={INPUT} />
+                <Field id="f-full_name" label="Full name" required error={problems.full_name}>
+                  <input id="f-full_name" value={form.full_name} onChange={set('full_name')} autoComplete="name"
+                    placeholder="Your name" className={`${INPUT} ${problems.full_name ? INPUT_ERROR : ''}`} />
                 </Field>
 
-                <Field label="Mobile number" required>
-                  <input required type="tel" inputMode="numeric" value={form.phone} onChange={setPhone}
-                    autoComplete="tel" placeholder="10-digit mobile" className={INPUT} />
+                <Field id="f-phone" label="Mobile number" required error={problems.phone}>
+                  <input id="f-phone" type="tel" inputMode="numeric" value={form.phone} onChange={setPhone}
+                    autoComplete="tel" placeholder="10-digit mobile" className={`${INPUT} ${problems.phone ? INPUT_ERROR : ''}`} />
                 </Field>
               </div>
 
-              <Field label="Email" required hint="Your pass and confirmation go here">
-                <input required type="email" value={form.email} onChange={set('email')}
-                  autoComplete="email" placeholder="you@example.com" className={INPUT} />
+              <Field id="f-email" label="Email" required error={problems.email} hint="Your pass and confirmation go here">
+                <input id="f-email" type="email" value={form.email} onChange={set('email')}
+                  autoComplete="email" placeholder="you@example.com" className={`${INPUT} ${problems.email ? INPUT_ERROR : ''}`} />
               </Field>
 
               {/* No seat picker. One registration is one seat, so there is no
@@ -415,9 +452,9 @@ export default function EventRegistration() {
                     never a dropdown of staff names: a dropdown silently drops
                     the existing customer who referred a friend, which is the
                     most valuable answer of all. */}
-                <Field label="Who invited you?" required>
-                  <input required value={form.invited_by} onChange={set('invited_by')}
-                    placeholder="e.g. Ujjwal, or a friend's name" className={INPUT} />
+                <Field id="f-invited_by" label="Who invited you?" required error={problems.invited_by}>
+                  <input id="f-invited_by" value={form.invited_by} onChange={set('invited_by')}
+                    placeholder="e.g. Ujjwal, or a friend's name" className={`${INPUT} ${problems.invited_by ? INPUT_ERROR : ''}`} />
                 </Field>
               </div>
 
@@ -586,19 +623,31 @@ export default function EventRegistration() {
   );
 }
 
+// A field with an error gets a red border too — the message alone is easy to
+// skim past on a small screen.
+const INPUT_ERROR = 'border-red-400 bg-red-50/40';
+
 const INPUT =
   'w-full px-3 py-2 border border-gray-200 rounded-md text-[#10243E] text-sm outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition bg-white';
 
-function Field({ label, required, hint, children }) {
+/** One field. The error is rendered in the layout rather than left to the
+ *  browser's native tooltip, which on a phone is a grey bubble that appears
+ *  for a second and is routinely missed — see the note on submit(). */
+function Field({ id, label, required, hint, error, children }) {
   return (
-    <label className="block">
+    <label htmlFor={id} className="block">
       <div className="flex items-center justify-between mb-1">
         <span className="block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
           {label}{required && <span className="text-[#9C7C1C]"> *</span>}
         </span>
-        {hint && <span className="text-[10px] text-gray-400 font-normal">{hint}</span>}
+        {hint && !error && <span className="text-[10px] text-gray-400 font-normal">{hint}</span>}
       </div>
       {children}
+      {error && (
+        <span role="alert" className="flex items-center gap-1 text-[11px] font-medium text-red-600 mt-1">
+          <AlertCircle size={12} className="shrink-0" /> {error}
+        </span>
+      )}
     </label>
   );
 }
