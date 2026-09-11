@@ -464,8 +464,26 @@ and Capital Brix is still only an authorised sales channel partner).
   anon deliberately has none — an `.insert().select('id')` here fails every real
   registration even though the insert itself is allowed. Verified against the
   live policies, not assumed.
-- A unique index on `(event_slug, lower(email))` stops a double-tap creating two
-  seats. The client reads `23505` as "your seat is already held", not an error.
+- **One email is not one person — this cost us a real attendee.** The unique
+  index was on `(event_slug, lower(email))`, so the *second* real person
+  registered from any address already used was rejected — a salesperson signing
+  up walk-ins from their own inbox, a couple sharing an inbox, a parent
+  registering a son. And because the client reads `23505` as "your seat is
+  already held", every one of them was shown a **success screen** for a seat
+  that did not exist. Confirmed in the Postgres log, 11 Sep 2026 12:30:21 UTC.
+
+  The index is now `cb_event_reg_unique_person` on
+  `(event_slug, name, phone, email)` — an exact repeat of one person is still
+  blocked, a different human on a shared address gets in. The double tap was
+  never the database's job anyway: the submit handler already refuses to run
+  while a request is in flight. **Do not put a unique constraint back on email
+  alone.**
+- **A failed insert is never silently swallowed.** Any error that is not a
+  genuine duplicate writes the attempt to `cb_leads` with
+  `source = 'event-registration-failed'`, and `/admin/events` shows those at the
+  top in red — a rescued registration filed in a different console is one
+  nobody looks at. The visitor is told the team will confirm by hand, never
+  shown a success they did not get.
 - Confirmation email: the **`event-confirmation` Edge Function** (source in
   `supabase/functions/`). It takes only a row id — never an address from the
   browser — refuses to send twice, and returns `{ sent: false }` instead of

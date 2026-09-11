@@ -44,6 +44,31 @@ function newId() {
  * registered; we just tell them the team will confirm by WhatsApp instead. A
  * sign-up that reports failure because an email bounced is a lost lead.
  */
+/**
+ * Last resort when the registration insert fails for a reason we did not
+ * anticipate. cb_leads accepts anon inserts and HR already watches it, so the
+ * person surfaces at /admin/leads instead of disappearing. Deliberately
+ * swallows its own errors: this is already the failure path, and throwing here
+ * would replace a recoverable problem with a blank screen.
+ */
+async function rescueToLeads({ name, phone, mail, city, invited_by, event_slug, reason }) {
+  try {
+    await supabase.from('cb_leads').insert([{
+      full_name: name,
+      phone,
+      email: mail,
+      message:
+        `EVENT REGISTRATION FAILED — please confirm this seat by hand.\n` +
+        `Event: ${event_slug}\n` +
+        `City: ${city || '—'}\n` +
+        `Invited by: ${invited_by || '—'}\n` +
+        `Reason: ${String(reason).slice(0, 200)}`,
+      source: 'event-registration-failed',
+      source_path: typeof window !== 'undefined' ? window.location.pathname : null,
+    }]);
+  } catch { /* nothing further we can do from here */ }
+}
+
 export async function registerForEvent({
   event_slug,
   full_name,
@@ -92,13 +117,34 @@ export async function registerForEvent({
     }]);
 
   if (error) {
-    // The unique index on (event_slug, lower(email)) is what stops a double-tap
-    // from creating two seats — and it is also what someone re-registering
-    // hits, so it must read as reassurance, not as an error.
+    // 23505 now means what it says.
+    //
+    // It used to fire on a shared email, because the unique index was on
+    // (event_slug, lower(email)) — so the SECOND real person registered from
+    // any address already used was rejected, and this branch told them their
+    // seat was held. A salesperson signing up walk-ins from their own inbox
+    // lost every one of them after the first, and the page said "you're on the
+    // list" each time. It cost us at least one confirmed attendee.
+    //
+    // The index is now on (event, name, phone, email), so a collision really is
+    // the same person submitting twice, and "already registered" is true.
     if (error.code === '23505') {
       return { ok: true, already: true };
     }
-    return { error: friendlyError(error) };
+
+    // Anything else must not vaporise the person.
+    //
+    // Whatever the cause — a check constraint, a dropped connection, a policy
+    // change — somebody is standing there having typed their details, and the
+    // one unacceptable outcome is that nobody ever hears about them. So the
+    // attempt is written to cb_leads, which anon may insert into and which HR
+    // already works at /admin/leads, and the visitor is told plainly that the
+    // team will confirm by hand rather than being shown a false success.
+    await rescueToLeads({ name, phone, mail, city, invited_by, event_slug, reason: error.message });
+    return {
+      error: 'We could not complete your registration just now, but we have your details and the team will confirm your seat on WhatsApp.',
+      rescued: true,
+    };
   }
 
   let emailed = false;

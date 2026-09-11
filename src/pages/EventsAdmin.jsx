@@ -8,7 +8,7 @@ import { downloadCsv } from '../lib/expenses';
 import { events as EVENT_DETAILS } from '../data/eventDetails';
 import {
   CalendarDays, Phone, Mail, MessageCircle, RefreshCw, LogOut, Search,
-  Users, ArrowDownToLine, X, UserCheck, MapPin, Send, MailWarning, Tag,
+  Users, ArrowDownToLine, X, UserCheck, MapPin, Send, MailWarning, Tag, AlertTriangle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -38,11 +38,25 @@ const STATUS_CLS = {
   cancelled:  'bg-red-50 text-red-600 border-red-200',
 };
 
+/**
+ * The confirmation WhatsApp.
+ *
+ * Email is the nicer channel and it is still wired up, but it needs a secret
+ * set in Supabase and until that happens nothing goes out at all. WhatsApp
+ * needs nothing, is what this audience actually reads, and HR is holding the
+ * phone anyway — so it is the one that must always work.
+ */
+const confirmationText = (r, ev) =>
+  `Hello ${r.full_name}, this is Capital Brix.\n\n` +
+  `Your seat is confirmed for *${ev?.title || 'our seminar'}*.\n\n` +
+  (ev ? `📅 ${ev.dateLabel}${ev.time ? `, ${ev.time}` : ''}\n` : '') +
+  (ev ? `📍 ${ev.venueFull || ev.venue}\n` : '') +
+  (ev?.mapsUrl ? `🗺️ ${ev.mapsUrl}\n` : '') +
+  (ev?.delegateFee ? `\nThe ₹${ev.delegateFee.toLocaleString('en-IN')} delegate fee is waived on your online registration — nothing to pay on the day.\n` : '') +
+  `\nPlease carry a photo ID. Reply here if anything changes.\n\n— Capital Brix LLP`;
+
 const waLink = (r, ev) =>
-  `https://wa.me/${String(r.phone).replace(/\D/g, '')}?text=${encodeURIComponent(
-    `Hello ${r.full_name}, this is Capital Brix. Your seat for "${ev?.title || 'our seminar'}"` +
-    `${ev ? ` on ${ev.dateLabel}` : ''} is confirmed${ev ? ` at ${ev.venue}` : ''}. See you there!`
-  )}`;
+  `https://wa.me/${String(r.phone).replace(/\D/g, '')}?text=${encodeURIComponent(confirmationText(r, ev))}`;
 
 export default function EventsAdmin() {
   const [session, setSession] = useState(null);
@@ -82,6 +96,20 @@ export default function EventsAdmin() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Anything the registration insert could not save lands in cb_leads tagged
+  // 'event-registration-failed'. It has to be visible HERE, on the page whose
+  // job is "who is coming" — a rescued registration filed in a different
+  // console is a registration nobody looks at.
+  const [rescued, setRescued] = useState([]);
+  useEffect(() => {
+    if (!isAdmin) return;
+    supabase.from('cb_leads')
+      .select('id, full_name, phone, email, message, created_at')
+      .eq('source', 'event-registration-failed')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setRescued(data || []));
+  }, [isAdmin]);
+
   // Is a mail provider actually configured? Without asking, the only way to
   // find out is to register someone and notice they never got an email — which
   // is how you discover a missing secret a week after the invitations went out.
@@ -93,6 +121,14 @@ export default function EventsAdmin() {
       .then(({ data }) => setMail(data ?? null))
       .catch(() => setMail(null));
   }, [isAdmin]);
+
+  // HR taps WhatsApp, the message opens prefilled, and the row moves to
+  // 'confirmed' — so "who still needs telling" is answerable from the list
+  // instead of from memory.
+  const confirmViaWhatsApp = (row) => {
+    window.open(waLink(row, EVENT_DETAILS[row.event_slug]), '_blank', 'noopener');
+    if (row.status === 'registered') setRowStatus(row, 'confirmed');
+  };
 
   const setRowStatus = async (row, next) => {
     const { error } = await supabase.from('cb_event_registrations')
@@ -221,6 +257,35 @@ export default function EventsAdmin() {
 
         {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-4 text-sm flex justify-between gap-3">{error}<button onClick={() => setError('')}><X size={16} /></button></div>}
 
+        {rescued.length > 0 && (
+          <div className="bg-red-50 border border-red-200 text-red-900 rounded-xl p-4 mb-6">
+            <h2 className="font-bold flex items-center gap-2 mb-1">
+              <AlertTriangle size={18} className="text-red-600" />
+              {rescued.length} registration{rescued.length === 1 ? '' : 's'} could not be saved — confirm {rescued.length === 1 ? 'this one' : 'these'} by hand
+            </h2>
+            <p className="text-xs text-red-800/80 mb-3">
+              The sign-up failed for these people but their details were caught. They are not in the
+              count below and nobody has told them anything.
+            </p>
+            <div className="space-y-2">
+              {rescued.map((l) => (
+                <div key={l.id} className="bg-white border border-red-200 rounded-lg px-3 py-2 flex flex-wrap gap-2 justify-between items-center">
+                  <span className="text-sm text-[#10243E]">
+                    <strong>{l.full_name}</strong> · {l.phone}{l.email ? ` · ${l.email}` : ''}
+                    <span className="block text-[11px] text-gray-500">
+                      {format(new Date(l.created_at), 'd MMM, hh:mm a')}
+                    </span>
+                  </span>
+                  <a href={`https://wa.me/${String(l.phone).replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold border border-green-300 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg">
+                    <MessageCircle size={14} /> WhatsApp
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {mail && mail.provider === null && (
           <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 mb-6 flex gap-3">
             <MailWarning size={20} className="shrink-0 mt-0.5 text-amber-600" />
@@ -229,10 +294,15 @@ export default function EventsAdmin() {
               saved normally, but no mail provider is configured, so nobody is receiving a
               confirmation — the page tells them your team will confirm on WhatsApp instead.
               <br />
-              To switch it on: generate an app-specific password in Zoho Accounts → Security →
-              App Passwords, then add <code className="bg-amber-100 px-1 rounded">SMTP_PASSWORD</code> (and{' '}
-              <code className="bg-amber-100 px-1 rounded">SMTP_USER</code> = hr@capitalbrix.co.in)
-              under Supabase → Project Settings → Edge Functions → Secrets.
+              <strong>Use the WhatsApp button on each row instead</strong> — it opens a ready-made
+              confirmation with the date, venue and map, and marks the person confirmed. Nothing to
+              configure.
+              <br /><br />
+              To switch email on: Zoho Accounts → Security → App Passwords, then add{' '}
+              <code className="bg-amber-100 px-1 rounded">SMTP_PASSWORD</code> and{' '}
+              <code className="bg-amber-100 px-1 rounded">SMTP_USER</code> = hr@capitalbrix.co.in under{' '}
+              <strong>Project Settings → Edge Functions → Secrets</strong>. That is a different screen
+              from Authentication → SMTP Settings, which only sends login emails and will not help here.
             </div>
           </div>
         )}
@@ -365,8 +435,11 @@ export default function EventsAdmin() {
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <a href={waLink(r, ev)} target="_blank" rel="noreferrer" title="WhatsApp"
-                          className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-green-600 hover:border-green-400"><MessageCircle size={16} /></a>
+                        <button onClick={() => confirmViaWhatsApp(r)}
+                          title="Send the confirmation on WhatsApp and mark this seat confirmed"
+                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-green-300 bg-green-50 text-green-700 text-xs font-semibold hover:border-green-500">
+                          <MessageCircle size={15} /> Confirm
+                        </button>
                         <a href={`tel:${r.phone}`} title="Call"
                           className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#f26522] hover:text-[#f26522]"><Phone size={16} /></a>
                         <a href={`mailto:${r.email}`} title="Email"
