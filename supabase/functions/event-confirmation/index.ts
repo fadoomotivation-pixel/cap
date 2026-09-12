@@ -22,12 +22,14 @@ import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 // ── How the mail actually goes out ───────────────────────────────────────────
 // Two providers, tried in this order:
 //
-//   1. SMTP, when SMTP_PASSWORD is set. This is the Zoho path: Capital Brix
-//      already owns hr@capitalbrix.co.in, so the confirmation goes out from the
-//      real company address with no third-party signup and no domain to verify.
-//      Zoho does NOT accept the account login password over SMTP — it needs an
-//      app-specific password generated under Zoho Accounts › Security.
-//      Defaults are Zoho India (smtp.zoho.in:465, implicit TLS).
+//   1. SMTP, when SMTP_PASSWORD is set. Two mailboxes are set up to work with
+//      no configuration beyond the address and an app password:
+//        · Zoho — hr@capitalbrix.co.in, the company address (smtp.zoho.in).
+//        · Gmail — any @gmail.com address (smtp.gmail.com).
+//      The host is derived from the domain of SMTP_USER, so setting the wrong
+//      host for the mailbox is not a mistake anyone can make here; SMTP_HOST
+//      still overrides it. Neither provider accepts the account login password
+//      over SMTP — both need an app-specific password.
 //   2. Resend, when RESEND_API_KEY is set instead.
 //
 // If neither is configured it returns { sent: false } rather than failing. The
@@ -70,6 +72,25 @@ const EVENTS: Record<string, {
   },
 };
 
+// The mailbox decides the host. Setting SMTP_USER to a Gmail address and
+// leaving the Zoho default in place would fail authentication with a message
+// that names neither — so the host is derived unless SMTP_HOST says otherwise.
+const SMTP_HOSTS: Record<string, string> = {
+  "gmail.com": "smtp.gmail.com",
+  "googlemail.com": "smtp.gmail.com",
+  "zoho.in": "smtp.zoho.in",
+  "zoho.com": "smtp.zoho.com",
+};
+
+const smtpUser = () => (Deno.env.get("SMTP_USER") ?? "hr@capitalbrix.co.in").trim();
+
+const smtpHost = (user: string) => {
+  const explicit = Deno.env.get("SMTP_HOST");
+  if (explicit) return explicit;
+  const domain = user.split("@")[1]?.toLowerCase() ?? "";
+  return SMTP_HOSTS[domain] ?? "smtp.zoho.in";
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const json = (b: unknown, status = 200) =>
@@ -100,11 +121,11 @@ Deno.serve(async (req) => {
       const provider = Deno.env.get("SMTP_PASSWORD")
         ? "smtp"
         : Deno.env.get("RESEND_API_KEY") ? "resend" : null;
+      const user = smtpUser();
       return json({
         provider,
-        from: Deno.env.get("EVENT_FROM_EMAIL") ??
-          (provider === "smtp" ? Deno.env.get("SMTP_USER") ?? "hr@capitalbrix.co.in" : null),
-        host: provider === "smtp" ? Deno.env.get("SMTP_HOST") ?? "smtp.zoho.in" : null,
+        from: Deno.env.get("EVENT_FROM_EMAIL") ?? (provider === "smtp" ? user : null),
+        host: provider === "smtp" ? smtpHost(user) : null,
       });
     }
 
@@ -132,14 +153,22 @@ Deno.serve(async (req) => {
     const ev = EVENTS[reg.event_slug] ?? EVENTS["dholera-wealth-2026"];
 
     const smtpPass = Deno.env.get("SMTP_PASSWORD");
-    const smtpUser = Deno.env.get("SMTP_USER") ?? "hr@capitalbrix.co.in";
+    const user = smtpUser();
     const key = Deno.env.get("RESEND_API_KEY");
-    const from = Deno.env.get("EVENT_FROM_EMAIL") ??
-      (smtpPass ? `Capital Brix <${smtpUser}>` : "Capital Brix <onboarding@resend.dev>");
+
+    // Gmail rewrites the From header to the authenticated account unless the
+    // address is a verified alias on it, so an EVENT_FROM_EMAIL pointing
+    // somewhere else would silently not be what the recipient sees. Better to
+    // send from the address we are actually authenticated as and say so, than
+    // to print a From line the provider is going to overwrite.
+    const override = Deno.env.get("EVENT_FROM_EMAIL");
+    const from = smtpPass
+      ? (override && !/@gmail\.com$/i.test(user) ? override : `Capital Brix <${user}>`)
+      : override ?? "Capital Brix <onboarding@resend.dev>";
 
     if (!smtpPass && !key) {
       // Registration stands; only the email is missing.
-      return json({ sent: false, reason: "No mail provider configured — set SMTP_PASSWORD (Zoho) or RESEND_API_KEY" });
+      return json({ sent: false, reason: "No mail provider configured — set SMTP_USER + SMTP_PASSWORD (Gmail or Zoho app password) or RESEND_API_KEY" });
     }
 
     const name = esc(reg.full_name);
@@ -179,10 +208,10 @@ Deno.serve(async (req) => {
     if (smtpPass) {
       const client = new SMTPClient({
         connection: {
-          hostname: Deno.env.get("SMTP_HOST") ?? "smtp.zoho.in",
+          hostname: smtpHost(user),
           port: Number(Deno.env.get("SMTP_PORT") ?? 465),
           tls: true,
-          auth: { username: smtpUser, password: smtpPass },
+          auth: { username: user, password: smtpPass },
         },
       });
       try {

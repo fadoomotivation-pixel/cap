@@ -315,9 +315,7 @@ export default function EventRegistration() {
                 <Check size={22} />
               </div>
               <p className="text-[#10243E] font-semibold text-base mb-1.5">
-                {done.already
-                  ? 'You had already registered with that email — your seat is held.'
-                  : `Seat held for ${form.full_name.trim()}.`}
+                {`Seat held for ${form.full_name.trim()}.`}
               </p>
               <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4">
                 {done.emailed
