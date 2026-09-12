@@ -511,14 +511,36 @@ and Capital Brix is still only an authorised sales channel partner).
   failing when `RESEND_API_KEY` is unset, because the registration is already
   saved by then and a missing mail provider must not look like a failed sign-up.
   `resend: true` bypasses the once-only rule and therefore requires an admin JWT.
-- **Mail provider — Zoho by default.** Capital Brix already owns
-  `hr@capitalbrix.co.in`, so the function sends over SMTP when `SMTP_PASSWORD`
-  is set (Zoho needs an **app-specific password**, not the login password;
-  `SMTP_HOST`/`SMTP_PORT` default to `smtp.zoho.in`/`465`, `SMTP_USER` to
-  `hr@capitalbrix.co.in`). `RESEND_API_KEY` is the alternative; SMTP wins if
-  both are set. With neither, registrations still save and the page falls back
-  to "our team will confirm on WhatsApp". Setup steps are in
-  `supabase/functions/README.md`.
+- **Mail provider — SMTP, Gmail or Zoho, with the host derived from the
+  address.** Set `SMTP_USER` (the mailbox) and `SMTP_PASSWORD` (an **app
+  password** — neither provider accepts the account login password) and the
+  function sends. `SMTP_HOST` comes from the domain of `SMTP_USER`
+  (`@gmail.com` → `smtp.gmail.com`, Zoho → `smtp.zoho.in`), so the one
+  configuration mistake that is easy to make — a Gmail address left pointing at
+  the Zoho default — cannot be made. `SMTP_HOST`/`SMTP_PORT` still override.
+  `EVENT_FROM_EMAIL` is **ignored when sending through Gmail**, because Google
+  rewrites the From header to the authenticated account: printing a From line
+  the provider overwrites is worse than sending from the address we are
+  actually authenticated as. Gmail also caps at ~500 messages a day.
+  `RESEND_API_KEY` is the alternative; SMTP wins if both are set. With neither,
+  registrations still save and the page falls back to "our team will confirm on
+  WhatsApp". Setup steps are in `supabase/functions/README.md`.
+
+  The secrets go in **Project Settings → Edge Functions → Secrets**, which is
+  not the Authentication → SMTP Settings page — that one only governs
+  Supabase's own auth emails and has no effect here.
+- **There is no "you had already registered" success. A pass is proof of a
+  row.** `registerForEvent` used to read a `23505` as "your seat is held" and
+  return no id; `EventPass` then drew the pass with `REF ——————`, because the
+  reference is the last six characters of the row id. On 11 Sep 2026 at
+  12:30:21 UTC that gave Sonia Gulati a saved, shareable pass for a seat the
+  database had just refused — the blank REF was the only sign, and not one any
+  registrant could be expected to read. Both halves are now closed: a `23505`
+  takes the ordinary failure path (rescued to `cb_leads`, the person told the
+  truth), and `EventPass` renders a "WhatsApp us" note instead of a pass when
+  it has no row id. **Never reintroduce a success branch that has no id.**
+  Exactly one person was hit — the full edge-log window from 10 Sep shows one
+  `409` against every other POST at `201`. Her row was recovered by hand.
 
 ### Past events
 

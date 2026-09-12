@@ -204,6 +204,21 @@ function save(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+/**
+ * A pass is proof of a row. No row id, no pass.
+ *
+ * This used to fall back to `REF ——————` when `id` was missing, which made the
+ * blank reference the only visible sign that something was wrong — and nothing
+ * a registrant could be expected to notice. On 11 Sep 2026 that produced a
+ * saved, shareable pass for Sonia Gulati, whose insert had been rejected. The
+ * caller no longer has a success path without an id, and this is the second
+ * lock on the same door: an undrawable pass must look undrawn.
+ */
+const refFromId = (id) => {
+  const hex = String(id || '').replace(/-/g, '');
+  return hex.length >= 6 ? hex.slice(-6).toUpperCase() : '';
+};
+
 export default function EventPass({ ev, name, seats = 1, id }) {
   const canvasRef = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -212,11 +227,11 @@ export default function EventPass({ ev, name, seats = 1, id }) {
   // Reference the person can read out on the phone. The row id is a UUID,
   // which nobody can dictate; its last six characters are plenty for HR to
   // find one registration among a few hundred.
-  const ref = (id || '').replace(/-/g, '').slice(-6).toUpperCase() || '——————';
+  const ref = refFromId(id);
 
   useEffect(() => {
     const c = canvasRef.current;
-    if (!c) return;
+    if (!c || !ref) return;
     drawPass(c, { ev, name, seats, ref });
     try { setPreview(c.toDataURL('image/png')); } catch { /* tainted canvas cannot happen here */ }
   }, [ev, name, seats, ref]);
@@ -239,6 +254,16 @@ export default function EventPass({ ev, name, seats = 1, id }) {
 
   const addToCalendar = () =>
     save(new Blob([icsFile(ev)], { type: 'text/calendar;charset=utf-8' }), `${ev.slug}.ics`);
+
+  // Hooks are all above this line, so the early return is safe.
+  if (!ref) {
+    return (
+      <p className="text-xs text-gray-500 leading-relaxed border border-gray-200 rounded-lg p-3">
+        We could not generate your pass automatically. Your seat is fine — please
+        WhatsApp us on +91 70489 17300 and we will confirm it by hand.
+      </p>
+    );
+  }
 
   return (
     <div>

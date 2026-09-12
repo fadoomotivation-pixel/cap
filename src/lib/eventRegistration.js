@@ -117,22 +117,22 @@ export async function registerForEvent({
     }]);
 
   if (error) {
-    // 23505 now means what it says.
+    // There is no "already registered" success any more.
     //
-    // It used to fire on a shared email, because the unique index was on
-    // (event_slug, lower(email)) — so the SECOND real person registered from
-    // any address already used was rejected, and this branch told them their
-    // seat was held. A salesperson signing up walk-ins from their own inbox
-    // lost every one of them after the first, and the page said "you're on the
-    // list" each time. It cost us at least one confirmed attendee.
+    // This branch used to read 23505 as "you are already on the list" and show
+    // a SUCCESS screen with a downloadable pass. The pass it drew had a blank
+    // REF, because the reference is the last six characters of the row id and
+    // this path never had a row. Sonia Gulati walked away on 11 Sep 2026 at
+    // 12:30 UTC holding exactly that pass for a seat that was never created —
+    // the edge log shows her POST returning 409 and nothing else.
     //
-    // The index is now on (event, name, phone, email), so a collision really is
-    // the same person submitting twice, and "already registered" is true.
-    if (error.code === '23505') {
-      return { ok: true, already: true };
-    }
+    // The unique index that caused it is gone (this table refuses nobody), so
+    // a 23505 here could now only be a primary-key collision on a UUID we
+    // minted ourselves. Either way it is an anomaly, not a confirmation, and
+    // it takes the same path as any other failure: the person is written to
+    // cb_leads and told the truth.
 
-    // Anything else must not vaporise the person.
+    // No failure may vaporise the person.
     //
     // Whatever the cause — a check constraint, a dropped connection, a policy
     // change — somebody is standing there having typed their details, and the
