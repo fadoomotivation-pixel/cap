@@ -308,6 +308,37 @@ An earlier attempt added shared "how to verify a plot" prose to all 22, which
 raised word count and left them 90% identical. Don't do that: link the guide
 that owns the query instead.
 
+### `priceFrom` is the field that unblocks these pages
+
+All 22 projects carry `price: 'On Request'` or `'Sold Out'` and not one real
+number. That single gap explains three separate symptoms:
+
+- Search Console reports the `Product` schema **invalid** — "Either 'price' or
+  'priceSpecification.price' should be specified in 'offers'" — so no project
+  page is eligible for any rich result. An `Offer` is therefore now emitted
+  **only** when `project.priceFrom` is a number; without one the page ships a
+  valid `Product` with no `Offer`. No Offer costs the price snippet; an invalid
+  Offer costs the whole item.
+- `<project> price` is the highest-intent query these pages can win, and a page
+  that never states a number cannot answer it.
+- "On Request" reads as "we will quote you depending on how you sound", which
+  is the opposite of the title-clear, nothing-hidden position everywhere else.
+
+Set `priceFrom: 7250` (rupees per sq yd, a plain number) and optionally
+`priceFromUnit`, and the visible price block, the meta description and the
+schema all pick it up with no code change. It is marked up as a
+`UnitPriceSpecification` because the number is per square yard — marking a
+per-yard rate as the price of a plot would publish a figure nobody can buy
+anything for. Only put a number there that we will actually honour: a stale
+rate is a misleading price claim of the same shape as the invented ₹2,500.
+
+**Open contradiction for the owner, not for a tool to guess at:** the homepage
+title leads with "from ₹7,250/sq yd" and the FAQ in `site.js` attributes that
+rate to **Mayur Greenz II** — which is listed `Sold Out`. Either the rate needs
+reattributing to a project someone can actually buy into, or the homepage title
+needs a different lead. Do not simply copy ₹7,250 onto other projects to make
+the schema validate.
+
 ### Animated figures start at the finished number
 
 `src/components/CountUp.jsx` used to initialise at zero, which baked **"₹0 Cr"**

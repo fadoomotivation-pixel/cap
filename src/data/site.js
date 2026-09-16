@@ -126,6 +126,33 @@ export const projectFilters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 //              rename a folder, and it tells a crawler whose content it is.
 // Without them, pages fall back to copy composed from the fields below, which
 // can only be as distinct as the data is. See src/lib/projectContent.js.
+//
+// priceFrom — THE SINGLE HIGHEST-VALUE FIELD ON THIS PAGE, and the one that is
+// empty on all 22 projects.
+//
+//   priceFrom: 7250,              // rupees per sq yd, a plain number
+//   priceFromUnit: 'sq yd',       // optional, defaults to 'sq yd'
+//
+// Three things switch on the moment a project has one:
+//
+//   1. The Product schema becomes VALID. Google Search Console currently
+//      reports "Either 'price' or 'priceSpecification.price' should be
+//      specified in 'offers'" as a critical issue, which means not one project
+//      page is eligible for a price-carrying rich result. Offers are emitted
+//      ONLY for a project with a real number — an Offer with no price is worse
+//      than no Offer, because it is the invalid one.
+//   2. The page can rank for price queries. "<project> price", "dholera plot
+//      price per sq yard" and "dholera plot rate" are the highest-intent
+//      searches this site can realistically win, and a page that never states
+//      a number cannot answer them.
+//   3. "On Request" stops costing enquiries. It reads as "we will quote you
+//      depending on how you sound", which is the opposite of the title-clear,
+//      nothing-hidden position the rest of the site takes.
+//
+// Only put a number here that we will actually honour, and keep it current —
+// a stale or aspirational rate is a misleading price claim. State the price
+// WE sell at; never describe it as the developer's own rate, and never claim a
+// discount (see CLAUDE.md, "Never describe Mirrikh's commercial policy").
 export const projects = [
   {
     name: 'Mayur NOVA',

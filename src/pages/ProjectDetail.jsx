@@ -52,12 +52,33 @@ export default function ProjectDetail() {
   // ("mayur greenz ii dholera price") instead of all of them competing
   // for the same generic "Dholera plots" term.
   const seoTitle = `${project.name} Dholera | ${project.type} in ${project.location} — Capital Brix`;
-  const seoDescription = `${project.name} — ${project.type} at ${project.location}. ${project.size}. ${
-    project.price === 'On Request' ? 'Pricing on request' : `Starting ${project.price}`
-  }. NA/NOC approved, title-clear plots. Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.`;
+  // A number in the description is the difference between a result that gets
+  // clicked on a price query and one that does not, so the rate leads when we
+  // have it.
+  const priceLine = typeof project.priceFrom === 'number'
+    ? `From ₹${project.priceFrom.toLocaleString('en-IN')} per ${project.priceFromUnit || 'sq yd'}`
+    : project.price === 'On Request' ? 'Pricing on request' : `Starting ${project.price}`;
+
+  const seoDescription = `${project.name} — ${project.type} at ${project.location}. ${project.size}. ${priceLine}. NA/NOC approved, title-clear plots. Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.`;
 
   const faqs = projectFaqs(project);
   const sections = projectSections(project);
+
+  // An Offer needs a price. Ours carried availability, currency and a seller but
+  // no number, which Search Console reports as a critical error — "Either
+  // 'price' or 'priceSpecification.price' should be specified in 'offers'" —
+  // and an invalid Product is not eligible for any rich result at all. So an
+  // Offer is emitted only for a project that has a real rate in site.js, and a
+  // project without one ships a valid Product carrying no Offer instead. No
+  // Offer costs the price snippet; an invalid Offer costs the whole item.
+  //
+  // It is a UnitPriceSpecification because the number is per square yard, not
+  // the price of the plot. Marking ₹7,250 as the price of a 150 sq yd plot
+  // would put a figure in Google's results that nobody can buy anything for.
+  //
+  // Only ever marked up because the same number is rendered on the page below —
+  // schema for content a visitor cannot see is a manual-action risk.
+  const rate = typeof project.priceFrom === 'number' ? project.priceFrom : null;
 
   const projectSchema = {
     '@context': 'https://schema.org',
@@ -67,14 +88,23 @@ export default function ProjectDetail() {
     description: seoDescription,
     category: project.type,
     brand: { '@type': 'Brand', name: 'Mirrikh Infratech' },
-    offers: {
-      '@type': 'Offer',
-      availability: project.category === 'Sold Out'
-        ? 'https://schema.org/SoldOut'
-        : 'https://schema.org/InStock',
-      priceCurrency: 'INR',
-      seller: { '@type': 'Organization', name: 'Capital Brix' },
-    },
+    ...(rate ? {
+      offers: {
+        '@type': 'Offer',
+        availability: project.category === 'Sold Out'
+          ? 'https://schema.org/SoldOut'
+          : 'https://schema.org/InStock',
+        priceCurrency: 'INR',
+        price: rate,
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          price: rate,
+          priceCurrency: 'INR',
+          unitText: project.priceFromUnit || 'sq yd',
+        },
+        seller: { '@type': 'Organization', name: 'Capital Brix' },
+      },
+    } : {}),
   }, {
     '@type': 'FAQPage',
     mainEntity: faqs.map((f) => ({
@@ -145,8 +175,12 @@ export default function ProjectDetail() {
             <div className="flex flex-wrap gap-6 mb-10">
               <div>
                 <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Starting Price</p>
-                <p className="text-3xl font-black text-[#9C7C1C]">{project.price}</p>
-                <p className="text-sm text-gray-500">{project.priceUnit}</p>
+                <p className="text-3xl font-black text-[#9C7C1C]">
+                  {rate ? `₹${rate.toLocaleString('en-IN')}` : project.price}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {rate ? `per ${project.priceFromUnit || 'sq yd'} · ${project.priceUnit}` : project.priceUnit}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Location</p>
