@@ -5,6 +5,7 @@ import Seo from '../components/Seo';
 import LeadForm from '../components/LeadForm';
 import ArticleBody from '../components/ArticleBody';
 import { projectIntro, projectSections, projectFaqs } from '../lib/projectContent';
+import { SITE_URL } from '../lib/seo';
 
 // Feature icons inline SVG
 const LegalIcon = () => (
@@ -28,6 +29,34 @@ const projectFeatures = [
   { Icon: FamilyIcon, title: 'PERFECT FOR FAMILIES, BUILT FOR LIFE' },
   { Icon: FutureIcon, title: 'THOUGHTFULLY PLANNED. FUTURE READY.' },
 ];
+
+const slugify = (name) => name.toLowerCase().replace(/\s+/g, '-');
+
+/**
+ * The six sibling projects each page links to.
+ *
+ * Until this existed, /projects was the ONLY page in the site linking to a
+ * project detail page, so all 22 sat at the same crawl depth behind one hub
+ * and each had exactly one internal link. On a new domain that is not enough
+ * for a crawler to work through 22 near-identical URLs: Search Console shows
+ * 44 pages submitted, 11 crawled, and exactly one of the 11 is a project.
+ *
+ * Deliberately the NEXT six in array order, wrapping around, rather than six
+ * chosen by similarity or six at random:
+ *
+ *   - Every project receives exactly six inbound links. A "most similar"
+ *     rule would pile links onto the popular projects and leave the ones
+ *     that need discovering with none.
+ *   - It is stable across builds, so the link graph a crawler saw last week
+ *     is the one it sees today. Random picks look like a different site on
+ *     every render and teach a crawler nothing.
+ */
+const siblingProjects = (project) => {
+  const i = projects.findIndex((p) => p.name === project.name);
+  if (i < 0) return [];
+  return Array.from({ length: 6 }, (_, n) => projects[(i + n + 1) % projects.length])
+    .filter((p) => p.name !== project.name);
+};
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -111,6 +140,17 @@ export default function ProjectDetail() {
       '@type': 'Question', name: f.q,
       acceptedAnswer: { '@type': 'Answer', text: f.a },
     })),
+  }, {
+    // Every other section of the site declares its breadcrumbs and these 22
+    // pages did not, so Google had nothing saying they belong under /projects
+    // rather than sitting loose at the root. It also puts the trail in the
+    // result instead of a bare URL.
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Projects', item: `${SITE_URL}/projects` },
+      { '@type': 'ListItem', position: 3, name: project.name, item: `${SITE_URL}/projects/${slugify(project.name)}` },
+    ],
   }],
   };
 
@@ -307,6 +347,35 @@ export default function ProjectDetail() {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            {/* Sibling projects. See siblingProjects() above: this is the only
+                thing besides /projects that links to a project detail page,
+                and without it 21 of the 22 were never crawled. */}
+            <div className="mb-12">
+              <h2 className="text-xl font-heading text-[#10243E] mb-1">
+                Other plot projects in Dholera Smart City
+              </h2>
+              <p className="text-xs text-gray-500 mb-5">
+                Developed by Mirrikh Infratech Pvt. Ltd., marketed by Capital Brix LLP
+                as an authorised sales channel partner.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
+                {siblingProjects(project).map((p) => (
+                  <Link
+                    key={p.name}
+                    to={`/projects/${slugify(p.name)}`}
+                    className="group flex items-baseline justify-between gap-3 border-b border-gray-100 py-2.5"
+                  >
+                    <span className="text-sm font-medium text-[#10243E] group-hover:text-[#9C7C1C] transition-colors">
+                      {p.name}
+                    </span>
+                    <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                      {p.type.replace(' Plots', '')} · {p.category}
+                    </span>
+                  </Link>
+                ))}
+              </div>
             </div>
 
             <section className="mb-4">
