@@ -1,7 +1,79 @@
+# https://www.capitalbrix.co.in/robots.txt
+
 User-agent: *
 Allow: /
 
 # Private / internal tools — never index these
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+# ── Assistants and answer engines ────────────────────────────────────────────
+# A growing share of "is Dholera a good investment" is answered inside an
+# assistant rather than on a results page, and the crawler that fetches a page
+# to ANSWER a question is usually not the one that fetches it to train on. They
+# are listed separately and allowed explicitly, because a bare "User-agent: *"
+# leaves it to each operator to guess, and one wrong guess costs the citation.
+#
+# Every one of these is allowed on the public site and refused the private
+# consoles, exactly like Googlebot.
+
+# ChatGPT — OAI-SearchBot fetches pages to answer a live search, so this is the
+# one that decides whether Capital Brix can be cited in ChatGPT.
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+# ChatGPT browsing on a user's behalf
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
+# Google-Extended is not a crawler — it is the switch that decides whether
+# pages Googlebot already has may be used in AI Overviews and Gemini. Blocking
+# it removes us from the answer box without gaining anything back.
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
 Disallow: /employee-kyc
 Disallow: /admin/
 Disallow: /book/

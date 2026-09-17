@@ -339,6 +339,51 @@ reattributing to a project someone can actually buy into, or the homepage title
 needs a different lead. Do not simply copy ₹7,250 onto other projects to make
 the schema validate.
 
+### Every project page links to six siblings
+
+Until this existed, `/projects` was the **only** page in the site linking to a
+project detail page. All 22 sat at the same crawl depth behind one hub with
+exactly one internal link each, and they are near-identical to begin with — so
+a crawler worked through two or three and stopped. Search Console: 44 pages
+submitted, **11 crawled, and one of the 11 was a project page.**
+
+`siblingProjects()` in `ProjectDetail.jsx` takes the **next six in array
+order, wrapping around** — not six by similarity and not six at random:
+
+- Every project receives exactly six inbound links. A "most similar" rule
+  piles links onto the popular projects and starves the ones that need
+  discovering.
+- It is stable across builds, so the link graph a crawler saw last week is the
+  one it sees today. Random picks look like a different site on every render.
+
+Project pages also now emit `BreadcrumbList`, which every other section already
+had. Don't replace the sibling block with a carousel that renders client-side
+only — the point is the `<a href>` in the prerendered HTML.
+
+### Assistants and answer engines — `robots.txt`
+
+`public/robots.txt` names the answer-engine crawlers **individually** and
+allows each on the public site while refusing it the private consoles, rather
+than leaving it to `User-agent: *`. The crawler that fetches a page to *answer*
+a question is usually not the one that fetches it to train, and one operator
+guessing wrong costs the citation:
+
+- **`OAI-SearchBot`** is the one that decides whether we can be cited in
+  ChatGPT. `ChatGPT-User` is browsing on a person's behalf; `GPTBot` is
+  training.
+- **`Google-Extended` is not a crawler** — it is the switch for whether pages
+  Googlebot already has may be used in AI Overviews and Gemini. Blocking it
+  removes us from the answer box and gains nothing.
+- `PerplexityBot` / `Perplexity-User`, `ClaudeBot` / `Claude-User`,
+  `Applebot-Extended` follow the same shape.
+
+**Adding a private route means adding its `Disallow` to every block**, not just
+the first — a per-agent block replaces `*` for that agent, it does not inherit
+from it. That is the one real cost of listing them separately.
+
+`public/llms.txt` is the companion: it names the nine guides and states the
+relationship wording for anything that summarises the site rather than links it.
+
 ### Animated figures start at the finished number
 
 `src/components/CountUp.jsx` used to initialise at zero, which baked **"₹0 Cr"**

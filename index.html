@@ -60,7 +60,16 @@
       rel="stylesheet"
     />
 
-    <!-- ── Structured data: RealEstateAgent ────────────────── -->
+    <!-- ── Structured data: RealEstateAgent ──────────────────
+         This node used to name the developer as Capital Brix's own brand,
+         which in schema.org is an ownership claim — made to machines, on
+         every page of the site. Same structural objection as a "Leadership"
+         heading under the developer's branding: no sentence said it, the
+         markup did. Removed; the description below states the relationship
+         correctly, and that is what an assistant summarising the site reads.
+         Never add a brand, parentOrganization or memberOf node naming the
+         developer to THIS node. On a project page it is correct and stays:
+         the plot really is developed by them. -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -80,7 +89,6 @@
       "url": "https://www.capitalbrix.co.in/",
       "email": "info@capitalbrix.com",
       "telephone": "+91-7048917300",
-      "brand": { "@type": "Brand", "name": "Mirrikh Infratech" },
       "areaServed": {
         "@type": "Place",
         "name": "Dholera SIR, Gujarat, India"
