@@ -128,11 +128,51 @@ goes.
    32-bit one despite the name; `odbcad32.exe` from the Start menu opens the
    64-bit one and will not show it.
 
-Still IM002 after that? Then this build wants a named DSN rather than a
-driver. In that same 32-bit administrator: *System DSN* → *Add* → MySQL ODBC
-5.3 ANSI Driver → name it **`AttendanceLogs`**, fill in the server, database,
-user and password, *Test*, OK. Then put the DSN name in eTimeTrackLite's
-**Server Name / IP** field instead of the IP.
+### IM002 again, with the driver installed
+
+Confirm the driver really did register, which is one command rather than a
+hunt through tabs:
+
+```cmd
+reg query "HKLM\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI\ODBC Drivers"
+```
+
+`MySQL ODBC 5.3 ANSI Driver ... Installed` in that list and **still** IM002
+means the message has changed meaning. It reads "Data source name not found
+**and** no default driver specified" — with the driver present, what is
+missing is the *data source name*. This build asks ODBC for a **DSN**, not for
+a driver, so a DSN has to exist and eTimeTrackLite has to be told its name.
+
+In the **32-bit** administrator (`C:\Windows\SysWOW64\odbcad32.exe`), on the
+**System DSN** tab — not User DSN, which only exists for the account that
+created it and is invisible to a service:
+
+*Add* → **MySQL ODBC 5.3 ANSI Driver** (ANSI, not Unicode: these older 32-bit
+apps hand ODBC single-byte strings) →
+
+| Field | Value |
+|---|---|
+| Data Source Name | `esslmysql` |
+| TCP/IP Server | the MySQL host · Port `3306` |
+| User / Password | the database user |
+| Database | pick from the dropdown |
+
+**The Database dropdown filling itself is the real test** — it can only list
+databases if the host, port, user and password are all correct, so a populated
+dropdown proves everything but eSSL's own settings. *Test* should then say
+Connection Successful.
+
+Back in Parallel Database Export, put the **DSN name in place of the IP**:
+
+| Field | Value |
+|---|---|
+| Server Name / IP | `esslmysql` |
+| Database Name | unchanged |
+| User Name / Password | unchanged |
+
+Some builds want the DSN in **Database Name** instead; if the first spelling
+still fails, try it there before assuming the DSN is wrong — the DSN's own
+Test button has already proved it is not.
 
 Punch once and check it arrived, in phpMyAdmin:
 
