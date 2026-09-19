@@ -83,9 +83,45 @@ them.
 **Test Connection** → Save. Then **Utilities → Device Management** → tick
 **Parallel Database Download** → **Start Download**.
 
-If the MySQL option errors where MS SQL did not, install the **MySQL ODBC
-Connector (32-bit)** — eTimeTrackLite is a 32-bit application and needs the
-32-bit driver even on 64-bit Windows.
+### "Data source name not found and no default driver specified"
+
+```
+ERROR [IM002] [Microsoft][ODBC Driver Manager]
+Data source name not found and no default driver specified
+```
+
+Progress, not a setback: this one comes from Windows, not from the network.
+eTimeTrackLite reaches MySQL through ODBC, and Windows ships no MySQL ODBC
+driver — it has to be installed.
+
+**It must be the 32-bit driver.** eTimeTrackLite installs into
+`C:\Program Files (x86)`, so it is a 32-bit application and can only load
+32-bit drivers, on 64-bit Windows as much as anywhere else. Installing the
+64-bit one leaves this error completely unchanged, which is where the time
+goes.
+
+1. Download **MySQL Connector/ODBC 5.3.x, `win32.msi`** from
+   <https://downloads.mysql.com/archives/c-odbc/>. 5.3 rather than 8.x on
+   purpose: Hostinger runs MariaDB, which authenticates with
+   `mysql_native_password`, and 8.x defaults to an auth plugin MariaDB does
+   not speak.
+2. Install it, then **restart eTimeTrackLite** — ODBC drivers are read at
+   start-up.
+3. Confirm it registered, in the **32-bit** ODBC administrator specifically:
+
+   ```cmd
+   C:\Windows\SysWOW64\odbcad32.exe
+   ```
+
+   *Drivers* tab should list **MySQL ODBC 5.3 ANSI Driver**. `SysWOW64` is the
+   32-bit one despite the name; `odbcad32.exe` from the Start menu opens the
+   64-bit one and will not show it.
+
+Still IM002 after that? Then this build wants a named DSN rather than a
+driver. In that same 32-bit administrator: *System DSN* → *Add* → MySQL ODBC
+5.3 ANSI Driver → name it **`AttendanceLogs`**, fill in the server, database,
+user and password, *Test*, OK. Then put the DSN name in eTimeTrackLite's
+**Server Name / IP** field instead of the IP.
 
 Punch once and check it arrived, in phpMyAdmin:
 
