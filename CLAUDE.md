@@ -198,6 +198,73 @@ touch that one.
   (roster + login creation), Monthly Report, and Settings.
 - Employee self-service lives in the Employee Portal's "Attendance" tab.
 
+### Biometric punches from the eSSL machine
+
+The office runs an **eSSL eTimeTrackLite 12** against device `192.168.1.201`.
+Its punches now reach `cb_attendance` on their own, so the portal's manual
+punch is a fallback rather than the only source.
+
+```
+machine → eTimeTrackLite → Parallel Database Export → local MS SQL
+       → integrations/punch-bridge → cb_ingest_punches() → cb_device_punches
+       → cb_fold_punches_into_attendance() → cb_attendance
+```
+
+- **eTimeTrackLite cannot write to Supabase directly.** Its Database Type list
+  is MS SQL Server / MySQL / Oracle; Supabase is Postgres. Hence the bridge.
+  It reads a table *we* create (`integrations/punch-bridge/schema.sql`) rather
+  than eSSL's own database, so an eSSL update cannot move the columns under it
+  and a bug here can never write to the attendance software's data.
+- **`cb_employees.device_code`** maps the machine's Emp Code (1, 2, 3, 10…) to
+  a person. It is neither `employee_code` nor the email. Punches for an
+  unmapped code are still stored and attach themselves once HR fills it in —
+  `cb_ingest_punches` returns `unknown_device_codes` so nobody has to notice.
+- **The bridge holds `cb_integration_secrets.punch_bridge`, never the
+  service-role key.** It runs on a desktop people use; the worst a copied
+  secret can do is submit punches.
+- **It re-sends a 36-hour window every run** instead of keeping a watermark.
+  A watermark is one lost file away from losing punches; re-sending is free
+  because `cb_device_punches` is unique on `(device_code, punch_at)`.
+- **A second punch under 60 minutes after the first is the same arrival tapped
+  twice, not a departure.** The eSSL monitor itself shows `10:35,10:35,`;
+  without that rule everyone reports zero hours. Verified both ways against
+  the live function before shipping.
+- **The machine never overrides a person or HR.** Check-in takes the earliest
+  of machine and portal and check-out the latest (`least`/`greatest`), and
+  `hr_status` is never touched — "Absent" must keep meaning genuinely
+  unaccounted for.
+- Punch times arrive as bare local IST and are stamped `+05:30` by the bridge.
+  A bare timestamp is read as UTC and would file every arrival 5½ hours early.
+
+### Daily attendance report to WhatsApp
+
+`attendance-whatsapp` Edge Function, fired by **pg_cron at 14:00 UTC
+(19:30 IST)** through `cb_send_attendance_report()` → `pg_net`. An admin can
+also call it with their JWT to send early, re-send (`force`), or preview
+(`dry_run`).
+
+- **Meta's official WhatsApp Cloud API cannot post to a group** — it only
+  messages individual numbers. Groups need a logged-in WhatsApp Web session
+  (Baileys). So the function embeds no WhatsApp client: it builds the text and
+  POSTs it to `WA_WEBHOOK_URL`, and that service owns the session. **When the
+  report stops arriving, check the Baileys login before suspecting this.**
+- Default body is `{"to", "text"}`; `WA_PAYLOAD_TEMPLATE` with `{{to}}` and
+  `{{text}}` covers an endpoint wanting another shape. Substitution is
+  JSON-escaped, so quotes and newlines in a message cannot break it.
+- `cb_hr_settings.wa_group_id` + `daily_report_enabled` are HR-editable; the
+  URL, token and `CRON_SECRET` are Edge Function secrets. A blank group falls
+  back to `founder_whatsapp`.
+- **`cb_report_log` is keyed on `(report_date, kind)`**, so the cron firing
+  twice, a retry and HR tapping Send collapse to one message. Failures are
+  logged too — a silent failure is how a team discovers three weeks later that
+  nobody has seen a report.
+- `cb_daily_attendance()` is gated on `cb_is_admin()`, which reads the JWT
+  email — the service role has none. **`cb_daily_attendance_report()` exists
+  for that reason**: same rows, granted to `service_role` alone. Do not weaken
+  `cb_is_admin()` instead; it backs RLS on every `cb_*` table.
+- The summary text is duplicated in `src/lib/attendanceReport.js` (console) and
+  the function (cron). Change both or the two disagree.
+
 ### HR creates employee logins
 
 Creating an auth user needs the service-role key, which must never reach the

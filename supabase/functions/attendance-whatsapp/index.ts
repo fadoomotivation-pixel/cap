@@ -1,0 +1,310 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+// ─────────────────────────────────────────────────────────────
+// Posts the daily attendance summary to the team's WhatsApp group.
+//
+// Called two ways:
+//   · pg_cron, once an evening, with the x-cron-secret header.
+//   · An admin from /admin/attendance, with their JWT, to send early or
+//     re-send a day.
+//
+// ── Why a webhook and not the WhatsApp API ───────────────────────────────
+// Meta's official WhatsApp Cloud API cannot post to a group at all — it only
+// messages individual numbers. Posting into a group needs a logged-in
+// WhatsApp Web session, which is what Baileys (and whatsapp-web.js, and the
+// providers that wrap them) gives you. Capital Brix already runs one, so this
+// function does not embed a WhatsApp client: it hands the finished text to
+// whatever endpoint is configured and lets that service own the session.
+//
+// That also means the session is the fragile part, not this. If the summary
+// stops arriving, check the Baileys service is still logged in before
+// suspecting anything here — cb_report_log records what this function
+// actually did.
+//
+// ── Secrets (Project Settings → Edge Functions → Secrets) ────────────────
+//   WA_WEBHOOK_URL    the Baileys endpoint that sends a message   (required)
+//   WA_WEBHOOK_TOKEN  bearer token that endpoint expects          (optional)
+//   WA_AUTH_HEADER    header name for the token, default Authorization
+//   WA_PAYLOAD_TEMPLATE  JSON with {{to}} and {{text}} placeholders, for an
+//                        endpoint whose body shape differs from the default
+//                        {"to": …, "text": …}
+//   CRON_SECRET       what pg_cron sends in x-cron-secret         (required)
+//
+// The group JID and the on/off switch live in cb_hr_settings instead, so HR
+// can change the group without a deploy.
+// ─────────────────────────────────────────────────────────────
+
+const ADMIN_EMAILS = [
+  "admin@capitalbrix.co.in",
+  "ujjwal@capitalbrix.co.in",
+  "disha@capitalbrix.com",
+];
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const IST = "Asia/Kolkata";
+
+/** Today in IST. The server runs in UTC, so "today" here is not today there
+ *  for five and a half hours of every day — long enough to send an empty
+ *  register at 6am IST and call it a day's attendance. */
+const istToday = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: IST,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+const fmtTime = (ts: string | null) =>
+  ts
+    ? new Intl.DateTimeFormat("en-IN", {
+        timeZone: IST,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }).format(new Date(ts))
+    : "—";
+
+const fmtDate = (d: string) =>
+  new Intl.DateTimeFormat("en-IN", {
+    timeZone: IST,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${d}T12:00:00+05:30`));
+
+type Row = {
+  full_name: string;
+  department: string | null;
+  work_mode: string | null;
+  hr_status: string | null;
+  check_in_at: string | null;
+  check_out_at: string | null;
+  is_late: boolean | null;
+  late_minutes: number | null;
+  distance_from_office: number | null;
+  outside_geofence: boolean | null;
+  note: string | null;
+};
+
+/**
+ * The same summary src/lib/attendanceReport.js builds for the HR console.
+ * Headline numbers, then only the rows that need a decision — a group message
+ * nobody reads past the first screen is worse than no message.
+ */
+function buildSummary(rows: Row[], dateStr: string) {
+  const present = rows.filter((r) => r.check_in_at);
+  const onLeave = rows.filter((r) => !r.check_in_at && r.hr_status);
+  const absent = rows.filter((r) => !r.check_in_at && !r.hr_status);
+  const late = present.filter((r) => r.is_late);
+  const siteVisits = present.filter((r) => r.work_mode === "site-visit");
+  const wfh = present.filter((r) => r.work_mode === "wfh");
+  const flagged = present.filter((r) => r.outside_geofence);
+  const stillIn = present.filter((r) => !r.check_out_at);
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX — Attendance*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push(`👥 Strength: ${rows.length}`);
+  L.push(`✅ Present: ${present.length}   ❌ Absent: ${absent.length}`);
+  if (onLeave.length) L.push(`🌴 On leave: ${onLeave.length}`);
+  L.push(
+    `⏰ Late: ${late.length}   🚗 Site visits: ${siteVisits.length}${
+      wfh.length ? `   🏠 WFH: ${wfh.length}` : ""
+    }`,
+  );
+
+  if (absent.length) {
+    L.push("");
+    L.push(`*Absent (${absent.length})*`);
+    absent.forEach((r) =>
+      L.push(`• ${r.full_name}${r.department ? ` (${r.department})` : ""}`)
+    );
+  }
+
+  if (late.length) {
+    L.push("");
+    L.push(`*Late (${late.length})*`);
+    late.forEach((r) =>
+      L.push(
+        `• ${r.full_name} — ${fmtTime(r.check_in_at)}${
+          r.late_minutes ? ` (+${r.late_minutes}m)` : ""
+        }`,
+      )
+    );
+  }
+
+  if (siteVisits.length) {
+    L.push("");
+    L.push(`*Site visits (${siteVisits.length})*`);
+    siteVisits.forEach((r) =>
+      L.push(`• ${r.full_name} — ${fmtTime(r.check_in_at)}${r.note ? ` · ${r.note}` : ""}`)
+    );
+  }
+
+  if (onLeave.length) {
+    L.push("");
+    L.push("*On leave*");
+    onLeave.forEach((r) => L.push(`• ${r.full_name} — ${r.hr_status}`));
+  }
+
+  if (flagged.length) {
+    L.push("");
+    L.push("*⚠️ Office punch outside geofence*");
+    flagged.forEach((r) =>
+      L.push(`• ${r.full_name} — ${Math.round(r.distance_from_office ?? 0)}m away`)
+    );
+  }
+
+  if (stillIn.length) {
+    L.push("");
+    L.push(`_${stillIn.length} still checked in at time of sending._`);
+  }
+
+  L.push("");
+  L.push("— Sent from Capital Brix HR");
+  return L.join("\n");
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const json = (b: unknown, status = 200) =>
+    new Response(JSON.stringify(b), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { date, force, dry_run } = body as {
+      date?: string;
+      force?: boolean;
+      dry_run?: boolean;
+    };
+
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // Two callers, two proofs. The cron secret is a header rather than a body
+    // field so it never ends up in a log line that records the payload.
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const viaCron = !!cronSecret &&
+      req.headers.get("x-cron-secret") === cronSecret;
+
+    let viaAdmin = false;
+    if (!viaCron) {
+      const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+      if (jwt) {
+        const { data: u } = await admin.auth.getUser(jwt);
+        viaAdmin = !!u?.user?.email &&
+          ADMIN_EMAILS.includes(u.user.email.toLowerCase());
+      }
+    }
+    if (!viaCron && !viaAdmin) return json({ error: "not authorised" }, 403);
+
+    // Only an admin may force a repeat, and only an admin may dry-run: the
+    // cron has no business doing either.
+    const reportDate = (viaAdmin && date) || istToday();
+
+    const { data: settings } = await admin
+      .from("cb_hr_settings")
+      .select("wa_group_id, founder_whatsapp, daily_report_enabled")
+      .limit(1)
+      .maybeSingle();
+
+    if (!viaAdmin && !settings?.daily_report_enabled) {
+      return json({ sent: false, reason: "daily report is switched off in HR settings" });
+    }
+
+    // Group first, founder's number as the fallback. A summary that reaches
+    // one person beats one that reaches nobody because a JID was mistyped.
+    const target = (settings?.wa_group_id || "").trim() ||
+      (settings?.founder_whatsapp || "").replace(/\D/g, "");
+    if (!target) {
+      return json({ sent: false, reason: "no WhatsApp group or founder number configured" });
+    }
+
+    // Already sent? cb_report_log is keyed on (report_date, kind), so the
+    // cron firing twice, a retry after a timeout and HR tapping Send all
+    // collapse to one message in the group.
+    if (!force) {
+      const { data: prior } = await admin
+        .from("cb_report_log")
+        .select("sent_at, ok")
+        .eq("report_date", reportDate)
+        .eq("kind", "attendance")
+        .maybeSingle();
+      if (prior?.ok) {
+        return json({ sent: false, reason: "already sent", sent_at: prior.sent_at });
+      }
+    }
+
+    const { data: rows, error } = await admin.rpc("cb_daily_attendance_report", {
+      p_date: reportDate,
+    });
+    if (error) return json({ error: error.message }, 500);
+
+    const text = buildSummary((rows ?? []) as Row[], reportDate);
+
+    if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, target, text });
+
+    const url = Deno.env.get("WA_WEBHOOK_URL");
+    if (!url) {
+      return json({ sent: false, reason: "WA_WEBHOOK_URL is not set", text });
+    }
+
+    // Default body is {"to": …, "text": …}. WA_PAYLOAD_TEMPLATE covers an
+    // endpoint that wants a different shape — JSON.stringify gives correctly
+    // escaped values, so a message containing a quote or a newline cannot
+    // break the template.
+    const template = Deno.env.get("WA_PAYLOAD_TEMPLATE");
+    const payload = template
+      ? template
+        .replaceAll("{{to}}", JSON.stringify(target).slice(1, -1))
+        .replaceAll("{{text}}", JSON.stringify(text).slice(1, -1))
+      : JSON.stringify({ to: target, text });
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const token = Deno.env.get("WA_WEBHOOK_TOKEN");
+    if (token) {
+      const name = Deno.env.get("WA_AUTH_HEADER") ?? "Authorization";
+      headers[name] = name.toLowerCase() === "authorization" ? `Bearer ${token}` : token;
+    }
+
+    let ok = false;
+    let detail = "";
+    try {
+      const res = await fetch(url, { method: "POST", headers, body: payload });
+      detail = (await res.text()).slice(0, 400);
+      ok = res.ok;
+      if (!ok) detail = `HTTP ${res.status}: ${detail}`;
+    } catch (e) {
+      detail = String(e).slice(0, 400);
+    }
+
+    // Logged either way. A failed send that leaves no trace is how a team
+    // discovers three weeks later that nobody has seen a report.
+    await admin.from("cb_report_log").upsert({
+      report_date: reportDate,
+      kind: "attendance",
+      sent_at: new Date().toISOString(),
+      target,
+      ok,
+      detail: detail || null,
+    });
+
+    return json({ sent: ok, date: reportDate, target, detail: ok ? undefined : detail });
+  } catch (e) {
+    return json({ sent: false, reason: String(e).slice(0, 300) }, 500);
+  }
+});
