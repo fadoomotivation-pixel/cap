@@ -174,6 +174,43 @@ Some builds want the DSN in **Database Name** instead; if the first spelling
 still fails, try it there before assuming the DSN is wrong — the DSN's own
 Test button has already proved it is not.
 
+### Still IM002 with a DSN that tests Successful — read what eSSL asks for
+
+At this point everything has been proved working *except* the string
+eTimeTrackLite itself hands to ODBC. That string is readable, so stop
+guessing at it:
+
+1. 32-bit administrator → **Tracing** tab. Note the **Log File Path** (default
+   `C:\Users\<you>\Documents\SQL.LOG`) and click **Start Tracing Now**.
+2. In Parallel Database Export, click **Test Connection** and let it fail.
+3. Back to the Tracing tab → **Stop Tracing Now**. Tracing logs every ODBC
+   call on the machine, so leaving it on costs disk and speed.
+4. Open the log and find the last `SQLDriverConnect`. The quoted string beside
+   it is exactly what eTimeTrackLite asked for:
+
+   ```
+   ENTER SQLDriverConnect
+       ... "DRIVER={MySQL ODBC 3.51 Driver};SERVER=...;DATABASE=..."
+   ```
+
+Whatever driver name appears there is the one that has to exist. **On
+eTimeTrackLite 12 it is usually `MySQL ODBC 3.51 Driver`** — software old
+enough to predate 5.3, asking by name for a driver nobody installs any more.
+IM002 is then literally true: the data source is not found *and* the driver it
+named is not installed.
+
+Two ways out, once the trace names it:
+
+- **Install that exact driver.** Connector/ODBC **3.51.30, `win32.msi`** from
+  the same archives page (change Product Version to 3.51.30). Ancient, tiny,
+  and it speaks `mysql_native_password`, which is what MariaDB uses.
+- **Alias the one already installed**, if the trace shows a name close to what
+  is there. Under
+  `HKLM\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI`, copy the
+  `MySQL ODBC 5.3 ANSI Driver` key to a new key named exactly what the trace
+  asked for, and add that name to the `ODBC Drivers` value list. No new
+  software, but it is a registry edit — export the key first.
+
 Punch once and check it arrived, in phpMyAdmin:
 
 ```sql
