@@ -101,10 +101,21 @@ driver — it has to be installed.
 goes.
 
 1. Download **MySQL Connector/ODBC 5.3.x, `win32.msi`** from
-   <https://downloads.mysql.com/archives/c-odbc/>. 5.3 rather than 8.x on
-   purpose: Hostinger runs MariaDB, which authenticates with
-   `mysql_native_password`, and 8.x defaults to an auth plugin MariaDB does
-   not speak.
+   <https://downloads.mysql.com/archives/c-odbc/>.
+
+   **Change the *Product Version* dropdown to 5.3.14 first.** The page opens
+   on the newest release, and current versions ship 64-bit only — so the
+   32-bit build looks as though it does not exist. It does; it is behind that
+   dropdown. Only 5.3.x lists a `win32.msi`.
+
+   5.3 also happens to be the right choice regardless: Hostinger runs MariaDB,
+   which authenticates with `mysql_native_password`, and the 8.x and later
+   drivers default to an auth plugin MariaDB does not speak.
+
+   If the installer asks for a Visual C++ redistributable, it is **Visual C++
+   Redistributable for Visual Studio 2013 (x86)** — the x86 one, to match the
+   x86 driver. The VS 2022 x64 message some builds show belongs to the 64-bit
+   installer and is not what this needs.
 2. Install it, then **restart eTimeTrackLite** — ODBC drivers are read at
    start-up.
 3. Confirm it registered, in the **32-bit** ODBC administrator specifically:
