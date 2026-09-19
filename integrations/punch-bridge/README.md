@@ -17,9 +17,121 @@ Supabase  cb_device_punches  →  cb_attendance
 your Baileys service  →  WhatsApp group
 ```
 
-Four things to set up. Roughly an hour, most of it waiting for installers.
+## Which route
+
+eTimeTrackLite's Database Type list offers **MS SQL Server, Oracle, My Sql** —
+no PostgreSQL, so it cannot write to Supabase directly either way. Something
+has to sit in between. Where that something lives is the choice:
+
+| | **Route B — Hostinger MySQL** (recommended) | **Route A — local MS SQL** |
+|---|---|---|
+| On the office PC | nothing new | SQL Server Express, SSMS, Node, a scheduled task |
+| Sync runs on | Hostinger cron, beside the Baileys service | the office PC |
+| If the PC is off | punches queue on the device, nothing else breaks | nothing syncs |
+
+**This office has no SQL Server at all** — `sc query` lists no SQL service and
+the registry has no instance — so Route A starts with an installer and ends
+with a second always-on program on a desktop people use. Capital Brix already
+pays for MySQL on Hostinger. Use Route B.
+
+eTimeTrackLite has to be open regardless, because it is what pulls punches off
+the device. Route B just avoids adding anything *else* that can be closed by
+accident.
 
 ---
+
+# Route B — Hostinger MySQL
+
+## 1 · Create the database
+
+Hostinger hPanel → **Databases → MySQL Databases**. Create one (any name; the
+panel prefixes it, e.g. `u123456789_attendance`) and note the user and
+password — they are shown once.
+
+Open **phpMyAdmin** for it and run **`schema.mysql.sql`** from this folder.
+
+## 2 · Let the office PC reach it
+
+hPanel → **Databases → Remote MySQL**. Add the office's public IP (search
+"what is my IP" on the office PC). `%` allows any address — it works, but it
+means anyone with the password can reach the database, so prefer the IP and
+only fall back to `%` if the office connection has a changing IP.
+
+If the ISP blocks outbound 3306 the connection will simply time out. Test from
+the office PC before blaming eSSL:
+
+```cmd
+powershell -c "Test-NetConnection <mysql-host> -Port 3306"
+```
+
+## 3 · Point eTimeTrackLite at it
+
+**Utilities → Parallel Database Export**
+
+| Field | Value |
+|---|---|
+| Database Type | **My Sql** |
+| Server Name / IP | the host from hPanel (not `localhost`) |
+| Database Name | `u123456789_attendance` |
+| User Name / Password | from step 1 |
+| Table Name | `AttendanceLogs` |
+
+Leave the field mapping alone, and **check `Employee Code = EmployeeCode` is
+still filled in** — blank there means punches arrive with nobody attached to
+them.
+
+**Test Connection** → Save. Then **Utilities → Device Management** → tick
+**Parallel Database Download** → **Start Download**.
+
+If the MySQL option errors where MS SQL did not, install the **MySQL ODBC
+Connector (32-bit)** — eTimeTrackLite is a 32-bit application and needs the
+32-bit driver even on 64-bit Windows.
+
+Punch once and check it arrived, in phpMyAdmin:
+
+```sql
+select * from AttendanceLogs order by LogDateTime desc limit 10;
+```
+
+## 4 · Run the sync on Hostinger
+
+Upload **`hostinger-sync.php`** next to the Baileys service and fill in the
+`$CFG` block at the top. Two values to fetch:
+
+| Value | Where |
+|---|---|
+| `anon_key` | Supabase → Project Settings → API → anon public key |
+| `ingest_secret` | Supabase → SQL Editor → `select secret from cb_integration_secrets where name = 'punch_bridge';` |
+
+**The ingest secret is deliberately not the service-role key.** It can do
+exactly one thing — submit punches. A service key on a web host would hand
+over every row in the database.
+
+Run it once by hand to check:
+
+```
+php hostinger-sync.php
+```
+
+Then hPanel → **Advanced → Cron Jobs**, every 2 minutes:
+
+```
+/usr/bin/php /home/USER/domains/<domain>/punch-sync/hostinger-sync.php
+```
+
+`db_host` stays `localhost` in the file — the cron runs on the same host as
+the database, so that connection never leaves the server. Remote MySQL is
+only for eTimeTrackLite reaching in from the office.
+
+Skip to **step 3 · Match every employee to their machine code** below.
+
+---
+
+# Route A — local MS SQL Server
+
+Only if Route B is impossible (no Remote MySQL on the plan, or the ISP blocks
+3306). It needs SQL Server Express installed on the office PC first — this
+one has none.
 
 ## 1 · On the office PC — create the table eSSL writes into
 
@@ -118,7 +230,7 @@ Nothing after a punch means eSSL is not exporting — re-check step 3.
 
 ---
 
-## 2 · On the office PC — run the bridge
+## 2 · On the office PC — run the bridge (Route A only)
 
 Install [Node.js LTS](https://nodejs.org), then in this folder:
 
@@ -159,6 +271,10 @@ Task Scheduler → Create Task:
   - Start in: this folder's full path
 
 ---
+
+---
+
+# Both routes
 
 ## 3 · Match every employee to their machine code
 
