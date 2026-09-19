@@ -40,6 +40,74 @@ Then in eTimeTrackLite:
 4. **Utilities → Device Management** → tick **Parallel Database Download**
    (already ticked in your setup) → **Start Download**.
 
+### "SQL Server does not exist or access denied"
+
+```
+[DBNETLIB][ConnectionOpen (Connect()).]SQL Server does not exist or access denied.
+```
+
+This is a **connection** failure, not a missing database — it never reached
+the server, so whether `TimeTrack` exists is not the question yet. (Once it
+connects, a missing database gives a different and much clearer error naming
+`TimeTrack`. Seeing that is progress.)
+
+Work down this list. The first item is the cause almost every time.
+
+**1 · `localhost` is usually wrong — it is a named instance.**
+
+eTimeTrackLite installs its own SQL Server Express instance, and a bare
+`localhost` does not resolve to it. Find the real name:
+
+```cmd
+sc query state= all | findstr /i "MSSQL$"
+```
+
+`MSSQL$SQLEXPRESS` means the instance is `SQLEXPRESS`, so **Server Name / IP**
+must read:
+
+```
+localhost\SQLEXPRESS
+```
+
+`.\SQLEXPRESS` works too. If the service shows as `MSSQLSERVER` with no `$`,
+that is the default instance and plain `localhost` is correct — go to step 2.
+
+**2 · Copy the connection eTimeTrackLite itself uses.**
+
+The software is already talking to a SQL Server — that is where all your
+employees and punches live. Whatever it connects with will work here. Open:
+
+```
+C:\Program Files (x86)\eSSL\eTimeTrackLite\eTimeTrackLite.exe.config
+```
+
+in Notepad and search for `Data Source`. That value is the answer, including
+the user and password if it uses SQL authentication.
+
+**3 · Blank User Name / Password.**
+
+Left blank, eSSL attempts SQL authentication with an empty user, which the
+server refuses — and reports as *access denied*. Put in the `sa` account and
+the password set during the eTimeTrackLite install (step 2 shows it).
+
+**4 · TCP/IP is switched off.**
+
+SQL Server Express ships with TCP/IP disabled. Open **SQL Server
+Configuration Manager** → *SQL Server Network Configuration* → *Protocols for
+SQLEXPRESS* → **TCP/IP** → *Enable*, then restart the **SQL Server
+(SQLEXPRESS)** service.
+
+**5 · SQL Server Browser is not running.**
+
+Named instances are resolved by this service, so `localhost\SQLEXPRESS` fails
+without it. `services.msc` → **SQL Server Browser** → Start, and set Startup
+type to *Automatic* so it survives a reboot.
+
+Whatever server name ends up working here, use the same one in the bridge's
+`.env` — `MSSQL_SERVER=localhost` plus `MSSQL_INSTANCE=SQLEXPRESS`.
+
+---
+
 Punch on the machine once and check the table has a row:
 
 ```sql
