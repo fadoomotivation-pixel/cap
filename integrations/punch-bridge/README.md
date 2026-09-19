@@ -1,0 +1,215 @@
+# Biometric attendance → WhatsApp group
+
+Every punch on the office eSSL machine reaches Supabase within two minutes,
+and one summary goes to the team's WhatsApp group each evening. Nobody types
+anything.
+
+```
+eSSL machine 192.168.1.201
+      │  eTimeTrackLite downloads punches (already happening)
+      ▼
+Parallel Database Export  →  local MS SQL  TimeTrack.AttendanceLogs
+      │  bridge.js, every 2 min
+      ▼
+Supabase  cb_device_punches  →  cb_attendance
+      │  pg_cron, 7:30 PM IST  →  attendance-whatsapp Edge Function
+      ▼
+your Baileys service  →  WhatsApp group
+```
+
+Four things to set up. Roughly an hour, most of it waiting for installers.
+
+---
+
+## 1 · On the office PC — create the table eSSL writes into
+
+The Parallel Database Export screen already shows `TimeTrack` and
+`AttendanceLogs`, but those are **placeholders eSSL ships with** — neither
+exists yet, which is why **Test Connection** fails on a fresh install.
+
+Open SQL Server Management Studio and run **`schema.sql`** from this folder.
+It creates the database, the table, and an index, with column names that
+match the mapping on that screen exactly — so you change nothing there.
+
+Then in eTimeTrackLite:
+
+1. **Utilities → Parallel Database Export**
+2. Database Type **MS SQL Server**, Server `localhost`, Database `TimeTrack`,
+   Table `AttendanceLogs`. Leave the field mapping as it is.
+3. **Test Connection** → should pass now. **Save**.
+4. **Utilities → Device Management** → tick **Parallel Database Download**
+   (already ticked in your setup) → **Start Download**.
+
+Punch on the machine once and check the table has a row:
+
+```sql
+select top 10 * from TimeTrack.dbo.AttendanceLogs order by LogDateTime desc;
+```
+
+Nothing after a punch means eSSL is not exporting — re-check step 3.
+
+---
+
+## 2 · On the office PC — run the bridge
+
+Install [Node.js LTS](https://nodejs.org), then in this folder:
+
+```
+npm install
+copy .env.example .env
+```
+
+Fill in `.env`. Two values you need to fetch:
+
+| Value | Where |
+|---|---|
+| `SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public key |
+| `PUNCH_INGEST_SECRET` | Supabase → SQL Editor → `select secret from cb_integration_secrets where name = 'punch_bridge';` |
+
+**The ingest secret is deliberately not the service-role key.** This PC is
+used by people; the worst a copied ingest secret can do is submit punches. A
+service key there would hand over every row in the database.
+
+Test it:
+
+```
+npm start
+```
+
+You should see `connected to localhost/TimeTrack` and `sent N, new N`.
+
+### Keep it running
+
+Task Scheduler → Create Task:
+
+- **General** → *Run whether user is logged on or not*
+- **Triggers** → *At startup*, and tick *Repeat every 5 minutes* →
+  *for: Indefinitely* (so a crash restarts itself)
+- **Actions** → Start a program
+  - Program: `C:\Program Files\nodejs\node.exe`
+  - Arguments: `-r dotenv/config bridge.js`
+  - Start in: this folder's full path
+
+---
+
+## 3 · Match every employee to their machine code
+
+This is the step that decides whether the report has names in it.
+
+The machine calls people `1`, `2`, `3`, `10`… (the **Emp Code** column in the
+eSSL Employee Punch Monitor). Our roster does not know those numbers, so
+until they are filled in, punches arrive and attach to nobody.
+
+For each person, set **`cb_employees.device_code`** to their Emp Code.
+
+The bridge tells you who is missing on every run:
+
+```
+⚠ device codes with no employee on the roster: 6, 17, 22
+```
+
+Those punches are **not lost** — they sit in `cb_device_punches` and attach
+themselves the moment you fill the code in and the next fold runs.
+
+---
+
+## 4 · Point it at your WhatsApp group
+
+### The bit worth knowing first
+
+**Meta's official WhatsApp Cloud API cannot post to a group.** It only
+messages individual numbers. Groups need a logged-in WhatsApp Web session,
+which is what Baileys gives you — you already run one.
+
+So this Edge Function does not contain a WhatsApp client. It builds the text
+and POSTs it to your service. Two consequences:
+
+- If the summary stops arriving, **check the Baileys session is still logged
+  in before suspecting anything here.** That is the fragile part.
+- Use a **separate company SIM**, not the founder's personal number.
+  Automated group posting is outside WhatsApp's terms and numbers do get
+  banned. Losing a spare SIM is an afternoon; losing the founder's number is
+  every customer conversation on it.
+
+### Supabase → Project Settings → Edge Functions → Secrets
+
+| Secret | Value |
+|---|---|
+| `WA_WEBHOOK_URL` | your Baileys endpoint that sends a message |
+| `WA_WEBHOOK_TOKEN` | whatever token it expects (optional) |
+| `CRON_SECRET` | `select secret from cb_integration_secrets where name = 'report_cron';` |
+
+Default body posted to your endpoint:
+
+```json
+{ "to": "120363XXXXXXXXXXXX@g.us", "text": "*CAPITAL BRIX — Attendance* …" }
+```
+
+If your service expects a different shape, don't change your service — set
+`WA_PAYLOAD_TEMPLATE` instead, e.g.
+
+```json
+{"chatId":"{{to}}","message":"{{text}}"}
+```
+
+`{{to}}` and `{{text}}` are substituted already JSON-escaped, so a message
+containing quotes or newlines cannot break the template.
+
+### The group JID
+
+Not a phone number — a group is `120363XXXXXXXXXXXX@g.us`. Any Baileys
+session can list the groups it is in; take the id of yours and set it:
+
+```sql
+update cb_hr_settings
+   set wa_group_id = '120363XXXXXXXXXXXX@g.us',
+       daily_report_enabled = true;
+```
+
+Leave `wa_group_id` blank and the report falls back to the founder's number
+from `founder_whatsapp` — a summary that reaches one person beats one that
+reaches nobody because a JID was mistyped.
+
+---
+
+## Testing before you trust it
+
+Dry run — builds the real summary, sends nothing (needs an admin login):
+
+```bash
+curl -X POST 'https://rqgkzamuohdvttnkluzn.supabase.co/functions/v1/attendance-whatsapp' \
+  -H 'Authorization: Bearer <your admin JWT>' \
+  -H 'Content-Type: application/json' \
+  -d '{"dry_run": true}'
+```
+
+Send a specific day for real:
+
+```bash
+-d '{"date": "2026-09-19", "force": true}'
+```
+
+`force` overrides the once-a-day rule. Without it, the cron firing twice, a
+retry after a timeout, and HR tapping Send all collapse to one message —
+`cb_report_log` is keyed on the date.
+
+Every attempt, successful or not, is recorded:
+
+```sql
+select * from cb_report_log order by report_date desc limit 14;
+```
+
+A failed send that leaves no trace is how a team finds out three weeks later
+that nobody has seen a report.
+
+---
+
+## Two rules the folding applies
+
+- **A second punch less than an hour after the first is the same arrival
+  tapped twice, not a departure.** Your own monitor shows `10:35,10:35,` —
+  without this rule everyone would show zero hours worked.
+- **The machine never overrides a person or HR.** Check-in takes the earliest
+  of machine and portal, check-out the latest, and `hr_status` — an approved
+  leave — is never touched. The register already treats "Absent" as
+  *genuinely unaccounted for*, and a machine must not undo that.
