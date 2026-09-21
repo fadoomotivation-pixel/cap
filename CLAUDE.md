@@ -301,6 +301,16 @@ also call it with their JWT to send early, re-send (`force`), or preview
   lone evening taps and `66` none since July. The confirming evidence is an
   11:18:10 punch by `59` on 9 September against HR's own handwritten
   "Amit - 11:18".
+- **eTimeTrackLite's download was never automatic.** `Devices.DownLoadType`
+  was `1` (manual) and `eSSL_Schedular.exe.config` had `AutoStart = False`, so
+  punches reached the PC only when somebody clicked Download — and the whole
+  pipeline silently stopped on 19 September when nobody did. Turning the
+  device's download to Auto/Online and ticking AutoStart is the fix, and it is
+  a GUI action on the office PC: a background agent cannot restore a tray
+  window and walk a Windows Forms menu. **The device is `Test Device`, id 14 —
+  never rename, delete or re-add it.** A re-added device can renumber the
+  person-to-code mapping, and all 26,722 historical punches are keyed on that
+  code.
 - **A silent stop is upstream, not in the bridge.** On 21 September the
   register had nothing after the 19th while the scheduled task's last result
   was `0x0` and the sync read every table without error. `DeviceLogs_9_2026`

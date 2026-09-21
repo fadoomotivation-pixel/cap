@@ -2,15 +2,16 @@
 
 The sync is **built, deployed and running**. Punches reach Supabase every five
 minutes, the scheduled task fires, and the register fills with real names and
-times. Twenty-eight of thirty-one active employees are mapped to their machine code.
+times. Twenty-nine of thirty-two active employees are mapped to their machine code.
 
 The history is in: **26,674 punches back to 15 November 2025** were imported
 and folded into **2,922 attendance rows across 28 people**. The last ambiguous
 mapping is settled — Amit is device code **59**, proved by an 11:18:10 punch on
 9 September against HR's own handwritten "Amit - 11:18".
 
-What is left is restarting the device's log download, which stopped on
-Saturday — Task A, and the only urgent item on this page.
+What is left is Task A: the device's log download stopped on Saturday, and the
+reason turns out to be that it was never automatic in the first place. It needs
+somebody at the PC's screen.
 
 Read `integrations/punch-bridge/README.md` before you start. This page is the
 task; that page is the reasoning.
@@ -24,7 +25,7 @@ task; that page is the reasoning.
 | Sync | `C:\CapitalBrix\punch-sync\ettl-sync.ps1`, reading `eTimeTrackLite1.mdb` |
 | Scheduled task | `CapitalBrix-PunchSync`, every 5 min, last result `0x0` |
 | Supabase | ingest, fold, report reader, `attendance-whatsapp` v3, two `pg_cron` jobs (12:10 IST attendance, 19:01 IST logout) |
-| Mapping | 28 of 31 active employees have a `device_code` |
+| Mapping | 29 of 32 active employees have a `device_code` |
 | Verified | 26,722 punches sent, a second run reports `new 0`, 2,922 attendance rows carry names, times and late flags |
 
 **Parallel Database Export is not used and must not be touched.** Two days went
@@ -36,51 +37,56 @@ If you find yourself opening `diagnose.cmd`, `schema.sql` or
 
 ---
 
-## Task A — restart the log download (the device is fine)
+## Task A — the download was never automatic
 
-Diagnosed, and it is **not** a network problem. `192.168.1.201` answers ping
-with 0% loss. eTimeTrackLite's own `Devices` row says:
-
-```
-LastLogDownloadDate : 09/19/2026 11:09:04
-DevicesStatus       : online at 09/19/2026 11:14:48   (nothing after that)
-```
-
-Both `eTimeTrackLite.exe` and `eSSL Online Downloader.exe` are running, in the
-tray, with `MainWindowHandle: 0`. So the downloader process is alive and has
-simply not polled the device since Saturday midday. The punches are still
-**inside the device's own memory** — nothing is lost yet, but eSSL terminals
-overwrite the oldest logs when their buffer fills, so this is worth doing today
-rather than next week.
-
-Do this on the PC's screen:
-
-1. Restore the eTimeTrackLite window from the system tray.
-2. **Device → Download Logs** (some builds call it *Get Log Data* or
-   *Download Attendance Logs*), pick device `192.168.1.201`, date range
-   **19-Sep-2026 to 21-Sep-2026**, and run it. Report how many records it says
-   it pulled.
-3. Confirm it worked by re-reading the database — this needs no GUI:
+Diagnosed, and it is neither the network nor the bridge. `192.168.1.201`
+answers ping with 0% loss, the sync reads every table without error, and the
+scheduled task's last result is `0x0`. The cause is in eTimeTrackLite's own
+settings:
 
 ```
-C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -Command "$c=New-Object System.Data.Odbc.OdbcConnection; $c.ConnectionString='Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=C:\Program Files (x86)\essl\eTimeTrackLite\eTimeTrackLite1.mdb;ReadOnly=1;'; $c.Open(); $q=$c.CreateCommand(); $q.CommandText='select count(*) from DeviceLogs_9_2026'; Write-Host ('DeviceLogs_9_2026 rows: ' + $q.ExecuteScalar()); $c.Close()"
+Devices.DownLoadType            = 1        ← 1 means MANUAL
+eSSL_Schedular.exe.config
+  AutoStart                     = False    ← the scheduler never starts
+  drp_DeviceLogsHour/Min        = 12 / 12
+Devices.LastLogDownloadDate     = 19/09/2026 11:09:04
+DevicesStatus                   = online at 19/09/2026 11:14:48, nothing after
 ```
 
-It held **1034** rows before. A higher number means the download worked.
+So punches only ever reached the PC when **a person clicked Download**, and
+they stopped on the 19th because nobody clicked again. Everything downstream —
+the bridge, the fold, the register, the 12:10 report — has been sitting on top
+of a manual step nobody knew was there.
 
-4. Then run the sync once so the new punches reach Supabase:
+The punches are still in the terminal's own memory, so nothing is lost yet.
+**eSSL terminals overwrite their oldest logs once that buffer fills**, so this
+is a deadline rather than an inconvenience.
+
+**This needs a person at the PC's screen** (or AnyDesk/TeamViewer). A
+background agent cannot restore a tray window and walk a Windows Forms menu,
+and that limit is real — do not work around it by editing the `.mdb`.
+
+1. Restore eTimeTrackLite from the system tray.
+2. **Device → Download Logs** (some builds: *Get Log Data* / *Download
+   Attendance Logs*), device `192.168.1.201`, **19-Sep-2026 to 21-Sep-2026**.
+3. In the same screen, turn the download **automatic** so this cannot recur:
+   set the device's download type to Auto/Online with an interval of a few
+   minutes, and tick **AutoStart** on the eSSL scheduler so it survives a
+   reboot. This is the one settings change that is wanted — everything else on
+   that screen stays as it is.
+4. Verify from the database (no GUI needed). It held **1034** rows before:
 
 ```
-C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File C:\CapitalBrix\punch-sync\ettl-sync.ps1
+C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -Command "$c=New-Object System.Data.Odbc.OdbcConnection; $c.ConnectionString='Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=C:\Program Files (x86)\essl\eTimeTrackLite\eTimeTrackLite1.mdb;ReadOnly=1;'; $c.Open(); $q=$c.CreateCommand(); $q.CommandText='select count(*) from DeviceLogs_9_2026'; Write-Host ('rows: ' + $q.ExecuteScalar()); $c.Close()"
 ```
 
-5. Finally, report **why the downloader stopped**: in eTimeTrackLite, open the
-   device's settings and say whether *Auto Download* / *Online Download* is
-   ticked and what interval it is set to. Report it — do not change it.
+5. The scheduled task runs every five minutes, so the new punches reach
+   Supabase on their own. Run it once by hand if you want it immediately.
 
 The device is registered as **`Test Device`, device id 14**. Do not rename,
-re-add or delete it. A re-added device can renumber the mapping between a
-person and their code, and every historical punch is keyed on that code.
+re-add or delete it: a re-added device can renumber the mapping between a
+person and their code, and every one of the 26,722 historical punches is keyed
+on that code.
 
 ---
 
@@ -93,12 +99,13 @@ Answered. The names behind the five unmapped codes are:
 | `6` | Amit | 1,132 since 15 Nov 2025 | 3 in September, all single evening taps |
 | `41` | Gaurav | 261 | yes, to 18 Sep |
 | `35` | Kunal | 248 | yes, to 18 Sep |
-| `52` | Anjali Tripathi | 136 | yes, to 19 Sep |
+| `52` | Anjali Tripathi | 136 | yes — **now on the roster** |
 | `66` | Amit | 39 | no, stopped 29 July |
 
-**Gaurav, Kunal and Anjali Tripathi are with the owner**, who decides whether
-each is an employee to add to the roster, somebody deliberately not tracked, or
-a card to ignore. Nothing to do on the PC.
+Anjali Tripathi is now on the roster and mapped to `52`; her 65 days of
+history folded in on their own. **Gaurav (`41`) and Kunal (`35`) are still with
+the owner**, who decides whether each is an employee to add, somebody
+deliberately not tracked, or a card to ignore. Nothing to do on the PC.
 
 The three Amits are settled: the roster's Amit is **`59`**. In September, `59`
 punched on ten working days arriving around 11:00 and leaving around 19:00,
