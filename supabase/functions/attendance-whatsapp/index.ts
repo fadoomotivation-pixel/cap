@@ -61,15 +61,37 @@ const istToday = () =>
     day: "2-digit",
   }).format(new Date());
 
+/** The day after an IST date string, for a half-open punch_at range. Built by
+ *  stepping the UTC instant that IST midnight maps to, so a month or year
+ *  boundary cannot drift. */
+const nextIstDay = (d: string): string => {
+  const t = new Date(`${d}T00:00:00+05:30`);
+  t.setUTCDate(t.getUTCDate() + 1);
+  return new Date(t.getTime() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+};
+
+
 const fmtTime = (ts: string | null) =>
   ts
-    ? new Intl.DateTimeFormat("en-IN", {
+    ? new Intl.DateTimeFormat("en-GB", {
         timeZone: IST,
         hour: "2-digit",
         minute: "2-digit",
-        hour12: true,
+        hour12: false,
       }).format(new Date(ts))
-    : "—";
+    : "\u2014";
+
+/** Minutes since midnight IST, for sorting people into arrival windows. */
+const istMinutes = (ts: string | null): number => {
+  if (!ts) return -1;
+  const [h, m] = new Intl.DateTimeFormat("en-GB", {
+    timeZone: IST,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(ts)).split(":");
+  return Number(h) * 60 + Number(m);
+};
 
 const fmtDate = (d: string) =>
   new Intl.DateTimeFormat("en-IN", {
@@ -95,82 +117,168 @@ type Row = {
 };
 
 /**
+ * Arrival windows, in the shape HR already sends by hand.
+ *
+ * `until` is minutes since midnight IST; the last window has none and takes
+ * everything after. The first is "till 10:30" rather than "9:00-10:30" on
+ * purpose: somebody arriving at 08:40 has to land somewhere, and a report
+ * that silently drops the earliest person in the office is worse than none.
+ */
+const WINDOWS: { label: string; until: number | null }[] = [
+  { label: "Till 10:30", until: 10 * 60 + 30 },
+  { label: "10:30 \u2013 11:00", until: 11 * 60 },
+  { label: "11:00 \u2013 12:00", until: 12 * 60 },
+  { label: "After 12:00", until: null },
+];
+
+/**
  * The same summary src/lib/attendanceReport.js builds for the HR console.
- * Headline numbers, then only the rows that need a decision — a group message
- * nobody reads past the first screen is worse than no message.
+ * Change one and change the other, or the console and the cron disagree.
  */
 function buildSummary(rows: Row[], dateStr: string) {
   const present = rows.filter((r) => r.check_in_at);
   const onLeave = rows.filter((r) => !r.check_in_at && r.hr_status);
   const absent = rows.filter((r) => !r.check_in_at && !r.hr_status);
-  const late = present.filter((r) => r.is_late);
   const siteVisits = present.filter((r) => r.work_mode === "site-visit");
   const wfh = present.filter((r) => r.work_mode === "wfh");
   const flagged = present.filter((r) => r.outside_geofence);
-  const stillIn = present.filter((r) => !r.check_out_at);
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX — Attendance*");
+  L.push("*CAPITAL BRIX \u2014 Attendance*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`👥 Strength: ${rows.length}`);
-  L.push(`✅ Present: ${present.length}   ❌ Absent: ${absent.length}`);
-  if (onLeave.length) L.push(`🌴 On leave: ${onLeave.length}`);
-  L.push(
-    `⏰ Late: ${late.length}   🚗 Site visits: ${siteVisits.length}${
-      wfh.length ? `   🏠 WFH: ${wfh.length}` : ""
-    }`,
+  L.push(`\u{1F465} Strength: ${rows.length}`);
+  L.push(`\u2705 Present: ${present.length}   \u274C Absent: ${absent.length}`);
+  if (onLeave.length) L.push(`\u{1F334} On leave: ${onLeave.length}`);
+  if (siteVisits.length || wfh.length) {
+    L.push(
+      `\u{1F697} Site visits: ${siteVisits.length}${
+        wfh.length ? `   \u{1F3E0} WFH: ${wfh.length}` : ""
+      }`,
+    );
+  }
+
+  // Every present person lands in exactly one window, so the windows always
+  // add up to the Present count above. If they ever do not, the bug is here.
+  let remaining = [...present].sort(
+    (a, b) => istMinutes(a.check_in_at) - istMinutes(b.check_in_at),
   );
+  for (const w of WINDOWS) {
+    const inWindow = w.until === null
+      ? remaining
+      : remaining.filter((r) => istMinutes(r.check_in_at) < w.until!);
+    remaining = w.until === null
+      ? []
+      : remaining.filter((r) => istMinutes(r.check_in_at) >= w.until!);
+
+    if (!inWindow.length) continue;
+    L.push("");
+    L.push(`*${w.label}* (${inWindow.length})`);
+    inWindow.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`));
+  }
 
   if (absent.length) {
     L.push("");
     L.push(`*Absent (${absent.length})*`);
-    absent.forEach((r) =>
-      L.push(`• ${r.full_name}${r.department ? ` (${r.department})` : ""}`)
-    );
-  }
-
-  if (late.length) {
-    L.push("");
-    L.push(`*Late (${late.length})*`);
-    late.forEach((r) =>
-      L.push(
-        `• ${r.full_name} — ${fmtTime(r.check_in_at)}${
-          r.late_minutes ? ` (+${r.late_minutes}m)` : ""
-        }`,
-      )
-    );
-  }
-
-  if (siteVisits.length) {
-    L.push("");
-    L.push(`*Site visits (${siteVisits.length})*`);
-    siteVisits.forEach((r) =>
-      L.push(`• ${r.full_name} — ${fmtTime(r.check_in_at)}${r.note ? ` · ${r.note}` : ""}`)
-    );
+    absent.forEach((r) => L.push(`\u2022 ${r.full_name.trim()}`));
   }
 
   if (onLeave.length) {
     L.push("");
     L.push("*On leave*");
-    onLeave.forEach((r) => L.push(`• ${r.full_name} — ${r.hr_status}`));
+    onLeave.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${r.hr_status}`));
   }
 
   if (flagged.length) {
     L.push("");
-    L.push("*⚠️ Office punch outside geofence*");
+    L.push("*\u26A0\uFE0F Punched outside the office geofence*");
     flagged.forEach((r) =>
-      L.push(`• ${r.full_name} — ${Math.round(r.distance_from_office ?? 0)}m away`)
+      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${Math.round(r.distance_from_office ?? 0)}m away`)
+    );
+  }
+
+  L.push("");
+  L.push("\u2014 Sent from Capital Brix HR");
+  return L.join("\n");
+}
+
+/**
+ * Departure windows. The shift ends at 19:00, so these split the day at the
+ * two points that mean something: gone before 18:00 is an early exit worth a
+ * question, gone between 18:00 and 19:00 is a little early, and after 19:00
+ * is simply the end of the day.
+ */
+const OUT_WINDOWS: { label: string; until: number | null }[] = [
+  { label: "Before 18:00", until: 18 * 60 },
+  { label: "18:00 \u2013 19:00", until: 19 * 60 },
+  { label: "19:00 onwards", until: null },
+];
+
+/**
+ * Who logged out, and when.
+ *
+ * Sent at 19:01, a minute after the shift ends, so it is mostly a list of
+ * people who left before the end — which is the part worth reading. Anyone
+ * still in the office has no check-out yet and is listed as such rather than
+ * left out; a name that appears in neither list would be a bug.
+ *
+ * A check-out only exists when the day's last punch is at least an hour
+ * after the first. Somebody who tapped once and left has an arrival and no
+ * departure, and shows under "still checked in" — correctly, because the
+ * machine has no evidence they left.
+ */
+function buildCheckoutSummary(rows: Row[], dateStr: string) {
+  const present = rows.filter((r) => r.check_in_at);
+  const out = present.filter((r) => r.check_out_at);
+  const stillIn = present.filter((r) => !r.check_out_at);
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX \u2014 Logout*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push(`\u{1F6AA} Logged out: ${out.length}   \u23F3 Still in: ${stillIn.length}`);
+
+  if (!present.length) {
+    L.push("");
+    L.push("_Nobody punched in today._");
+    L.push("");
+    L.push("\u2014 Sent from Capital Brix HR");
+    return L.join("\n");
+  }
+
+  let remaining = [...out].sort(
+    (a, b) => istMinutes(a.check_out_at) - istMinutes(b.check_out_at),
+  );
+  for (const w of OUT_WINDOWS) {
+    const inWindow = w.until === null
+      ? remaining
+      : remaining.filter((r) => istMinutes(r.check_out_at) < w.until!);
+    remaining = w.until === null
+      ? []
+      : remaining.filter((r) => istMinutes(r.check_out_at) >= w.until!);
+
+    if (!inWindow.length) continue;
+    L.push("");
+    L.push(`*${w.label}* (${inWindow.length})`);
+    inWindow.forEach((r) =>
+      L.push(
+        `\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}, out ${
+          fmtTime(r.check_out_at)
+        }`,
+      )
     );
   }
 
   if (stillIn.length) {
     L.push("");
-    L.push(`_${stillIn.length} still checked in at time of sending._`);
+    L.push(`*Still checked in (${stillIn.length})*`);
+    stillIn.forEach((r) =>
+      L.push(`\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}`)
+    );
   }
 
   L.push("");
-  L.push("— Sent from Capital Brix HR");
+  L.push("\u2014 Sent from Capital Brix HR");
   return L.join("\n");
 }
 
@@ -184,11 +292,17 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { date, force, dry_run } = body as {
+    const { date, force, dry_run, kind: rawKind } = body as {
       date?: string;
       force?: boolean;
       dry_run?: boolean;
+      kind?: string;
     };
+
+    // Two reports a day off one function: the arrival summary at 12:10 and
+    // the logout summary at 19:01. cb_report_log is keyed on
+    // (report_date, kind), so each is sent once and neither blocks the other.
+    const kind = rawKind === "checkout" ? "checkout" : "attendance";
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -242,7 +356,7 @@ Deno.serve(async (req) => {
         .from("cb_report_log")
         .select("sent_at, ok")
         .eq("report_date", reportDate)
-        .eq("kind", "attendance")
+        .eq("kind", kind)
         .maybeSingle();
       if (prior?.ok) {
         return json({ sent: false, reason: "already sent", sent_at: prior.sent_at });
@@ -254,9 +368,43 @@ Deno.serve(async (req) => {
     });
     if (error) return json({ error: error.message }, 500);
 
-    const text = buildSummary((rows ?? []) as Row[], reportDate);
+    // A DAY WITH NOT ONE PUNCH IS A BROKEN FEED UNTIL PROVEN OTHERWISE.
+    //
+    // Everything downstream of the eSSL machine can be green while the machine
+    // itself has stopped reaching the office PC. On 21 September the scheduled
+    // task's last result was 0x0 and the sync read every table without error,
+    // and the register had been five days stale — eTimeTrackLite's download is
+    // manual and nobody had clicked it.
+    //
+    // The register cannot tell that apart from a day nobody came, and its
+    // answer either way is "Absent" against every name, which is the single
+    // most damaging thing this message could say. So when no punch has arrived
+    // for the day, say that instead of reading out a roll-call nobody should
+    // act on. On a real holiday it is still true and still the right message.
+    const { count: punchCount } = await admin
+      .from("cb_device_punches")
+      .select("id", { count: "exact", head: true })
+      .gte("punch_at", `${reportDate}T00:00:00+05:30`)
+      .lt("punch_at", `${nextIstDay(reportDate)}T00:00:00+05:30`);
 
-    if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, target, text });
+    const text = punchCount === 0
+      ? [
+        `⚠️ *CAPITAL BRIX — Attendance*`,
+        fmtDate(reportDate),
+        "",
+        "No punches have reached the system for today, so the register is not",
+        "being read out. Either nobody punched, or the biometric machine has",
+        "stopped sending to the office PC.",
+        "",
+        "Check: eTimeTrackLite → Utilities → Device Management → Start Download.",
+        "",
+        "— Sent from Capital Brix HR",
+      ].join("\n")
+      : kind === "checkout"
+      ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
+      : buildSummary((rows ?? []) as Row[], reportDate);
+
+    if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, kind, target, text });
 
     const url = Deno.env.get("WA_WEBHOOK_URL");
     if (!url) {
@@ -296,14 +444,14 @@ Deno.serve(async (req) => {
     // discovers three weeks later that nobody has seen a report.
     await admin.from("cb_report_log").upsert({
       report_date: reportDate,
-      kind: "attendance",
+      kind,
       sent_at: new Date().toISOString(),
       target,
       ok,
       detail: detail || null,
     });
 
-    return json({ sent: ok, date: reportDate, target, detail: ok ? undefined : detail });
+    return json({ sent: ok, date: reportDate, kind, target, detail: ok ? undefined : detail });
   } catch (e) {
     return json({ sent: false, reason: String(e).slice(0, 300) }, 500);
   }

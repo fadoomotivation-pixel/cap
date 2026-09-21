@@ -1,472 +1,163 @@
 # Biometric attendance → WhatsApp group
 
-Every punch on the office eSSL machine reaches Supabase within two minutes,
-and one summary goes to the team's WhatsApp group each evening. Nobody types
-anything.
+Every punch on the office eSSL machine reaches Supabase within minutes, and one
+summary goes to the team's WhatsApp group each evening. Nobody types anything.
 
 ```
-eSSL machine 192.168.1.201
-      │  eTimeTrackLite downloads punches (already happening)
+eSSL device 192.168.1.201
+      │  eTimeTrackLite downloads punches (already happening, unchanged)
       ▼
-Parallel Database Export  →  local MS SQL  TimeTrack.AttendanceLogs
-      │  bridge.js, every 2 min
+C:\Program Files (x86)\essl\eTimeTrackLite\eTimeTrackLite1.mdb
+      │  ettl-sync.ps1, every 5 min, read-only
       ▼
-Supabase  cb_device_punches  →  cb_attendance
-      │  pg_cron, 7:30 PM IST  →  attendance-whatsapp Edge Function
+Supabase   cb_ingest_punches() → cb_device_punches → cb_attendance
+      │  pg_cron 19:30 IST → attendance-whatsapp Edge Function
       ▼
-your Baileys service  →  WhatsApp group
+Baileys service → WhatsApp group
 ```
 
-## Which route
-
-eTimeTrackLite's Database Type list offers **MS SQL Server, Oracle, My Sql** —
-no PostgreSQL, so it cannot write to Supabase directly either way. Something
-has to sit in between. Where that something lives is the choice:
-
-| | **Route B — Hostinger MySQL** (recommended) | **Route A — local MS SQL** |
-|---|---|---|
-| On the office PC | nothing new | SQL Server Express, SSMS, Node, a scheduled task |
-| Sync runs on | Hostinger cron, beside the Baileys service | the office PC |
-| If the PC is off | punches queue on the device, nothing else breaks | nothing syncs |
-
-**This office has no SQL Server at all** — `sc query` lists no SQL service and
-the registry has no instance — so Route A starts with an installer and ends
-with a second always-on program on a desktop people use. Capital Brix already
-pays for MySQL on Hostinger. Use Route B.
-
-eTimeTrackLite has to be open regardless, because it is what pulls punches off
-the device. Route B just avoids adding anything *else* that can be closed by
-accident.
+**Everything from Supabase rightwards is already built, deployed and tested.**
+What remains is the office PC: two PowerShell scripts and a scheduled task.
 
 ---
 
-# Route B — Hostinger MySQL
+## The route: read eTimeTrackLite's own database
 
-## 1 · Create the database
+eTimeTrackLite stores everything in **MS Access** — `eTimeTrackLite1.mdb`, 442
+MB, in its install folder. So the punches are already on the PC, and the Access
+ODBC driver needed to read them is already installed, because eTimeTrackLite
+itself uses it.
 
-Hostinger hPanel → **Databases → MySQL Databases**. Create one (any name; the
-panel prefixes it, e.g. `u123456789_attendance`) and note the user and
-password — they are shown once.
+That means **Parallel Database Export is not used and does not need to work.**
+No MySQL, no SQL Server, no ODBC connector to install, no DSN. It also means
+months of history are available, not just punches from today onward.
 
-Open **phpMyAdmin** for it and run **`schema.mysql.sql`** from this folder.
+### Everything below was learned by looking, not assuming
 
-## 2 · Let the office PC reach it
+Four facts the software does not advertise, each of which breaks the sync if
+ignored. They are handled in the scripts; they are written down because the
+next person will not otherwise believe them:
 
-hPanel → **Databases → Remote MySQL**. Add the office's public IP (search
-"what is my IP" on the office PC). `%` allows any address — it works, but it
-means anyone with the password can reach the database, so prefer the IP and
-only fall back to `%` if the office connection has a changing IP.
+- **`DeviceLogs` is empty.** Verified: 0 rows, while `DeviceLogs_9_2026` held
+  1034. eSSL rolls punches into monthly `DeviceLogs_<month>_<year>` tables, so
+  the sync reads the current month, the previous month, *and* plain
+  `DeviceLogs`. Read only the obvious table and the register stops every 1st
+  of the month, silently.
+- **`Direction` and `AttDirection` are always blank.** The machine records no
+  in/out at all — just a timestamp per tap. This is why the fold rule is what
+  it is: first punch of the day is the arrival, last is the departure, and a
+  second tap inside 60 minutes is neither.
+- **`DeviceLogs.UserId` is the machine's own code**, matching
+  `Employees.EmployeeCodeInDevice` — not `EmployeeCode`, not an email.
+- **Deleted employees stay in the table**, renamed `del_<name>` with their
+  device code zeroed. Both tests are needed when filtering.
 
-If the ISP blocks outbound 3306 the connection will simply time out. Test from
-the office PC before blaming eSSL:
+### Anything 32-bit stays 32-bit
 
-```cmd
-powershell -c "Test-NetConnection <mysql-host> -Port 3306"
-```
-
-## 3 · Point eTimeTrackLite at it
-
-**Utilities → Parallel Database Export**
-
-| Field | Value |
-|---|---|
-| Database Type | **My Sql** |
-| Server Name / IP | the host from hPanel (not `localhost`) |
-| Database Name | `u123456789_attendance` |
-| User Name / Password | from step 1 |
-| Table Name | `AttendanceLogs` |
-
-Leave the field mapping alone, and **check `Employee Code = EmployeeCode` is
-still filled in** — blank there means punches arrive with nobody attached to
-them.
-
-**Test Connection** → Save. Then **Utilities → Device Management** → tick
-**Parallel Database Download** → **Start Download**.
-
-### "Data source name not found and no default driver specified"
+eTimeTrackLite installs into `C:\Program Files (x86)`, so it is a 32-bit
+application, and the Access ODBC driver is registered **32-bit only**. Every
+script here must run under:
 
 ```
-ERROR [IM002] [Microsoft][ODBC Driver Manager]
-Data source name not found and no default driver specified
+C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
 ```
 
-Progress, not a setback: this one comes from Windows, not from the network.
-eTimeTrackLite reaches MySQL through ODBC, and Windows ships no MySQL ODBC
-driver — it has to be installed.
+Run from the normal 64-bit PowerShell they fail with `IM002 Data source name
+not found`, which says nothing about the real cause. Both scripts check and
+refuse rather than letting that happen.
 
-**It must be the 32-bit driver.** eTimeTrackLite installs into
-`C:\Program Files (x86)`, so it is a 32-bit application and can only load
-32-bit drivers, on 64-bit Windows as much as anywhere else. Installing the
-64-bit one leaves this error completely unchanged, which is where the time
-goes.
+---
 
-1. Download **MySQL Connector/ODBC 5.3.x, `win32.msi`** from
-   <https://downloads.mysql.com/archives/c-odbc/>.
+## 1 · Put the scripts on the office PC
 
-   **Change the *Product Version* dropdown to 5.3.14 first.** The page opens
-   on the newest release, and current versions ship 64-bit only — so the
-   32-bit build looks as though it does not exist. It does; it is behind that
-   dropdown. Only 5.3.x lists a `win32.msi`.
+Copy from this folder into `C:\CapitalBrix\punch-sync\`:
 
-   5.3 also happens to be the right choice regardless: Hostinger runs MariaDB,
-   which authenticates with `mysql_native_password`, and the 8.x and later
-   drivers default to an auth plugin MariaDB does not speak.
+- `ettl-sync.ps1`
+- `ettl-employee-map.ps1`
 
-   If the installer asks for a Visual C++ redistributable, it is **Visual C++
-   Redistributable for Visual Studio 2013 (x86)** — the x86 one, to match the
-   x86 driver. The VS 2022 x64 message some builds show belongs to the 64-bit
-   installer and is not what this needs.
-2. Install it, then **restart eTimeTrackLite** — ODBC drivers are read at
-   start-up.
-3. Confirm it registered, in the **32-bit** ODBC administrator specifically:
+Open `ettl-sync.ps1` and set **`$IngestSecret`**:
 
-   ```cmd
-   C:\Windows\SysWOW64\odbcad32.exe
-   ```
-
-   *Drivers* tab should list **MySQL ODBC 5.3 ANSI Driver**. `SysWOW64` is the
-   32-bit one despite the name; `odbcad32.exe` from the Start menu opens the
-   64-bit one and will not show it.
-
-### IM002 again, with the driver installed
-
-Confirm the driver really did register, which is one command rather than a
-hunt through tabs:
-
-```cmd
-reg query "HKLM\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI\ODBC Drivers"
+```
+Supabase → SQL Editor →
+select secret from cb_integration_secrets where name = 'punch_bridge';
 ```
 
-`MySQL ODBC 5.3 ANSI Driver ... Installed` in that list and **still** IM002
-means the message has changed meaning. It reads "Data source name not found
-**and** no default driver specified" — with the driver present, what is
-missing is the *data source name*. This build asks ODBC for a **DSN**, not for
-a driver, so a DSN has to exist and eTimeTrackLite has to be told its name.
+**That is deliberately not the service-role key.** This is a desktop people
+use; the worst a copied ingest secret can do is submit punches. A service key
+there would hand over every row in the database.
 
-In the **32-bit** administrator (`C:\Windows\SysWOW64\odbcad32.exe`), on the
-**System DSN** tab — not User DSN, which only exists for the account that
-created it and is invisible to a service:
+Nothing else in the file needs changing — the Supabase URL and the public anon
+key are already filled in.
 
-*Add* → **MySQL ODBC 5.3 ANSI Driver** (ANSI, not Unicode: these older 32-bit
-apps hand ODBC single-byte strings) →
+## 2 · Map every employee to their machine code
 
-| Field | Value |
-|---|---|
-| Data Source Name | `esslmysql` |
-| TCP/IP Server | the MySQL host · Port `3306` |
-| User / Password | the database user |
-| Database | pick from the dropdown |
+This step decides whether the report has names in it. The machine knows people
+as `1`, `3`, `4`, `32`, `52`, `102`; until those are on the roster, punches
+arrive and attach to nobody.
 
-**The Database dropdown filling itself is the real test** — it can only list
-databases if the host, port, user and password are all correct, so a populated
-dropdown proves everything but eSSL's own settings. *Test* should then say
-Connection Successful.
+```
+C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File C:\CapitalBrix\punch-sync\ettl-employee-map.ps1
+```
 
-Back in Parallel Database Export, put the **DSN name in place of the IP**:
+It prints ready-to-run SQL out of eSSL's own mapping — paste it into the
+Supabase SQL editor. It matches on **name**, the only field both systems
+share, so run the check query it prints at the end: anyone still without a
+`device_code` needs doing by hand.
 
-| Field | Value |
-|---|---|
-| Server Name / IP | `esslmysql` |
-| Database Name | unchanged |
-| User Name / Password | unchanged |
-
-Some builds want the DSN in **Database Name** instead; if the first spelling
-still fails, try it there before assuming the DSN is wrong — the DSN's own
-Test button has already proved it is not.
-
-### Still IM002 with a DSN that tests Successful — read what eSSL asks for
-
-At this point everything has been proved working *except* the string
-eTimeTrackLite itself hands to ODBC. That string is readable, so stop
-guessing at it:
-
-1. 32-bit administrator → **Tracing** tab. Note the **Log File Path** (default
-   `C:\Users\<you>\Documents\SQL.LOG`) and click **Start Tracing Now**.
-2. In Parallel Database Export, click **Test Connection** and let it fail.
-3. Back to the Tracing tab → **Stop Tracing Now**. Tracing logs every ODBC
-   call on the machine, so leaving it on costs disk and speed.
-4. Open the log and find the last `SQLDriverConnect`. The quoted string beside
-   it is exactly what eTimeTrackLite asked for:
-
-   ```
-   ENTER SQLDriverConnect
-       ... "DRIVER={MySQL ODBC 3.51 Driver};SERVER=...;DATABASE=..."
-   ```
-
-Whatever driver name appears there is the one that has to exist. **On
-eTimeTrackLite 12 it is usually `MySQL ODBC 3.51 Driver`** — software old
-enough to predate 5.3, asking by name for a driver nobody installs any more.
-IM002 is then literally true: the data source is not found *and* the driver it
-named is not installed.
-
-Two ways out, once the trace names it:
-
-- **Install that exact driver.** Connector/ODBC **3.51.30, `win32.msi`** from
-  the same archives page (change Product Version to 3.51.30). Ancient, tiny,
-  and it speaks `mysql_native_password`, which is what MariaDB uses.
-- **Alias the one already installed**, if the trace shows a name close to what
-  is there. Under
-  `HKLM\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI`, copy the
-  `MySQL ODBC 5.3 ANSI Driver` key to a new key named exactly what the trace
-  asked for, and add that name to the `ODBC Drivers` value list. No new
-  software, but it is a registry edit — export the key first.
-
-Punch once and check it arrived, in phpMyAdmin:
+Punches for an unmapped code are **not lost**. They sit in `cb_device_punches`,
+and because the fold resolves the person through `device_code` at fold time —
+never through anything stored on the punch — they attach themselves the moment
+the code is filled in. Re-run the fold for the dates concerned:
 
 ```sql
-select * from AttendanceLogs order by LogDateTime desc limit 10;
+select cb_fold_punches_into_attendance('2026-09-01'::date, current_date);
 ```
 
-## 4 · Run the sync on Hostinger
+## 3 · Test the sync
 
-Upload **`hostinger-sync.php`** next to the Baileys service and fill in the
-`$CFG` block at the top. Two values to fetch:
-
-| Value | Where |
-|---|---|
-| `anon_key` | Supabase → Project Settings → API → anon public key |
-| `ingest_secret` | Supabase → SQL Editor → `select secret from cb_integration_secrets where name = 'punch_bridge';` |
-
-**The ingest secret is deliberately not the service-role key.** It can do
-exactly one thing — submit punches. A service key on a web host would hand
-over every row in the database.
-
-Run it once by hand to check:
+Reads and reports, sends nothing:
 
 ```
-php hostinger-sync.php
+… -File C:\CapitalBrix\punch-sync\ettl-sync.ps1 -DryRun
 ```
 
-Then hPanel → **Advanced → Cron Jobs**, every 2 minutes:
+Then for real:
 
 ```
-/usr/bin/php /home/USER/domains/<domain>/punch-sync/hostinger-sync.php
+… -File C:\CapitalBrix\punch-sync\ettl-sync.ps1
 ```
 
-`db_host` stays `localhost` in the file — the cron runs on the same host as
-the database, so that connection never leaves the server. Remote MySQL is
-only for eTimeTrackLite reaching in from the office.
+Expect `DeviceLogs_9_2026 : 240` and `sent 240, new 240`. Run it twice — the
+second run should say `new 0`, which is the idempotency doing its job.
 
-Skip to **step 3 · Match every employee to their machine code** below.
+`-All` imports every month in the database instead of the recent window, to
+backfill the register in one go.
 
----
-
-# Route A — local MS SQL Server
-
-Only if Route B is impossible (no Remote MySQL on the plan, or the ISP blocks
-3306). It needs SQL Server Express installed on the office PC first — this
-one has none.
-
-## 1 · On the office PC — create the table eSSL writes into
-
-The Parallel Database Export screen already shows `TimeTrack` and
-`AttendanceLogs`, but those are **placeholders eSSL ships with** — neither
-exists yet, which is why **Test Connection** fails on a fresh install.
-
-Open SQL Server Management Studio and run **`schema.sql`** from this folder.
-It creates the database, the table, and an index, with column names that
-match the mapping on that screen exactly — so you change nothing there.
-
-Then in eTimeTrackLite:
-
-1. **Utilities → Parallel Database Export**
-2. Database Type **MS SQL Server**, Server `localhost`, Database `TimeTrack`,
-   Table `AttendanceLogs`. Leave the field mapping as it is.
-3. **Test Connection** → should pass now. **Save**.
-4. **Utilities → Device Management** → tick **Parallel Database Download**
-   (already ticked in your setup) → **Start Download**.
-
-### "SQL Server does not exist or access denied"
-
-```
-[DBNETLIB][ConnectionOpen (Connect()).]SQL Server does not exist or access denied.
-```
-
-This is a **connection** failure, not a missing database — it never reached
-the server, so whether `TimeTrack` exists is not the question yet. (Once it
-connects, a missing database gives a different and much clearer error naming
-`TimeTrack`. Seeing that is progress.)
-
-Work down this list. The first item is the cause almost every time.
-
-**1 · `localhost` is usually wrong — it is a named instance.**
-
-eTimeTrackLite installs its own SQL Server Express instance, and a bare
-`localhost` does not resolve to it. Find the real name:
-
-```cmd
-sc query state= all | findstr /i "MSSQL$"
-```
-
-`MSSQL$SQLEXPRESS` means the instance is `SQLEXPRESS`, so **Server Name / IP**
-must read:
-
-```
-localhost\SQLEXPRESS
-```
-
-`.\SQLEXPRESS` works too. If the service shows as `MSSQLSERVER` with no `$`,
-that is the default instance and plain `localhost` is correct — go to step 2.
-
-**2 · Copy the connection eTimeTrackLite itself uses.**
-
-The software is already talking to a SQL Server — that is where all your
-employees and punches live. Whatever it connects with will work here. Open:
-
-```
-C:\Program Files (x86)\eSSL\eTimeTrackLite\eTimeTrackLite.exe.config
-```
-
-in Notepad and search for `Data Source`. That value is the answer, including
-the user and password if it uses SQL authentication.
-
-**3 · Blank User Name / Password.**
-
-Left blank, eSSL attempts SQL authentication with an empty user, which the
-server refuses — and reports as *access denied*. Put in the `sa` account and
-the password set during the eTimeTrackLite install (step 2 shows it).
-
-**4 · TCP/IP is switched off.**
-
-SQL Server Express ships with TCP/IP disabled. Open **SQL Server
-Configuration Manager** → *SQL Server Network Configuration* → *Protocols for
-SQLEXPRESS* → **TCP/IP** → *Enable*, then restart the **SQL Server
-(SQLEXPRESS)** service.
-
-**5 · SQL Server Browser is not running.**
-
-Named instances are resolved by this service, so `localhost\SQLEXPRESS` fails
-without it. `services.msc` → **SQL Server Browser** → Start, and set Startup
-type to *Automatic* so it survives a reboot.
-
-Whatever server name ends up working here, use the same one in the bridge's
-`.env` — `MSSQL_SERVER=localhost` plus `MSSQL_INSTANCE=SQLEXPRESS`.
-
----
-
-Punch on the machine once and check the table has a row:
-
-```sql
-select top 10 * from TimeTrack.dbo.AttendanceLogs order by LogDateTime desc;
-```
-
-Nothing after a punch means eSSL is not exporting — re-check step 3.
-
----
-
-## 2 · On the office PC — run the bridge (Route A only)
-
-Install [Node.js LTS](https://nodejs.org), then in this folder:
-
-```
-npm install
-copy .env.example .env
-```
-
-Fill in `.env`. Two values you need to fetch:
-
-| Value | Where |
-|---|---|
-| `SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public key |
-| `PUNCH_INGEST_SECRET` | Supabase → SQL Editor → `select secret from cb_integration_secrets where name = 'punch_bridge';` |
-
-**The ingest secret is deliberately not the service-role key.** This PC is
-used by people; the worst a copied ingest secret can do is submit punches. A
-service key there would hand over every row in the database.
-
-Test it:
-
-```
-npm start
-```
-
-You should see `connected to localhost/TimeTrack` and `sent N, new N`.
-
-### Keep it running
+## 4 · Schedule it
 
 Task Scheduler → Create Task:
 
 - **General** → *Run whether user is logged on or not*
-- **Triggers** → *At startup*, and tick *Repeat every 5 minutes* →
-  *for: Indefinitely* (so a crash restarts itself)
+- **Triggers** → *At startup*, tick *Repeat every 5 minutes* → *Indefinitely*
 - **Actions** → Start a program
-  - Program: `C:\Program Files\nodejs\node.exe`
-  - Arguments: `-r dotenv/config bridge.js`
-  - Start in: this folder's full path
+  - Program: `C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe`
+  - Arguments: `-ExecutionPolicy Bypass -File C:\CapitalBrix\punch-sync\ettl-sync.ps1`
+  - Start in: `C:\CapitalBrix\punch-sync`
 
----
+The **32-bit** PowerShell path, for the reason above.
 
----
+## 5 · Point the report at the WhatsApp group
 
-# Both routes
-
-## 3 · Match every employee to their machine code
-
-This is the step that decides whether the report has names in it.
-
-The machine calls people `1`, `2`, `3`, `10`… (the **Emp Code** column in the
-eSSL Employee Punch Monitor). Our roster does not know those numbers, so
-until they are filled in, punches arrive and attach to nobody.
-
-For each person, set **`cb_employees.device_code`** to their Emp Code.
-
-The bridge tells you who is missing on every run:
-
-```
-⚠ device codes with no employee on the roster: 6, 17, 22
-```
-
-Those punches are **not lost** — they sit in `cb_device_punches` and attach
-themselves the moment you fill the code in and the next fold runs.
-
----
-
-## 4 · Point it at your WhatsApp group
-
-### The bit worth knowing first
-
-**Meta's official WhatsApp Cloud API cannot post to a group.** It only
-messages individual numbers. Groups need a logged-in WhatsApp Web session,
-which is what Baileys gives you — you already run one.
-
-So this Edge Function does not contain a WhatsApp client. It builds the text
-and POSTs it to your service. Two consequences:
-
-- If the summary stops arriving, **check the Baileys session is still logged
-  in before suspecting anything here.** That is the fragile part.
-- Use a **separate company SIM**, not the founder's personal number.
-  Automated group posting is outside WhatsApp's terms and numbers do get
-  banned. Losing a spare SIM is an afternoon; losing the founder's number is
-  every customer conversation on it.
-
-### Supabase → Project Settings → Edge Functions → Secrets
+Supabase → **Project Settings → Edge Functions → Secrets** (*not* the
+Authentication → SMTP Settings page):
 
 | Secret | Value |
 |---|---|
-| `WA_WEBHOOK_URL` | your Baileys endpoint that sends a message |
+| `WA_WEBHOOK_URL` | the Baileys endpoint that sends a message |
 | `WA_WEBHOOK_TOKEN` | whatever token it expects (optional) |
 | `CRON_SECRET` | `select secret from cb_integration_secrets where name = 'report_cron';` |
 
-Default body posted to your endpoint:
-
-```json
-{ "to": "120363XXXXXXXXXXXX@g.us", "text": "*CAPITAL BRIX — Attendance* …" }
-```
-
-If your service expects a different shape, don't change your service — set
-`WA_PAYLOAD_TEMPLATE` instead, e.g.
-
-```json
-{"chatId":"{{to}}","message":"{{text}}"}
-```
-
-`{{to}}` and `{{text}}` are substituted already JSON-escaped, so a message
-containing quotes or newlines cannot break the template.
-
-### The group JID
-
-Not a phone number — a group is `120363XXXXXXXXXXXX@g.us`. Any Baileys
-session can list the groups it is in; take the id of yours and set it:
+Then:
 
 ```sql
 update cb_hr_settings
@@ -474,50 +165,97 @@ update cb_hr_settings
        daily_report_enabled = true;
 ```
 
-Leave `wa_group_id` blank and the report falls back to the founder's number
-from `founder_whatsapp` — a summary that reaches one person beats one that
-reaches nobody because a JID was mistyped.
+### The Baileys worker we already run
+
+`callpro-baileys` on Hostinger (`pink-worm-375262.hostingersite.com`, port
+8080) is the CallProAI WhatsApp worker, and it already does exactly what this
+needs:
+
+```
+POST /send   { "to": "...", "text": "..." }   Authorization: Bearer <SECRET>
+```
+
+That is byte-for-byte the default body and header this Edge Function sends, so
+**`WA_PAYLOAD_TEMPLATE` is not needed** — `WA_WEBHOOK_URL` and
+`WA_WEBHOOK_TOKEN` alone are the whole configuration.
+
+**Only the founder's session can send.** The worker holds one sending session
+plus any number of per-telecaller "rep" sessions under `/s/<id>/…`, and a rep's
+`send` action answers **403 by design**: *"This session is watch-only. A
+telecaller's number sends by hand, from their own WhatsApp."* So scanning a new
+phone — HR's or anyone's — does **not** produce something that can post the
+report. The number that sends is the founder session's number, and **that
+number has to be a member of the WhatsApp group**, because WhatsApp only lets
+an account post to groups it belongs to.
+
+`/health` is unauthenticated and reports per-state session counts; everything
+else needs the bearer. A QR page accepts the same secret as `?k=` so a phone
+can open it, which is why the secret must never be treated as public.
+
+**Meta's official WhatsApp Cloud API cannot post to a group** — it only
+messages individual numbers. Groups need a logged-in WhatsApp Web session,
+which is what Baileys is. So the Edge Function contains no WhatsApp client: it
+builds the text and POSTs it. **If the report stops arriving, check the Baileys
+login before suspecting anything else** — that session is the fragile part.
+
+Default body is `{"to": …, "text": …}`. If the Baileys endpoint wants another
+shape, do not change the endpoint — set `WA_PAYLOAD_TEMPLATE`, e.g.
+`{"chatId":"{{to}}","message":"{{text}}"}`. Substitution is JSON-escaped, so
+quotes and newlines in a message cannot break it.
+
+Use a **separate company SIM**, not the founder's number. Automated group
+posting is outside WhatsApp's terms and numbers do get banned. Losing a spare
+SIM is an afternoon; losing the founder's number is every customer
+conversation on it.
 
 ---
 
-## Testing before you trust it
-
-Dry run — builds the real summary, sends nothing (needs an admin login):
-
-```bash
-curl -X POST 'https://rqgkzamuohdvttnkluzn.supabase.co/functions/v1/attendance-whatsapp' \
-  -H 'Authorization: Bearer <your admin JWT>' \
-  -H 'Content-Type: application/json' \
-  -d '{"dry_run": true}'
-```
-
-Send a specific day for real:
-
-```bash
--d '{"date": "2026-09-19", "force": true}'
-```
-
-`force` overrides the once-a-day rule. Without it, the cron firing twice, a
-retry after a timeout, and HR tapping Send all collapse to one message —
-`cb_report_log` is keyed on the date.
-
-Every attempt, successful or not, is recorded:
+## Checking it afterwards
 
 ```sql
+-- punches arriving
+select count(*), max(punch_at) from cb_device_punches;
+
+-- anyone the machine knows and the roster does not
+select distinct p.device_code
+from cb_device_punches p
+left join cb_employees e on e.device_code = p.device_code
+where e.id is null;
+
+-- today's register
+select * from cb_daily_attendance(current_date);
+
+-- every report send, successful or not
 select * from cb_report_log order by report_date desc limit 14;
 ```
 
-A failed send that leaves no trace is how a team finds out three weeks later
-that nobody has seen a report.
-
 ---
 
-## Two rules the folding applies
+## Abandoned: Parallel Database Export
 
-- **A second punch less than an hour after the first is the same arrival
-  tapped twice, not a departure.** Your own monitor shows `10:35,10:35,` —
-  without this rule everyone would show zero hours worked.
-- **The machine never overrides a person or HR.** Check-in takes the earliest
-  of machine and portal, check-out the latest, and `hr_status` — an approved
-  leave — is never touched. The register already treats "Absent" as
-  *genuinely unaccounted for*, and a machine must not undo that.
+Two days went into exporting from eTimeTrackLite to an external database
+before the `.mdb` was found. Recorded so nobody repeats it.
+
+The Database Type list offers **MS SQL Server, Oracle, My Sql** — no
+PostgreSQL, so it can never reach Supabase directly, and something always has
+to sit in between. Both attempts died:
+
+- **Local MS SQL Server.** `[DBNETLIB] SQL Server does not exist or access
+  denied`, through every instance spelling. Cause: `sc query` lists no SQL
+  service and the registry has no registered instance — **this PC has no SQL
+  Server at all**, because eTimeTrackLite never needed one.
+- **MySQL on Hostinger.** Network was fine — both 3306 and the SSH port tested
+  open, the database and table were created, Remote MySQL was allowed, and a
+  System DSN tested **Connection Successful**. eTimeTrackLite still answered
+  `IM002` with the MySQL ODBC 5.3 driver registered and a working DSN named in
+  every field that could take one. It asks ODBC for something that could not
+  be made to exist, and ODBC tracing produced no log to say what.
+
+If anyone ever revisits this, the diagnostic that would settle it is ODBC
+tracing with **Machine-Wide tracing** ticked — the per-user setting produced
+no file. `diagnose.cmd`, `schema.sql` and `schema.mysql.sql` in this folder
+belong to those attempts and are kept only as a record.
+
+The `.mdb` route is better anyway, and not only because it works: it needs
+nothing installed, it cannot be broken by an eSSL settings screen, and it can
+read history that Parallel Export would never have produced.

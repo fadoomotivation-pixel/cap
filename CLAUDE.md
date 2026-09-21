@@ -118,6 +118,15 @@ repo only covers the website.
   `main` → production. Feature branches get preview deployments.
 - **Supabase project**: `SalesAutoCall`, ref `rqgkzamuohdvttnkluzn` (ap-south-1).
   Client config is in `src/lib/supabase.js`.
+  **The same org holds a second project, `Fanbe-CRM` / `mfgjzkaabyltscgrkhdz`
+  (ap-southeast-1), and it is not ours.** The dashboard opens whichever was
+  last used, so "Edge Functions → Secrets" can silently be the wrong project —
+  it already happened once with `WA_WEBHOOK_URL`, `WA_WEBHOOK_TOKEN` and
+  `CRON_SECRET`, which looked set and left the function answering
+  `403 not authorised`. Check the ref in the URL before saving a secret, and
+  confirm from this side rather than from the screen: `select
+  cb_send_attendance_report('attendance');` then read `net._http_response` —
+  a 403 means the secret is not where you think it is.
 - Repo: `fadoomotivation-pixel/cap`. Work happens on feature branches → PR into `main`.
 
 ## Supabase schema in use
@@ -160,6 +169,7 @@ Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/:slug
 Public: also `/blog/:slug` (8 original guides — see below).
 Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
 `/admin/attendance`, `/admin/expenses`, `/admin/leads`, `/admin/cards`,
+`/admin/events`, `/admin/whatsapp`,
 `/book/:token`, `/book/confirm/:bookingId`.
 
 Every admin console renders `<AdminNav />` (`src/components/AdminNav.jsx`),
@@ -217,8 +227,16 @@ machine → eTimeTrackLite → Parallel Database Export → local MS SQL
   and a bug here can never write to the attendance software's data.
 - **`cb_employees.device_code`** maps the machine's Emp Code (1, 2, 3, 10…) to
   a person. It is neither `employee_code` nor the email. Punches for an
-  unmapped code are still stored and attach themselves once HR fills it in —
-  `cb_ingest_punches` returns `unknown_device_codes` so nobody has to notice.
+  unmapped code are still stored, and `cb_ingest_punches` returns
+  `unknown_device_codes` so nobody has to notice on their own.
+- **The fold resolves the person through `device_code`, never through the
+  `employee_id` stored on the punch.** It used to read the stored id, which is
+  set at ingest — so 48 real punches that arrived before the roster knew their
+  codes sat attached to nobody, and filling the codes in afterwards changed
+  nothing, silently. Joining on the code makes it self-healing: a punch
+  recorded before the roster knew that code lands in the register the moment
+  it does. `employee_id` stays on the row as a record of who the punch was
+  attributed to on arrival; the register must not depend on it.
 - **The bridge holds `cb_integration_secrets.punch_bridge`, never the
   service-role key.** It runs on a desktop people use; the worst a copied
   secret can do is submit punches.
@@ -243,6 +261,23 @@ machine → eTimeTrackLite → Parallel Database Export → local MS SQL
 also call it with their JWT to send early, re-send (`force`), or preview
 (`dry_run`).
 
+- **The sending number is the founder session's, and there is no way around
+  it.** The `callpro-baileys` worker exposes `POST /send {to,text}` with a
+  bearer — byte-identical to what this function already sends, so no
+  `WA_PAYLOAD_TEMPLATE` — but only for the founder session. Per-telecaller
+  "rep" sessions are watch-only and their `send` action returns 403 on purpose.
+  Scanning another phone therefore does not create a sender. **The founder
+  session's number must be a member of the WhatsApp group**, since WhatsApp
+  only lets an account post to groups it is in.
+- **Proving the chain is four separate facts, and the log distinguishes
+  them.** `select cb_send_attendance_report('attendance');` then read
+  `net._http_response`: `403 not authorised` means `CRON_SECRET` is missing or
+  in the wrong project; `200 {"sent":false,"reason":"daily report is switched
+  off"}` means the cron leg works; anything after that lands in
+  `cb_report_log.detail`. On 21 September that read
+  `HTTP 503 … This WhatsApp is logged out` — which proves the URL and the
+  bearer are both right and puts the fault squarely on the Baileys session,
+  not on anything in this repo.
 - **Meta's official WhatsApp Cloud API cannot post to a group** — it only
   messages individual numbers. Groups need a logged-in WhatsApp Web session
   (Baileys). So the function embeds no WhatsApp client: it builds the text and
@@ -254,6 +289,14 @@ also call it with their JWT to send early, re-send (`force`), or preview
 - `cb_hr_settings.wa_group_id` + `daily_report_enabled` are HR-editable; the
   URL, token and `CRON_SECRET` are Edge Function secrets. A blank group falls
   back to `founder_whatsapp`.
+- **A day with no punches is reported as a broken feed, not as everyone being
+  absent.** The register cannot tell "nobody came" from "the machine stopped
+  reaching the PC", and its answer either way is Absent against every name —
+  which is the most damaging thing this message could say, and on 21 September
+  it would have said it for five days running while every automated check was
+  green. So `attendance-whatsapp` counts `cb_device_punches` for the IST day
+  first, and when that is zero it sends a short warning naming the download
+  step instead of the roll-call. On a real holiday the warning is still true.
 - **`cb_report_log` is keyed on `(report_date, kind)`**, so the cron firing
   twice, a retry and HR tapping Send collapse to one message. Failures are
   logged too — a silent failure is how a team discovers three weeks later that
@@ -262,8 +305,141 @@ also call it with their JWT to send early, re-send (`force`), or preview
   email — the service role has none. **`cb_daily_attendance_report()` exists
   for that reason**: same rows, granted to `service_role` alone. Do not weaken
   `cb_is_admin()` instead; it backs RLS on every `cb_*` table.
-- The summary text is duplicated in `src/lib/attendanceReport.js` (console) and
-  the function (cron). Change both or the two disagree.
+- **The summary is grouped into arrival windows**, matching the format HR
+  already sends by hand: `Till 10:30`, `10:30 – 11:00`, `11:00 – 12:00`,
+  `After 12:00`, then Absent and On leave. The founder reads this to see who
+  drifted in late; grouped, the answer is the size of each block instead of a
+  list to scan. There is no separate "Late" section — the windows are it.
+
+  The first window is **"Till 10:30", not "9:00 – 10:30"**. Somebody arriving
+  at 08:40 has to land somewhere, and every present person must appear in
+  exactly one window — the windows always sum to the Present count. A report
+  that silently drops the earliest person in the office would be worse than
+  no report.
+
+  Windows are computed from **IST explicitly**, never the browser's clock: an
+  HR laptop left on another timezone would otherwise file people into the
+  wrong block, and the blocks are the whole point.
+- **The register holds real history, not just today.** `ettl-sync.ps1 -All`
+  imported **26,674 punches back to 15 November 2025**, which folded into
+  **2,922 attendance rows across 28 people**. Backfilling early is safe and
+  was wrongly gated for a day: the fold resolves a person through
+  `device_code` at fold time, so an unmapped code produces **no** row rather
+  than a wrong one, and the punches attach themselves the moment the code is
+  filled in. Re-run `cb_fold_punches_into_attendance(from, to)` after any
+  mapping change.
+- **Three Amits are enrolled on the machine; the roster's Amit is `59`.**
+  Codes `6`, `59` and `66` are all named "Amit". Frequency alone points the
+  wrong way — `6` has 1,132 punches since November against `59`'s 266 — but
+  the pattern decides it: in September `59` punched on ten working days,
+  arriving around 11:00 and leaving around 19:00, while `6` produced three
+  lone evening taps and `66` none since July. The confirming evidence is an
+  11:18:10 punch by `59` on 9 September against HR's own handwritten
+  "Amit - 11:18".
+- **"Parallel Database Download" is ticked in Device Management and points at
+  nothing.** Its target is MS SQL `localhost` / `TimeTrack` / `AttendanceLogs`,
+  and this PC has no SQL Server at all — that is the abandoned export route.
+  The tick costs a failed write on every download. Untick it; the `.mdb` route
+  does not use it.
+- **eTimeTrackLite's download was never automatic.** `Devices.DownLoadType`
+  was `1` (manual) and `eSSL_Schedular.exe.config` had `AutoStart = False`, so
+  punches reached the PC only when somebody clicked Download — and the whole
+  pipeline silently stopped on 19 September when nobody did. Turning the
+  device's download to Auto/Online and ticking AutoStart is the fix, and it is
+  a GUI action on the office PC: a background agent cannot restore a tray
+  window and walk a Windows Forms menu. **The device is `Test Device`, id 14 —
+  never rename, delete or re-add it.** A re-added device can renumber the
+  person-to-code mapping, and all 26,722 historical punches are keyed on that
+  code.
+- **A silent stop is upstream, not in the bridge.** On 21 September the
+  register had nothing after the 19th while the scheduled task's last result
+  was `0x0` and the sync read every table without error. `DeviceLogs_9_2026`
+  had simply stopped growing — eTimeTrackLite had stopped downloading from
+  `192.168.1.201`. **A green sync proves the PC→Supabase half only.** The
+  check that catches this is the day count, not the task's exit code.
+
+  When it happens: ping the device, then read `Devices.LastLogDownloadDate`
+  and `DevicesStatus` in the `.mdb`. On 21 September those said the device was
+  reachable and the downloader had simply not polled since Saturday 11:14 —
+  the punches were still in the terminal's own memory. **eSSL terminals
+  overwrite their oldest logs once that buffer fills**, so a stalled download
+  is a deadline, not an inconvenience. Restarting it is a GUI action
+  (Device → Download Logs) that nothing on the command line can do.
+- **Device code `32` is Jasveer Singh Chaudhary, not a test card.** The
+  machine labels it `Card`, and on that reading it spent a day in
+  `cb_ignored_device_codes` as "test card, not a person". The owner's own
+  cross-check says the card belongs to Jasveer — one of three roster names
+  that had no code — so it is mapped to him and no longer ignored. If his
+  arrivals ever look like somebody else's, this is the line to revisit: a
+  card named `Card` is the shape a shared visitor card would also have.
+
+- **`cb_employees.in_daily_report = false` keeps somebody out of the
+  summary** — the founder, people who do not punch, pantry staff, a test
+  card. Leaving them merely unmapped does **not** work: an active employee
+  with no punch is "Absent", so they would be listed absent every single day
+  and the one section that needs reading fills with people nobody is asking
+  about. It is deliberately **not** `is_active = false`, which means "no
+  longer with us" and is read by the portal, logins and the register. The
+  filter lives in `cb_daily_attendance_report()`, so the HR console still
+  shows everyone — the console is the full picture, the report is the short
+  list.
+- **Two reports a day, one function.** `kind` selects which:
+  `attendance` at **12:10 IST** (06:40 UTC) — arrivals by window, plus absent
+  and on leave; `checkout` at **19:01 IST** (13:31 UTC) — who logged out and
+  when, split `Before 18:00` / `18:00 – 19:00` / `19:00 onwards`, plus who is
+  still checked in. `cb_report_log` is keyed on `(report_date, kind)`, so each
+  is sent once a day and neither can suppress the other.
+
+  19:01 is one minute after the 19:00 shift end, deliberately: what it catches
+  is people who left **before** the end, which is the part worth a decision.
+  Everyone still in the office appears under "Still checked in" rather than
+  being omitted — a name in neither list is a bug.
+
+  A check-out only exists when the day's last punch is at least an hour after
+  the first. Somebody who tapped once and left has an arrival and no
+  departure, and shows as still checked in — correctly, since the machine has
+  no evidence they left.
+- **`cb_ignored_device_codes` keeps the "unknown device codes" warning
+  honest.** The founder's two IDs, pantry staff, a test card and the
+  not-tracked staff punch every day; without this the bridge named all of
+  them on every run, and a warning that is always there is one nobody reads.
+  Anything the line still names is a real person nobody has mapped. Punches
+  from ignored codes are still stored — deleting them would mean losing the
+  evidence if one of those people ever does need tracking.
+- The arrival summary is duplicated in `src/lib/attendanceReport.js` (console)
+  and the function (cron). Change both or the two disagree. The checkout
+  summary lives only in the function — the console has no Send button for it
+  yet, and a copy nothing calls is a copy that drifts.
+
+### The WhatsApp connection console
+
+`/admin/whatsapp` (admin-only, `noindex`, in `ADMIN_LINKS`) is where HR sees
+whether the reports can actually leave the building, and re-links the phone
+when they cannot.
+
+It exists because the session that posts the register is **shared with Call Pro
+AI**: it lives on a different dashboard, in another product's account, and
+describes itself in that product's words — the failure we hit read *"the rep
+needs to scan the QR again"*, which says nothing about Capital Brix
+attendance. Worse, the only evidence anything was wrong was a `503` inside
+`cb_report_log.detail`. Nobody was going to find that.
+
+- **The page never holds the bearer token.** It calls the **`wa-session` Edge
+  Function**, which is admin-JWT-only, holds `WA_WEBHOOK_TOKEN`, and proxies
+  four actions: `status`, `qr`, `reconnect`, `test`. It derives the worker's
+  base URL by stripping `/send` off `WA_WEBHOOK_URL` rather than adding a
+  second secret that can drift out of step; `WA_BASE_URL` overrides it.
+- **There is no cron path in `wa-session` and there must not be one.** Every
+  action either reveals the state of a WhatsApp account or sends a message.
+- **The QR is polled, not fetched once.** It expires in seconds and the worker
+  mints a fresh one, so a square fetched on page load is stale by the time a
+  phone is unlocked. The poll also notices `connected` and stops on its own.
+- `/health` is the one call that separates "the worker is down" from "the
+  worker is up and logged out" — it needs no bearer and returns per-state
+  session counts. Those two look identical from a failed send.
+- The page also owns `wa_group_id` and `daily_report_enabled`, and lists the
+  last few `cb_report_log` rows with their `detail`, so the evidence that was
+  buried in Postgres is the first thing on screen next time.
 
 ### HR creates employee logins
 
