@@ -166,7 +166,9 @@ export default function WhatsAppAdmin() {
     setBusy(true);
     try {
       const data = await invoke({ action: 'test', to: testTo });
-      if (data.ok) flash(`Sent to ${data.target}. Check that chat.`);
+      // The worker returns WhatsApp's own message id. Printing it turns "I
+      // think it worked" into something that can be checked against the chat.
+      if (data.ok) flash(`Sent to ${data.target}${data.body?.id ? ` (id ${data.body.id})` : ''}. Check that chat now.`);
       else setError(`The worker refused it — ${JSON.stringify(data.body)}`);
       loadSettings();
     } catch (e) {
@@ -335,13 +337,23 @@ export default function WhatsAppAdmin() {
           </div>
         </section>
 
-        {/* Every send, successful or not — the table that held the only
-            evidence last time this broke. */}
+        {/* Every scheduled send, successful or not — the table that held the
+            only evidence last time this broke.
+
+            It is titled "daily report" rather than "sends" because a test from
+            the box above does NOT appear here, and within minutes of shipping
+            that cost somebody a wrong conclusion: they pressed Send, looked
+            down, saw yesterday's red line still sitting at the top and read it
+            as the test failing. */}
         <section className="bg-white border border-gray-100 rounded-xl p-5">
-          <h2 className="font-semibold text-[#10243E] mb-4 flex items-center gap-2">
-            <MessageCircle size={18} /> Recent sends
+          <h2 className="font-semibold text-[#10243E] mb-1 flex items-center gap-2">
+            <MessageCircle size={18} /> Daily report history
           </h2>
-          {log.length === 0 && <p className="text-sm text-gray-500">Nothing sent yet.</p>}
+          <p className="text-sm text-gray-500 mb-4">
+            The 12:10 and 19:01 reports only. A test from the box above shows
+            its result at the top of this page, not here.
+          </p>
+          {log.length === 0 && <p className="text-sm text-gray-500">No report sent yet.</p>}
           <div className="space-y-2">
             {log.map((r, i) => (
               <div key={i} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm border-b border-gray-50 pb-2 last:border-0">
