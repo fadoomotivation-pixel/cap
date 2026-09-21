@@ -327,6 +327,7 @@ export default function WhatsAppAdmin() {
           <ul className="text-xs text-gray-500 mb-4 space-y-1">
             <li><strong className="text-gray-700">10:30</strong> &mdash; who has punched in so far &rarr; <strong className="text-gray-700">group</strong></li>
             <li><strong className="text-gray-700">11:30</strong> &mdash; arrivals by window, absent, on leave &rarr; <strong className="text-gray-700">founder</strong></li>
+            <li><strong className="text-gray-700">11:31</strong> &mdash; the absent list alone &rarr; <strong className="text-gray-700">group</strong></li>
             <li><strong className="text-gray-700">18:45</strong> &mdash; whose attendance is incomplete &rarr; <strong className="text-gray-700">group</strong></li>
             <li><strong className="text-gray-700">19:01</strong> &mdash; who logged out, who is still in &rarr; <strong className="text-gray-700">founder</strong></li>
           </ul>
@@ -339,7 +340,7 @@ export default function WhatsAppAdmin() {
               className="px-4 py-2 rounded-md border border-gray-200 text-gray-700 hover:border-[#D4AF37]">Save</button>
           </div>
           <p className="text-xs text-gray-500 mb-5">
-            The two group messages post here. Leave it empty and they go to the
+            The three group messages post here. Leave it empty and they go to the
             founder&apos;s number
             instead{settings?.founder_whatsapp ? ` (${settings.founder_whatsapp})` : ''} — a
             summary that reaches one person beats one that reaches nobody.
@@ -350,7 +351,7 @@ export default function WhatsAppAdmin() {
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={!!settings?.daily_report_enabled}
               onChange={(e) => saveSettings({ daily_report_enabled: e.target.checked })} />
-            Send the daily messages automatically (10:30, 11:30, 18:45 and 19:01)
+            Send the daily messages automatically (10:30, 11:30, 11:31, 18:45 and 19:01)
           </label>
         </section>
 
@@ -394,7 +395,7 @@ export default function WhatsAppAdmin() {
             <MessageCircle size={18} /> Daily report history
           </h2>
           <p className="text-sm text-gray-500 mb-4">
-            The four scheduled messages only. A test from the box above shows
+            The five scheduled messages only. A test from the box above shows
             its result under the Send button, not here.
           </p>
           {log.length === 0 && <p className="text-sm text-gray-500">No report sent yet.</p>}

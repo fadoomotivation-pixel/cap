@@ -4,11 +4,12 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // ─────────────────────────────────────────────────────────────
 // Posts the daily attendance messages to WhatsApp.
 //
-// Four a day, off one function, and they do NOT share an audience — see the
+// Five a day, off one function, and they do NOT share an audience — see the
 // routing block below. `kind` picks which:
 //   morning     10:30 IST — who has punched in so far, so anyone missing can
 //                           still fix it before the register closes  → group
 //   attendance  11:30 IST — arrivals by window, and who is absent    → founder
+//   absent      11:31 IST — the absent list alone, no arrival times   → group
 //   reminder    18:45 IST — whose attendance is incomplete, while they are
 //                           still in the building and can fix it     → group
 //   checkout    19:01 IST — who logged out and when, and who is still in
@@ -244,8 +245,10 @@ const OUT_WINDOWS: { label: string; until: number | null }[] = [
  *
  * Sent at 19:01, a minute after the shift ends, so it is mostly a list of
  * people who left before the end — which is the part worth reading. Anyone
- * still in the office has no check-out yet and is listed as such rather than
- * left out; a name that appears in neither list would be a bug.
+ * without a check-out is listed rather than left out; a name that appears in
+ * neither list would be a bug. The report does not claim they are still
+ * here: the machine cannot tell a missed exit punch from a late finish, so
+ * the message names both possibilities and leaves the judgement to a person.
  *
  * A check-out only exists when the day's last punch is at least an hour
  * after the first. Somebody who tapped once and left has an arrival and no
@@ -261,7 +264,7 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
   L.push("*CAPITAL BRIX \u2014 Daily Logout*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`Logged out ${out.length}  \u00B7  Still in office ${stillIn.length}`);
+  L.push(`Logged out ${out.length}  \u00B7  No check-out ${stillIn.length}`);
 
   if (!present.length) {
     L.push("");
@@ -296,7 +299,14 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
 
   if (stillIn.length) {
     L.push("");
-    L.push(`*Still in office (${stillIn.length})*`);
+    // "Still in office" states something the machine cannot know. A missing
+    // check-out has two causes that look identical to it — the person left
+    // without tapping, or they are genuinely still here — and printing only
+    // one of them makes the report assert a fact it does not have. Saying
+    // both is shorter than being wrong, and it tells the founder exactly
+    // which names need a question rather than a conclusion.
+    L.push(`*No check-out recorded (${stillIn.length})*`);
+    L.push("_Either the exit punch was missed, or they are still in the office._");
     stillIn.forEach((r) =>
       L.push(`\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}`)
     );
@@ -345,6 +355,52 @@ function buildMorningSummary(rows: Row[], dateStr: string): string | null {
   L.push("");
   L.push("If you are in the office and your name is not on this list, please");
   L.push("punch on the machine now. The register is finalised at 11:30.");
+  L.push("");
+  L.push("\u2014 Capital Brix HR");
+  return L.join("\n");
+}
+
+/**
+ * The absent list, published to the group at 11:31.
+ *
+ * The founder asked for this directly, twice, after being told plainly that
+ * naming absent colleagues in a fifty-person group is the scoreboard the rest
+ * of this module avoids. It is his call and it is implemented; what is NOT
+ * published with it is the arrival roll-call — who walked in at 11:07 and who
+ * at 11:52. He asked for the absent list, so that is what goes, and the
+ * minute-by-minute record of everybody else stays in his own message.
+ *
+ * It follows the 11:30 report by a minute, mirroring 19:00/19:01: the
+ * founder's copy is the record, the group's is the consequence.
+ *
+ * Returns null when nobody is absent. A daily "nobody is absent today" is a
+ * message people stop reading, and on a full-attendance day silence says it
+ * better. On leave is carried only when there is an absent list to carry it
+ * with — it is context for the absences, not news of its own.
+ */
+function buildAbsentSummary(rows: Row[], dateStr: string): string | null {
+  const absent = rows.filter((r) => !r.check_in_at && !r.hr_status);
+  const onLeave = rows.filter((r) => !r.check_in_at && r.hr_status);
+  if (!absent.length) return null;
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX \u2014 Attendance*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push(`*Absent (${absent.length})*`);
+  absent.forEach((r) => L.push(`\u2022 ${r.full_name.trim()}`));
+
+  if (onLeave.length) {
+    L.push("");
+    L.push(`*On leave (${onLeave.length})*`);
+    onLeave.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${r.hr_status}`));
+  }
+
+  L.push("");
+  // Not "you can still fix it" — the 10:30 message said the register closes
+  // at 11:30 and this is sent after that. A route to a person is the honest
+  // recourse; an invitation to reopen a closed register is not.
+  L.push("If any name here is wrong, please speak to HR.");
   L.push("");
   L.push("\u2014 Capital Brix HR");
   return L.join("\n");
@@ -427,7 +483,8 @@ Deno.serve(async (req) => {
     // cb_report_log is keyed on (report_date, kind), so each is sent once and
     // none can suppress another.
     const kind =
-      rawKind === "checkout" || rawKind === "reminder" || rawKind === "morning"
+      rawKind === "checkout" || rawKind === "reminder" ||
+        rawKind === "morning" || rawKind === "absent"
         ? rawKind
         : "attendance";
 
@@ -483,7 +540,7 @@ Deno.serve(async (req) => {
     const founder = (settings?.founder_whatsapp || "").replace(/\D/g, "");
     // Each falls back to the other: a summary that reaches one person beats
     // one that reaches nobody because a number was never filled in.
-    let target = kind === "reminder" || kind === "morning"
+    let target = kind === "reminder" || kind === "morning" || kind === "absent"
       ? (group || founder)
       : (founder || group);
     if (!target) {
@@ -563,6 +620,8 @@ Deno.serve(async (req) => {
       ? buildReminderSummary((rows ?? []) as Row[], reportDate)
       : kind === "morning"
       ? buildMorningSummary((rows ?? []) as Row[], reportDate)
+      : kind === "absent"
+      ? buildAbsentSummary((rows ?? []) as Row[], reportDate)
       : buildSummary((rows ?? []) as Row[], reportDate);
 
     // Nothing to remind anyone about is the good day, and it gets no message.
@@ -577,11 +636,17 @@ Deno.serve(async (req) => {
         ok: true,
         detail: kind === "morning"
           ? "nothing to post — nobody had punched in by 10:30"
+          : kind === "absent"
+          ? "nothing to post — nobody was absent"
           : "nothing to remind — every attendance was complete",
       });
       return json({
         sent: false,
-        reason: kind === "morning" ? "nobody punched in yet" : "nothing to remind",
+        reason: kind === "morning"
+          ? "nobody punched in yet"
+          : kind === "absent"
+          ? "nobody was absent"
+          : "nothing to remind",
         kind,
       });
     }
