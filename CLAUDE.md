@@ -884,8 +884,63 @@ registry CSV --> cb_import_partner_targets() --> cb_partner_targets
   ("developed by Mirrikh Infratech Pvt. Ltd., marketed by Capital Brix LLP as
   an authorised sales channel partner") — the notice covers WhatsApp material,
   not only the website.
+- **Dates are parsed day-first.** Indian registry exports write `03/09/2026`,
+  and `Date.parse` reads that as the American month-first order — 3 March
+  instead of 3 September. `toIsoDate()` handles dd/mm/yyyy explicitly and
+  returns **null** rather than a guess for anything it cannot read, because a
+  wrong date sorts a five-year-old firm to the top of a list whose whole
+  purpose is freshness. Verified both orders before shipping.
+- **Import has a "Check it first" preview.** A registry's column names are
+  never quite what you expect, and an import that silently maps "Registered
+  State" onto `city` is a mistake nobody catches until somebody calls
+  Lucknow. It parses without sending and shows three rows.
+- **The importer reads MCA's column names as well as RERA's.** The two share
+  almost nothing — company name vs agent name, CIN vs registration number,
+  date of incorporation vs registration date — which is why the alias list is
+  long. Without a `source_ref` it derives one from the RERA number or
+  name+phone.
 
+### The browser extension is not a scraper
 
+`integrations/chrome-capture/` — a Chrome MV3 extension, one button.
+
+The registries answer **who is new**. They do **not** give a phone number, and
+finding that is a person looking something up. The extension is only for that
+last step: the listing is already open, one click saves it instead of the
+telecaller retyping it into a second window — which is where a number gets
+mistyped and a lead gets dropped.
+
+- It reads **only the page already open**, when the popup is opened, and saves
+  **one record per click**. No background job, no list walking — so there is
+  no rate to get blocked and nothing to ban.
+- `cb_employees.capture_token` is **per person, shown once**, and regenerated
+  to revoke. A shared secret could not say whose list a row belongs in, which
+  is the whole point.
+- `cb_capture_partner_target()` is granted to `anon` because an extension
+  holds no session — the token in the body is the credential and the function
+  refuses everything else. It de-duplicates on name+phone, **leaves a row
+  somebody else already holds with them**, and **will not re-add a number
+  marked `do_not_contact`**. All four verified against the live function.
+
+### `/channel-partner` — the inbound half
+
+The registry import plus a telecaller working a list is the outbound half, and
+it is a **commodity**: any competitor can buy or scrape the same names on the
+same day. This page is the part that compounds — a broker who finds it is
+already searching for inventory to sell, which is a warmer lead than a hundred
+cold calls, and once it ranks it produces without anybody dialling.
+
+- It targets **one cluster nothing else on the site claims** — "Dholera
+  channel partner", "Dholera broker tie-up". `pageSeo.channelPartner`, and
+  **it is in `public/sitemap.xml`**, which is the only reason it prerenders.
+- The form is `LeadForm` with `source="channel-partner"`, so partner
+  enquiries land in `cb_leads` beside website leads and `/admin/leads` can
+  tell them apart by source.
+- Reasons first, form below — the same order the event page settled on.
+  Somebody who has decided scrolls past the argument; somebody still deciding
+  needs it.
+
+## Petty cash / office expenses
 
 `/admin/expenses` — admin-only, `noindex`. Built on the **imprest (float) model**,
 because a plain expense list can never be proved right: the office hands HR cash,
