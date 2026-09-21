@@ -311,8 +311,10 @@ forwards to the function, not weakening anything here.
 
 ### Daily attendance report to WhatsApp
 
-`attendance-whatsapp` Edge Function, fired by **pg_cron at 14:00 UTC
-(19:30 IST)** through `cb_send_attendance_report()` → `pg_net`. An admin can
+`attendance-whatsapp` Edge Function, fired by **four pg_cron jobs**
+(`cb-morning-checkin-whatsapp`, `cb-daily-attendance-whatsapp`,
+`cb-attendance-reminder`, `cb-daily-logout-whatsapp`) through
+`cb_send_attendance_report(kind)` → `pg_net`. An admin can
 also call it with their JWT to send early, re-send (`force`), or preview
 (`dry_run`).
 
@@ -488,18 +490,52 @@ also call it with their JWT to send early, re-send (`force`), or preview
   daily message people stop reading. It sits fifteen minutes before the
   logout report on purpose: the reminder is the last chance to fix the day,
   the 19:01 summary is the record of it.
-- **The three messages do not share an audience, and the routing is the
-  product decision.** The group gets **only** the 18:45 reminder; the 12:10
-  arrivals roll-call and the 19:01 logout summary go to
-  `founder_whatsapp`. Each falls back to the other so a blank setting cannot
-  silence a report.
+- **Four messages a day, two audiences, and the split is the product
+  decision.**
 
-  The reminder asks people to act while they still can, so it has to reach
-  them — and it sends nothing when both its lists are empty, so the group is
-  usually quiet. The other two are management information: fifty people can
-  do nothing with them, and a daily roll-call of colleagues' arrival times in
-  a company group reads as surveillance however plainly it is worded. This
-  took the group from three messages a day to one, usually none.
+  | Time | `kind` | What | To |
+  |---|---|---|---|
+  | 10:30 | `morning` | who has punched in so far | **group** |
+  | 11:30 | `attendance` | arrivals by window, plus absent and on leave | **founder** |
+  | 18:45 | `reminder` | whose attendance is still incomplete | **group** |
+  | 19:01 | `checkout` | who logged out, and who is still in | **founder** |
+
+  Each target falls back to the other so a blank setting cannot silence a
+  report.
+
+  **The group's two both ask somebody to act while they still can.** The
+  founder's two are the record and the decisions only he can make: fifty
+  people can do nothing with a roll-call, and a daily list of colleagues'
+  arrival times in a company group reads as surveillance however plainly it
+  is worded.
+
+  **The 10:30 message names who HAS punched, never who has not.** A list of
+  late names in a fifty-person group is the scoreboard this module keeps
+  being told not to become — but somebody scanning for their own name and not
+  finding it learns exactly the same thing without being held up in front of
+  colleagues, and can still walk to the machine. The deadline is stated
+  ("the register is finalised at 11:30") and the absent list that follows
+  goes to the founder. It returns null, and sends nothing, when nobody has
+  punched at all: at 10:30 that is a holiday or a broken feed, and "nobody is
+  in the office" is not a sentence to publish on the strength of a silent
+  machine.
+
+  **An owner's first sketch had five messages** — 10:30 and 11:15 present
+  lists, 11:30 absent, 19:00 logout, 19:10 missing-punch. Two were merged
+  because 11:15's list is the same list as 10:30's, and a message that
+  repeats itself is how people stop reading the first one; stating the 11:30
+  deadline inside the 10:30 message does the same work. And the evening nudge
+  stayed at **18:45, not 19:10**: the shift ends at 19:00, so at 19:10 the
+  person who forgot to tap has already left. The whole point of that message
+  is that they are still in the building.
+
+  **The broken-feed warning always goes to the founder**, whatever the kind.
+  It asks for a specific click inside eTimeTrackLite; in the group it is an
+  unactionable announcement that the company's attendance is broken.
+
+  The founder's two messages carry a **`Register:` link to
+  `/admin/attendance`** — a summary that names a problem and then leaves the
+  reader hunting for the place to fix it is half a message.
 
   **The broken-feed warning always goes to the founder too**, whatever the
   kind. It asks for a specific click inside eTimeTrackLite; in the group it
@@ -522,8 +558,9 @@ also call it with their JWT to send early, re-send (`force`), or preview
   before, so an unenrolled person looked exactly like an absent one. Hiding
   them from the report without surfacing them here would mean nobody ever
   enrols them.
-- **Three messages a day, one function.** `kind` selects which:
-  `attendance` at **12:10 IST** (06:40 UTC) — arrivals by window, plus absent
+- **Four messages a day, one function.** `kind` selects which:
+  `morning` at **10:30 IST** (05:00 UTC); `attendance` at **11:30 IST**
+  (06:00 UTC) — arrivals by window, plus absent
   and on leave; `reminder` at **18:45 IST** (13:15 UTC); `checkout` at
   **19:01 IST** (13:31 UTC) — who logged out and
   when, split `Before 18:00` / `18:00 – 19:00` / `19:00 onwards`, plus who is
