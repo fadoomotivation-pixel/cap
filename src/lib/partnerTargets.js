@@ -70,6 +70,33 @@ export function parseCsv(text) {
  * and counted rather than silently skipped: an import that says "480 rows"
  * when the file had 500 is how bad data hides.
  */
+/**
+ * A registry date string -> yyyy-mm-dd, or null.
+ *
+ * dd/mm/yyyy and dd-mm-yyyy are read day-first, because that is what Indian
+ * government exports use. An already-ISO date is passed through. Anything
+ * else returns null rather than a guess: a wrong date sorts a five-year-old
+ * firm to the top of a list whose entire purpose is freshness.
+ */
+export function toIsoDate(raw) {
+  const v = String(raw || '').trim();
+  if (!v) return null;
+
+  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  const dmy = v.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+  if (dmy) {
+    const [, d, m, y] = dmy;
+    if (Number(m) > 12) return null;
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  // "18 Sep 2026" and similar are unambiguous, so let Date handle those.
+  const t = Date.parse(v);
+  return Number.isNaN(t) ? null : new Date(t).toISOString().slice(0, 10);
+}
+
 export function rowsFromCsv(text, source) {
   const table = parseCsv(text);
   if (table.length < 2) return { rows: [], skipped: 0, headerFound: false };
@@ -77,17 +104,30 @@ export function rowsFromCsv(text, source) {
   const norm = (s) => String(s || '').toLowerCase().replace(/[\s_-]+/g, '');
   const header = table[0].map(norm);
 
+  // Two very different exports have to paste in unedited: a state RERA agent
+  // list (agent name, registration no.) and MCA's monthly incorporations
+  // (company name, CIN, date of incorporation, registered office address).
+  // They share almost no column names, which is why this list is long.
   const ALIASES = {
-    source_ref: ['sourceref', 'ref', 'regno', 'registrationno', 'registrationnumber', 'id', 'cin', 'llpin'],
-    name: ['name', 'agentname', 'applicantname', 'promotername', 'companyname', 'fullname'],
-    firm: ['firm', 'firmname', 'organisation', 'organization', 'tradename', 'businessname'],
-    phone: ['phone', 'mobile', 'contact', 'contactno', 'mobileno', 'phoneno'],
-    email: ['email', 'emailid', 'mail'],
-    rera_no: ['rerano', 'reraregistrationno', 'registrationno', 'regno'],
-    address: ['address', 'officeaddress', 'registeredaddress'],
+    source_ref: ['sourceref', 'ref', 'regno', 'registrationno', 'registrationnumber',
+                 'id', 'cin', 'llpin', 'cinllpin', 'corporateidentificationnumber'],
+    name: ['name', 'agentname', 'applicantname', 'promotername', 'companyname',
+           'fullname', 'nameofcompany', 'companylpname', 'nameofthecompany',
+           'entityname', 'llpname'],
+    firm: ['firm', 'firmname', 'organisation', 'organization', 'tradename',
+           'businessname', 'organizationname', 'organisationname'],
+    phone: ['phone', 'mobile', 'contact', 'contactno', 'mobileno', 'phoneno',
+            'phonenumber', 'mobilenumber', 'contactnumber'],
+    email: ['email', 'emailid', 'mail', 'emailaddress'],
+    rera_no: ['rerano', 'reraregistrationno', 'registrationno', 'regno',
+              'reraregno', 'reraid'],
+    address: ['address', 'officeaddress', 'registeredaddress',
+              'registeredofficeaddress', 'addressofthecompany', 'fulladdress'],
     area: ['area', 'locality', 'sector'],
-    city: ['city', 'district', 'town'],
-    registered_on: ['registeredon', 'registrationdate', 'dateofregistration', 'dateofincorporation', 'validfrom', 'date'],
+    city: ['city', 'district', 'town', 'registeredstate', 'state'],
+    registered_on: ['registeredon', 'registrationdate', 'dateofregistration',
+                    'dateofincorporation', 'validfrom', 'date', 'incorporationdate',
+                    'dateofregistrationincorporation'],
   };
 
   const index = {};
@@ -116,9 +156,12 @@ export function rowsFromCsv(text, source) {
       const v = get(col);
       if (v) out[col] = v;
     }
-    // A date the database cannot read is worse than no date: it would fail
-    // the whole batch for one bad cell.
-    if (out.registered_on && Number.isNaN(Date.parse(out.registered_on))) delete out.registered_on;
+    // Indian registry exports write dd/mm/yyyy, and Date.parse reads that as
+    // the American month-first order — so 03/09/2026 silently becomes 3 March
+    // instead of 3 September, and the whole "who is new" ordering is wrong by
+    // months without anything looking broken.
+    if (out.registered_on) out.registered_on = toIsoDate(out.registered_on);
+    if (!out.registered_on) delete out.registered_on;
     rows.push(out);
   }
 

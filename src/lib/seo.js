@@ -40,6 +40,12 @@ export const pageSeo = {
       'Everything about Dholera Special Investment Region — India\'s first greenfield smart city. Tata semiconductor fab, Dholera International Airport, the Ahmedabad–Dholera Expressway, master plan, land prices and investment outlook.',
     path: '/dholera',
   },
+  channelPartner: {
+    title: 'Dholera Channel Partner Programme | Capital Brix',
+    description:
+      'Sell NA-approved, title-clear plots in Dholera SIR as a Capital Brix channel partner. Written terms, verifiable documentation and site visits we run for you. Developed by Mirrikh Infratech Pvt. Ltd., marketed by Capital Brix LLP as an authorised sales channel partner.',
+    path: '/channel-partner',
+  },
   contact: {
     title: 'Contact Capital Brix | Book a Free Dholera Site Visit',
     description:

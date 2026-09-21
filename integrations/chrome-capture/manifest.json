@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Add to Capital Brix",
+  "version": "1.0.0",
+  "description": "Save a broker you are looking at straight into your Capital Brix channel-partner list.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://rqgkzamuohdvttnkluzn.supabase.co/*"],
+  "action": {
+    "default_title": "Add to Capital Brix",
+    "default_popup": "popup.html"
+  }
+}

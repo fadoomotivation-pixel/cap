@@ -26,6 +26,7 @@ import CardsAdmin from './pages/CardsAdmin';
 import EventsAdmin from './pages/EventsAdmin';
 import WhatsAppAdmin from './pages/WhatsAppAdmin';
 import PartnersAdmin from './pages/PartnersAdmin';
+import ChannelPartner from './pages/ChannelPartner';
 import InterviewBooking from './pages/InterviewBooking';
 import InterviewConfirmation from './pages/InterviewConfirmation';
 
@@ -63,6 +64,7 @@ export function AppContent() {
         {/* Dholera Dropdown Pages */}
 
         <Route path="/contact" element={<Contact />} />
+        <Route path="/channel-partner" element={<ChannelPartner />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/events" element={<Events />} />

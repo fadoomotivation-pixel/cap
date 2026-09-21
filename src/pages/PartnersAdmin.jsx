@@ -7,7 +7,7 @@ import { friendlyError } from '../lib/errors';
 import { PARTNER_STATUSES, statusMeta, rowsFromCsv } from '../lib/partnerTargets';
 import {
   Handshake, RefreshCw, LogOut, X, Upload, UserPlus, Search,
-  Phone, MessageCircle, Ban, CheckCircle2, AlertTriangle, Star,
+  Phone, MessageCircle, Ban, CheckCircle2, AlertTriangle, Star, Eye, Copy, KeyRound,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
@@ -56,6 +56,8 @@ export default function PartnersAdmin() {
   const [csv, setCsv] = useState('');
   const [csvSource, setCsvSource] = useState(SOURCES[0].key);
   const [importResult, setImportResult] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [tokenFor, setTokenFor] = useState(null);
   const [assignCount, setAssignCount] = useState(25);
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function PartnersAdmin() {
         .order('registered_on', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .limit(500),
-      supabase.from('cb_employees').select('id, full_name, phone, can_work_partners')
+      supabase.from('cb_employees').select('id, full_name, phone, can_work_partners, capture_token')
         .eq('is_active', true).order('full_name'),
       supabase.rpc('cb_partner_board'),
     ]);
@@ -120,8 +122,35 @@ export default function PartnersAdmin() {
     });
   }, [targets, search, statusFilter, ownerFilter]);
 
+  /**
+   * Read the paste WITHOUT sending it.
+   *
+   * A registry export's column names are never quite what you expect, and an
+   * import that silently maps "Registered State" onto city is the kind of
+   * mistake nobody catches until a telecaller calls somebody in Lucknow.
+   * Showing three parsed rows costs one click and answers it.
+   */
+  const runPreview = () => {
+    setImportResult(null);
+    const { rows, skipped, headerFound } = rowsFromCsv(csv, csvSource);
+    setPreview({ rows: rows.slice(0, 3), total: rows.length, skipped, headerFound });
+  };
+
+  /**
+   * A capture token for the browser extension. Generating a new one
+   * immediately invalidates the old, which is the whole point: a token on a
+   * shared desktop is revoked by replacing it, not by asking nicely.
+   */
+  const issueToken = async (emp) => {
+    const token = crypto.randomUUID();
+    const { error: e } = await supabase.from('cb_employees')
+      .update({ capture_token: token }).eq('id', emp.id);
+    if (e) return setError(e.message);
+    setTokenFor({ id: emp.id, name: emp.full_name.trim(), token });
+  };
+
   const runImport = async () => {
-    setError(''); setImportResult(null);
+    setError(''); setImportResult(null); setPreview(null);
     const { rows, skipped, headerFound } = rowsFromCsv(csv, csvSource);
     if (!headerFound) {
       return setImportResult({ error: 'No recognisable column headers. The first line must name the columns — at minimum a name column.' });
@@ -316,18 +345,50 @@ export default function PartnersAdmin() {
                 <strong> only the names you hand them</strong>, never the queue
                 and never a colleague&apos;s list.
               </p>
+              {/* Shown once, here, and not stored anywhere in the console.
+                  A secret that stays on screen is a secret on a shared desk. */}
+              {tokenFor && (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs text-amber-900 mb-2">
+                    <strong>{tokenFor.name}&apos;s capture token.</strong> Copy it into their
+                    browser extension now — it is not shown again, and issuing another
+                    one stops this working.
+                  </p>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <code className="text-[11px] bg-white border border-amber-200 rounded px-2 py-1 font-mono break-all">
+                      {tokenFor.token}
+                    </code>
+                    <button onClick={() => { navigator.clipboard?.writeText(tokenFor.token); flash('Token copied.'); }}
+                      className="text-[11px] px-2 py-1 rounded border border-amber-300 text-amber-900 hover:bg-amber-100 flex items-center gap-1">
+                      <Copy size={11} /> Copy
+                    </button>
+                    <button onClick={() => setTokenFor(null)}
+                      className="text-[11px] text-amber-700 hover:underline">Done</button>
+                  </div>
+                </div>
+              )}
+
               <div className="divide-y divide-gray-50">
                 {team.map((e) => (
                   <div key={e.id} className="py-2 flex items-center justify-between gap-3">
                     <span className="text-sm text-[#10243E]">{e.full_name.trim()}</span>
-                    <button onClick={() => toggleWorker(e)}
-                      className={`text-[11px] px-2.5 py-1 rounded border flex items-center gap-1 ${
-                        e.can_work_partners
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-white text-gray-400 border-gray-200 hover:text-green-700'
-                      }`}>
-                      <Star size={11} /> {e.can_work_partners ? 'Can work partners' : 'Off'}
-                    </button>
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {e.can_work_partners && (
+                        <button onClick={() => issueToken(e)}
+                          title="A new token for the browser extension. Issuing one stops the old token working immediately."
+                          className="text-[11px] px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:border-[#D4AF37] hover:text-[#9C7C1C] flex items-center gap-1">
+                          <KeyRound size={11} /> {e.capture_token ? 'New token' : 'Capture token'}
+                        </button>
+                      )}
+                      <button onClick={() => toggleWorker(e)}
+                        className={`text-[11px] px-2.5 py-1 rounded border flex items-center gap-1 ${
+                          e.can_work_partners
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : 'bg-white text-gray-400 border-gray-200 hover:text-green-700'
+                        }`}>
+                        <Star size={11} /> {e.can_work_partners ? 'Can work partners' : 'Off'}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -415,10 +476,59 @@ export default function PartnersAdmin() {
               placeholder={'name,firm,phone,city,rera_no,registered_on\nRahul Sharma,Sharma Estates,9810012345,Noida,UPRERAAGT12345,2026-09-18'}
               className="w-full border border-gray-200 rounded-md p-3 text-xs font-mono outline-none focus:border-[#f26522] mb-3" />
 
-            <button onClick={runImport} disabled={busy || !csv.trim()}
-              className="flex items-center gap-2 bg-[#f26522] text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-orange-600 disabled:opacity-50">
-              <Upload size={16} /> {busy ? 'Importing…' : 'Import'}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={runPreview} disabled={!csv.trim()}
+                className="flex items-center gap-2 border border-gray-200 text-gray-700 px-4 py-2.5 rounded-md text-sm font-medium hover:border-[#f26522] disabled:opacity-50">
+                <Eye size={16} /> Check it first
+              </button>
+              <button onClick={runImport} disabled={busy || !csv.trim()}
+                className="flex items-center gap-2 bg-[#f26522] text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-orange-600 disabled:opacity-50">
+                <Upload size={16} /> {busy ? 'Importing…' : 'Import'}
+              </button>
+            </div>
+
+            {preview && (
+              <div className="mt-4 border border-gray-200 rounded-lg p-3 text-xs">
+                {!preview.headerFound ? (
+                  <p className="text-red-700">
+                    No column headers recognised. The first line must name the columns.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-gray-600 mb-2">
+                      <strong>{preview.total}</strong> rows would be read
+                      {preview.skipped > 0 && <>, {preview.skipped} skipped for having no name</>}.
+                      Here are the first {preview.rows.length} — check a phone number landed in
+                      phone and a date in date before importing.
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="text-[11px] w-full">
+                        <thead className="text-gray-400">
+                          <tr>
+                            <th className="text-left p-1">name</th>
+                            <th className="text-left p-1">phone</th>
+                            <th className="text-left p-1">city</th>
+                            <th className="text-left p-1">registered_on</th>
+                            <th className="text-left p-1">source_ref</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {preview.rows.map((r, i) => (
+                            <tr key={i} className="border-t border-gray-100">
+                              <td className="p-1">{r.name}</td>
+                              <td className="p-1">{r.phone || <span className="text-gray-300">—</span>}</td>
+                              <td className="p-1">{r.city || <span className="text-gray-300">—</span>}</td>
+                              <td className="p-1">{r.registered_on || <span className="text-amber-600">missing</span>}</td>
+                              <td className="p-1 text-gray-400">{r.source_ref}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {importResult && (
               <div className={`mt-4 rounded-lg p-3 text-sm border flex gap-2 ${

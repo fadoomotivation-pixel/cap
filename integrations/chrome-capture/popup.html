@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Add to Capital Brix</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <strong>Add to Capital Brix</strong>
+      <button id="settings-toggle" type="button" title="Your capture token">⚙</button>
+    </header>
+
+    <section id="settings" hidden>
+      <label>
+        Your capture token
+        <input id="token" type="text" placeholder="Paste the token HR gave you" autocomplete="off" />
+      </label>
+      <p class="hint">
+        Get it from /admin/partners. It says which list a saved broker lands in,
+        so it is yours alone — do not share it.
+      </p>
+      <button id="save-token" type="button" class="primary">Save token</button>
+    </section>
+
+    <form id="capture">
+      <label>Name <input id="name" type="text" required autocomplete="off" /></label>
+      <label>Phone <input id="phone" type="text" inputmode="tel" autocomplete="off" /></label>
+      <label>Firm <input id="firm" type="text" autocomplete="off" /></label>
+      <label>City <input id="city" type="text" autocomplete="off" /></label>
+      <label>Note <textarea id="notes" rows="2" placeholder="Where you found them"></textarea></label>
+      <button type="submit" class="primary" id="submit">Add to my list</button>
+    </form>
+
+    <p id="result" hidden></p>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
