@@ -295,8 +295,33 @@ also call it with their JWT to send early, re-send (`force`), or preview
   filter lives in `cb_daily_attendance_report()`, so the HR console still
   shows everyone — the console is the full picture, the report is the short
   list.
-- The summary text is duplicated in `src/lib/attendanceReport.js` (console) and
-  the function (cron). Change both or the two disagree.
+- **Two reports a day, one function.** `kind` selects which:
+  `attendance` at **12:10 IST** (06:40 UTC) — arrivals by window, plus absent
+  and on leave; `checkout` at **19:01 IST** (13:31 UTC) — who logged out and
+  when, split `Before 18:00` / `18:00 – 19:00` / `19:00 onwards`, plus who is
+  still checked in. `cb_report_log` is keyed on `(report_date, kind)`, so each
+  is sent once a day and neither can suppress the other.
+
+  19:01 is one minute after the 19:00 shift end, deliberately: what it catches
+  is people who left **before** the end, which is the part worth a decision.
+  Everyone still in the office appears under "Still checked in" rather than
+  being omitted — a name in neither list is a bug.
+
+  A check-out only exists when the day's last punch is at least an hour after
+  the first. Somebody who tapped once and left has an arrival and no
+  departure, and shows as still checked in — correctly, since the machine has
+  no evidence they left.
+- **`cb_ignored_device_codes` keeps the "unknown device codes" warning
+  honest.** The founder's two IDs, pantry staff, a test card and the
+  not-tracked staff punch every day; without this the bridge named all of
+  them on every run, and a warning that is always there is one nobody reads.
+  Anything the line still names is a real person nobody has mapped. Punches
+  from ignored codes are still stored — deleting them would mean losing the
+  evidence if one of those people ever does need tracking.
+- The arrival summary is duplicated in `src/lib/attendanceReport.js` (console)
+  and the function (cron). Change both or the two disagree. The checkout
+  summary lives only in the function — the console has no Send button for it
+  yet, and a copy nothing calls is a copy that drifts.
 
 ### HR creates employee logins
 

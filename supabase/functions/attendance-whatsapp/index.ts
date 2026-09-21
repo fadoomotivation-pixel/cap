@@ -192,6 +192,86 @@ function buildSummary(rows: Row[], dateStr: string) {
   return L.join("\n");
 }
 
+/**
+ * Departure windows. The shift ends at 19:00, so these split the day at the
+ * two points that mean something: gone before 18:00 is an early exit worth a
+ * question, gone between 18:00 and 19:00 is a little early, and after 19:00
+ * is simply the end of the day.
+ */
+const OUT_WINDOWS: { label: string; until: number | null }[] = [
+  { label: "Before 18:00", until: 18 * 60 },
+  { label: "18:00 \u2013 19:00", until: 19 * 60 },
+  { label: "19:00 onwards", until: null },
+];
+
+/**
+ * Who logged out, and when.
+ *
+ * Sent at 19:01, a minute after the shift ends, so it is mostly a list of
+ * people who left before the end — which is the part worth reading. Anyone
+ * still in the office has no check-out yet and is listed as such rather than
+ * left out; a name that appears in neither list would be a bug.
+ *
+ * A check-out only exists when the day's last punch is at least an hour
+ * after the first. Somebody who tapped once and left has an arrival and no
+ * departure, and shows under "still checked in" — correctly, because the
+ * machine has no evidence they left.
+ */
+function buildCheckoutSummary(rows: Row[], dateStr: string) {
+  const present = rows.filter((r) => r.check_in_at);
+  const out = present.filter((r) => r.check_out_at);
+  const stillIn = present.filter((r) => !r.check_out_at);
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX \u2014 Logout*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push(`\u{1F6AA} Logged out: ${out.length}   \u23F3 Still in: ${stillIn.length}`);
+
+  if (!present.length) {
+    L.push("");
+    L.push("_Nobody punched in today._");
+    L.push("");
+    L.push("\u2014 Sent from Capital Brix HR");
+    return L.join("\n");
+  }
+
+  let remaining = [...out].sort(
+    (a, b) => istMinutes(a.check_out_at) - istMinutes(b.check_out_at),
+  );
+  for (const w of OUT_WINDOWS) {
+    const inWindow = w.until === null
+      ? remaining
+      : remaining.filter((r) => istMinutes(r.check_out_at) < w.until!);
+    remaining = w.until === null
+      ? []
+      : remaining.filter((r) => istMinutes(r.check_out_at) >= w.until!);
+
+    if (!inWindow.length) continue;
+    L.push("");
+    L.push(`*${w.label}* (${inWindow.length})`);
+    inWindow.forEach((r) =>
+      L.push(
+        `\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}, out ${
+          fmtTime(r.check_out_at)
+        }`,
+      )
+    );
+  }
+
+  if (stillIn.length) {
+    L.push("");
+    L.push(`*Still checked in (${stillIn.length})*`);
+    stillIn.forEach((r) =>
+      L.push(`\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}`)
+    );
+  }
+
+  L.push("");
+  L.push("\u2014 Sent from Capital Brix HR");
+  return L.join("\n");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const json = (b: unknown, status = 200) =>
@@ -202,11 +282,17 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { date, force, dry_run } = body as {
+    const { date, force, dry_run, kind: rawKind } = body as {
       date?: string;
       force?: boolean;
       dry_run?: boolean;
+      kind?: string;
     };
+
+    // Two reports a day off one function: the arrival summary at 12:10 and
+    // the logout summary at 19:01. cb_report_log is keyed on
+    // (report_date, kind), so each is sent once and neither blocks the other.
+    const kind = rawKind === "checkout" ? "checkout" : "attendance";
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -260,7 +346,7 @@ Deno.serve(async (req) => {
         .from("cb_report_log")
         .select("sent_at, ok")
         .eq("report_date", reportDate)
-        .eq("kind", "attendance")
+        .eq("kind", kind)
         .maybeSingle();
       if (prior?.ok) {
         return json({ sent: false, reason: "already sent", sent_at: prior.sent_at });
@@ -272,9 +358,11 @@ Deno.serve(async (req) => {
     });
     if (error) return json({ error: error.message }, 500);
 
-    const text = buildSummary((rows ?? []) as Row[], reportDate);
+    const text = kind === "checkout"
+      ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
+      : buildSummary((rows ?? []) as Row[], reportDate);
 
-    if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, target, text });
+    if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, kind, target, text });
 
     const url = Deno.env.get("WA_WEBHOOK_URL");
     if (!url) {
@@ -314,14 +402,14 @@ Deno.serve(async (req) => {
     // discovers three weeks later that nobody has seen a report.
     await admin.from("cb_report_log").upsert({
       report_date: reportDate,
-      kind: "attendance",
+      kind,
       sent_at: new Date().toISOString(),
       target,
       ok,
       detail: detail || null,
     });
 
-    return json({ sent: ok, date: reportDate, target, detail: ok ? undefined : detail });
+    return json({ sent: ok, date: reportDate, kind, target, detail: ok ? undefined : detail });
   } catch (e) {
     return json({ sent: false, reason: String(e).slice(0, 300) }, 500);
   }
