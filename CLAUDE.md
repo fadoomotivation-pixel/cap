@@ -437,6 +437,13 @@ attendance. Worse, the only evidence anything was wrong was a `503` inside
 - `/health` is the one call that separates "the worker is down" from "the
   worker is up and logged out" — it needs no bearer and returns per-state
   session counts. Those two look identical from a failed send.
+- **The test result renders under the Send button, and stays there.** It
+  first shipped as the page-wide flash banner at the very top — five screens
+  above the button, gone after five seconds. The first person to use it
+  pressed Send, saw nothing and reported that nothing had happened; the
+  message had gone. It also now says when the target is the sending number
+  itself, because WhatsApp files a message to yourself in the "Message
+  yourself" chat rather than the chat list, which reads as silence.
 - The page also owns `wa_group_id` and `daily_report_enabled`, and lists the
   last few `cb_report_log` rows with their `detail`, so the evidence that was
   buried in Postgres is the first thing on screen next time.
