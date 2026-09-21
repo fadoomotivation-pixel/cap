@@ -21,6 +21,28 @@ What remains is the office PC: two PowerShell scripts and a scheduled task.
 
 ---
 
+## There are now two roads, and both stay open
+
+Everything below describes the **PC route**. Since September the terminal also
+posts its punches straight to Supabase over the ZKTeco push (ADMS) protocol —
+see `supabase/functions/essl-adms` — so the register keeps working with this
+desktop switched off.
+
+```
+eSSL device 192.168.1.201
+      ├─ PC route    eTimeTrackLite -> .mdb -> ettl-sync.ps1 ─┐
+      └─ direct      HTTPS to /iclock/* -> essl-adms ─────────┤
+                                                              ▼
+                              cb_ingest_punches() -> cb_device_punches
+```
+
+**Do not switch either off.** `cb_device_punches` is unique on
+`(device_code, punch_at)`, so both sending the same punch costs nothing, and
+whichever one is alive keeps attendance working. The PC route is also the only
+one that can backfill history out of the `.mdb`.
+
+---
+
 ## The route: read eTimeTrackLite's own database
 
 eTimeTrackLite stores everything in **MS Access** — `eTimeTrackLite1.mdb`, 442
