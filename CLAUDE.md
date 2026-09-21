@@ -217,8 +217,16 @@ machine → eTimeTrackLite → Parallel Database Export → local MS SQL
   and a bug here can never write to the attendance software's data.
 - **`cb_employees.device_code`** maps the machine's Emp Code (1, 2, 3, 10…) to
   a person. It is neither `employee_code` nor the email. Punches for an
-  unmapped code are still stored and attach themselves once HR fills it in —
-  `cb_ingest_punches` returns `unknown_device_codes` so nobody has to notice.
+  unmapped code are still stored, and `cb_ingest_punches` returns
+  `unknown_device_codes` so nobody has to notice on their own.
+- **The fold resolves the person through `device_code`, never through the
+  `employee_id` stored on the punch.** It used to read the stored id, which is
+  set at ingest — so 48 real punches that arrived before the roster knew their
+  codes sat attached to nobody, and filling the codes in afterwards changed
+  nothing, silently. Joining on the code makes it self-healing: a punch
+  recorded before the roster knew that code lands in the register the moment
+  it does. `employee_id` stays on the row as a record of who the punch was
+  attributed to on arrival; the register must not depend on it.
 - **The bridge holds `cb_integration_secrets.punch_bridge`, never the
   service-role key.** It runs on a desktop people use; the worst a copied
   secret can do is submit punches.
