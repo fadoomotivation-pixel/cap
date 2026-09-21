@@ -8,7 +8,7 @@ import { buildDailyWhatsAppSummary, whatsappLink, buildNudgeMessage } from '../l
 import {
   Users, UserPlus, MapPin, Download, Search, LogOut, RefreshCw, CheckCircle, Clock,
   Building2, Navigation, Home, UserX, Power, Calendar, Send, KeyRound, Settings, AlertTriangle,
-  Copy, BarChart3, Bell, Crosshair, X, Wallet,
+  Copy, BarChart3, Bell, Crosshair, X, Wallet, Star,
   Inbox,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -158,6 +158,16 @@ export default function AttendanceAdmin() {
 
   const toggleActive = async (emp) => {
     await supabase.from('cb_employees').update({ is_active: !emp.is_active }).eq('id', emp.id);
+    fetchData();
+  };
+
+  // Senior staff account for their own movements straight to the founder, so
+  // the register listing them as Absent is not information — it is a name in
+  // the one section that needs reading, whose answer the founder already has.
+  // They are dropped from the WhatsApp report only on days they have neither
+  // a punch nor an HR status; with a punch they appear like anybody else.
+  const toggleSenior = async (emp) => {
+    await supabase.from('cb_employees').update({ is_senior: !emp.is_senior }).eq('id', emp.id);
     fetchData();
   };
 
@@ -607,6 +617,11 @@ export default function AttendanceAdmin() {
                               Not in daily report
                             </span>
                           )}
+                          {e.is_senior && (
+                            <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.5">
+                              Senior — never listed absent
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="p-3 text-gray-600">{e.email}<br /><span className="text-xs text-gray-400">{e.phone}</span></td>
@@ -638,6 +653,11 @@ export default function AttendanceAdmin() {
                               <KeyRound size={14} /> {creatingFor === e.id ? 'Working…' : e.user_id ? 'Reset password' : 'Create login'}
                             </button>
                           )}
+                          <button onClick={() => toggleSenior(e)}
+                            className={`flex items-center gap-1 text-xs ${e.is_senior ? 'text-indigo-600 hover:text-indigo-700' : 'text-gray-400 hover:text-indigo-600'}`}
+                            title="Senior staff are left out of the WhatsApp report on days they have no punch and no HR status. They still appear here and in the register.">
+                            <Star size={14} /> {e.is_senior ? 'Senior' : 'Mark senior'}
+                          </button>
                           <button onClick={() => toggleActive(e)} className="text-gray-400 hover:text-red-500 flex items-center gap-1 text-xs">
                             <Power size={14} /> {e.is_active ? 'Deactivate' : 'Activate'}
                           </button>

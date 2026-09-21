@@ -536,6 +536,24 @@ also call it with their JWT to send early, re-send (`force`), or preview
   The founder's two messages carry a **`Register:` link to
   `/admin/attendance`** — a summary that names a problem and then leaves the
   reader hunting for the place to fix it is half a message.
+- **`cb_employees.is_senior` keeps a name out of the Absent list, and
+  nothing else.** Senior staff account for their own movements straight to
+  the founder, so the register printing their name under Absent is not
+  information — it is a name whose answer he already has, sitting in the one
+  section that needs reading and pushing down the names that need a decision.
+
+  The filter is deliberately narrow: a senior is dropped **only on days they
+  have neither a punch nor an `hr_status`** — exactly the rows that would
+  read as Absent. With a punch they appear in the arrival windows like
+  everybody else; with an `hr_status` they still show under On leave, because
+  HR recording something is a statement of fact rather than an accusation.
+  So the counts always still match the names listed.
+
+  It is **not** `in_daily_report = false`, which hides somebody on the days
+  they do punch too, and **not** `is_active = false`, which means they have
+  left. It lives in `cb_daily_attendance_report()` with the other report
+  filter, so the HR console, the register and the CSV keep showing everyone.
+  HR sets it from the Employees tab ("Mark senior").
 - **Somebody who is not enrolled on the machine is left out of the report,
   and the gap is shown on the roster instead.** An active employee with no
   `device_code` can never produce a punch, so the register can only ever call
