@@ -268,6 +268,15 @@ also call it with their JWT to send early, re-send (`force`), or preview
   Scanning another phone therefore does not create a sender. **The founder
   session's number must be a member of the WhatsApp group**, since WhatsApp
   only lets an account post to groups it is in.
+- **Proving the chain is four separate facts, and the log distinguishes
+  them.** `select cb_send_attendance_report('attendance');` then read
+  `net._http_response`: `403 not authorised` means `CRON_SECRET` is missing or
+  in the wrong project; `200 {"sent":false,"reason":"daily report is switched
+  off"}` means the cron leg works; anything after that lands in
+  `cb_report_log.detail`. On 21 September that read
+  `HTTP 503 … This WhatsApp is logged out` — which proves the URL and the
+  bearer are both right and puts the fault squarely on the Baileys session,
+  not on anything in this repo.
 - **Meta's official WhatsApp Cloud API cannot post to a group** — it only
   messages individual numbers. Groups need a logged-in WhatsApp Web session
   (Baileys). So the function embeds no WhatsApp client: it builds the text and
