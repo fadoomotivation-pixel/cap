@@ -4,8 +4,14 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // ─────────────────────────────────────────────────────────────
 // Posts the daily attendance summary to the team's WhatsApp group.
 //
+// Three messages a day, off one function. `kind` picks which:
+//   attendance  12:10 IST — who arrived and when, and who is absent
+//   reminder    18:45 IST — whose attendance is incomplete, while they are
+//                           still in the building and can fix it
+//   checkout    19:01 IST — who logged out and when, and who is still in
+//
 // Called two ways:
-//   · pg_cron, once an evening, with the x-cron-secret header.
+//   · pg_cron, with the x-cron-secret header.
 //   · An admin from /admin/attendance, with their JWT, to send early or
 //     re-send a day.
 //
@@ -143,19 +149,29 @@ function buildSummary(rows: Row[], dateStr: string) {
   const wfh = present.filter((r) => r.work_mode === "wfh");
   const flagged = present.filter((r) => r.outside_geofence);
 
+  // TONE: this is read by fifty people in a company group, so it is written as
+  // an HR notice rather than a dashboard. No emoji: a row of ticks and
+  // crosses against colleagues' names reads as a scoreboard, and the counts
+  // already say everything the icons did.
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Attendance*");
+  L.push("*CAPITAL BRIX \u2014 Daily Attendance*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`\u{1F465} Strength: ${rows.length}`);
-  L.push(`\u2705 Present: ${present.length}   \u274C Absent: ${absent.length}`);
-  if (onLeave.length) L.push(`\u{1F334} On leave: ${onLeave.length}`);
+  // HEADCOUNT IS NOT PUBLISHED. An explicit "Strength 30" in a group this
+  // size reads as a statement about how small the company is, and it answers
+  // a question nobody sent this report to ask - the point is who came in
+  // today, not how many people exist.
+  const head = [
+    `Present ${present.length}`,
+    `Absent ${absent.length}`,
+  ];
+  if (onLeave.length) head.push(`On leave ${onLeave.length}`);
+  L.push(head.join("  \u00B7  "));
   if (siteVisits.length || wfh.length) {
-    L.push(
-      `\u{1F697} Site visits: ${siteVisits.length}${
-        wfh.length ? `   \u{1F3E0} WFH: ${wfh.length}` : ""
-      }`,
-    );
+    const extra: string[] = [];
+    if (siteVisits.length) extra.push(`Site visits ${siteVisits.length}`);
+    if (wfh.length) extra.push(`Work from home ${wfh.length}`);
+    L.push(extra.join("  \u00B7  "));
   }
 
   // Every present person lands in exactly one window, so the windows always
@@ -185,20 +201,20 @@ function buildSummary(rows: Row[], dateStr: string) {
 
   if (onLeave.length) {
     L.push("");
-    L.push("*On leave*");
+    L.push(`*On leave (${onLeave.length})*`);
     onLeave.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${r.hr_status}`));
   }
 
   if (flagged.length) {
     L.push("");
-    L.push("*\u26A0\uFE0F Punched outside the office geofence*");
+    L.push("*Punched away from the office*");
     flagged.forEach((r) =>
-      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${Math.round(r.distance_from_office ?? 0)}m away`)
+      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${Math.round(r.distance_from_office ?? 0)} m away`)
     );
   }
 
   L.push("");
-  L.push("\u2014 Sent from Capital Brix HR");
+  L.push("\u2014 Capital Brix HR");
   return L.join("\n");
 }
 
@@ -233,16 +249,16 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
   const stillIn = present.filter((r) => !r.check_out_at);
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Logout*");
+  L.push("*CAPITAL BRIX \u2014 Daily Logout*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`\u{1F6AA} Logged out: ${out.length}   \u23F3 Still in: ${stillIn.length}`);
+  L.push(`Logged out ${out.length}  \u00B7  Still in office ${stillIn.length}`);
 
   if (!present.length) {
     L.push("");
-    L.push("_Nobody punched in today._");
+    L.push("_No attendance was recorded today._");
     L.push("");
-    L.push("\u2014 Sent from Capital Brix HR");
+    L.push("\u2014 Capital Brix HR");
     return L.join("\n");
   }
 
@@ -271,14 +287,69 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
 
   if (stillIn.length) {
     L.push("");
-    L.push(`*Still checked in (${stillIn.length})*`);
+    L.push(`*Still in office (${stillIn.length})*`);
     stillIn.forEach((r) =>
       L.push(`\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}`)
     );
   }
 
   L.push("");
-  L.push("\u2014 Sent from Capital Brix HR");
+  L.push("\u2014 Capital Brix HR");
+  return L.join("\n");
+}
+
+/**
+ * The nudge, fifteen minutes before the shift ends.
+ *
+ * Somebody who was in all day and forgot to tap is indistinguishable from
+ * somebody who never came: the machine has nothing either way. The register
+ * cannot solve that, but a person can — if they are told while they are still
+ * in the building. At 19:01 it is too late, and the next morning it is a
+ * dispute nobody can settle.
+ *
+ * Two lists, and nothing else:
+ *   no exit punch     they are in and about to leave; without a tap on the
+ *                     way out the day reads as zero hours
+ *   no punch at all   either genuinely absent, or present and never tapped —
+ *                     only they know which, which is exactly why they are
+ *                     asked rather than marked
+ *
+ * Anyone HR has already accounted for is left out: somebody on approved leave
+ * is not being forgetful. Returns null when both lists are empty, because a
+ * daily message that is usually empty is a daily message people stop reading.
+ */
+function buildReminderSummary(rows: Row[], dateStr: string): string | null {
+  const present = rows.filter((r) => r.check_in_at);
+  const noExit = present.filter((r) => !r.check_out_at);
+  const noPunch = rows.filter((r) => !r.check_in_at && !r.hr_status);
+
+  if (!noExit.length && !noPunch.length) return null;
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX — Attendance Reminder*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push("Please complete today's attendance before you leave.");
+
+  if (noExit.length) {
+    L.push("");
+    L.push(`*No exit punch yet (${noExit.length})*`);
+    noExit.forEach((r) =>
+      L.push(`• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}`)
+    );
+  }
+
+  if (noPunch.length) {
+    L.push("");
+    L.push(`*No attendance recorded today (${noPunch.length})*`);
+    noPunch.forEach((r) => L.push(`• ${r.full_name.trim()}`));
+    L.push("");
+    L.push("If you are in the office and your name is here, please punch on");
+    L.push("the machine or tell HR — otherwise today will be marked absent.");
+  }
+
+  L.push("");
+  L.push("— Capital Brix HR");
   return L.join("\n");
 }
 
@@ -299,10 +370,12 @@ Deno.serve(async (req) => {
       kind?: string;
     };
 
-    // Two reports a day off one function: the arrival summary at 12:10 and
-    // the logout summary at 19:01. cb_report_log is keyed on
-    // (report_date, kind), so each is sent once and neither blocks the other.
-    const kind = rawKind === "checkout" ? "checkout" : "attendance";
+    // Three messages a day off one function: arrivals at 12:10, the reminder
+    // at 18:45 and the logout summary at 19:01. cb_report_log is keyed on
+    // (report_date, kind), so each is sent once and none blocks the others.
+    const kind = rawKind === "checkout" || rawKind === "reminder"
+      ? rawKind
+      : "attendance";
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -363,6 +436,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fold first. Punches are folded into the register by cb_ingest_punches
+    // and by a ten-minute cron, but a report that reads the register without
+    // folding can still publish a figure that is minutes out of date - and
+    // the one time that matters is the one time it is wrong in public.
+    await admin.rpc("cb_fold_punches_into_attendance", {
+      p_from: reportDate,
+      p_to: reportDate,
+    }).then(() => {}, () => {});
+
     const { data: rows, error } = await admin.rpc("cb_daily_attendance_report", {
       p_date: reportDate,
     });
@@ -389,20 +471,38 @@ Deno.serve(async (req) => {
 
     const text = punchCount === 0
       ? [
-        `⚠️ *CAPITAL BRIX — Attendance*`,
+        "*CAPITAL BRIX — Daily Attendance*",
         fmtDate(reportDate),
         "",
-        "No punches have reached the system for today, so the register is not",
-        "being read out. Either nobody punched, or the biometric machine has",
-        "stopped sending to the office PC.",
+        "No attendance records were received for today, so the register is not",
+        "being published. This is either a non-working day, or the biometric",
+        "system has stopped sending to the office computer.",
         "",
-        "Check: eTimeTrackLite → Utilities → Device Management → Start Download.",
+        "_HR: please check eTimeTrackLite → Utilities → Device Management →",
+        "Start Download._",
         "",
-        "— Sent from Capital Brix HR",
+        "— Capital Brix HR",
       ].join("\n")
       : kind === "checkout"
       ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
+      : kind === "reminder"
+      ? buildReminderSummary((rows ?? []) as Row[], reportDate)
       : buildSummary((rows ?? []) as Row[], reportDate);
+
+    // Nothing to remind anyone about is the good day, and it gets no message.
+    // Logged as ok so the console shows the reminder ran and found nothing,
+    // rather than looking like it never fired.
+    if (text === null) {
+      await admin.from("cb_report_log").upsert({
+        report_date: reportDate,
+        kind,
+        sent_at: new Date().toISOString(),
+        target,
+        ok: true,
+        detail: "nothing to remind — every attendance was complete",
+      });
+      return json({ sent: false, reason: "nothing to remind", kind });
+    }
 
     if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, kind, target, text });
 

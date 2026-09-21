@@ -297,6 +297,13 @@ also call it with their JWT to send early, re-send (`force`), or preview
   green. So `attendance-whatsapp` counts `cb_device_punches` for the IST day
   first, and when that is zero it sends a short warning naming the download
   step instead of the roll-call. On a real holiday the warning is still true.
+- **The register is folded before it is published.** `cb_ingest_punches`
+  folds as it stores, and `cb-fold-punches-10min` sweeps yesterday and today
+  every ten minutes, but the report also folds its own date before reading —
+  a register that is a few minutes stale is harmless in a console and not
+  harmless in a message to fifty people. It happened once already: punches
+  from a 13:56 download had arrived and the register still said five people
+  were in.
 - **`cb_report_log` is keyed on `(report_date, kind)`**, so the cron firing
   twice, a retry and HR tapping Send collapse to one message. Failures are
   logged too — a silent failure is how a team discovers three weeks later that
@@ -316,6 +323,21 @@ also call it with their JWT to send early, re-send (`force`), or preview
   exactly one window — the windows always sum to the Present count. A report
   that silently drops the earliest person in the office would be worse than
   no report.
+
+  **Headcount is not published.** The headline opened with
+  `Strength 30`, and in a group this size that reads as a statement about how
+  small the company is — a question nobody sent this report to ask. It is now
+  `Present 24 · Absent 5`. Those still sum to the roster, so the size is
+  inferable; what is gone is the sentence that announces it.
+
+  **The tone is an HR notice, not a dashboard.** The first version carried
+  emoji on every headline — 👥 strength, ✅ present, ❌ absent, 🌴 on leave.
+  In a fifty-person company group a row of ticks and crosses against
+  colleagues' names reads as a scoreboard, and the counts already said
+  everything the icons did. Headline figures are now a plain
+  `Strength 30 · Present 24 · Absent 5` line, the geofence section is
+  "Punched away from the office" rather than a warning triangle, and both
+  reports sign off `— Capital Brix HR`.
 
   Windows are computed from **IST explicitly**, never the browser's clock: an
   HR laptop left on another timezone would otherwise file people into the
@@ -383,9 +405,29 @@ also call it with their JWT to send early, re-send (`force`), or preview
   filter lives in `cb_daily_attendance_report()`, so the HR console still
   shows everyone — the console is the full picture, the report is the short
   list.
-- **Two reports a day, one function.** `kind` selects which:
+- **An evening reminder, at 18:45 IST** (13:15 UTC), `kind = 'reminder'`.
+  Somebody who was in all day and forgot to tap is **indistinguishable from
+  somebody who never came** — the machine has nothing either way. The register
+  cannot solve that; a person can, if they are told while they are still in
+  the building. At 19:01 it is too late, and the next morning it is a dispute
+  nobody can settle. So the reminder names two groups and asks:
+
+  - **no exit punch yet** — without a tap on the way out the day reads as
+    zero hours;
+  - **no attendance recorded** — either genuinely absent or present and never
+    tapped, and only they know which, which is why they are *asked* rather
+    than marked.
+
+  Anyone with an `hr_status` is left out: somebody on approved leave is not
+  being forgetful. **When both lists are empty it sends nothing** and logs
+  `ok` with "nothing to remind" — a daily message that is usually empty is a
+  daily message people stop reading. It sits fifteen minutes before the
+  logout report on purpose: the reminder is the last chance to fix the day,
+  the 19:01 summary is the record of it.
+- **Three messages a day, one function.** `kind` selects which:
   `attendance` at **12:10 IST** (06:40 UTC) — arrivals by window, plus absent
-  and on leave; `checkout` at **19:01 IST** (13:31 UTC) — who logged out and
+  and on leave; `reminder` at **18:45 IST** (13:15 UTC); `checkout` at
+  **19:01 IST** (13:31 UTC) — who logged out and
   when, split `Before 18:00` / `18:00 – 19:00` / `19:00 onwards`, plus who is
   still checked in. `cb_report_log` is keyed on `(report_date, kind)`, so each
   is sent once a day and neither can suppress the other.
@@ -437,6 +479,16 @@ attendance. Worse, the only evidence anything was wrong was a `503` inside
 - `/health` is the one call that separates "the worker is down" from "the
   worker is up and logged out" — it needs no bearer and returns per-state
   session counts. Those two look identical from a failed send.
+- **A phone number without its country code is accepted, acknowledged and
+  delivered to nobody.** Baileys builds `<digits>@s.whatsapp.net` out of
+  whatever it is handed, so `9999750049` produces a valid-looking JID for an
+  account that does not exist — and returns a message id. The page went green,
+  printed the id, and nothing arrived. `wa-session` therefore normalises: ten
+  bare digits get `91`, a leading `0` is dropped, anything already carrying a
+  code is left alone. `cb_hr_settings.founder_whatsapp` is stored as
+  `917048917300` for the same reason; the fallback target is used verbatim.
+  **A group JID is unaffected** — it is passed through whole — which is why
+  the group report worked while every number test silently did not.
 - **The test result renders under the Send button, and stays there.** It
   first shipped as the page-wide flash banner at the very top — five screens
   above the button, gone after five seconds. The first person to use it
