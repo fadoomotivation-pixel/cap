@@ -59,15 +59,22 @@ export function buildDailyWhatsAppSummary(rows, dateStr) {
   const wfh = present.filter((r) => r.work_mode === 'wfh');
   const flagged = present.filter((r) => r.outside_geofence);
 
+  // TONE: this is read by fifty people in a company group, so it is written
+  // as an HR notice rather than a dashboard. No emoji — a row of ticks and
+  // crosses against colleagues' names reads as a scoreboard, and the counts
+  // already say everything the icons did.
   const L = [];
-  L.push('*CAPITAL BRIX — Attendance*');
+  L.push('*CAPITAL BRIX — Daily Attendance*');
   L.push(date);
   L.push('');
-  L.push(`👥 Strength: ${rows.length}`);
-  L.push(`✅ Present: ${present.length}   ❌ Absent: ${absent.length}`);
-  if (onLeave.length) L.push(`🌴 On leave: ${onLeave.length}`);
+  const head = [`Strength ${rows.length}`, `Present ${present.length}`, `Absent ${absent.length}`];
+  if (onLeave.length) head.push(`On leave ${onLeave.length}`);
+  L.push(head.join('  ·  '));
   if (siteVisits.length || wfh.length) {
-    L.push(`🚗 Site visits: ${siteVisits.length}${wfh.length ? `   🏠 WFH: ${wfh.length}` : ''}`);
+    const extra = [];
+    if (siteVisits.length) extra.push(`Site visits ${siteVisits.length}`);
+    if (wfh.length) extra.push(`Work from home ${wfh.length}`);
+    L.push(extra.join('  ·  '));
   }
 
   // Every present person lands in exactly one window, so the windows always
@@ -97,18 +104,18 @@ export function buildDailyWhatsAppSummary(rows, dateStr) {
 
   if (onLeave.length) {
     L.push('');
-    L.push('*On leave*');
+    L.push(`*On leave (${onLeave.length})*`);
     onLeave.forEach((r) => L.push(`• ${r.full_name.trim()} — ${r.hr_status}`));
   }
 
   if (flagged.length) {
     L.push('');
-    L.push('*⚠️ Punched outside the office geofence*');
-    flagged.forEach((r) => L.push(`• ${r.full_name.trim()} — ${Math.round(r.distance_from_office)}m away`));
+    L.push('*Punched away from the office*');
+    flagged.forEach((r) => L.push(`• ${r.full_name.trim()} — ${Math.round(r.distance_from_office)} m away`));
   }
 
   L.push('');
-  L.push('— Sent from Capital Brix HR');
+  L.push('— Capital Brix HR');
   return L.join('\n');
 }
 

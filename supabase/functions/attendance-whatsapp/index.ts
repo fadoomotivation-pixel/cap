@@ -143,19 +143,26 @@ function buildSummary(rows: Row[], dateStr: string) {
   const wfh = present.filter((r) => r.work_mode === "wfh");
   const flagged = present.filter((r) => r.outside_geofence);
 
+  // TONE: this is read by fifty people in a company group, so it is written as
+  // an HR notice rather than a dashboard. No emoji: a row of ticks and
+  // crosses against colleagues' names reads as a scoreboard, and the counts
+  // already say everything the icons did.
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Attendance*");
+  L.push("*CAPITAL BRIX \u2014 Daily Attendance*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`\u{1F465} Strength: ${rows.length}`);
-  L.push(`\u2705 Present: ${present.length}   \u274C Absent: ${absent.length}`);
-  if (onLeave.length) L.push(`\u{1F334} On leave: ${onLeave.length}`);
+  const head = [
+    `Strength ${rows.length}`,
+    `Present ${present.length}`,
+    `Absent ${absent.length}`,
+  ];
+  if (onLeave.length) head.push(`On leave ${onLeave.length}`);
+  L.push(head.join("  \u00B7  "));
   if (siteVisits.length || wfh.length) {
-    L.push(
-      `\u{1F697} Site visits: ${siteVisits.length}${
-        wfh.length ? `   \u{1F3E0} WFH: ${wfh.length}` : ""
-      }`,
-    );
+    const extra: string[] = [];
+    if (siteVisits.length) extra.push(`Site visits ${siteVisits.length}`);
+    if (wfh.length) extra.push(`Work from home ${wfh.length}`);
+    L.push(extra.join("  \u00B7  "));
   }
 
   // Every present person lands in exactly one window, so the windows always
@@ -185,20 +192,20 @@ function buildSummary(rows: Row[], dateStr: string) {
 
   if (onLeave.length) {
     L.push("");
-    L.push("*On leave*");
+    L.push(`*On leave (${onLeave.length})*`);
     onLeave.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${r.hr_status}`));
   }
 
   if (flagged.length) {
     L.push("");
-    L.push("*\u26A0\uFE0F Punched outside the office geofence*");
+    L.push("*Punched away from the office*");
     flagged.forEach((r) =>
-      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${Math.round(r.distance_from_office ?? 0)}m away`)
+      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${Math.round(r.distance_from_office ?? 0)} m away`)
     );
   }
 
   L.push("");
-  L.push("\u2014 Sent from Capital Brix HR");
+  L.push("\u2014 Capital Brix HR");
   return L.join("\n");
 }
 
@@ -233,16 +240,16 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
   const stillIn = present.filter((r) => !r.check_out_at);
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Logout*");
+  L.push("*CAPITAL BRIX \u2014 Daily Logout*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`\u{1F6AA} Logged out: ${out.length}   \u23F3 Still in: ${stillIn.length}`);
+  L.push(`Logged out ${out.length}  \u00B7  Still in office ${stillIn.length}`);
 
   if (!present.length) {
     L.push("");
-    L.push("_Nobody punched in today._");
+    L.push("_No attendance was recorded today._");
     L.push("");
-    L.push("\u2014 Sent from Capital Brix HR");
+    L.push("\u2014 Capital Brix HR");
     return L.join("\n");
   }
 
@@ -271,14 +278,14 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
 
   if (stillIn.length) {
     L.push("");
-    L.push(`*Still checked in (${stillIn.length})*`);
+    L.push(`*Still in office (${stillIn.length})*`);
     stillIn.forEach((r) =>
       L.push(`\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}`)
     );
   }
 
   L.push("");
-  L.push("\u2014 Sent from Capital Brix HR");
+  L.push("\u2014 Capital Brix HR");
   return L.join("\n");
 }
 
@@ -389,16 +396,17 @@ Deno.serve(async (req) => {
 
     const text = punchCount === 0
       ? [
-        `⚠️ *CAPITAL BRIX — Attendance*`,
+        "*CAPITAL BRIX — Daily Attendance*",
         fmtDate(reportDate),
         "",
-        "No punches have reached the system for today, so the register is not",
-        "being read out. Either nobody punched, or the biometric machine has",
-        "stopped sending to the office PC.",
+        "No attendance records were received for today, so the register is not",
+        "being published. This is either a non-working day, or the biometric",
+        "system has stopped sending to the office computer.",
         "",
-        "Check: eTimeTrackLite → Utilities → Device Management → Start Download.",
+        "_HR: please check eTimeTrackLite → Utilities → Device Management →",
+        "Start Download._",
         "",
-        "— Sent from Capital Brix HR",
+        "— Capital Brix HR",
       ].join("\n")
       : kind === "checkout"
       ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)

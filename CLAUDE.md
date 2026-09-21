@@ -317,6 +317,15 @@ also call it with their JWT to send early, re-send (`force`), or preview
   that silently drops the earliest person in the office would be worse than
   no report.
 
+  **The tone is an HR notice, not a dashboard.** The first version carried
+  emoji on every headline — 👥 strength, ✅ present, ❌ absent, 🌴 on leave.
+  In a fifty-person company group a row of ticks and crosses against
+  colleagues' names reads as a scoreboard, and the counts already said
+  everything the icons did. Headline figures are now a plain
+  `Strength 30 · Present 24 · Absent 5` line, the geofence section is
+  "Punched away from the office" rather than a warning triangle, and both
+  reports sign off `— Capital Brix HR`.
+
   Windows are computed from **IST explicitly**, never the browser's clock: an
   HR laptop left on another timezone would otherwise file people into the
   wrong block, and the blocks are the whole point.
