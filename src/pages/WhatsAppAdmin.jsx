@@ -317,7 +317,19 @@ export default function WhatsAppAdmin() {
 
         {/* Where it posts */}
         <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
-          <h2 className="font-semibold text-[#10243E] mb-4">Where the report goes</h2>
+          <h2 className="font-semibold text-[#10243E] mb-1">Where each message goes</h2>
+          {/*
+            The four messages do not share an audience, and this page used to
+            imply one group id decided all of them. Saying which is which here
+            is the difference between "the report" being a thing somebody
+            trusts and a thing they guess at.
+          */}
+          <ul className="text-xs text-gray-500 mb-4 space-y-1">
+            <li><strong className="text-gray-700">10:30</strong> &mdash; who has punched in so far &rarr; <strong className="text-gray-700">group</strong></li>
+            <li><strong className="text-gray-700">11:30</strong> &mdash; arrivals by window, absent, on leave &rarr; <strong className="text-gray-700">founder</strong></li>
+            <li><strong className="text-gray-700">18:45</strong> &mdash; whose attendance is incomplete &rarr; <strong className="text-gray-700">group</strong></li>
+            <li><strong className="text-gray-700">19:01</strong> &mdash; who logged out, who is still in &rarr; <strong className="text-gray-700">founder</strong></li>
+          </ul>
 
           <label className="block text-sm font-medium text-gray-700 mb-1">Group id</label>
           <div className="flex flex-wrap gap-2 mb-1">
@@ -327,15 +339,18 @@ export default function WhatsAppAdmin() {
               className="px-4 py-2 rounded-md border border-gray-200 text-gray-700 hover:border-[#D4AF37]">Save</button>
           </div>
           <p className="text-xs text-gray-500 mb-5">
-            Leave it empty and the report goes to the founder&apos;s number
+            The two group messages post here. Leave it empty and they go to the
+            founder&apos;s number
             instead{settings?.founder_whatsapp ? ` (${settings.founder_whatsapp})` : ''} — a
             summary that reaches one person beats one that reaches nobody.
+            Who is named in them is set per person on the Attendance console&apos;s
+            Employees tab.
           </p>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={!!settings?.daily_report_enabled}
               onChange={(e) => saveSettings({ daily_report_enabled: e.target.checked })} />
-            Send the daily reports automatically (12:10 arrivals, 19:01 logouts)
+            Send the daily messages automatically (10:30, 11:30, 18:45 and 19:01)
           </label>
         </section>
 
@@ -379,8 +394,8 @@ export default function WhatsAppAdmin() {
             <MessageCircle size={18} /> Daily report history
           </h2>
           <p className="text-sm text-gray-500 mb-4">
-            The 12:10 and 19:01 reports only. A test from the box above shows
-            its result at the top of this page, not here.
+            The four scheduled messages only. A test from the box above shows
+            its result under the Send button, not here.
           </p>
           {log.length === 0 && <p className="text-sm text-gray-500">No report sent yet.</p>}
           <div className="space-y-2">
