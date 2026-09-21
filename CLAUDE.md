@@ -437,6 +437,16 @@ attendance. Worse, the only evidence anything was wrong was a `503` inside
 - `/health` is the one call that separates "the worker is down" from "the
   worker is up and logged out" — it needs no bearer and returns per-state
   session counts. Those two look identical from a failed send.
+- **A phone number without its country code is accepted, acknowledged and
+  delivered to nobody.** Baileys builds `<digits>@s.whatsapp.net` out of
+  whatever it is handed, so `9999750049` produces a valid-looking JID for an
+  account that does not exist — and returns a message id. The page went green,
+  printed the id, and nothing arrived. `wa-session` therefore normalises: ten
+  bare digits get `91`, a leading `0` is dropped, anything already carrying a
+  code is left alone. `cb_hr_settings.founder_whatsapp` is stored as
+  `917048917300` for the same reason; the fallback target is used verbatim.
+  **A group JID is unaffected** — it is passed through whole — which is why
+  the group report worked while every number test silently did not.
 - **The test result renders under the Send button, and stays there.** It
   first shipped as the page-wide flash banner at the very top — five screens
   above the button, gone after five seconds. The first person to use it

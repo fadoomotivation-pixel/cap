@@ -52,6 +52,23 @@ function baseUrl(): string | null {
   return send.replace(/\/+$/, "").replace(/\/send$/i, "");
 }
 
+/**
+ * A number WhatsApp will recognise.
+ *
+ * Baileys builds `<digits>@s.whatsapp.net` out of whatever it is handed and
+ * returns a message id either way, so a number without its country code is
+ * accepted, acknowledged, and delivered to nobody. That is far worse than a
+ * refusal: the page went green, the id was printed, and the message did not
+ * exist. India is the only country this office dials, so a bare ten digits
+ * gets +91 and anything already carrying a code is left alone.
+ */
+function waNumber(raw: string): string {
+  const d = String(raw ?? "").replace(/\D/g, "");
+  if (d.length === 10) return `91${d}`;
+  if (d.length === 11 && d.startsWith("0")) return `91${d.slice(1)}`;
+  return d;
+}
+
 const authHeaders = () => {
   const h: Record<string, string> = { "Content-Type": "application/json" };
   const token = Deno.env.get("WA_WEBHOOK_TOKEN");
@@ -134,12 +151,10 @@ Deno.serve(async (req) => {
     if (action === "test") {
       const target = String(to ?? "").trim();
       if (!target) return json({ error: "a number or group id is required" }, 400);
-      // A group JID is passed through whole; a phone number is reduced to its
-      // digits, because a pasted "+91 70489 17300" is the same number and the
-      // worker will not recognise the spaces.
-      const cleaned = target.endsWith("@g.us")
-        ? target
-        : target.replace(/\D/g, "");
+      // A group JID is passed through whole; a phone number is normalised, so
+      // "+91 70489 17300", "07048917300" and "7048917300" all reach the same
+      // person.
+      const cleaned = target.endsWith("@g.us") ? target : waNumber(target);
       const r = await call("/send", {
         method: "POST",
         body: JSON.stringify({
