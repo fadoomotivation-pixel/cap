@@ -254,6 +254,61 @@ machine → eTimeTrackLite → Parallel Database Export → local MS SQL
 - Punch times arrive as bare local IST and are stamped `+05:30` by the bridge.
   A bare timestamp is read as UTC and would file every arrival 5½ hours early.
 
+### The machine posts to us directly (ADMS)
+
+The bridge above is only as awake as the office desktop, and that desktop has
+already taken the register down once for five days. So the terminal now also
+posts its own punches straight to Supabase, over the ZKTeco **push (ADMS)**
+protocol the firmware already speaks (`ZAM70-NF24HA-Ver3.3.12`, Push Ver
+`3.1.2S-20250616`, serial `NYU7252102010`). With that on, attendance keeps
+working with the PC switched off.
+
+```
+machine --(HTTPS)--> www.capitalbrix.co.in/iclock/* --> essl-adms Edge Function
+       --> cb_ingest_punches() --> cb_device_punches --> cb_attendance
+```
+
+- **It is a second road, never a replacement.** `cb_device_punches` is unique
+  on `(device_code, punch_at)`, so the PC bridge and the terminal can both
+  send the same punch all day and the register cannot double-count. Leave both
+  running: whichever is alive keeps attendance working.
+- **`vercel.json` rewrites `/iclock/:path*` to the function**, and that rule
+  must stay **above** the `/(.*)` → `/app.html` catch-all or the device gets
+  the SPA shell. The path is served off the live site rather than the raw
+  Supabase URL because the device has one address field and no path prefix.
+- **The serial is the credential.** The terminal has no field for a bearer
+  token — what it does send on every request is `SN`. `ADMS_ALLOWED_SN`
+  (default: the office serial) is the allowlist; anything else gets 401. The
+  ceiling on a forged serial is the same as the bridge's: it can submit
+  punches, nothing more. The function reads
+  `cb_integration_secrets.punch_bridge` server-side and calls the same RPC —
+  the device never sees a key.
+- **`getrequest` always answers `OK` and there is no command path.** This
+  endpoint receives attendance; it must never be able to enrol, delete or
+  unlock anybody.
+- **A failed ingest answers 500, not `OK`.** An un-acknowledged batch stays on
+  the terminal and is re-sent. Saying `OK` when the store failed throws those
+  punches away.
+- **Non-ATTLOG uploads (`OPERLOG`, `ATTPHOTO`) are acknowledged and
+  discarded.** An upload the device cannot clear is retried until it blocks the
+  punches queued behind it.
+- Times arrive as the terminal's own wall clock and are stamped `+05:30`, for
+  the same reason the bridge does it: a bare timestamp is read as UTC and files
+  every arrival 5½ hours early. The in/out `status` flag is **not** acted on —
+  people tap the same key both ways; the register decides direction from the
+  times.
+- **`cb_adms_log` is the heartbeat**, one row per contact, pruned to 14 days,
+  and surfaced on `/admin/attendance` → Settings as "Attendance machine". With
+  the PC out of the loop there is no screen in the office that shows whether the
+  machine is talking to anybody, and the September stall proved that an
+  unanswerable "is it working?" is how five days disappear.
+
+Device settings (Menu → Comm. → Cloud Server / ADMS): **Enable Domain Name ON**,
+Server Address `www.capitalbrix.co.in`, Server Port `443`. **If the terminal
+refuses 443** — a good many eSSL push builds are HTTP-only — the panel above
+stays on "never contacted us", and the answer is a small HTTP front door that
+forwards to the function, not weakening anything here.
+
 ### Daily attendance report to WhatsApp
 
 `attendance-whatsapp` Edge Function, fired by **pg_cron at 14:00 UTC
