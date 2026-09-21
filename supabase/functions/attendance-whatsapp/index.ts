@@ -2,13 +2,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 // ─────────────────────────────────────────────────────────────
-// Posts the daily attendance summary to the team's WhatsApp group.
+// Posts the daily attendance messages to WhatsApp.
 //
-// Three messages a day, off one function. `kind` picks which:
-//   attendance  12:10 IST — who arrived and when, and who is absent
+// Three a day, off one function, and they do NOT share an audience — see the
+// routing block below. `kind` picks which:
+//   attendance  12:10 IST — who arrived and when, and who is absent  → founder
 //   reminder    18:45 IST — whose attendance is incomplete, while they are
-//                           still in the building and can fix it
+//                           still in the building and can fix it     → group
 //   checkout    19:01 IST — who logged out and when, and who is still in
+//                                                                    → founder
 //
 // Called two ways:
 //   · pg_cron, with the x-cron-secret header.
@@ -214,6 +216,8 @@ function buildSummary(rows: Row[], dateStr: string) {
   }
 
   L.push("");
+  L.push("Register: https://www.capitalbrix.co.in/admin/attendance");
+  L.push("");
   L.push("\u2014 Capital Brix HR");
   return L.join("\n");
 }
@@ -293,6 +297,8 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
     );
   }
 
+  L.push("");
+  L.push("Register: https://www.capitalbrix.co.in/admin/attendance");
   L.push("");
   L.push("\u2014 Capital Brix HR");
   return L.join("\n");
@@ -413,10 +419,27 @@ Deno.serve(async (req) => {
       return json({ sent: false, reason: "daily report is switched off in HR settings" });
     }
 
-    // Group first, founder's number as the fallback. A summary that reaches
-    // one person beats one that reaches nobody because a JID was mistyped.
-    const target = (settings?.wa_group_id || "").trim() ||
-      (settings?.founder_whatsapp || "").replace(/\D/g, "");
+    // Who each message is FOR decides where it goes, and they are not the
+    // same audience.
+    //
+    // The reminder asks people to do something while they can still do it, so
+    // it has to reach them: the group. It names two short lists and sends
+    // nothing at all when both are empty, so most days the group stays quiet.
+    //
+    // The arrivals roll-call and the logout summary are management
+    // information — who drifted in late, who left before the shift ended.
+    // Fifty people cannot act on either, and a daily roll-call of colleagues'
+    // arrival times in a company group reads as surveillance however plainly
+    // it is worded. Those go to the founder.
+    //
+    // This cut the group from three messages a day to one, usually none.
+    const group = (settings?.wa_group_id || "").trim();
+    const founder = (settings?.founder_whatsapp || "").replace(/\D/g, "");
+    // Each falls back to the other: a summary that reaches one person beats
+    // one that reaches nobody because a number was never filled in.
+    let target = kind === "reminder"
+      ? (group || founder)
+      : (founder || group);
     if (!target) {
       return json({ sent: false, reason: "no WhatsApp group or founder number configured" });
     }
@@ -468,6 +491,11 @@ Deno.serve(async (req) => {
       .select("id", { count: "exact", head: true })
       .gte("punch_at", `${reportDate}T00:00:00+05:30`)
       .lt("punch_at", `${nextIstDay(reportDate)}T00:00:00+05:30`);
+
+    // The broken-feed warning is HR's problem, never the group's. It asks for
+    // a specific click inside eTimeTrackLite, which forty-nine of fifty people
+    // cannot act on and would read as the company's attendance being broken.
+    if (punchCount === 0) target = founder || group;
 
     const text = punchCount === 0
       ? [
