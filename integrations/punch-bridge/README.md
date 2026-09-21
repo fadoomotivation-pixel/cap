@@ -159,11 +159,18 @@ Authentication → SMTP Settings page):
 
 Then:
 
+Both are editable from **`/admin/whatsapp`**, which is also where the phone is
+re-linked when the session drops. The group is already set:
+
 ```sql
+-- CAPITAL BRIX INFO, live since 21 September 2026
 update cb_hr_settings
-   set wa_group_id = '120363XXXXXXXXXXXX@g.us',
+   set wa_group_id = '120363040760612538@g.us',
        daily_report_enabled = true;
 ```
+
+A JID appears nowhere in WhatsApp's own interface. `GET /groups` on the worker
+lists them; it was added for exactly this.
 
 ### The Baileys worker we already run
 

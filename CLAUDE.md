@@ -273,15 +273,23 @@ also call it with their JWT to send early, re-send (`force`), or preview
   CAPITAL BRIX INFO group, and it stays that way. The worker also runs a
   per-telecaller session on `919310012981`, which belongs to Fanbe and is
   nothing to do with this: all 26 groups it reports are Fanbe's.
+- **The group is `120363040760612538@g.us` — CAPITAL BRIX INFO, 50 members.**
+  Live since 21 September 2026; both reports post there.
 - **A group's JID cannot be read out of our own database.** The worker's
   watch-only rep sessions post what they observe to `wa_observed_messages` /
   `wa_peer_names`, so their groups are visible here — but **the founder
   session, the one that sends, deliberately reports nothing**. WhatsApp shows
   a JID nowhere in its UI either. So getting `wa_group_id` means either adding
-  a `/groups` route to the worker (`groupFetchAllParticipating` is already
-  imported there) or briefly letting a reporting session into the group and
-  reading the id it observes. The JID belongs to the group, not to whoever
-  looked at it.
+  a `/groups` route to the worker or briefly letting a reporting session into
+  the group and reading the id it observes. The JID belongs to the group, not
+  to whoever looked at it.
+
+  We took the first: **`GET /groups` now exists on the worker**, added in
+  `callpro-baileys-worker-v28-GROUPS-ROUTE`. Read-only, behind the same
+  bearer, and it refuses with 503 rather than guessing when the session is not
+  connected. It is the only Capital Brix change to someone else's live worker,
+  so if that worker is ever restored from an older zip, this route goes with
+  it and `wa_group_id` becomes unfindable again.
 - **Proving the chain is four separate facts, and the log distinguishes
   them.** `select cb_send_attendance_report('attendance');` then read
   `net._http_response`: `403 not authorised` means `CRON_SECRET` is missing or
