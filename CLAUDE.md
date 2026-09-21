@@ -405,9 +405,29 @@ also call it with their JWT to send early, re-send (`force`), or preview
   filter lives in `cb_daily_attendance_report()`, so the HR console still
   shows everyone — the console is the full picture, the report is the short
   list.
-- **Two reports a day, one function.** `kind` selects which:
+- **An evening reminder, at 18:45 IST** (13:15 UTC), `kind = 'reminder'`.
+  Somebody who was in all day and forgot to tap is **indistinguishable from
+  somebody who never came** — the machine has nothing either way. The register
+  cannot solve that; a person can, if they are told while they are still in
+  the building. At 19:01 it is too late, and the next morning it is a dispute
+  nobody can settle. So the reminder names two groups and asks:
+
+  - **no exit punch yet** — without a tap on the way out the day reads as
+    zero hours;
+  - **no attendance recorded** — either genuinely absent or present and never
+    tapped, and only they know which, which is why they are *asked* rather
+    than marked.
+
+  Anyone with an `hr_status` is left out: somebody on approved leave is not
+  being forgetful. **When both lists are empty it sends nothing** and logs
+  `ok` with "nothing to remind" — a daily message that is usually empty is a
+  daily message people stop reading. It sits fifteen minutes before the
+  logout report on purpose: the reminder is the last chance to fix the day,
+  the 19:01 summary is the record of it.
+- **Three messages a day, one function.** `kind` selects which:
   `attendance` at **12:10 IST** (06:40 UTC) — arrivals by window, plus absent
-  and on leave; `checkout` at **19:01 IST** (13:31 UTC) — who logged out and
+  and on leave; `reminder` at **18:45 IST** (13:15 UTC); `checkout` at
+  **19:01 IST** (13:31 UTC) — who logged out and
   when, split `Before 18:00` / `18:00 – 19:00` / `19:00 onwards`, plus who is
   still checked in. `cb_report_log` is keyed on `(report_date, kind)`, so each
   is sent once a day and neither can suppress the other.

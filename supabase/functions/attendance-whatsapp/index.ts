@@ -4,8 +4,14 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // ─────────────────────────────────────────────────────────────
 // Posts the daily attendance summary to the team's WhatsApp group.
 //
+// Three messages a day, off one function. `kind` picks which:
+//   attendance  12:10 IST — who arrived and when, and who is absent
+//   reminder    18:45 IST — whose attendance is incomplete, while they are
+//                           still in the building and can fix it
+//   checkout    19:01 IST — who logged out and when, and who is still in
+//
 // Called two ways:
-//   · pg_cron, once an evening, with the x-cron-secret header.
+//   · pg_cron, with the x-cron-secret header.
 //   · An admin from /admin/attendance, with their JWT, to send early or
 //     re-send a day.
 //
@@ -292,6 +298,61 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
   return L.join("\n");
 }
 
+/**
+ * The nudge, fifteen minutes before the shift ends.
+ *
+ * Somebody who was in all day and forgot to tap is indistinguishable from
+ * somebody who never came: the machine has nothing either way. The register
+ * cannot solve that, but a person can — if they are told while they are still
+ * in the building. At 19:01 it is too late, and the next morning it is a
+ * dispute nobody can settle.
+ *
+ * Two lists, and nothing else:
+ *   no exit punch     they are in and about to leave; without a tap on the
+ *                     way out the day reads as zero hours
+ *   no punch at all   either genuinely absent, or present and never tapped —
+ *                     only they know which, which is exactly why they are
+ *                     asked rather than marked
+ *
+ * Anyone HR has already accounted for is left out: somebody on approved leave
+ * is not being forgetful. Returns null when both lists are empty, because a
+ * daily message that is usually empty is a daily message people stop reading.
+ */
+function buildReminderSummary(rows: Row[], dateStr: string): string | null {
+  const present = rows.filter((r) => r.check_in_at);
+  const noExit = present.filter((r) => !r.check_out_at);
+  const noPunch = rows.filter((r) => !r.check_in_at && !r.hr_status);
+
+  if (!noExit.length && !noPunch.length) return null;
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX — Attendance Reminder*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push("Please complete today's attendance before you leave.");
+
+  if (noExit.length) {
+    L.push("");
+    L.push(`*No exit punch yet (${noExit.length})*`);
+    noExit.forEach((r) =>
+      L.push(`• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}`)
+    );
+  }
+
+  if (noPunch.length) {
+    L.push("");
+    L.push(`*No attendance recorded today (${noPunch.length})*`);
+    noPunch.forEach((r) => L.push(`• ${r.full_name.trim()}`));
+    L.push("");
+    L.push("If you are in the office and your name is here, please punch on");
+    L.push("the machine or tell HR — otherwise today will be marked absent.");
+  }
+
+  L.push("");
+  L.push("— Capital Brix HR");
+  return L.join("\n");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const json = (b: unknown, status = 200) =>
@@ -309,10 +370,12 @@ Deno.serve(async (req) => {
       kind?: string;
     };
 
-    // Two reports a day off one function: the arrival summary at 12:10 and
-    // the logout summary at 19:01. cb_report_log is keyed on
-    // (report_date, kind), so each is sent once and neither blocks the other.
-    const kind = rawKind === "checkout" ? "checkout" : "attendance";
+    // Three messages a day off one function: arrivals at 12:10, the reminder
+    // at 18:45 and the logout summary at 19:01. cb_report_log is keyed on
+    // (report_date, kind), so each is sent once and none blocks the others.
+    const kind = rawKind === "checkout" || rawKind === "reminder"
+      ? rawKind
+      : "attendance";
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -422,7 +485,24 @@ Deno.serve(async (req) => {
       ].join("\n")
       : kind === "checkout"
       ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
+      : kind === "reminder"
+      ? buildReminderSummary((rows ?? []) as Row[], reportDate)
       : buildSummary((rows ?? []) as Row[], reportDate);
+
+    // Nothing to remind anyone about is the good day, and it gets no message.
+    // Logged as ok so the console shows the reminder ran and found nothing,
+    // rather than looking like it never fired.
+    if (text === null) {
+      await admin.from("cb_report_log").upsert({
+        report_date: reportDate,
+        kind,
+        sent_at: new Date().toISOString(),
+        target,
+        ok: true,
+        detail: "nothing to remind — every attendance was complete",
+      });
+      return json({ sent: false, reason: "nothing to remind", kind });
+    }
 
     if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, kind, target, text });
 
