@@ -2,11 +2,15 @@
 
 The sync is **built, deployed and running**. Punches reach Supabase every five
 minutes, the scheduled task fires, and the register fills with real names and
-times. Twenty-seven of thirty-one active employees are now mapped to their
-machine code.
+times. Twenty-eight of thirty-one active employees are mapped to their machine code.
 
-Two things are left. Task A is one query — the last ambiguous mapping. Task B
-is the history backfill, which is now unblocked.
+The history is in: **26,674 punches back to 15 November 2025** were imported
+and folded into **2,922 attendance rows across 28 people**. The last ambiguous
+mapping is settled — Amit is device code **59**, proved by an 11:18:10 punch on
+9 September against HR's own handwritten "Amit - 11:18".
+
+What is left is one live problem and one question. Task A is the problem and is
+urgent.
 
 Read `integrations/punch-bridge/README.md` before you start. This page is the
 task; that page is the reasoning.
@@ -20,8 +24,8 @@ task; that page is the reasoning.
 | Sync | `C:\CapitalBrix\punch-sync\ettl-sync.ps1`, reading `eTimeTrackLite1.mdb` |
 | Scheduled task | `CapitalBrix-PunchSync`, every 5 min, last result `0x0` |
 | Supabase | ingest, fold, report reader, `attendance-whatsapp` v3, two `pg_cron` jobs (12:10 IST attendance, 19:01 IST logout) |
-| Mapping | 27 of 31 active employees have a `device_code` |
-| Verified | punches ingested, a second run reports `new 0`, attendance rows carry names, times and late flags |
+| Mapping | 28 of 31 active employees have a `device_code` |
+| Verified | 26,722 punches sent, a second run reports `new 0`, 2,922 attendance rows carry names, times and late flags |
 
 **Parallel Database Export is not used and must not be touched.** Two days went
 into it before `eTimeTrackLite1.mdb` was found; the record is at the bottom of
@@ -32,58 +36,54 @@ If you find yourself opening `diagnose.cmd`, `schema.sql` or
 
 ---
 
-## Task A — settle "Amit", and report two undecided codes
+## Task A — the device has stopped feeding eTimeTrackLite
 
-The machine has **three** enrolled Amits — `6 Amit`, `59 Amit`, `66 Amit` — and
-the roster has one. `66` is already eliminated: zero punches in fifteen days.
-`6` and `59` both punch, so frequency alone does not separate them.
+**This is the only urgent item. Everything else on this page is answered.**
 
-What separates them is HR's own handwritten list for **9 September 2026**,
-which records **"Amit - 11:18"**. Exactly one of the two codes punched near
-11:18 that morning. Run this and return the output verbatim:
+The register holds nothing after **19 September**, and 19 September itself is
+half a normal day: 28 punches from 16 people, against 61 from 31 the day
+before. 20 September was a Sunday, but **21 September is a Monday and at
+13:33 IST the database had zero punches for it.** The `-All` run confirms it
+from the other side — `DeviceLogs_9_2026` still holds exactly 1034 rows, the
+same number it held days ago.
 
-```
-C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -Command "$c=New-Object System.Data.Odbc.OdbcConnection; $c.ConnectionString='Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=C:\Program Files (x86)\essl\eTimeTrackLite\eTimeTrackLite1.mdb;ReadOnly=1;'; $c.Open(); foreach($t in @('DeviceLogs','DeviceLogs_9_2026')){ try{ $q=$c.CreateCommand(); $q.CommandText=\"select UserId, LogDate from [$t] where UserId in ('6','59','66') and LogDate >= {ts '2026-09-09 00:00:00'} and LogDate < {ts '2026-09-10 00:00:00'} order by LogDate\"; $r=$q.ExecuteReader(); while($r.Read()){ Write-Host ($t + ' | ' + $r[0] + ' | ' + ([datetime]$r[1]).ToString('dd MMM HH:mm:ss')) }; $r.Close() } catch { Write-Host ($t + ' | ERROR ' + $_.Exception.Message) } }; $c.Close()"
-```
+The sync script is not the problem. It read every table, sent 26,722 punches
+and the scheduled task's last result is `0x0`. The gap is **upstream of it**:
+eTimeTrackLite has stopped downloading from the device.
 
-Also report, from the fifteen-day table you already produced, the punch count
-and last punch for **`52 Anjali Tripathi`** and **`35 Kunal`**. Both are on the
-machine, neither is on the roster, and the owner has not said what they are.
+Check, in this order, and report what you find:
 
-**Do not decide any mapping and do not run any `UPDATE` against Supabase.** A
-wrong code files one person's arrival under another person's name in a report
-the founder reads every day at 12:10 — worse than a blank.
+1. Open eTimeTrackLite → the device list. Is `192.168.1.201` showing
+   **connected**? Report its exact status text.
+2. `ping 192.168.1.201` — report the output.
+3. In eTimeTrackLite, run **Download Logs** (or Device → Get Log Data) for
+   19–21 September and report how many records it says it pulled.
+4. If the device is unreachable, say so and stop. That is a cable, a power
+   cut or a changed IP on the machine itself, and someone in the office has to
+   look at it.
 
-Three roster names are **not enrolled on the machine at all**:
-`jasveer singh chaudhary` is now mapped to code `32` by the owner, but
-`Pranav Arora` and `Sanjali kumari` have no code anywhere in `Employees`.
-Nothing on the PC can fix that — HR has to enrol them on the device. Just
-confirm they are genuinely absent from the table.
+Do **not** reinstall, reconfigure or update eTimeTrackLite, and do not touch
+the device's own settings. Report and stop.
 
 ---
 
-## Task B — backfill the history (run it now)
+## Task B — report the names behind five codes
 
-`eTimeTrackLite1.mdb` holds **26,722 punches back to November 2025**. Parallel
-Export would never have produced those, and they are worth having.
-
-This was previously gated on the mappings being settled. It no longer is, and
-the reason matters: **the fold resolves a person through `device_code` at fold
-time, not through anything stored on the punch.** An unmapped code produces no
-attendance row at all — it does not produce a wrong one — and the moment the
-code is filled in, every punch already stored attaches itself. So importing
-history early costs nothing and loses nothing.
+The backfill's warning named five device codes that punch regularly and are on
+nobody's roster row. Before any of them is mapped, the owner needs their names
+as the machine has them. Print `EmployeeCodeInDevice`, `EmployeeName` and
+`EmployeeCode` for codes **6, 41, 35, 52, 66**:
 
 ```
-C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File C:\CapitalBrix\punch-sync\ettl-sync.ps1 -All
+C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -Command "$c=New-Object System.Data.Odbc.OdbcConnection; $c.ConnectionString='Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=C:\Program Files (x86)\essl\eTimeTrackLite\eTimeTrackLite1.mdb;ReadOnly=1;'; $c.Open(); $q=$c.CreateCommand(); $q.CommandText=\"select EmployeeCodeInDevice, EmployeeName, EmployeeCode from Employees where EmployeeCodeInDevice in ('6','41','35','52','66')\"; $r=$q.ExecuteReader(); while($r.Read()){ Write-Host ($r[0].ToString().Trim() + ' | ' + $r[1].ToString().Trim() + ' | ' + $r[2].ToString().Trim()) }; $r.Close(); $c.Close()"
 ```
 
-It sends in batches of 500 and `cb_device_punches` is unique on
-`(device_code, punch_at)`, so a re-run is safe and a partial run can simply be
-repeated. Report the per-table counts it prints and the final `sent N, new N`.
+Code `6` is the one that matters most: **1,132 punches since 15 November
+2025**, which is a full-time employee nobody has on the roster. `41` has 261
+and `35` has 248. `66` last punched on 29 July and is probably somebody who
+left.
 
-The fold across the full range is run from Supabase afterwards, **not** from
-the PC.
+**Do not map any of them.** Names only.
 
 ---
 

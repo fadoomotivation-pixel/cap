@@ -285,6 +285,20 @@ also call it with their JWT to send early, re-send (`force`), or preview
   Windows are computed from **IST explicitly**, never the browser's clock: an
   HR laptop left on another timezone would otherwise file people into the
   wrong block, and the blocks are the whole point.
+- **The register holds real history, not just today.** `ettl-sync.ps1 -All`
+  imported **26,674 punches back to 15 November 2025**, which folded into
+  **2,922 attendance rows across 28 people**. Backfilling early is safe and
+  was wrongly gated for a day: the fold resolves a person through
+  `device_code` at fold time, so an unmapped code produces **no** row rather
+  than a wrong one, and the punches attach themselves the moment the code is
+  filled in. Re-run `cb_fold_punches_into_attendance(from, to)` after any
+  mapping change.
+- **A silent stop is upstream, not in the bridge.** On 21 September the
+  register had nothing after the 19th while the scheduled task's last result
+  was `0x0` and the sync read every table without error. `DeviceLogs_9_2026`
+  had simply stopped growing — eTimeTrackLite had stopped downloading from
+  `192.168.1.201`. **A green sync proves the PC→Supabase half only.** The
+  check that catches this is the day count, not the task's exit code.
 - **Device code `32` is Jasveer Singh Chaudhary, not a test card.** The
   machine labels it `Card`, and on that reading it spent a day in
   `cb_ignored_device_codes` as "test card, not a person". The owner's own
