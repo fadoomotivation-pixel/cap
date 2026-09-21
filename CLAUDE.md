@@ -688,6 +688,42 @@ also call it with their JWT to send early, re-send (`force`), or preview
   summary lives only in the function — the console has no Send button for it
   yet, and a copy nothing calls is a copy that drifts.
 
+### `/admin/whatsapp` is the control room, not just a status page
+
+Every recurring request in this module's first week was the same shape: *stop
+that message*, *send it now*, *is so-and-so senior*, *what will it actually
+say*. Each one needed a developer, and needing a developer to change a
+sentence fifty colleagues will read is the real defect. The page now answers
+all four.
+
+- **The five messages, each its own card** — time, audience, what it says, an
+  **on/off** switch, **Preview** and **Send now**. `MESSAGES` in
+  `WhatsAppAdmin.jsx` is the single list the switches, previews and buttons
+  all read from, so a message cannot appear in one place and be missing from
+  another.
+- **Preview is `dry_run` through the same Edge Function the cron calls**, so
+  what it shows is what would go out — not a re-implementation that drifts.
+  This is the change that makes the page usable by a founder: see the exact
+  text fifty people are about to read, then decide.
+- **`cb_hr_settings.wa_messages_enabled` is a per-message switch**, jsonb
+  keyed by kind. **A missing key means ON**, so a message added later works
+  before anybody touches the row — the alternative silently ships every new
+  kind switched off. `daily_report_enabled` stays as the master switch above
+  it. **An admin is exempt from the switch**: Preview and Send now still work
+  on a paused message, because seeing what it would say is how you decide to
+  un-pause it.
+- **"Who the messages name" lives here too** — every active person with
+  **In report** and **Senior / Junior** toggles, and a live count. The same
+  controls are on the Attendance console's Employees tab; this copy exists
+  because the question is asked while looking at the messages, not while
+  looking at the roster. Adding, removing and machine-code mapping stay on
+  the Attendance console, and the page says so.
+- **The schedule is deliberately not editable here.** A schedule two screens
+  can change is one nobody can trust; the times live in pg_cron. The page also
+  no longer carries a second copy of the schedule list — it used to, and it
+  went on claiming "12:10 arrivals, 19:01 logouts" for a day after the server
+  had stopped running that.
+
 ### The WhatsApp connection console
 
 `/admin/whatsapp` (admin-only, `noindex`, in `ADMIN_LINKS`) is where HR sees

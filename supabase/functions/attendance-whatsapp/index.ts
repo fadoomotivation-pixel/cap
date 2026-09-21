@@ -16,13 +16,13 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 //   checkout    19:01 IST — who logged out and when, and who is still in
 //                                                                    → founder
 //
-// The group's two both ask somebody to do something. The founder's two are
-// the record, and the decisions only he can act on.
+// Each has its own on/off switch in cb_hr_settings.wa_messages_enabled, set
+// from /admin/whatsapp; daily_report_enabled is the master switch above them.
 //
 // Called two ways:
 //   · pg_cron, with the x-cron-secret header.
-//   · An admin from /admin/attendance, with their JWT, to send early or
-//     re-send a day.
+//   · An admin from /admin/attendance or /admin/whatsapp, with their JWT, to
+//     preview (dry_run), send early, or re-send (force).
 //
 // ── Why a webhook and not the WhatsApp API ───────────────────────────────
 // Meta's official WhatsApp Cloud API cannot post to a group at all — it only
@@ -46,8 +46,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 //                        {"to": …, "text": …}
 //   CRON_SECRET       what pg_cron sends in x-cron-secret         (required)
 //
-// The group JID and the on/off switch live in cb_hr_settings instead, so HR
-// can change the group without a deploy.
+// The group JID and the switches live in cb_hr_settings instead, so HR can
+// change them without a deploy.
 // ─────────────────────────────────────────────────────────────
 
 const ADMIN_EMAILS = [
@@ -543,12 +543,26 @@ Deno.serve(async (req) => {
 
     const { data: settings } = await admin
       .from("cb_hr_settings")
-      .select("wa_group_id, founder_whatsapp, daily_report_enabled")
+      .select("wa_group_id, founder_whatsapp, daily_report_enabled, wa_messages_enabled")
       .limit(1)
       .maybeSingle();
 
     if (!viaAdmin && !settings?.daily_report_enabled) {
       return json({ sent: false, reason: "daily report is switched off in HR settings" });
+    }
+
+    // Each message has its own switch, because they are separate decisions —
+    // "stop the absent list but keep the reminder" used to have no answer
+    // except asking a developer. A MISSING KEY MEANS ON: a message added
+    // after this row was last saved must work without anybody editing it,
+    // otherwise shipping a new kind silently ships it switched off.
+    //
+    // An admin is exempt, so Preview and Send now still work on a message
+    // that is switched off — seeing what a paused message would say is how
+    // you decide whether to turn it back on.
+    const switches = (settings?.wa_messages_enabled ?? {}) as Record<string, unknown>;
+    if (!viaAdmin && switches[kind] === false) {
+      return json({ sent: false, reason: `the ${kind} message is switched off`, kind });
     }
 
     // Who each message is FOR decides where it goes, and they are not the
