@@ -9,8 +9,8 @@ and folded into **2,922 attendance rows across 28 people**. The last ambiguous
 mapping is settled — Amit is device code **59**, proved by an 11:18:10 punch on
 9 September against HR's own handwritten "Amit - 11:18".
 
-What is left is one live problem and one question. Task A is the problem and is
-urgent.
+What is left is restarting the device's log download, which stopped on
+Saturday — Task A, and the only urgent item on this page.
 
 Read `integrations/punch-bridge/README.md` before you start. This page is the
 task; that page is the reasoning.
@@ -36,54 +36,73 @@ If you find yourself opening `diagnose.cmd`, `schema.sql` or
 
 ---
 
-## Task A — the device has stopped feeding eTimeTrackLite
+## Task A — restart the log download (the device is fine)
 
-**This is the only urgent item. Everything else on this page is answered.**
+Diagnosed, and it is **not** a network problem. `192.168.1.201` answers ping
+with 0% loss. eTimeTrackLite's own `Devices` row says:
 
-The register holds nothing after **19 September**, and 19 September itself is
-half a normal day: 28 punches from 16 people, against 61 from 31 the day
-before. 20 September was a Sunday, but **21 September is a Monday and at
-13:33 IST the database had zero punches for it.** The `-All` run confirms it
-from the other side — `DeviceLogs_9_2026` still holds exactly 1034 rows, the
-same number it held days ago.
+```
+LastLogDownloadDate : 09/19/2026 11:09:04
+DevicesStatus       : online at 09/19/2026 11:14:48   (nothing after that)
+```
 
-The sync script is not the problem. It read every table, sent 26,722 punches
-and the scheduled task's last result is `0x0`. The gap is **upstream of it**:
-eTimeTrackLite has stopped downloading from the device.
+Both `eTimeTrackLite.exe` and `eSSL Online Downloader.exe` are running, in the
+tray, with `MainWindowHandle: 0`. So the downloader process is alive and has
+simply not polled the device since Saturday midday. The punches are still
+**inside the device's own memory** — nothing is lost yet, but eSSL terminals
+overwrite the oldest logs when their buffer fills, so this is worth doing today
+rather than next week.
 
-Check, in this order, and report what you find:
+Do this on the PC's screen:
 
-1. Open eTimeTrackLite → the device list. Is `192.168.1.201` showing
-   **connected**? Report its exact status text.
-2. `ping 192.168.1.201` — report the output.
-3. In eTimeTrackLite, run **Download Logs** (or Device → Get Log Data) for
-   19–21 September and report how many records it says it pulled.
-4. If the device is unreachable, say so and stop. That is a cable, a power
-   cut or a changed IP on the machine itself, and someone in the office has to
-   look at it.
+1. Restore the eTimeTrackLite window from the system tray.
+2. **Device → Download Logs** (some builds call it *Get Log Data* or
+   *Download Attendance Logs*), pick device `192.168.1.201`, date range
+   **19-Sep-2026 to 21-Sep-2026**, and run it. Report how many records it says
+   it pulled.
+3. Confirm it worked by re-reading the database — this needs no GUI:
 
-Do **not** reinstall, reconfigure or update eTimeTrackLite, and do not touch
-the device's own settings. Report and stop.
+```
+C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -Command "$c=New-Object System.Data.Odbc.OdbcConnection; $c.ConnectionString='Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=C:\Program Files (x86)\essl\eTimeTrackLite\eTimeTrackLite1.mdb;ReadOnly=1;'; $c.Open(); $q=$c.CreateCommand(); $q.CommandText='select count(*) from DeviceLogs_9_2026'; Write-Host ('DeviceLogs_9_2026 rows: ' + $q.ExecuteScalar()); $c.Close()"
+```
+
+It held **1034** rows before. A higher number means the download worked.
+
+4. Then run the sync once so the new punches reach Supabase:
+
+```
+C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File C:\CapitalBrix\punch-sync\ettl-sync.ps1
+```
+
+5. Finally, report **why the downloader stopped**: in eTimeTrackLite, open the
+   device's settings and say whether *Auto Download* / *Online Download* is
+   ticked and what interval it is set to. Report it — do not change it.
+
+The device is registered as **`Test Device`, device id 14**. Do not rename,
+re-add or delete it. A re-added device can renumber the mapping between a
+person and their code, and every historical punch is keyed on that code.
 
 ---
 
-## Task B — report the names behind five codes
+## Task B — three people punch daily and are on no roster row
 
-The backfill's warning named five device codes that punch regularly and are on
-nobody's roster row. Before any of them is mapped, the owner needs their names
-as the machine has them. Print `EmployeeCodeInDevice`, `EmployeeName` and
-`EmployeeCode` for codes **6, 41, 35, 52, 66**:
+Answered. The names behind the five unmapped codes are:
 
-```
-C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -Command "$c=New-Object System.Data.Odbc.OdbcConnection; $c.ConnectionString='Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=C:\Program Files (x86)\essl\eTimeTrackLite\eTimeTrackLite1.mdb;ReadOnly=1;'; $c.Open(); $q=$c.CreateCommand(); $q.CommandText=\"select EmployeeCodeInDevice, EmployeeName, EmployeeCode from Employees where EmployeeCodeInDevice in ('6','41','35','52','66')\"; $r=$q.ExecuteReader(); while($r.Read()){ Write-Host ($r[0].ToString().Trim() + ' | ' + $r[1].ToString().Trim() + ' | ' + $r[2].ToString().Trim()) }; $r.Close(); $c.Close()"
-```
+| Code | Name on the machine | Punches | Still punching? |
+|---|---|---|---|
+| `6` | Amit | 1,132 since 15 Nov 2025 | 3 in September, all single evening taps |
+| `41` | Gaurav | 261 | yes, to 18 Sep |
+| `35` | Kunal | 248 | yes, to 18 Sep |
+| `52` | Anjali Tripathi | 136 | yes, to 19 Sep |
+| `66` | Amit | 39 | no, stopped 29 July |
 
-Code `6` is the one that matters most: **1,132 punches since 15 November
-2025**, which is a full-time employee nobody has on the roster. `41` has 261
-and `35` has 248. `66` last punched on 29 July and is probably somebody who
-left.
+**Gaurav, Kunal and Anjali Tripathi are with the owner**, who decides whether
+each is an employee to add to the roster, somebody deliberately not tracked, or
+a card to ignore. Nothing to do on the PC.
 
-**Do not map any of them.** Names only.
+The three Amits are settled: the roster's Amit is **`59`**. In September, `59`
+punched on ten working days arriving around 11:00 and leaving around 19:00,
+while `6` produced three lone evening taps and `66` nothing at all.
 
 ---
 

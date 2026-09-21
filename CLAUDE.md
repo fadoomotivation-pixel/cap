@@ -293,12 +293,28 @@ also call it with their JWT to send early, re-send (`force`), or preview
   than a wrong one, and the punches attach themselves the moment the code is
   filled in. Re-run `cb_fold_punches_into_attendance(from, to)` after any
   mapping change.
+- **Three Amits are enrolled on the machine; the roster's Amit is `59`.**
+  Codes `6`, `59` and `66` are all named "Amit". Frequency alone points the
+  wrong way — `6` has 1,132 punches since November against `59`'s 266 — but
+  the pattern decides it: in September `59` punched on ten working days,
+  arriving around 11:00 and leaving around 19:00, while `6` produced three
+  lone evening taps and `66` none since July. The confirming evidence is an
+  11:18:10 punch by `59` on 9 September against HR's own handwritten
+  "Amit - 11:18".
 - **A silent stop is upstream, not in the bridge.** On 21 September the
   register had nothing after the 19th while the scheduled task's last result
   was `0x0` and the sync read every table without error. `DeviceLogs_9_2026`
   had simply stopped growing — eTimeTrackLite had stopped downloading from
   `192.168.1.201`. **A green sync proves the PC→Supabase half only.** The
   check that catches this is the day count, not the task's exit code.
+
+  When it happens: ping the device, then read `Devices.LastLogDownloadDate`
+  and `DevicesStatus` in the `.mdb`. On 21 September those said the device was
+  reachable and the downloader had simply not polled since Saturday 11:14 —
+  the punches were still in the terminal's own memory. **eSSL terminals
+  overwrite their oldest logs once that buffer fills**, so a stalled download
+  is a deadline, not an inconvenience. Restarting it is a GUI action
+  (Device → Download Logs) that nothing on the command line can do.
 - **Device code `32` is Jasveer Singh Chaudhary, not a test card.** The
   machine labels it `Card`, and on that reading it spent a day in
   `cb_ignored_device_codes` as "test card, not a person". The owner's own
