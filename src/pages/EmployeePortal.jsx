@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
-import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard, Pencil, Download } from 'lucide-react';
+import { Lock, Mail, User, Phone, CheckCircle, AlertCircle, LogOut, FileText, Upload, Calendar, Building, Briefcase, Camera, X, Clock, Cake, CreditCard, FileSignature, XCircle , IdCard, Pencil, Download, Handshake } from 'lucide-react';
 import EmployeeKYCForm from '../components/EmployeeKYCForm';
 import AttendancePunch from '../components/AttendancePunch';
+import MyPartnerTargets from '../components/MyPartnerTargets';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isAdminEmail } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
@@ -188,6 +189,10 @@ export default function EmployeePortal() {
 
 function EmployeeDashboard({ session, onLogout }) {
   const [activeTab, setActiveTab] = useState('kyc');
+  // The tab only exists for the few people HR has switched on. Hiding it is
+  // not the security boundary — RLS is — but a tab nobody can use is a tab
+  // that gets asked about.
+  const [canWorkPartners, setCanWorkPartners] = useState(false);
   const [kyc, setKyc] = useState(null);
   const [kycLoading, setKycLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -197,6 +202,12 @@ function EmployeeDashboard({ session, onLogout }) {
   // submitted before they can tell whether it is wrong. .single() also threw on
   // nobody-has-submitted-yet, and there is no unique constraint on user_id, so
   // this takes the latest row instead.
+  useEffect(() => {
+    supabase.from('cb_employees').select('can_work_partners')
+      .eq('user_id', session.user.id).maybeSingle()
+      .then(({ data }) => setCanWorkPartners(!!data?.can_work_partners));
+  }, [session.user.id]);
+
   const loadKyc = useCallback(async () => {
     const { data } = await supabase
       .from('employee_kyc')
@@ -238,6 +249,9 @@ function EmployeeDashboard({ session, onLogout }) {
               { key: 'kyc', label: 'Profile & KYC', Icon: User },
               { key: 'attendance', label: 'Attendance', Icon: Clock },
               { key: 'cards', label: 'Cards', Icon: IdCard },
+              ...(canWorkPartners
+                ? [{ key: 'partners', label: 'Channel Partners', Icon: Handshake }]
+                : []),
               { key: 'features', label: 'Workspace', Icon: Building },
             ].map(({ key, label, Icon }) => (
               <button key={key} onClick={() => setActiveTab(key)}
@@ -297,6 +311,17 @@ function EmployeeDashboard({ session, onLogout }) {
             {activeTab === 'cards' && (
               <motion.div key="cards" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
                 <CardRequestForm session={session} />
+              </motion.div>
+            )}
+
+            {activeTab === 'partners' && canWorkPartners && (
+              <motion.div key="partners" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-white rounded-3xl shadow-sm p-6 md:p-8">
+                <h2 className="text-2xl font-bold text-[#10243E] mb-1">Channel Partners</h2>
+                <p className="text-sm text-gray-500 mb-6 border-b pb-4">
+                  Brokers and new real-estate firms handed to you to bring on as
+                  channel partners. Newest registrations first.
+                </p>
+                <MyPartnerTargets />
               </motion.div>
             )}
 
