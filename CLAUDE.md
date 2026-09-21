@@ -324,6 +324,15 @@ also call it with their JWT to send early, re-send (`force`), or preview
   Scanning another phone therefore does not create a sender. **The founder
   session's number must be a member of the WhatsApp group**, since WhatsApp
   only lets an account post to groups it is in.
+
+  **`/send` has no session parameter at all** — it always uses the founder
+  socket, and there is no code path by which a message of ours could leave
+  from a telecaller's or another product's session. Worth knowing because on
+  21 September a Capital Brix report was reported as having reached somebody
+  at Fanbe: whatever that was, it did not come from this function, which sent
+  exactly two messages that day, to the group JID and to
+  `917048917300`. Look at who can read the founder session on the Call Pro AI
+  dashboard, not at this repo.
 - **Proving the chain is four separate facts, and the log distinguishes
   them.** `select cb_send_attendance_report('attendance');` then read
   `net._http_response`: `403 not authorised` means `CRON_SECRET` is missing or
@@ -542,8 +551,29 @@ attendance. Worse, the only evidence anything was wrong was a `503` inside
   bare digits get `91`, a leading `0` is dropped, anything already carrying a
   code is left alone. `cb_hr_settings.founder_whatsapp` is stored as
   `917048917300` for the same reason; the fallback target is used verbatim.
-  **A group JID is unaffected** — it is passed through whole — which is why
-  the group report worked while every number test silently did not.
+  **A group JID is passed through whole by `wa-session`** — but that was
+  only half the road, and the sentence that used to sit here ("which is why
+  the group report worked") was wrong. **The worker did the same stripping
+  one layer further down**, in its own `toJid()`:
+
+  ```js
+  const digits = String(phone || "").replace(/\D/g, "");
+  return `${digits}@s.whatsapp.net`;
+  ```
+
+  So `120363040760612538@g.us` reached Baileys as
+  `120363040760612538@s.whatsapp.net`, an account that does not exist,
+  and came back with a message id. **Every attendance report addressed to the
+  group was logged `ok` and delivered to nobody** — for as long as the group
+  was configured. Fixed in the worker on 21 September 2026: an address
+  carrying an `@` is now returned untouched.
+
+  The lesson is the one this module keeps relearning, and it is not about
+  groups: **a message id is not delivery.** Two independent layers each
+  "normalised" the same value, each looked correct alone, and the only
+  evidence of the failure was that fifty people never saw a report. When a
+  send looks fine and nothing arrives, check every hop that touches the
+  address, not just ours.
 - **The test result renders under the Send button, and stays there.** It
   first shipped as the page-wide flash banner at the very top — five screens
   above the button, gone after five seconds. The first person to use it
