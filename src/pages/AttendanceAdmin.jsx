@@ -8,7 +8,7 @@ import { buildDailyWhatsAppSummary, whatsappLink, buildNudgeMessage } from '../l
 import {
   Users, UserPlus, MapPin, Download, Search, LogOut, RefreshCw, CheckCircle, Clock,
   Building2, Navigation, Home, UserX, Power, Calendar, Send, KeyRound, Settings, AlertTriangle,
-  Copy, BarChart3, Bell, Crosshair, X, Wallet,
+  Copy, BarChart3, Bell, Crosshair, X, Wallet, Star,
   Inbox,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -158,6 +158,27 @@ export default function AttendanceAdmin() {
 
   const toggleActive = async (emp) => {
     await supabase.from('cb_employees').update({ is_active: !emp.is_active }).eq('id', emp.id);
+    fetchData();
+  };
+
+  // Senior staff account for their own movements straight to the founder, so
+  // the register listing them as Absent is not information — it is a name in
+  // the one section that needs reading, whose answer the founder already has.
+  // They are dropped from the WhatsApp report only on days they have neither
+  // a punch nor an HR status; with a punch they appear like anybody else.
+  const toggleSenior = async (emp) => {
+    await supabase.from('cb_employees').update({ is_senior: !emp.is_senior }).eq('id', emp.id);
+    fetchData();
+  };
+
+  // in_daily_report had no control anywhere — it was only ever set by hand in
+  // SQL, which meant every "keep so-and-so out of the report" needed a
+  // developer. It is the switch HR reaches for most (pantry staff, people who
+  // do not punch, anyone the founder does not want listed), so it belongs on
+  // the row next to the person it is about.
+  const toggleInReport = async (emp) => {
+    await supabase.from('cb_employees')
+      .update({ in_daily_report: !emp.in_daily_report }).eq('id', emp.id);
     fetchData();
   };
 
@@ -511,6 +532,51 @@ export default function AttendanceAdmin() {
               </button>
             </div>
 
+            {/*
+              The switches below decide who the WhatsApp messages name, and
+              until now two of the three could only be changed by a developer
+              running SQL. The counts are computed from the same three fields
+              the server filters on, so what this says and what goes out cannot
+              drift apart.
+            */}
+            <div className="mb-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-[#10243E] mb-1">
+                {employees.filter((e) => e.is_active && e.in_daily_report).length} names can appear in the WhatsApp messages
+              </p>
+              <p className="text-xs text-gray-500 mb-3">
+                Out of {employees.filter((e) => e.is_active).length} people still with us.
+                Changes take effect on the very next message — nothing to publish or re-send.
+              </p>
+              <ul className="text-xs text-gray-600 space-y-1.5">
+                <li>
+                  <span className="font-semibold text-green-700">In the report</span> — off, and this
+                  person is never named, even on days they punch. For pantry staff, anyone who does
+                  not use the machine, and anyone the founder does not want listed.
+                  {employees.filter((e) => e.is_active && !e.in_daily_report).length > 0 && (
+                    <span className="text-gray-500">
+                      {' '}Currently off for: {employees.filter((e) => e.is_active && !e.in_daily_report).map((e) => e.full_name.trim()).join(', ')}.
+                    </span>
+                  )}
+                </li>
+                <li>
+                  <span className="font-semibold text-indigo-700">Senior</span> — never printed under
+                  Absent. They still show in the arrival list on days they punch, and under On leave
+                  if HR marks a status; only the Absent case is dropped, so the counts always match
+                  the names.
+                  {employees.filter((e) => e.is_active && e.is_senior).length > 0 && (
+                    <span className="text-gray-500">
+                      {' '}Currently: {employees.filter((e) => e.is_active && e.is_senior).map((e) => e.full_name.trim()).join(', ')}.
+                    </span>
+                  )}
+                </li>
+                <li>
+                  <span className="font-semibold text-gray-700">Mark as left</span> — they stop
+                  appearing everywhere from the next message. Their history stays, so past months
+                  still report correctly.
+                </li>
+              </ul>
+            </div>
+
             {employees.some((e) => e.is_active && !e.device_code) && (
               <div className="mb-5 flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <AlertTriangle size={16} className="mt-0.5 shrink-0" />
@@ -575,7 +641,7 @@ export default function AttendanceAdmin() {
                     <th className="p-3 font-medium">Contact</th>
                     <th className="p-3 font-medium">Role</th>
                     <th className="p-3 font-medium">Login</th>
-                    <th className="p-3 font-medium">Status</th>
+                    <th className="p-3 font-medium">WhatsApp report</th>
                     <th className="p-3 font-medium"></th>
                   </tr>
                 </thead>
@@ -607,6 +673,11 @@ export default function AttendanceAdmin() {
                               Not in daily report
                             </span>
                           )}
+                          {e.is_senior && (
+                            <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.5">
+                              Senior — never listed absent
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="p-3 text-gray-600">{e.email}<br /><span className="text-xs text-gray-400">{e.phone}</span></td>
@@ -618,10 +689,43 @@ export default function AttendanceAdmin() {
                           <span className="text-gray-400 text-xs">Not created</span>
                         )}
                       </td>
+                      {/*
+                        Everything that decides whether this person shows up in
+                        the WhatsApp messages, on the row of the person it is
+                        about, and worded as what it does rather than as a
+                        column name. All three take effect on the very next
+                        message — nothing is cached and there is nothing to
+                        re-publish.
+                      */}
                       <td className="p-3">
-                        <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded border ${e.is_active ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                          {e.is_active ? 'Active' : 'Inactive'}
-                        </span>
+                        {!e.is_active ? (
+                          <span className="text-[11px] text-gray-500">
+                            Left the company — not in any message
+                          </span>
+                        ) : (
+                          <div className="flex flex-col gap-1.5 items-start">
+                            <button onClick={() => toggleInReport(e)}
+                              title="Off: this person is never named in the WhatsApp messages, even when they punch. For pantry staff, people who do not use the machine, or anyone the founder does not want listed."
+                              className={`text-[11px] font-medium px-2 py-1 rounded border transition ${
+                                e.in_daily_report
+                                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                                  : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
+                              }`}>
+                              {e.in_daily_report ? 'In the report' : 'Not in the report'}
+                            </button>
+                            {e.in_daily_report && (
+                              <button onClick={() => toggleSenior(e)}
+                                title="On: never printed under Absent. They still appear in the arrival list on days they punch, and under On leave if HR marks a status — only the Absent case is dropped."
+                                className={`text-[11px] font-medium px-2 py-1 rounded border transition flex items-center gap-1 ${
+                                  e.is_senior
+                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                                    : 'bg-white text-gray-400 border-gray-200 hover:border-indigo-200 hover:text-indigo-600'
+                                }`}>
+                                <Star size={11} /> {e.is_senior ? 'Senior — never absent' : 'Mark senior'}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-3">
@@ -638,8 +742,12 @@ export default function AttendanceAdmin() {
                               <KeyRound size={14} /> {creatingFor === e.id ? 'Working…' : e.user_id ? 'Reset password' : 'Create login'}
                             </button>
                           )}
-                          <button onClick={() => toggleActive(e)} className="text-gray-400 hover:text-red-500 flex items-center gap-1 text-xs">
-                            <Power size={14} /> {e.is_active ? 'Deactivate' : 'Activate'}
+                          <button onClick={() => toggleActive(e)}
+                            title={e.is_active
+                              ? 'They have left. Their history stays; they stop appearing in the register and in every WhatsApp message from the next one onward.'
+                              : 'They are back. They start appearing again from the next message.'}
+                            className="text-gray-400 hover:text-red-500 flex items-center gap-1 text-xs">
+                            <Power size={14} /> {e.is_active ? 'Mark as left' : 'Bring back'}
                           </button>
                         </div>
                       </td>
