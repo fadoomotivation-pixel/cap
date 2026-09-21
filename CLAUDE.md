@@ -488,6 +488,40 @@ also call it with their JWT to send early, re-send (`force`), or preview
   daily message people stop reading. It sits fifteen minutes before the
   logout report on purpose: the reminder is the last chance to fix the day,
   the 19:01 summary is the record of it.
+- **The three messages do not share an audience, and the routing is the
+  product decision.** The group gets **only** the 18:45 reminder; the 12:10
+  arrivals roll-call and the 19:01 logout summary go to
+  `founder_whatsapp`. Each falls back to the other so a blank setting cannot
+  silence a report.
+
+  The reminder asks people to act while they still can, so it has to reach
+  them — and it sends nothing when both its lists are empty, so the group is
+  usually quiet. The other two are management information: fifty people can
+  do nothing with them, and a daily roll-call of colleagues' arrival times in
+  a company group reads as surveillance however plainly it is worded. This
+  took the group from three messages a day to one, usually none.
+
+  **The broken-feed warning always goes to the founder too**, whatever the
+  kind. It asks for a specific click inside eTimeTrackLite; in the group it
+  would be an unactionable announcement that the company's attendance is
+  broken.
+
+  The founder's two messages carry a **`Register:` link to
+  `/admin/attendance`** — a summary that names a problem and then leaves the
+  reader hunting for the place to fix it is half a message.
+- **Somebody who is not enrolled on the machine is left out of the report,
+  and the gap is shown on the roster instead.** An active employee with no
+  `device_code` can never produce a punch, so the register can only ever call
+  them Absent — every day, forever, in the one section people actually read.
+  They get `in_daily_report = false` (Pranav Arora and Sanjali kumari, 21 Sep).
+
+  That is only safe because the roster tab now shows it: each row carries
+  either `machine #<code>` or a **"Not on the machine"** badge, plus a
+  **"Not in daily report"** badge, and the tab opens with an amber banner
+  naming everybody unenrolled. Nothing on this console showed `device_code`
+  before, so an unenrolled person looked exactly like an absent one. Hiding
+  them from the report without surfacing them here would mean nobody ever
+  enrols them.
 - **Three messages a day, one function.** `kind` selects which:
   `attendance` at **12:10 IST** (06:40 UTC) — arrivals by window, plus absent
   and on leave; `reminder` at **18:45 IST** (13:15 UTC); `checkout` at

@@ -511,6 +511,19 @@ export default function AttendanceAdmin() {
               </button>
             </div>
 
+            {employees.some((e) => e.is_active && !e.device_code) && (
+              <div className="mb-5 flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                <span>
+                  <strong>Not enrolled on the attendance machine:</strong>{' '}
+                  {employees.filter((e) => e.is_active && !e.device_code).map((e) => e.full_name.trim()).join(', ')}.
+                  {' '}They cannot punch, so nothing will ever be recorded for them. Enrol them on the device, then put
+                  the machine&apos;s Emp Code against their name — until then they are left out of the daily WhatsApp
+                  report rather than listed absent every day.
+                </span>
+              </div>
+            )}
+
             {showAdd && (
               <form onSubmit={addEmployee} className="mb-6 p-5 bg-gray-50 rounded-xl border border-gray-100">
                 <p className="text-sm text-gray-500 mb-4">
@@ -572,6 +585,29 @@ export default function AttendanceAdmin() {
                       <td className="p-3">
                         <p className="font-semibold text-[#10243E]">{e.full_name}</p>
                         {e.employee_code && <p className="text-xs text-gray-400">{e.employee_code}</p>}
+                        {/*
+                          Nothing on this console used to show the device code, so
+                          somebody who was never enrolled on the machine looked
+                          exactly like somebody who simply did not come in — and
+                          read as Absent every single day forever. It is shown
+                          here because the WhatsApp report deliberately leaves
+                          those people out; if the gap is invisible in both
+                          places, nobody ever enrols them.
+                        */}
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {e.device_code ? (
+                            <span className="text-[10px] text-gray-400">machine #{e.device_code}</span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+                              Not on the machine
+                            </span>
+                          )}
+                          {e.in_daily_report === false && (
+                            <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 rounded px-1.5 py-0.5">
+                              Not in daily report
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-3 text-gray-600">{e.email}<br /><span className="text-xs text-gray-400">{e.phone}</span></td>
                       <td className="p-3 text-gray-600">{e.role_title || '—'}<br /><span className="text-xs text-gray-400">{e.department}</span></td>
