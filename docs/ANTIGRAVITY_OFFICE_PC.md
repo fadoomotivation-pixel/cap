@@ -37,6 +37,73 @@ If you find yourself opening `diagnose.cmd`, `schema.sql` or
 
 ---
 
+## Task A — read the device directly, and stop depending on a click
+
+The sync currently reads `eTimeTrackLite1.mdb`, which only fills when somebody
+clicks **Download** in eTimeTrackLite. `Devices.DownLoadType = 1` means manual,
+and that single fact stopped the register for five days in September while
+every automated check stayed green.
+
+The setting that fixes it lives in the **eSSL Online Downloader**'s tray
+window, which a background agent cannot reach. So stop needing it: the device
+speaks its own protocol on **192.168.1.201:4370**, and a script on this PC can
+read the punches itself. eTimeTrackLite then keeps doing its own thing for HR's
+local reports, and our chain no longer passes through it.
+
+**Build `C:\CapitalBrix\punch-sync\zk-direct\`:**
+
+1. Check for Node (`node -v`). If it is missing, install the current LTS.
+2. `npm init -y` and `npm i node-zklib`.
+3. A script that, every run:
+   - connects to `192.168.1.201:4370` (comm key `0` — the device shows
+     `Comm Key 000000`),
+   - reads the attendance logs,
+   - keeps only the last **36 hours**,
+   - POSTs them to `cb_ingest_punches`,
+   - **disconnects**, every time, including on error.
+
+The request is exactly what `ettl-sync.ps1` already sends, so copy the URL, the
+anon key and the ingest secret out of that file rather than asking for them:
+
+```
+POST https://rqgkzamuohdvttnkluzn.supabase.co/rest/v1/rpc/cb_ingest_punches
+apikey: <AnonKey>        Authorization: Bearer <AnonKey>
+
+{ "p_secret": "<IngestSecret>",
+  "p_punches": [ { "device_code": "59",
+                   "punch_at": "2026-09-22T10:18:04+05:30",
+                   "direction": null, "device_name": null } ] }
+```
+
+Four things that are not negotiable, each of which has already cost a day:
+
+- **`punch_at` must carry `+05:30`.** The device reports bare local time; a
+  bare timestamp is read as UTC and files every arrival five and a half hours
+  early.
+- **`device_code` is the device's own user id** — the number on the machine
+  (1, 13, 59, 95…), which is `Employees.EmployeeCodeInDevice`, not the email
+  and not `employee_code`.
+- **Re-send a window, do not keep a watermark.** A watermark is one lost file
+  away from losing punches. `cb_device_punches` is unique on
+  `(device_code, punch_at)`, so re-sending is free.
+- **Never clear the device's logs.** Its memory is the last backup; the whole
+  19-21 September recovery worked only because the punches were still in it.
+
+Then a scheduled task, **every 5 minutes**, same shape as
+`CapitalBrix-PunchSync`. Leave that existing task running: both are idempotent,
+and two sources are how we find out if one stops.
+
+**Report back:** the Node version, whether the connection opened, how many
+records were read, and the exact JSON `cb_ingest_punches` returned
+(`stored` and `unknown_device_codes`).
+
+**If the device refuses the connection, stop and say so.** Do not retry in a
+loop and do not try other ports — an eSSL terminal can be made unresponsive by
+a client that opens sessions and never closes them, and it is the only copy of
+the day's attendance.
+
+---
+
 ## Task A — the download was never automatic
 
 Diagnosed, and it is neither the network nor the bridge. `192.168.1.201`
