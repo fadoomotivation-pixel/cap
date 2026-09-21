@@ -165,6 +165,33 @@ update cb_hr_settings
        daily_report_enabled = true;
 ```
 
+### The Baileys worker we already run
+
+`callpro-baileys` on Hostinger (`pink-worm-375262.hostingersite.com`, port
+8080) is the CallProAI WhatsApp worker, and it already does exactly what this
+needs:
+
+```
+POST /send   { "to": "...", "text": "..." }   Authorization: Bearer <SECRET>
+```
+
+That is byte-for-byte the default body and header this Edge Function sends, so
+**`WA_PAYLOAD_TEMPLATE` is not needed** — `WA_WEBHOOK_URL` and
+`WA_WEBHOOK_TOKEN` alone are the whole configuration.
+
+**Only the founder's session can send.** The worker holds one sending session
+plus any number of per-telecaller "rep" sessions under `/s/<id>/…`, and a rep's
+`send` action answers **403 by design**: *"This session is watch-only. A
+telecaller's number sends by hand, from their own WhatsApp."* So scanning a new
+phone — HR's or anyone's — does **not** produce something that can post the
+report. The number that sends is the founder session's number, and **that
+number has to be a member of the WhatsApp group**, because WhatsApp only lets
+an account post to groups it belongs to.
+
+`/health` is unauthenticated and reports per-state session counts; everything
+else needs the bearer. A QR page accepts the same secret as `?k=` so a phone
+can open it, which is why the secret must never be treated as public.
+
 **Meta's official WhatsApp Cloud API cannot post to a group** — it only
 messages individual numbers. Groups need a logged-in WhatsApp Web session,
 which is what Baileys is. So the Edge Function contains no WhatsApp client: it

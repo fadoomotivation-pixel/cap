@@ -251,6 +251,14 @@ machine → eTimeTrackLite → Parallel Database Export → local MS SQL
 also call it with their JWT to send early, re-send (`force`), or preview
 (`dry_run`).
 
+- **The sending number is the founder session's, and there is no way around
+  it.** The `callpro-baileys` worker exposes `POST /send {to,text}` with a
+  bearer — byte-identical to what this function already sends, so no
+  `WA_PAYLOAD_TEMPLATE` — but only for the founder session. Per-telecaller
+  "rep" sessions are watch-only and their `send` action returns 403 on purpose.
+  Scanning another phone therefore does not create a sender. **The founder
+  session's number must be a member of the WhatsApp group**, since WhatsApp
+  only lets an account post to groups it is in.
 - **Meta's official WhatsApp Cloud API cannot post to a group** — it only
   messages individual numbers. Groups need a logged-in WhatsApp Web session
   (Baileys). So the function embeds no WhatsApp client: it builds the text and
