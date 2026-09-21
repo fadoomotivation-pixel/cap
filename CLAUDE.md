@@ -118,6 +118,15 @@ repo only covers the website.
   `main` → production. Feature branches get preview deployments.
 - **Supabase project**: `SalesAutoCall`, ref `rqgkzamuohdvttnkluzn` (ap-south-1).
   Client config is in `src/lib/supabase.js`.
+  **The same org holds a second project, `Fanbe-CRM` / `mfgjzkaabyltscgrkhdz`
+  (ap-southeast-1), and it is not ours.** The dashboard opens whichever was
+  last used, so "Edge Functions → Secrets" can silently be the wrong project —
+  it already happened once with `WA_WEBHOOK_URL`, `WA_WEBHOOK_TOKEN` and
+  `CRON_SECRET`, which looked set and left the function answering
+  `403 not authorised`. Check the ref in the URL before saving a secret, and
+  confirm from this side rather than from the screen: `select
+  cb_send_attendance_report('attendance');` then read `net._http_response` —
+  a 403 means the secret is not where you think it is.
 - Repo: `fadoomotivation-pixel/cap`. Work happens on feature branches → PR into `main`.
 
 ## Supabase schema in use
