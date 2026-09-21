@@ -46,6 +46,10 @@ export default function AttendanceAdmin() {
   const [credential, setCredential] = useState(null); // {email, password, existed}
   const [creatingFor, setCreatingFor] = useState(null);
 
+  // The terminal's own contact log. See the Device link panel below for why
+  // this is on screen at all.
+  const [deviceLog, setDeviceLog] = useState(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -80,6 +84,12 @@ export default function AttendanceAdmin() {
     supabase.rpc('cb_monthly_attendance', { p_month: `${month}-01` })
       .then(({ data }) => setMonthly(data || []));
   }, [isAdmin, tab, month]);
+
+  useEffect(() => {
+    if (!isAdmin || tab !== 'settings') return;
+    supabase.from('cb_adms_log').select('*').order('at', { ascending: false }).limit(8)
+      .then(({ data }) => setDeviceLog(data || []));
+  }, [isAdmin, tab, refreshing]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -660,6 +670,10 @@ export default function AttendanceAdmin() {
         )}
 
         {/* ── SETTINGS ── */}
+        {tab === 'settings' && (
+          <DeviceLink rows={deviceLog} />
+        )}
+
         {tab === 'settings' && settings && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-2xl">
             <h2 className="text-xl font-semibold text-[#10243E] flex items-center gap-2 mb-6">
@@ -734,6 +748,77 @@ export default function AttendanceAdmin() {
         )}
 
       </div>
+    </div>
+  );
+}
+
+/**
+ * Is the attendance machine reaching us?
+ *
+ * The punches now travel two roads: the office PC's bridge, and the terminal
+ * posting to us directly. Both can stop without anything looking wrong — that
+ * is not a guess, it is what happened for five days in September while every
+ * automated check stayed green and the register quietly held nothing.
+ *
+ * The only honest answer to "is it working" is when the machine last spoke to
+ * us, so that is what this says, in a sentence rather than a chart. It reads
+ * cb_adms_log, which the terminal writes to on every contact.
+ */
+function DeviceLink({ rows }) {
+  if (!rows) return null;
+  const last = rows[0];
+  const lastPunch = rows.find((r) => r.table_name === 'ATTLOG' && r.rows_in > 0);
+  const minsAgo = last ? Math.round((Date.now() - new Date(last.at).getTime()) / 60000) : null;
+  // The terminal handshakes every few minutes, so an hour of silence is a
+  // stall, not a quiet patch.
+  const stale = minsAgo === null || minsAgo > 60;
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-2xl mb-6">
+      <h2 className="text-xl font-semibold text-[#10243E] flex items-center gap-2 mb-1">
+        <Power size={20} className="text-[#f26522]" /> Attendance machine
+      </h2>
+      <p className="text-xs text-gray-500 mb-4">
+        The terminal posts punches here on its own, so the register keeps working with the office PC switched off.
+      </p>
+
+      {!last ? (
+        <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+          <span>
+            The machine has never contacted us directly. Until it does, attendance depends entirely on the office PC being on
+            and eTimeTrackLite downloading.
+          </span>
+        </div>
+      ) : (
+        <div className={`flex items-start gap-2 text-sm rounded-lg p-3 border ${
+          stale ? 'text-amber-800 bg-amber-50 border-amber-200' : 'text-green-800 bg-green-50 border-green-200'
+        }`}>
+          {stale ? <AlertTriangle size={16} className="mt-0.5 shrink-0" /> : <CheckCircle size={16} className="mt-0.5 shrink-0" />}
+          <span>
+            {stale
+              ? `The machine last contacted us ${format(new Date(last.at), 'd MMM, hh:mm a')} — over an hour ago. Check that it is powered on and on the office network.`
+              : `Connected. Last contact ${minsAgo < 2 ? 'just now' : `${minsAgo} min ago`}.`}
+            {lastPunch && ` Last punches received ${format(new Date(lastPunch.at), 'd MMM, hh:mm a')}.`}
+          </span>
+        </div>
+      )}
+
+      {rows.length > 0 && (
+        <div className="mt-4 divide-y divide-gray-100 text-xs">
+          {rows.map((r) => (
+            <div key={r.id} className="py-2 flex items-start justify-between gap-3">
+              <span className="text-gray-500 shrink-0">{format(new Date(r.at), 'd MMM hh:mm a')}</span>
+              <span className="text-gray-700 text-right">
+                {r.table_name === 'ATTLOG'
+                  ? `${r.rows_in} punch${r.rows_in === 1 ? '' : 'es'} sent, ${r.stored ?? 0} new`
+                  : r.note || r.path}
+                {r.table_name === 'ATTLOG' && r.note ? ` — ${r.note}` : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

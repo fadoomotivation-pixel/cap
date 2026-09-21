@@ -8,6 +8,10 @@
   ],
   "rewrites": [
     {
+      "source": "/iclock/:path*",
+      "destination": "https://rqgkzamuohdvttnkluzn.supabase.co/functions/v1/essl-adms/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/app.html"
     }
