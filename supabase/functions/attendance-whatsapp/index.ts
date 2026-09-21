@@ -61,6 +61,16 @@ const istToday = () =>
     day: "2-digit",
   }).format(new Date());
 
+/** The day after an IST date string, for a half-open punch_at range. Built by
+ *  stepping the UTC instant that IST midnight maps to, so a month or year
+ *  boundary cannot drift. */
+const nextIstDay = (d: string): string => {
+  const t = new Date(`${d}T00:00:00+05:30`);
+  t.setUTCDate(t.getUTCDate() + 1);
+  return new Date(t.getTime() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+};
+
+
 const fmtTime = (ts: string | null) =>
   ts
     ? new Intl.DateTimeFormat("en-GB", {
@@ -358,7 +368,39 @@ Deno.serve(async (req) => {
     });
     if (error) return json({ error: error.message }, 500);
 
-    const text = kind === "checkout"
+    // A DAY WITH NOT ONE PUNCH IS A BROKEN FEED UNTIL PROVEN OTHERWISE.
+    //
+    // Everything downstream of the eSSL machine can be green while the machine
+    // itself has stopped reaching the office PC. On 21 September the scheduled
+    // task's last result was 0x0 and the sync read every table without error,
+    // and the register had been five days stale — eTimeTrackLite's download is
+    // manual and nobody had clicked it.
+    //
+    // The register cannot tell that apart from a day nobody came, and its
+    // answer either way is "Absent" against every name, which is the single
+    // most damaging thing this message could say. So when no punch has arrived
+    // for the day, say that instead of reading out a roll-call nobody should
+    // act on. On a real holiday it is still true and still the right message.
+    const { count: punchCount } = await admin
+      .from("cb_device_punches")
+      .select("id", { count: "exact", head: true })
+      .gte("punch_at", `${reportDate}T00:00:00+05:30`)
+      .lt("punch_at", `${nextIstDay(reportDate)}T00:00:00+05:30`);
+
+    const text = punchCount === 0
+      ? [
+        `⚠️ *CAPITAL BRIX — Attendance*`,
+        fmtDate(reportDate),
+        "",
+        "No punches have reached the system for today, so the register is not",
+        "being read out. Either nobody punched, or the biometric machine has",
+        "stopped sending to the office PC.",
+        "",
+        "Check: eTimeTrackLite → Utilities → Device Management → Start Download.",
+        "",
+        "— Sent from Capital Brix HR",
+      ].join("\n")
+      : kind === "checkout"
       ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
       : buildSummary((rows ?? []) as Row[], reportDate);
 

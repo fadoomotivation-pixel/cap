@@ -270,6 +270,14 @@ also call it with their JWT to send early, re-send (`force`), or preview
 - `cb_hr_settings.wa_group_id` + `daily_report_enabled` are HR-editable; the
   URL, token and `CRON_SECRET` are Edge Function secrets. A blank group falls
   back to `founder_whatsapp`.
+- **A day with no punches is reported as a broken feed, not as everyone being
+  absent.** The register cannot tell "nobody came" from "the machine stopped
+  reaching the PC", and its answer either way is Absent against every name —
+  which is the most damaging thing this message could say, and on 21 September
+  it would have said it for five days running while every automated check was
+  green. So `attendance-whatsapp` counts `cb_device_punches` for the IST day
+  first, and when that is zero it sends a short warning naming the download
+  step instead of the roll-call. On a real holiday the warning is still true.
 - **`cb_report_log` is keyed on `(report_date, kind)`**, so the cron firing
   twice, a retry and HR tapping Send collapse to one message. Failures are
   logged too — a silent failure is how a team discovers three weeks later that
