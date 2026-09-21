@@ -472,7 +472,21 @@ also call it with their JWT to send early, re-send (`force`), or preview
   filter lives in `cb_daily_attendance_report()`, so the HR console still
   shows everyone — the console is the full picture, the report is the short
   list.
-- **An evening reminder, at 18:45 IST** (13:15 UTC), `kind = 'reminder'`.
+- **The evening message is one combined picture, at 18:45 IST** (13:15 UTC),
+  `kind = 'reminder'` — three sections in one: **Logged out** (with hours),
+  **No check-out yet**, and **No attendance recorded today**.
+
+  It sits at 18:45 and not at 19:01 deliberately, and that choice is the whole
+  design. An evening message to the group is only worth sending while somebody
+  can still act on it; after 19:00 the person who forgot to tap has gone home.
+  The logout list is not empty at that hour either — at 18:45, by definition,
+  everyone on it left early, which is the part worth seeing. The founder's
+  19:01 message remains the complete record, with the full departure windows.
+
+  There are **no departure windows in the 18:45 message**: before the shift
+  has ended, "18:00 – 19:00" and "19:00 onwards" describe time that has not
+  happened yet.
+- Originally this was a two-list nudge, `kind = 'reminder'`.
   Somebody who was in all day and forgot to tap is **indistinguishable from
   somebody who never came** — the machine has nothing either way. The register
   cannot solve that; a person can, if they are told while they are still in
@@ -499,7 +513,7 @@ also call it with their JWT to send early, re-send (`force`), or preview
   | 10:30 | `morning` | who has punched in so far | **group** |
   | 11:30 | `attendance` | arrivals by window, plus absent and on leave | **founder** |
   | 11:31 | `absent` | the absent list alone, no arrival times | **group** |
-  | 18:45 | `reminder` | whose attendance is still incomplete | **group** |
+  | 18:45 | `reminder` | logged out so far, no check-out yet, no attendance | **group** |
   | 19:01 | `checkout` | who logged out, and who has no check-out | **founder** |
 
   Each target falls back to the other so a blank setting cannot silence a
