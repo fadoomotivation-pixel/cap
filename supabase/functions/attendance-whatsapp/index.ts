@@ -4,13 +4,18 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // ─────────────────────────────────────────────────────────────
 // Posts the daily attendance messages to WhatsApp.
 //
-// Three a day, off one function, and they do NOT share an audience — see the
+// Four a day, off one function, and they do NOT share an audience — see the
 // routing block below. `kind` picks which:
-//   attendance  12:10 IST — who arrived and when, and who is absent  → founder
+//   morning     10:30 IST — who has punched in so far, so anyone missing can
+//                           still fix it before the register closes  → group
+//   attendance  11:30 IST — arrivals by window, and who is absent    → founder
 //   reminder    18:45 IST — whose attendance is incomplete, while they are
 //                           still in the building and can fix it     → group
 //   checkout    19:01 IST — who logged out and when, and who is still in
 //                                                                    → founder
+//
+// The group's two both ask somebody to do something. The founder's two are
+// the record, and the decisions only he can act on.
 //
 // Called two ways:
 //   · pg_cron, with the x-cron-secret header.
@@ -305,6 +310,47 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
 }
 
 /**
+ * The 10:30 check-in list, and the only attendance message the group sees in
+ * the morning.
+ *
+ * It names who HAS punched, never who has not. A list of late names in a
+ * fifty-person company group is a scoreboard, and it is the one thing this
+ * module keeps being told not to become. But somebody scanning for their own
+ * name and not finding it learns exactly the same thing, without anybody
+ * being held up in front of their colleagues — and they can still walk to the
+ * machine and fix it, which is the entire point of sending anything at 10:30.
+ *
+ * So the deadline is stated plainly: the register is finalised at 11:30, and
+ * the absent list that follows goes to the founder, not here.
+ *
+ * Returns null when nobody has punched at all. At 10:30 that is either a
+ * holiday or a broken feed, and "nobody is in the office" is not a sentence
+ * to put in front of fifty people on the strength of a silent machine.
+ */
+function buildMorningSummary(rows: Row[], dateStr: string): string | null {
+  const present = rows.filter((r) => r.check_in_at);
+  if (!present.length) return null;
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX \u2014 Attendance Update*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push(`*Punched in so far (${present.length})*`);
+  [...present]
+    .sort((a, b) => istMinutes(a.check_in_at) - istMinutes(b.check_in_at))
+    .forEach((r) =>
+      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`)
+    );
+
+  L.push("");
+  L.push("If you are in the office and your name is not on this list, please");
+  L.push("punch on the machine now. The register is finalised at 11:30.");
+  L.push("");
+  L.push("\u2014 Capital Brix HR");
+  return L.join("\n");
+}
+
+/**
  * The nudge, fifteen minutes before the shift ends.
  *
  * Somebody who was in all day and forgot to tap is indistinguishable from
@@ -376,12 +422,14 @@ Deno.serve(async (req) => {
       kind?: string;
     };
 
-    // Three messages a day off one function: arrivals at 12:10, the reminder
-    // at 18:45 and the logout summary at 19:01. cb_report_log is keyed on
-    // (report_date, kind), so each is sent once and none blocks the others.
-    const kind = rawKind === "checkout" || rawKind === "reminder"
-      ? rawKind
-      : "attendance";
+    // Four messages a day off one function: the 10:30 check-in list, the
+    // 11:30 roll-call, the 18:45 reminder and the 19:01 logout summary.
+    // cb_report_log is keyed on (report_date, kind), so each is sent once and
+    // none can suppress another.
+    const kind =
+      rawKind === "checkout" || rawKind === "reminder" || rawKind === "morning"
+        ? rawKind
+        : "attendance";
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -422,22 +470,20 @@ Deno.serve(async (req) => {
     // Who each message is FOR decides where it goes, and they are not the
     // same audience.
     //
-    // The reminder asks people to do something while they can still do it, so
-    // it has to reach them: the group. It names two short lists and sends
-    // nothing at all when both are empty, so most days the group stays quiet.
+    // The group's two both ask somebody to act while they still can: at 10:30
+    // "your name is not on this list, go and punch", and at 18:45 "finish
+    // your attendance before you leave". Neither names anybody as late.
     //
-    // The arrivals roll-call and the logout summary are management
+    // The 11:30 roll-call and the 19:01 logout summary are management
     // information — who drifted in late, who left before the shift ended.
-    // Fifty people cannot act on either, and a daily roll-call of colleagues'
+    // Fifty people cannot act on either, and a daily list of colleagues'
     // arrival times in a company group reads as surveillance however plainly
     // it is worded. Those go to the founder.
-    //
-    // This cut the group from three messages a day to one, usually none.
     const group = (settings?.wa_group_id || "").trim();
     const founder = (settings?.founder_whatsapp || "").replace(/\D/g, "");
     // Each falls back to the other: a summary that reaches one person beats
     // one that reaches nobody because a number was never filled in.
-    let target = kind === "reminder"
+    let target = kind === "reminder" || kind === "morning"
       ? (group || founder)
       : (founder || group);
     if (!target) {
@@ -515,6 +561,8 @@ Deno.serve(async (req) => {
       ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
       : kind === "reminder"
       ? buildReminderSummary((rows ?? []) as Row[], reportDate)
+      : kind === "morning"
+      ? buildMorningSummary((rows ?? []) as Row[], reportDate)
       : buildSummary((rows ?? []) as Row[], reportDate);
 
     // Nothing to remind anyone about is the good day, and it gets no message.
@@ -527,9 +575,15 @@ Deno.serve(async (req) => {
         sent_at: new Date().toISOString(),
         target,
         ok: true,
-        detail: "nothing to remind — every attendance was complete",
+        detail: kind === "morning"
+          ? "nothing to post — nobody had punched in by 10:30"
+          : "nothing to remind — every attendance was complete",
       });
-      return json({ sent: false, reason: "nothing to remind", kind });
+      return json({
+        sent: false,
+        reason: kind === "morning" ? "nobody punched in yet" : "nothing to remind",
+        kind,
+      });
     }
 
     if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, kind, target, text });
