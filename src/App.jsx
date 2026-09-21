@@ -25,6 +25,7 @@ import LeadsAdmin from './pages/LeadsAdmin';
 import CardsAdmin from './pages/CardsAdmin';
 import EventsAdmin from './pages/EventsAdmin';
 import WhatsAppAdmin from './pages/WhatsAppAdmin';
+import PartnersAdmin from './pages/PartnersAdmin';
 import InterviewBooking from './pages/InterviewBooking';
 import InterviewConfirmation from './pages/InterviewConfirmation';
 
@@ -76,6 +77,7 @@ export function AppContent() {
         <Route path="/admin/cards" element={<PrivateRoute title="Card Requests | Capital Brix"><CardsAdmin /></PrivateRoute>} />
         <Route path="/admin/events" element={<PrivateRoute title="Event Registrations | Capital Brix"><EventsAdmin /></PrivateRoute>} />
         <Route path="/admin/whatsapp" element={<PrivateRoute title="WhatsApp Reports | Capital Brix"><WhatsAppAdmin /></PrivateRoute>} />
+        <Route path="/admin/partners" element={<PrivateRoute title="Channel Partners | Capital Brix"><PartnersAdmin /></PrivateRoute>} />
         <Route path="/book/:token" element={<PrivateRoute title="Schedule Your Interview | Capital Brix"><InterviewBooking /></PrivateRoute>} />
         <Route path="/book/confirm/:bookingId" element={<PrivateRoute title="Interview Confirmed | Capital Brix"><InterviewConfirmation /></PrivateRoute>} />
       </Routes>

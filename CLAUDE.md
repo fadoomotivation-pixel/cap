@@ -809,7 +809,83 @@ numbers, then only rows needing a decision: absent, late, site visits, geofence
 flags). The HR console renders it with a one-tap `wa.me` link to the founder's
 number from settings. There is no server-side scheduler — HR taps Send.
 
-## Petty cash / office expenses
+## Channel-partner recruitment
+
+`/admin/partners` (admin-only, `noindex`, in `ADMIN_LINKS`) plus a **Channel
+Partners** tab in the Employee Portal for the few people HR switches on.
+
+The premise is **"who opened a real-estate business this week"**, not "every
+broker in NCR". A newly registered agent needs inventory and a developer
+relationship; an established one already has both. So `registered_on` is a
+first-class column, the queue is ordered by it, and the console leads with
+"Registered this week".
+
+### Do not build a Google Maps scraper for this
+
+The owner's first idea was crawling Google Maps for NCR brokers. It was not
+built, and should not be:
+
+- Scraping Maps breaches Google's terms, and the Places API forbids storing
+  its content to build a database. The ban arrives **after** the work is done
+  — an API key, sometimes the Google account — and there is nothing to fix.
+- The data is bad for this purpose anyway: a Maps pin proves somebody paid for
+  a listing, not that they are a working agent.
+
+**The sources with a registration date are the ones that make "daily new"
+possible at all:** state RERA agent registries (UP, Haryana, Delhi) and MCA
+new incorporations filtered to real-estate activity. Both are published by
+government for exactly this kind of verification, both carry the date, and a
+RERA-registered agent is a better channel partner than a random pin.
+
+Also worth knowing before anybody scales the calling: commercial calls in
+India sit under TRAI's TCCCP 2018, and calling a DND-registered number is a
+regulated offence rather than bad manners. That is why `do_not_contact` exists
+and why it is one-way.
+
+### How it holds together
+
+```
+registry CSV --> cb_import_partner_targets() --> cb_partner_targets
+                                                       |
+                        cb_assign_partner_targets() --> assigned_to (cb_employees)
+                                                       |
+                        Employee Portal tab (RLS: only your own rows)
+```
+
+- **`(source, source_ref)` is unique**, so the same registry file can be
+  pasted every day for a month and never duplicate. On a conflict the import
+  refreshes **only the source facts** — name, firm, phone, address,
+  `registered_on`. **Status, owner, notes and follow-up dates are never
+  overwritten by an import**; that is a week of calling silently undone.
+  Verified against the live table before shipping.
+- **Without a `source_ref` the importer derives one** from the RERA number, or
+  from name+phone. A row with no stable key cannot be de-duplicated, and
+  refusing it outright loses a lead nobody knows was dropped.
+- **RLS is the boundary, not the UI.** A telecaller can select only rows where
+  `assigned_to` resolves to them through `cb_my_employee()`, and their UPDATE
+  policy has the same check on both sides — so they can work a row and cannot
+  reassign one to themselves. They never see the queue and never see a
+  colleague's list. `cb_employees.can_work_partners` only decides whether the
+  tab is *shown*; hiding a tab is not security.
+- **`do_not_contact` is one-way and global.** Set it and `cb_assign_partner_targets`
+  never hands that name to anybody again. The telecaller's button for it is
+  worded as a promise ("They asked not to be called again"), separate from the
+  status buttons, because it is not a pipeline stage.
+- **Assignment hands out the newest first** and skips rows another transaction
+  has locked (`for update skip locked`), so two admins clicking at once cannot
+  hand the same broker to two people.
+- `cb_partner_board()` is the one place per-person counts are computed, same
+  reason as the attendance RPCs: the console and any summary cannot disagree.
+- The CSV parser in `src/lib/partnerTargets.js` handles quoted commas —
+  registry addresses are full of them, and a naive split shifts every later
+  column left, which puts a pin code in the phone field. Header names are
+  matched loosely so most exports paste in unedited.
+- **The outreach message names the relationship correctly**
+  ("developed by Mirrikh Infratech Pvt. Ltd., marketed by Capital Brix LLP as
+  an authorised sales channel partner") — the notice covers WhatsApp material,
+  not only the website.
+
+
 
 `/admin/expenses` — admin-only, `noindex`. Built on the **imprest (float) model**,
 because a plain expense list can never be proved right: the office hands HR cash,
