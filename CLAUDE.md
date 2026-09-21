@@ -169,6 +169,7 @@ Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/:slug
 Public: also `/blog/:slug` (8 original guides — see below).
 Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
 `/admin/attendance`, `/admin/expenses`, `/admin/leads`, `/admin/cards`,
+`/admin/events`, `/admin/whatsapp`,
 `/book/:token`, `/book/confirm/:bookingId`.
 
 Every admin console renders `<AdminNav />` (`src/components/AdminNav.jsx`),
@@ -409,6 +410,36 @@ also call it with their JWT to send early, re-send (`force`), or preview
   and the function (cron). Change both or the two disagree. The checkout
   summary lives only in the function — the console has no Send button for it
   yet, and a copy nothing calls is a copy that drifts.
+
+### The WhatsApp connection console
+
+`/admin/whatsapp` (admin-only, `noindex`, in `ADMIN_LINKS`) is where HR sees
+whether the reports can actually leave the building, and re-links the phone
+when they cannot.
+
+It exists because the session that posts the register is **shared with Call Pro
+AI**: it lives on a different dashboard, in another product's account, and
+describes itself in that product's words — the failure we hit read *"the rep
+needs to scan the QR again"*, which says nothing about Capital Brix
+attendance. Worse, the only evidence anything was wrong was a `503` inside
+`cb_report_log.detail`. Nobody was going to find that.
+
+- **The page never holds the bearer token.** It calls the **`wa-session` Edge
+  Function**, which is admin-JWT-only, holds `WA_WEBHOOK_TOKEN`, and proxies
+  four actions: `status`, `qr`, `reconnect`, `test`. It derives the worker's
+  base URL by stripping `/send` off `WA_WEBHOOK_URL` rather than adding a
+  second secret that can drift out of step; `WA_BASE_URL` overrides it.
+- **There is no cron path in `wa-session` and there must not be one.** Every
+  action either reveals the state of a WhatsApp account or sends a message.
+- **The QR is polled, not fetched once.** It expires in seconds and the worker
+  mints a fresh one, so a square fetched on page load is stale by the time a
+  phone is unlocked. The poll also notices `connected` and stops on its own.
+- `/health` is the one call that separates "the worker is down" from "the
+  worker is up and logged out" — it needs no bearer and returns per-state
+  session counts. Those two look identical from a failed send.
+- The page also owns `wa_group_id` and `daily_report_enabled`, and lists the
+  last few `cb_report_log` rows with their `detail`, so the evidence that was
+  buried in Postgres is the first thing on screen next time.
 
 ### HR creates employee logins
 
