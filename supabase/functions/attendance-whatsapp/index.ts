@@ -63,13 +63,25 @@ const istToday = () =>
 
 const fmtTime = (ts: string | null) =>
   ts
-    ? new Intl.DateTimeFormat("en-IN", {
+    ? new Intl.DateTimeFormat("en-GB", {
         timeZone: IST,
         hour: "2-digit",
         minute: "2-digit",
-        hour12: true,
+        hour12: false,
       }).format(new Date(ts))
-    : "—";
+    : "\u2014";
+
+/** Minutes since midnight IST, for sorting people into arrival windows. */
+const istMinutes = (ts: string | null): number => {
+  if (!ts) return -1;
+  const [h, m] = new Intl.DateTimeFormat("en-GB", {
+    timeZone: IST,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(ts)).split(":");
+  return Number(h) * 60 + Number(m);
+};
 
 const fmtDate = (d: string) =>
   new Intl.DateTimeFormat("en-IN", {
@@ -95,82 +107,88 @@ type Row = {
 };
 
 /**
+ * Arrival windows, in the shape HR already sends by hand.
+ *
+ * `until` is minutes since midnight IST; the last window has none and takes
+ * everything after. The first is "till 10:30" rather than "9:00-10:30" on
+ * purpose: somebody arriving at 08:40 has to land somewhere, and a report
+ * that silently drops the earliest person in the office is worse than none.
+ */
+const WINDOWS: { label: string; until: number | null }[] = [
+  { label: "Till 10:30", until: 10 * 60 + 30 },
+  { label: "10:30 \u2013 11:00", until: 11 * 60 },
+  { label: "11:00 \u2013 12:00", until: 12 * 60 },
+  { label: "After 12:00", until: null },
+];
+
+/**
  * The same summary src/lib/attendanceReport.js builds for the HR console.
- * Headline numbers, then only the rows that need a decision — a group message
- * nobody reads past the first screen is worse than no message.
+ * Change one and change the other, or the console and the cron disagree.
  */
 function buildSummary(rows: Row[], dateStr: string) {
   const present = rows.filter((r) => r.check_in_at);
   const onLeave = rows.filter((r) => !r.check_in_at && r.hr_status);
   const absent = rows.filter((r) => !r.check_in_at && !r.hr_status);
-  const late = present.filter((r) => r.is_late);
   const siteVisits = present.filter((r) => r.work_mode === "site-visit");
   const wfh = present.filter((r) => r.work_mode === "wfh");
   const flagged = present.filter((r) => r.outside_geofence);
-  const stillIn = present.filter((r) => !r.check_out_at);
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX — Attendance*");
+  L.push("*CAPITAL BRIX \u2014 Attendance*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`👥 Strength: ${rows.length}`);
-  L.push(`✅ Present: ${present.length}   ❌ Absent: ${absent.length}`);
-  if (onLeave.length) L.push(`🌴 On leave: ${onLeave.length}`);
-  L.push(
-    `⏰ Late: ${late.length}   🚗 Site visits: ${siteVisits.length}${
-      wfh.length ? `   🏠 WFH: ${wfh.length}` : ""
-    }`,
+  L.push(`\u{1F465} Strength: ${rows.length}`);
+  L.push(`\u2705 Present: ${present.length}   \u274C Absent: ${absent.length}`);
+  if (onLeave.length) L.push(`\u{1F334} On leave: ${onLeave.length}`);
+  if (siteVisits.length || wfh.length) {
+    L.push(
+      `\u{1F697} Site visits: ${siteVisits.length}${
+        wfh.length ? `   \u{1F3E0} WFH: ${wfh.length}` : ""
+      }`,
+    );
+  }
+
+  // Every present person lands in exactly one window, so the windows always
+  // add up to the Present count above. If they ever do not, the bug is here.
+  let remaining = [...present].sort(
+    (a, b) => istMinutes(a.check_in_at) - istMinutes(b.check_in_at),
   );
+  for (const w of WINDOWS) {
+    const inWindow = w.until === null
+      ? remaining
+      : remaining.filter((r) => istMinutes(r.check_in_at) < w.until!);
+    remaining = w.until === null
+      ? []
+      : remaining.filter((r) => istMinutes(r.check_in_at) >= w.until!);
+
+    if (!inWindow.length) continue;
+    L.push("");
+    L.push(`*${w.label}* (${inWindow.length})`);
+    inWindow.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`));
+  }
 
   if (absent.length) {
     L.push("");
     L.push(`*Absent (${absent.length})*`);
-    absent.forEach((r) =>
-      L.push(`• ${r.full_name}${r.department ? ` (${r.department})` : ""}`)
-    );
-  }
-
-  if (late.length) {
-    L.push("");
-    L.push(`*Late (${late.length})*`);
-    late.forEach((r) =>
-      L.push(
-        `• ${r.full_name} — ${fmtTime(r.check_in_at)}${
-          r.late_minutes ? ` (+${r.late_minutes}m)` : ""
-        }`,
-      )
-    );
-  }
-
-  if (siteVisits.length) {
-    L.push("");
-    L.push(`*Site visits (${siteVisits.length})*`);
-    siteVisits.forEach((r) =>
-      L.push(`• ${r.full_name} — ${fmtTime(r.check_in_at)}${r.note ? ` · ${r.note}` : ""}`)
-    );
+    absent.forEach((r) => L.push(`\u2022 ${r.full_name.trim()}`));
   }
 
   if (onLeave.length) {
     L.push("");
     L.push("*On leave*");
-    onLeave.forEach((r) => L.push(`• ${r.full_name} — ${r.hr_status}`));
+    onLeave.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${r.hr_status}`));
   }
 
   if (flagged.length) {
     L.push("");
-    L.push("*⚠️ Office punch outside geofence*");
+    L.push("*\u26A0\uFE0F Punched outside the office geofence*");
     flagged.forEach((r) =>
-      L.push(`• ${r.full_name} — ${Math.round(r.distance_from_office ?? 0)}m away`)
+      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${Math.round(r.distance_from_office ?? 0)}m away`)
     );
   }
 
-  if (stillIn.length) {
-    L.push("");
-    L.push(`_${stillIn.length} still checked in at time of sending._`);
-  }
-
   L.push("");
-  L.push("— Sent from Capital Brix HR");
+  L.push("\u2014 Sent from Capital Brix HR");
   return L.join("\n");
 }
 

@@ -1,11 +1,53 @@
 import { format, parseISO } from 'date-fns';
 
-const fmtTime = (ts) => (ts ? format(new Date(ts), 'hh:mm a') : '—');
+const IST = 'Asia/Kolkata';
+
+/**
+ * Minutes since midnight IST, or null.
+ *
+ * Deliberately computed in IST rather than from the browser's clock. An HR
+ * laptop left on another timezone would otherwise sort people into the wrong
+ * arrival window — and the windows are the whole point of this report.
+ */
+function istMinutes(ts) {
+  if (!ts) return null;
+  const [h, m] = new Intl.DateTimeFormat('en-GB', {
+    timeZone: IST, hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date(ts)).split(':');
+  return Number(h) * 60 + Number(m);
+}
+
+const fmtTime = (ts) =>
+  ts
+    ? new Intl.DateTimeFormat('en-GB', {
+        timeZone: IST, hour: '2-digit', minute: '2-digit', hour12: false,
+      }).format(new Date(ts))
+    : '—';
+
+/**
+ * Arrival windows, in the shape HR already sends by hand.
+ *
+ * The founder reads this to see who drifted in late, and a list sorted by
+ * time makes that a scanning exercise. Grouped, the answer is the size of
+ * each block — and it matches what the team is already used to reading.
+ *
+ * `until` is minutes since midnight IST; the last window has none and takes
+ * everything after. The first window is "till 10:30" rather than
+ * "9:00–10:30" on purpose: somebody who arrives at 08:40 must land somewhere,
+ * and a report that silently drops the earliest person in the office would be
+ * worse than no report.
+ */
+const WINDOWS = [
+  { label: 'Till 10:30',    until: 10 * 60 + 30 },
+  { label: '10:30 – 11:00', until: 11 * 60 },
+  { label: '11:00 – 12:00', until: 12 * 60 },
+  { label: 'After 12:00',   until: null },
+];
 
 /**
  * Build the daily WhatsApp summary the founder actually reads on a phone.
- * Kept plain-text and short: headline numbers first, then only the rows that
- * need a decision (absent, late, site visits) — not a dump of everyone.
+ * Headline numbers, then arrivals by window, then only the rows that need a
+ * decision — never a dump of everyone.
  */
 export function buildDailyWhatsAppSummary(rows, dateStr) {
   const date = format(parseISO(dateStr), 'EEE, d MMM yyyy');
@@ -13,54 +55,56 @@ export function buildDailyWhatsAppSummary(rows, dateStr) {
   const present = rows.filter((r) => r.check_in_at);
   const onLeave = rows.filter((r) => !r.check_in_at && r.hr_status);
   const absent = rows.filter((r) => !r.check_in_at && !r.hr_status);
-  const late = present.filter((r) => r.is_late);
   const siteVisits = present.filter((r) => r.work_mode === 'site-visit');
   const wfh = present.filter((r) => r.work_mode === 'wfh');
   const flagged = present.filter((r) => r.outside_geofence);
-  const stillIn = present.filter((r) => !r.check_out_at);
 
   const L = [];
-  L.push(`*CAPITAL BRIX — Attendance*`);
-  L.push(`${date}`);
+  L.push('*CAPITAL BRIX — Attendance*');
+  L.push(date);
   L.push('');
   L.push(`👥 Strength: ${rows.length}`);
   L.push(`✅ Present: ${present.length}   ❌ Absent: ${absent.length}`);
   if (onLeave.length) L.push(`🌴 On leave: ${onLeave.length}`);
-  L.push(`⏰ Late: ${late.length}   🚗 Site visits: ${siteVisits.length}${wfh.length ? `   🏠 WFH: ${wfh.length}` : ''}`);
+  if (siteVisits.length || wfh.length) {
+    L.push(`🚗 Site visits: ${siteVisits.length}${wfh.length ? `   🏠 WFH: ${wfh.length}` : ''}`);
+  }
+
+  // Every present person lands in exactly one window, so the windows always
+  // add up to the Present count above. If they ever do not, the bug is here.
+  let remaining = [...present].sort(
+    (a, b) => istMinutes(a.check_in_at) - istMinutes(b.check_in_at),
+  );
+  for (const w of WINDOWS) {
+    const inWindow = w.until === null
+      ? remaining
+      : remaining.filter((r) => istMinutes(r.check_in_at) < w.until);
+    remaining = w.until === null
+      ? []
+      : remaining.filter((r) => istMinutes(r.check_in_at) >= w.until);
+
+    if (!inWindow.length) continue;
+    L.push('');
+    L.push(`*${w.label}* (${inWindow.length})`);
+    inWindow.forEach((r) => L.push(`• ${r.full_name.trim()} — ${fmtTime(r.check_in_at)}`));
+  }
 
   if (absent.length) {
     L.push('');
     L.push(`*Absent (${absent.length})*`);
-    absent.forEach((r) => L.push(`• ${r.full_name}${r.department ? ` (${r.department})` : ''}`));
-  }
-
-  if (late.length) {
-    L.push('');
-    L.push(`*Late (${late.length})*`);
-    late.forEach((r) => L.push(`• ${r.full_name} — ${fmtTime(r.check_in_at)}${r.late_minutes ? ` (+${r.late_minutes}m)` : ''}`));
-  }
-
-  if (siteVisits.length) {
-    L.push('');
-    L.push(`*Site visits (${siteVisits.length})*`);
-    siteVisits.forEach((r) => L.push(`• ${r.full_name} — ${fmtTime(r.check_in_at)}${r.note ? ` · ${r.note}` : ''}`));
+    absent.forEach((r) => L.push(`• ${r.full_name.trim()}`));
   }
 
   if (onLeave.length) {
     L.push('');
-    L.push(`*On leave*`);
-    onLeave.forEach((r) => L.push(`• ${r.full_name} — ${r.hr_status}`));
+    L.push('*On leave*');
+    onLeave.forEach((r) => L.push(`• ${r.full_name.trim()} — ${r.hr_status}`));
   }
 
   if (flagged.length) {
     L.push('');
-    L.push(`*⚠️ Office punch outside geofence*`);
-    flagged.forEach((r) => L.push(`• ${r.full_name} — ${Math.round(r.distance_from_office)}m away`));
-  }
-
-  if (stillIn.length) {
-    L.push('');
-    L.push(`_${stillIn.length} still checked in at time of sending._`);
+    L.push('*⚠️ Punched outside the office geofence*');
+    flagged.forEach((r) => L.push(`• ${r.full_name.trim()} — ${Math.round(r.distance_from_office)}m away`));
   }
 
   L.push('');

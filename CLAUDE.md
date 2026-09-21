@@ -270,6 +270,31 @@ also call it with their JWT to send early, re-send (`force`), or preview
   email — the service role has none. **`cb_daily_attendance_report()` exists
   for that reason**: same rows, granted to `service_role` alone. Do not weaken
   `cb_is_admin()` instead; it backs RLS on every `cb_*` table.
+- **The summary is grouped into arrival windows**, matching the format HR
+  already sends by hand: `Till 10:30`, `10:30 – 11:00`, `11:00 – 12:00`,
+  `After 12:00`, then Absent and On leave. The founder reads this to see who
+  drifted in late; grouped, the answer is the size of each block instead of a
+  list to scan. There is no separate "Late" section — the windows are it.
+
+  The first window is **"Till 10:30", not "9:00 – 10:30"**. Somebody arriving
+  at 08:40 has to land somewhere, and every present person must appear in
+  exactly one window — the windows always sum to the Present count. A report
+  that silently drops the earliest person in the office would be worse than
+  no report.
+
+  Windows are computed from **IST explicitly**, never the browser's clock: an
+  HR laptop left on another timezone would otherwise file people into the
+  wrong block, and the blocks are the whole point.
+- **`cb_employees.in_daily_report = false` keeps somebody out of the
+  summary** — the founder, people who do not punch, pantry staff, a test
+  card. Leaving them merely unmapped does **not** work: an active employee
+  with no punch is "Absent", so they would be listed absent every single day
+  and the one section that needs reading fills with people nobody is asking
+  about. It is deliberately **not** `is_active = false`, which means "no
+  longer with us" and is read by the portal, logins and the register. The
+  filter lives in `cb_daily_attendance_report()`, so the HR console still
+  shows everyone — the console is the full picture, the report is the short
+  list.
 - The summary text is duplicated in `src/lib/attendanceReport.js` (console) and
   the function (cron). Change both or the two disagree.
 
