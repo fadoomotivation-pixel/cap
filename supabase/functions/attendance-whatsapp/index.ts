@@ -151,8 +151,11 @@ function buildSummary(rows: Row[], dateStr: string) {
   L.push("*CAPITAL BRIX \u2014 Daily Attendance*");
   L.push(fmtDate(dateStr));
   L.push("");
+  // HEADCOUNT IS NOT PUBLISHED. An explicit "Strength 30" in a group this
+  // size reads as a statement about how small the company is, and it answers
+  // a question nobody sent this report to ask - the point is who came in
+  // today, not how many people exist.
   const head = [
-    `Strength ${rows.length}`,
     `Present ${present.length}`,
     `Absent ${absent.length}`,
   ];
@@ -369,6 +372,15 @@ Deno.serve(async (req) => {
         return json({ sent: false, reason: "already sent", sent_at: prior.sent_at });
       }
     }
+
+    // Fold first. Punches are folded into the register by cb_ingest_punches
+    // and by a ten-minute cron, but a report that reads the register without
+    // folding can still publish a figure that is minutes out of date - and
+    // the one time that matters is the one time it is wrong in public.
+    await admin.rpc("cb_fold_punches_into_attendance", {
+      p_from: reportDate,
+      p_to: reportDate,
+    }).then(() => {}, () => {});
 
     const { data: rows, error } = await admin.rpc("cb_daily_attendance_report", {
       p_date: reportDate,

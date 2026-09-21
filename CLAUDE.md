@@ -297,6 +297,13 @@ also call it with their JWT to send early, re-send (`force`), or preview
   green. So `attendance-whatsapp` counts `cb_device_punches` for the IST day
   first, and when that is zero it sends a short warning naming the download
   step instead of the roll-call. On a real holiday the warning is still true.
+- **The register is folded before it is published.** `cb_ingest_punches`
+  folds as it stores, and `cb-fold-punches-10min` sweeps yesterday and today
+  every ten minutes, but the report also folds its own date before reading —
+  a register that is a few minutes stale is harmless in a console and not
+  harmless in a message to fifty people. It happened once already: punches
+  from a 13:56 download had arrived and the register still said five people
+  were in.
 - **`cb_report_log` is keyed on `(report_date, kind)`**, so the cron firing
   twice, a retry and HR tapping Send collapse to one message. Failures are
   logged too — a silent failure is how a team discovers three weeks later that
@@ -316,6 +323,12 @@ also call it with their JWT to send early, re-send (`force`), or preview
   exactly one window — the windows always sum to the Present count. A report
   that silently drops the earliest person in the office would be worse than
   no report.
+
+  **Headcount is not published.** The headline opened with
+  `Strength 30`, and in a group this size that reads as a statement about how
+  small the company is — a question nobody sent this report to ask. It is now
+  `Present 24 · Absent 5`. Those still sum to the roster, so the size is
+  inferable; what is gone is the sentence that announces it.
 
   **The tone is an HR notice, not a dashboard.** The first version carried
   emoji on every headline — 👥 strength, ✅ present, ❌ absent, 🌴 on leave.

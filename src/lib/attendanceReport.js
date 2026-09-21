@@ -67,7 +67,11 @@ export function buildDailyWhatsAppSummary(rows, dateStr) {
   L.push('*CAPITAL BRIX — Daily Attendance*');
   L.push(date);
   L.push('');
-  const head = [`Strength ${rows.length}`, `Present ${present.length}`, `Absent ${absent.length}`];
+  // HEADCOUNT IS NOT PUBLISHED. An explicit "Strength 30" in a group this
+  // size reads as a statement about how small the company is, and it answers
+  // a question nobody sent this report to ask — the point is who came in
+  // today, not how many people exist.
+  const head = [`Present ${present.length}`, `Absent ${absent.length}`];
   if (onLeave.length) head.push(`On leave ${onLeave.length}`);
   L.push(head.join('  ·  '));
   if (siteVisits.length || wfh.length) {
