@@ -6,7 +6,7 @@ import AdminNav from '../components/AdminNav';
 import { friendlyError } from '../lib/errors';
 import {
   MessageCircle, RefreshCw, LogOut, X, QrCode, Send, CheckCircle2,
-  AlertTriangle, Power, Info,
+  AlertTriangle, Power, Info, Eye, Star, Users, Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -25,6 +25,53 @@ import { format } from 'date-fns';
  */
 
 const CHECK_MS = 5000;
+
+/**
+ * The five messages, described in the words HR would use.
+ *
+ * This list is the page's spine: the switches, the previews and the Send-now
+ * buttons all read from it, so a message can never appear in one place and be
+ * missing from another. Times are the pg_cron schedules translated to IST —
+ * they are not editable here on purpose, because a schedule that two people
+ * can change from two screens is a schedule nobody can trust.
+ */
+const MESSAGES = [
+  {
+    kind: 'morning',
+    time: '10:30 AM',
+    to: 'group',
+    title: 'Who has punched in so far',
+    blurb: 'Names only the people who HAVE punched, so anybody missing can spot themselves and go to the machine. Nobody is named as late. Sends nothing if not one person has punched.',
+  },
+  {
+    kind: 'attendance',
+    time: '11:30 AM',
+    to: 'founder',
+    title: 'The full register',
+    blurb: 'Arrivals grouped by window, then absent and on leave. The complete picture, with a link to the register.',
+  },
+  {
+    kind: 'absent',
+    time: '11:31 AM',
+    to: 'group',
+    title: 'The absent list',
+    blurb: 'Absent and on leave only — no arrival times. Sends nothing when nobody is absent.',
+  },
+  {
+    kind: 'reminder',
+    time: '6:45 PM',
+    to: 'group',
+    title: 'Finish your attendance',
+    blurb: 'Who has logged out, who has no check-out yet, and whose attendance is missing — while they are still in the building and can fix it. Sends nothing when the day is already complete.',
+  },
+  {
+    kind: 'checkout',
+    time: '7:01 PM',
+    to: 'founder',
+    title: 'The logout record',
+    blurb: 'Who left and when, split by window, plus everyone with no check-out recorded.',
+  },
+];
 
 /** The worker reports per-state session counts; this is the one that matters. */
 const readState = (payload) => {
@@ -65,6 +112,9 @@ export default function WhatsAppAdmin() {
   const [testTo, setTestTo] = useState('');
   const [testResult, setTestResult] = useState(null);
   const [log, setLog] = useState([]);
+  const [people, setPeople] = useState([]);
+  const [preview, setPreview] = useState(null);   // { kind, text, target, error }
+  const [running, setRunning] = useState(null);   // kind currently previewing/sending
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -104,7 +154,7 @@ export default function WhatsAppAdmin() {
     if (!isAdmin) return;
     const { data } = await supabase
       .from('cb_hr_settings')
-      .select('id, wa_group_id, founder_whatsapp, daily_report_enabled')
+      .select('id, wa_group_id, founder_whatsapp, daily_report_enabled, wa_messages_enabled')
       .limit(1).maybeSingle();
     if (data) {
       setSettings(data);
@@ -116,6 +166,17 @@ export default function WhatsAppAdmin() {
       .select('report_date, kind, target, ok, detail, sent_at')
       .order('sent_at', { ascending: false }).limit(8);
     setLog(rows || []);
+
+    // Who the messages can name belongs on this page too. It is the question
+    // that got asked over and over — "is so-and-so senior, is so-and-so in
+    // the report" — and answering it meant opening a second console or
+    // messaging a developer.
+    const { data: emps } = await supabase
+      .from('cb_employees')
+      .select('id, full_name, device_code, is_active, in_daily_report, is_senior')
+      .eq('is_active', true)
+      .order('full_name');
+    setPeople(emps || []);
   }, [isAdmin]);
 
   useEffect(() => { refresh(); loadSettings(); }, [refresh, loadSettings]);
@@ -194,6 +255,54 @@ export default function WhatsAppAdmin() {
     } finally {
       setBusy(false);
     }
+  };
+
+  /**
+   * Run one message against today, either as a preview or for real.
+   *
+   * dry_run returns the exact text without sending it, which is the single
+   * thing that turns this page from "press and hope" into something a founder
+   * can use: see what fifty people are about to read, then decide. Both paths
+   * go through the same Edge Function the cron calls, so a preview cannot
+   * differ from what actually goes out.
+   */
+  const runMessage = async (kind, { dryRun }) => {
+    setError('');
+    setPreview(null);
+    setRunning(kind);
+    try {
+      const { data, error } = await supabase.functions.invoke('attendance-whatsapp', {
+        body: dryRun ? { kind, dry_run: true } : { kind, force: true },
+      });
+      if (error) throw new Error(error.message);
+      if (dryRun) {
+        setPreview(data?.text
+          ? { kind, text: data.text, target: data.target }
+          : { kind, error: data?.reason || 'Nothing would be sent today.' });
+      } else if (data?.sent) {
+        flash(`Sent to ${data.target}. Check the chat — a message id is not proof it arrived.`);
+      } else {
+        setPreview({ kind, error: data?.reason || data?.detail || 'Nothing was sent.' });
+      }
+      loadSettings();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setRunning(null);
+    }
+  };
+
+  const messageOn = (kind) => settings?.wa_messages_enabled?.[kind] !== false;
+
+  const toggleMessage = async (kind) => {
+    const next = { ...(settings?.wa_messages_enabled || {}), [kind]: !messageOn(kind) };
+    await saveSettings({ wa_messages_enabled: next });
+  };
+
+  const patchPerson = async (person, patch) => {
+    const { error } = await supabase.from('cb_employees').update(patch).eq('id', person.id);
+    if (error) return setError(error.message);
+    setPeople((rows) => rows.map((r) => (r.id === person.id ? { ...r, ...patch } : r)));
   };
 
   const saveSettings = async (patch) => {
@@ -315,21 +424,167 @@ export default function WhatsAppAdmin() {
           {polling && !qr && <p className="text-sm text-gray-500 mt-3">Waiting for WhatsApp to offer a square…</p>}
         </section>
 
+        {/* ── THE FIVE MESSAGES ─────────────────────────────────────────
+            Everything that used to require a message to a developer: what
+            goes out, when, to whom, whether it goes at all, what it will say
+            today, and sending it now. Each card is one message.            */}
+        <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
+          <h2 className="font-semibold text-[#10243E] mb-1 flex items-center gap-2">
+            <Clock size={18} className="text-[#9C7C1C]" /> The five messages
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Preview shows exactly what would go out right now, without sending it.
+            Times are fixed — a schedule two people can change from two screens
+            is one nobody can trust.
+          </p>
+
+          <div className="space-y-3">
+            {MESSAGES.map((m) => {
+              const on = messageOn(m.kind);
+              const isGroup = m.to === 'group';
+              return (
+                <div key={m.kind}
+                  className={`border rounded-lg p-4 ${on ? 'border-gray-200' : 'border-gray-100 bg-gray-50'}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="font-mono text-sm font-semibold text-[#10243E]">{m.time}</span>
+                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
+                          isGroup
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                        }`}>
+                          {isGroup ? 'Group' : 'Founder'}
+                        </span>
+                        {!on && (
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-gray-200 text-gray-600 border-gray-300">
+                            Off
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-sm font-medium ${on ? 'text-[#10243E]' : 'text-gray-500'}`}>{m.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{m.blurb}</p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <button onClick={() => runMessage(m.kind, { dryRun: true })}
+                        disabled={running === m.kind}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-gray-200 text-gray-700 hover:border-[#D4AF37] disabled:opacity-50">
+                        <Eye size={14} /> {running === m.kind ? 'Working…' : 'Preview'}
+                      </button>
+                      <button onClick={() => runMessage(m.kind, { dryRun: false })}
+                        disabled={running === m.kind || !connected}
+                        title={connected ? 'Sends it now, for real' : 'WhatsApp is not linked'}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-[#10243E] text-white hover:bg-[#1a365d] disabled:opacity-40">
+                        <Send size={14} /> Send now
+                      </button>
+                      <button onClick={() => toggleMessage(m.kind)}
+                        title={on ? 'Stop sending this one' : 'Start sending this one again'}
+                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border ${
+                          on
+                            ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                            : 'border-gray-300 bg-white text-gray-500 hover:border-gray-400'
+                        }`}>
+                        <Power size={14} /> {on ? 'On' : 'Off'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* The preview lands under the card it belongs to, for the
+                      same reason the test result moved under its button. */}
+                  {preview?.kind === m.kind && (
+                    <div className="mt-3 border-t border-gray-100 pt-3">
+                      {preview.error ? (
+                        <p className="text-sm text-gray-600">
+                          <strong>Nothing would go out:</strong> {preview.error}
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-xs text-gray-500 mb-2">
+                            Would go to <span className="font-mono">{preview.target}</span> — this is the
+                            exact text, not an approximation.
+                          </p>
+                          <pre className="text-xs bg-gray-50 border border-gray-100 rounded-md p-3 whitespace-pre-wrap font-sans text-gray-800 max-h-80 overflow-auto">
+{preview.text}
+                          </pre>
+                        </>
+                      )}
+                      <button onClick={() => setPreview(null)} className="text-xs text-gray-400 hover:text-gray-600 mt-2">
+                        Close preview
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ── WHO THE MESSAGES NAME ──────────────────────────────────────
+            The question that kept coming back: who is senior, who is in the
+            report at all. It had no control anywhere for months, so every
+            answer went through a developer running SQL.                    */}
+        <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
+          <h2 className="font-semibold text-[#10243E] mb-1 flex items-center gap-2">
+            <Users size={18} className="text-[#9C7C1C]" /> Who the messages name
+          </h2>
+          <p className="text-sm text-gray-500 mb-1">
+            <strong>{people.filter((p) => p.in_daily_report).length}</strong> of {people.length} can
+            appear. Changes take effect on the very next message.
+          </p>
+          <ul className="text-xs text-gray-500 mb-4 space-y-0.5">
+            <li><strong className="text-green-700">In report</strong> — off, and they are never named, even on days they punch.</li>
+            <li><strong className="text-indigo-700">Senior</strong> — never printed under Absent; still listed on days they punch.</li>
+          </ul>
+
+          <div className="divide-y divide-gray-50 max-h-[420px] overflow-auto -mx-2 px-2">
+            {people.map((p) => (
+              <div key={p.id} className="py-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm text-[#10243E]">{p.full_name.trim()}</p>
+                  <p className="text-[10px] text-gray-400">
+                    {p.device_code ? `machine #${p.device_code}` : 'Not on the machine — can never punch'}
+                  </p>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <button onClick={() => patchPerson(p, { in_daily_report: !p.in_daily_report })}
+                    className={`text-[11px] px-2 py-1 rounded border ${
+                      p.in_daily_report
+                        ? 'bg-green-50 text-green-700 border-green-200'
+                        : 'bg-gray-100 text-gray-500 border-gray-200'
+                    }`}>
+                    {p.in_daily_report ? 'In report' : 'Not in report'}
+                  </button>
+                  {p.in_daily_report && (
+                    <button onClick={() => patchPerson(p, { is_senior: !p.is_senior })}
+                      className={`text-[11px] px-2 py-1 rounded border flex items-center gap-1 ${
+                        p.is_senior
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                          : 'bg-white text-gray-400 border-gray-200 hover:text-indigo-600'
+                      }`}>
+                      <Star size={11} /> {p.is_senior ? 'Senior' : 'Junior'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {people.length === 0 && <p className="text-sm text-gray-400 py-4">No active employees.</p>}
+          </div>
+          <p className="text-xs text-gray-400 mt-3">
+            Adding someone, removing someone who has left, and mapping a machine code
+            all live on the Attendance console&apos;s Employees tab.
+          </p>
+        </section>
+
         {/* Where it posts */}
         <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
-          <h2 className="font-semibold text-[#10243E] mb-1">Where each message goes</h2>
           {/*
-            The four messages do not share an audience, and this page used to
-            imply one group id decided all of them. Saying which is which here
-            is the difference between "the report" being a thing somebody
-            trusts and a thing they guess at.
+            No schedule list here any more: the panel above owns it. Two
+            places describing one schedule is how the page ended up claiming
+            "12:10 arrivals, 19:01 logouts" months after the server stopped
+            running that.
           */}
-          <ul className="text-xs text-gray-500 mb-4 space-y-1">
-            <li><strong className="text-gray-700">10:30</strong> &mdash; who has punched in so far &rarr; <strong className="text-gray-700">group</strong></li>
-            <li><strong className="text-gray-700">11:30</strong> &mdash; arrivals by window, absent, on leave &rarr; <strong className="text-gray-700">founder</strong></li>
-            <li><strong className="text-gray-700">18:45</strong> &mdash; whose attendance is incomplete &rarr; <strong className="text-gray-700">group</strong></li>
-            <li><strong className="text-gray-700">19:01</strong> &mdash; who logged out, who is still in &rarr; <strong className="text-gray-700">founder</strong></li>
-          </ul>
+          <h2 className="font-semibold text-[#10243E] mb-4">Where the group messages post</h2>
 
           <label className="block text-sm font-medium text-gray-700 mb-1">Group id</label>
           <div className="flex flex-wrap gap-2 mb-1">
@@ -339,7 +594,7 @@ export default function WhatsAppAdmin() {
               className="px-4 py-2 rounded-md border border-gray-200 text-gray-700 hover:border-[#D4AF37]">Save</button>
           </div>
           <p className="text-xs text-gray-500 mb-5">
-            The two group messages post here. Leave it empty and they go to the
+            The three group messages post here. Leave it empty and they go to the
             founder&apos;s number
             instead{settings?.founder_whatsapp ? ` (${settings.founder_whatsapp})` : ''} — a
             summary that reaches one person beats one that reaches nobody.
@@ -350,7 +605,7 @@ export default function WhatsAppAdmin() {
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={!!settings?.daily_report_enabled}
               onChange={(e) => saveSettings({ daily_report_enabled: e.target.checked })} />
-            Send the daily messages automatically (10:30, 11:30, 18:45 and 19:01)
+            Send the daily messages automatically (the master switch — off stops all five)
           </label>
         </section>
 
@@ -394,7 +649,7 @@ export default function WhatsAppAdmin() {
             <MessageCircle size={18} /> Daily report history
           </h2>
           <p className="text-sm text-gray-500 mb-4">
-            The four scheduled messages only. A test from the box above shows
+            The five scheduled messages only. A test from the box above shows
             its result under the Send button, not here.
           </p>
           {log.length === 0 && <p className="text-sm text-gray-500">No report sent yet.</p>}

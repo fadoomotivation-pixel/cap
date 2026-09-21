@@ -311,9 +311,10 @@ forwards to the function, not weakening anything here.
 
 ### Daily attendance report to WhatsApp
 
-`attendance-whatsapp` Edge Function, fired by **four pg_cron jobs**
+`attendance-whatsapp` Edge Function, fired by **five pg_cron jobs**
 (`cb-morning-checkin-whatsapp`, `cb-daily-attendance-whatsapp`,
-`cb-attendance-reminder`, `cb-daily-logout-whatsapp`) through
+`cb-absent-list-whatsapp`, `cb-attendance-reminder`,
+`cb-daily-logout-whatsapp`) through
 `cb_send_attendance_report(kind)` → `pg_net`. An admin can
 also call it with their JWT to send early, re-send (`force`), or preview
 (`dry_run`).
@@ -471,7 +472,21 @@ also call it with their JWT to send early, re-send (`force`), or preview
   filter lives in `cb_daily_attendance_report()`, so the HR console still
   shows everyone — the console is the full picture, the report is the short
   list.
-- **An evening reminder, at 18:45 IST** (13:15 UTC), `kind = 'reminder'`.
+- **The evening message is one combined picture, at 18:45 IST** (13:15 UTC),
+  `kind = 'reminder'` — three sections in one: **Logged out** (with hours),
+  **No check-out yet**, and **No attendance recorded today**.
+
+  It sits at 18:45 and not at 19:01 deliberately, and that choice is the whole
+  design. An evening message to the group is only worth sending while somebody
+  can still act on it; after 19:00 the person who forgot to tap has gone home.
+  The logout list is not empty at that hour either — at 18:45, by definition,
+  everyone on it left early, which is the part worth seeing. The founder's
+  19:01 message remains the complete record, with the full departure windows.
+
+  There are **no departure windows in the 18:45 message**: before the shift
+  has ended, "18:00 – 19:00" and "19:00 onwards" describe time that has not
+  happened yet.
+- Originally this was a two-list nudge, `kind = 'reminder'`.
   Somebody who was in all day and forgot to tap is **indistinguishable from
   somebody who never came** — the machine has nothing either way. The register
   cannot solve that; a person can, if they are told while they are still in
@@ -497,8 +512,9 @@ also call it with their JWT to send early, re-send (`force`), or preview
   |---|---|---|---|
   | 10:30 | `morning` | who has punched in so far | **group** |
   | 11:30 | `attendance` | arrivals by window, plus absent and on leave | **founder** |
-  | 18:45 | `reminder` | whose attendance is still incomplete | **group** |
-  | 19:01 | `checkout` | who logged out, and who is still in | **founder** |
+  | 11:31 | `absent` | the absent list alone, no arrival times | **group** |
+  | 18:45 | `reminder` | logged out so far, no check-out yet, no attendance | **group** |
+  | 19:01 | `checkout` | who logged out, and who has no check-out | **founder** |
 
   Each target falls back to the other so a blank setting cannot silence a
   report.
@@ -615,10 +631,37 @@ also call it with their JWT to send early, re-send (`force`), or preview
   before, so an unenrolled person looked exactly like an absent one. Hiding
   them from the report without surfacing them here would mean nobody ever
   enrols them.
-- **Four messages a day, one function.** `kind` selects which:
+- **The absent list is published to the group at 11:31, on the founder's
+  explicit instruction.** He was told twice, plainly, that naming absent
+  colleagues in a fifty-person group is the scoreboard the rest of this module
+  avoids; he asked for it anyway, and it is his company. **Do not quietly
+  remove it** — if it is ever to come off, that is his decision too.
+
+  What is deliberately **not** published with it is the arrival roll-call: who
+  walked in at 11:07 and who at 11:52. He asked for the absent list, so the
+  absent list is what goes, and the minute-by-minute record of everybody else
+  stays in his own 11:30 message. `buildAbsentSummary` returns null when
+  nobody is absent, so a full-attendance day is silent rather than carrying a
+  "nobody is absent today" nobody reads. On leave rides along only when there
+  is an absent list to carry it — it is context, not news.
+
+  It closes with "If any name here is wrong, please speak to HR", **not** an
+  invitation to punch now: the 10:30 message said the register closes at
+  11:30 and this is sent after that. A route to a person is honest recourse;
+  reopening a register you just announced as closed is not.
+- **The logout message does not claim anybody is still in the office.** It
+  said "Still in office (15)", which is a fact the machine does not have: a
+  missing check-out means either the exit punch was missed or the person is
+  genuinely still there, and the two are identical from the register's side.
+  It now reads "No check-out recorded" with the line *"Either the exit punch
+  was missed, or they are still in the office."* — naming both possibilities
+  is shorter than being wrong, and it hands the founder a question rather
+  than a false conclusion.
+- **Five messages a day, one function.** `kind` selects which:
   `morning` at **10:30 IST** (05:00 UTC); `attendance` at **11:30 IST**
   (06:00 UTC) — arrivals by window, plus absent
-  and on leave; `reminder` at **18:45 IST** (13:15 UTC); `checkout` at
+  and on leave; `absent` at **11:31 IST** (06:01 UTC); `reminder` at
+  **18:45 IST** (13:15 UTC); `checkout` at
   **19:01 IST** (13:31 UTC) — who logged out and
   when, split `Before 18:00` / `18:00 – 19:00` / `19:00 onwards`, plus who is
   still checked in. `cb_report_log` is keyed on `(report_date, kind)`, so each
@@ -644,6 +687,42 @@ also call it with their JWT to send early, re-send (`force`), or preview
   and the function (cron). Change both or the two disagree. The checkout
   summary lives only in the function — the console has no Send button for it
   yet, and a copy nothing calls is a copy that drifts.
+
+### `/admin/whatsapp` is the control room, not just a status page
+
+Every recurring request in this module's first week was the same shape: *stop
+that message*, *send it now*, *is so-and-so senior*, *what will it actually
+say*. Each one needed a developer, and needing a developer to change a
+sentence fifty colleagues will read is the real defect. The page now answers
+all four.
+
+- **The five messages, each its own card** — time, audience, what it says, an
+  **on/off** switch, **Preview** and **Send now**. `MESSAGES` in
+  `WhatsAppAdmin.jsx` is the single list the switches, previews and buttons
+  all read from, so a message cannot appear in one place and be missing from
+  another.
+- **Preview is `dry_run` through the same Edge Function the cron calls**, so
+  what it shows is what would go out — not a re-implementation that drifts.
+  This is the change that makes the page usable by a founder: see the exact
+  text fifty people are about to read, then decide.
+- **`cb_hr_settings.wa_messages_enabled` is a per-message switch**, jsonb
+  keyed by kind. **A missing key means ON**, so a message added later works
+  before anybody touches the row — the alternative silently ships every new
+  kind switched off. `daily_report_enabled` stays as the master switch above
+  it. **An admin is exempt from the switch**: Preview and Send now still work
+  on a paused message, because seeing what it would say is how you decide to
+  un-pause it.
+- **"Who the messages name" lives here too** — every active person with
+  **In report** and **Senior / Junior** toggles, and a live count. The same
+  controls are on the Attendance console's Employees tab; this copy exists
+  because the question is asked while looking at the messages, not while
+  looking at the roster. Adding, removing and machine-code mapping stay on
+  the Attendance console, and the page says so.
+- **The schedule is deliberately not editable here.** A schedule two screens
+  can change is one nobody can trust; the times live in pg_cron. The page also
+  no longer carries a second copy of the schedule list — it used to, and it
+  went on claiming "12:10 arrivals, 19:01 logouts" for a day after the server
+  had stopped running that.
 
 ### The WhatsApp connection console
 
