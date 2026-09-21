@@ -558,6 +558,23 @@ also call it with their JWT to send early, re-send (`force`), or preview
   HR's August/September sheets are also the reason to trust this flag at all
   — not one Director appears in them. HR was already leaving seniors out by
   hand; `is_senior` only makes that automatic.
+- **Who the messages name is HR's to change, from the Employees tab.**
+  `in_daily_report` had no control anywhere — it was only ever set by hand in
+  SQL, so every "keep so-and-so out of the report" needed a developer, which
+  is not an answer for a decision the founder makes about his own team. Each
+  roster row now carries the three switches that decide it, worded as what
+  they do rather than as column names:
+
+  | Switch | Effect |
+  |---|---|
+  | **In the report** (`in_daily_report`) | off → never named, even on days they punch |
+  | **Senior** (`is_senior`) | never printed under Absent; still in the arrival list and On leave |
+  | **Mark as left** (`is_active`) | gone from the register and every message; history kept |
+
+  The tab opens with a live count — "N names can appear in the WhatsApp
+  messages" — computed from the same three fields the server filters on, so
+  the console and the message cannot drift apart. All three take effect on
+  the next message; nothing is cached and there is nothing to re-publish.
 - **`cb_employees.is_senior` keeps a name out of the Absent list, and
   nothing else.** Senior staff account for their own movements straight to
   the founder, so the register printing their name under Absent is not
