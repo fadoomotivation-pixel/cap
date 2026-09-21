@@ -269,6 +269,19 @@ also call it with their JWT to send early, re-send (`force`), or preview
   Scanning another phone therefore does not create a sender. **The founder
   session's number must be a member of the WhatsApp group**, since WhatsApp
   only lets an account post to groups it is in.
+- **The sending number is `7048917300`** — HR's, already a member of the
+  CAPITAL BRIX INFO group, and it stays that way. The worker also runs a
+  per-telecaller session on `919310012981`, which belongs to Fanbe and is
+  nothing to do with this: all 26 groups it reports are Fanbe's.
+- **A group's JID cannot be read out of our own database.** The worker's
+  watch-only rep sessions post what they observe to `wa_observed_messages` /
+  `wa_peer_names`, so their groups are visible here — but **the founder
+  session, the one that sends, deliberately reports nothing**. WhatsApp shows
+  a JID nowhere in its UI either. So getting `wa_group_id` means either adding
+  a `/groups` route to the worker (`groupFetchAllParticipating` is already
+  imported there) or briefly letting a reporting session into the group and
+  reading the id it observes. The JID belongs to the group, not to whoever
+  looked at it.
 - **Proving the chain is four separate facts, and the log distinguishes
   them.** `select cb_send_attendance_report('attendance');` then read
   `net._http_response`: `403 not authorised` means `CRON_SECRET` is missing or
