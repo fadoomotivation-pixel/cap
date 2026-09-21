@@ -10,8 +10,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 //                           still fix it before the register closes  → group
 //   attendance  11:30 IST — arrivals by window, and who is absent    → founder
 //   absent      11:31 IST — the absent list alone, no arrival times   → group
-//   reminder    18:45 IST — whose attendance is incomplete, while they are
-//                           still in the building and can fix it     → group
+//   reminder    18:45 IST — the evening picture: who has logged out, who
+//                           has no check-out yet, and whose attendance is
+//                           missing — while they can still fix it    → group
 //   checkout    19:01 IST — who logged out and when, and who is still in
 //                                                                    → founder
 //
@@ -407,31 +408,42 @@ function buildAbsentSummary(rows: Row[], dateStr: string): string | null {
 }
 
 /**
- * The nudge, fifteen minutes before the shift ends.
+ * The evening picture, fifteen minutes before the shift ends — the group's
+ * one message about how the day closed.
  *
  * Somebody who was in all day and forgot to tap is indistinguishable from
  * somebody who never came: the machine has nothing either way. The register
  * cannot solve that, but a person can — if they are told while they are still
  * in the building. At 19:01 it is too late, and the next morning it is a
- * dispute nobody can settle.
+ * dispute nobody can settle. That is why the combined message sits here and
+ * not after the shift ends: 18:45 is the last moment at which anything in it
+ * can still be acted on.
  *
- * Two lists, and nothing else:
- *   no exit punch     they are in and about to leave; without a tap on the
+ * Three lists, and nothing else:
+ *   logged out        who has already left, with their hours. At 18:45 that
+ *                     is by definition the people who went early, which is
+ *                     the part worth seeing
+ *   no check-out yet  they are in and about to leave; without a tap on the
  *                     way out the day reads as zero hours
  *   no punch at all   either genuinely absent, or present and never tapped —
  *                     only they know which, which is exactly why they are
  *                     asked rather than marked
  *
+ * There are no departure windows here, unlike the 19:01 record: before the
+ * shift has ended, "18:00 – 19:00" and "19:00 onwards" describe time that
+ * has not happened yet. The founder's 19:01 message keeps the full breakdown.
+ *
  * Anyone HR has already accounted for is left out: somebody on approved leave
- * is not being forgetful. Returns null when both lists are empty, because a
- * daily message that is usually empty is a daily message people stop reading.
+ * is not being forgetful. Returns null when all three lists are empty,
+ * because a daily message that is usually empty is one people stop reading.
  */
 function buildReminderSummary(rows: Row[], dateStr: string): string | null {
   const present = rows.filter((r) => r.check_in_at);
+  const loggedOut = present.filter((r) => r.check_out_at);
   const noExit = present.filter((r) => !r.check_out_at);
   const noPunch = rows.filter((r) => !r.check_in_at && !r.hr_status);
 
-  if (!noExit.length && !noPunch.length) return null;
+  if (!loggedOut.length && !noExit.length && !noPunch.length) return null;
 
   const L: string[] = [];
   L.push("*CAPITAL BRIX — Attendance Reminder*");
@@ -439,12 +451,29 @@ function buildReminderSummary(rows: Row[], dateStr: string): string | null {
   L.push("");
   L.push("Please complete today's attendance before you leave.");
 
+  if (loggedOut.length) {
+    L.push("");
+    L.push(`*Logged out (${loggedOut.length})*`);
+    [...loggedOut]
+      .sort((a, b) => istMinutes(a.check_out_at) - istMinutes(b.check_out_at))
+      .forEach((r) =>
+        L.push(
+          `• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}, out ${
+            fmtTime(r.check_out_at)
+          }`,
+        )
+      );
+  }
+
   if (noExit.length) {
     L.push("");
-    L.push(`*No exit punch yet (${noExit.length})*`);
+    L.push(`*No check-out yet (${noExit.length})*`);
     noExit.forEach((r) =>
       L.push(`• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}`)
     );
+    L.push("");
+    L.push("Please punch on the machine on your way out, or the day is");
+    L.push("recorded as zero hours.");
   }
 
   if (noPunch.length) {
@@ -478,10 +507,8 @@ Deno.serve(async (req) => {
       kind?: string;
     };
 
-    // Four messages a day off one function: the 10:30 check-in list, the
-    // 11:30 roll-call, the 18:45 reminder and the 19:01 logout summary.
-    // cb_report_log is keyed on (report_date, kind), so each is sent once and
-    // none can suppress another.
+    // Five messages a day off one function. cb_report_log is keyed on
+    // (report_date, kind), so each is sent once and none can suppress another.
     const kind =
       rawKind === "checkout" || rawKind === "reminder" ||
         rawKind === "morning" || rawKind === "absent"
@@ -527,9 +554,10 @@ Deno.serve(async (req) => {
     // Who each message is FOR decides where it goes, and they are not the
     // same audience.
     //
-    // The group's two both ask somebody to act while they still can: at 10:30
+    // The group's messages ask somebody to act while they still can: at 10:30
     // "your name is not on this list, go and punch", and at 18:45 "finish
-    // your attendance before you leave". Neither names anybody as late.
+    // your attendance before you leave". The 11:31 absent list is the
+    // exception, and it is there because the founder asked for it directly.
     //
     // The 11:30 roll-call and the 19:01 logout summary are management
     // information — who drifted in late, who left before the shift ended.
