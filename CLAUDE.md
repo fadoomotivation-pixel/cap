@@ -285,6 +285,14 @@ also call it with their JWT to send early, re-send (`force`), or preview
   Windows are computed from **IST explicitly**, never the browser's clock: an
   HR laptop left on another timezone would otherwise file people into the
   wrong block, and the blocks are the whole point.
+- **Device code `32` is Jasveer Singh Chaudhary, not a test card.** The
+  machine labels it `Card`, and on that reading it spent a day in
+  `cb_ignored_device_codes` as "test card, not a person". The owner's own
+  cross-check says the card belongs to Jasveer — one of three roster names
+  that had no code — so it is mapped to him and no longer ignored. If his
+  arrivals ever look like somebody else's, this is the line to revisit: a
+  card named `Card` is the shape a shared visitor card would also have.
+
 - **`cb_employees.in_daily_report = false` keeps somebody out of the
   summary** — the founder, people who do not punch, pantry staff, a test
   card. Leaving them merely unmapped does **not** work: an active employee

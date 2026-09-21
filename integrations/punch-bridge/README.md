@@ -104,8 +104,14 @@ Supabase SQL editor. It matches on **name**, the only field both systems
 share, so run the check query it prints at the end: anyone still without a
 `device_code` needs doing by hand.
 
-Punches for an unmapped code are **not lost**. They sit in `cb_device_punches`
-and attach themselves once the code is filled in.
+Punches for an unmapped code are **not lost**. They sit in `cb_device_punches`,
+and because the fold resolves the person through `device_code` at fold time —
+never through anything stored on the punch — they attach themselves the moment
+the code is filled in. Re-run the fold for the dates concerned:
+
+```sql
+select cb_fold_punches_into_attendance('2026-09-01'::date, current_date);
+```
 
 ## 3 · Test the sync
 
