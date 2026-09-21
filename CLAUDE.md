@@ -301,6 +301,11 @@ also call it with their JWT to send early, re-send (`force`), or preview
   lone evening taps and `66` none since July. The confirming evidence is an
   11:18:10 punch by `59` on 9 September against HR's own handwritten
   "Amit - 11:18".
+- **"Parallel Database Download" is ticked in Device Management and points at
+  nothing.** Its target is MS SQL `localhost` / `TimeTrack` / `AttendanceLogs`,
+  and this PC has no SQL Server at all — that is the abandoned export route.
+  The tick costs a failed write on every download. Untick it; the `.mdb` route
+  does not use it.
 - **eTimeTrackLite's download was never automatic.** `Devices.DownLoadType`
   was `1` (manual) and `eSSL_Schedular.exe.config` had `AutoStart = False`, so
   punches reached the PC only when somebody clicked Download — and the whole
