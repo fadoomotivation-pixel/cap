@@ -63,6 +63,7 @@ export default function WhatsAppAdmin() {
   const [settings, setSettings] = useState(null);
   const [groupId, setGroupId] = useState('');
   const [testTo, setTestTo] = useState('');
+  const [testResult, setTestResult] = useState(null);
   const [log, setLog] = useState([]);
 
   useEffect(() => {
@@ -160,19 +161,36 @@ export default function WhatsAppAdmin() {
     }
   };
 
+  // THE ANSWER GOES UNDER THE BUTTON, NOT AT THE TOP OF THE PAGE.
+  //
+  // This first shipped as a banner above the status card, five screens up from
+  // the Send button and gone after five seconds. The first person to use it
+  // pressed Send, saw nothing, and reported that nothing had happened — the
+  // message had in fact gone. Feedback belongs where the eye already is, and
+  // it stays until the next attempt replaces it.
   const sendTest = async () => {
     setError('');
-    if (!testTo.trim()) return setError('Put a number or a group id in first.');
+    setTestResult(null);
+    if (!testTo.trim()) return setTestResult({ ok: false, text: 'Put a number or a group id in first.' });
     setBusy(true);
     try {
       const data = await invoke({ action: 'test', to: testTo });
-      // The worker returns WhatsApp's own message id. Printing it turns "I
-      // think it worked" into something that can be checked against the chat.
-      if (data.ok) flash(`Sent to ${data.target}${data.body?.id ? ` (id ${data.body.id})` : ''}. Check that chat now.`);
-      else setError(`The worker refused it — ${JSON.stringify(data.body)}`);
+      const self = data.target && data.target === String(settings?.founder_whatsapp || '').replace(/\D/g, '');
+      setTestResult(data.ok
+        ? {
+          ok: true,
+          text: `Sent to ${data.target}.${data.body?.id ? ` WhatsApp id ${data.body.id}.` : ''}`,
+          // Sending to the number that does the sending is a message to
+          // yourself, and WhatsApp files those in the "Message yourself" chat
+          // rather than the chat list — which reads as nothing happening.
+          note: self
+            ? 'That is the number that sends, so this went to your own "Message yourself" chat — look there, not in the chat list.'
+            : null,
+        }
+        : { ok: false, text: `The worker refused it — ${JSON.stringify(data.body)}` });
       loadSettings();
     } catch (e) {
-      setError(e.message);
+      setTestResult({ ok: false, text: e.message });
     } finally {
       setBusy(false);
     }
@@ -332,9 +350,20 @@ export default function WhatsAppAdmin() {
               className="flex-1 min-w-[240px] px-3 py-2 border border-gray-300 rounded-md outline-none focus:border-[#D4AF37]" />
             <button onClick={sendTest} disabled={busy}
               className="flex items-center gap-2 bg-[#10243E] text-white px-4 py-2.5 rounded-md font-medium hover:bg-[#1a365d] disabled:opacity-50">
-              <Send size={16} /> Send
+              <Send size={16} /> {busy ? 'Sending…' : 'Send'}
             </button>
           </div>
+
+          {testResult && (
+            <div className={`mt-4 rounded-lg border p-3 text-sm ${
+              testResult.ok
+                ? 'bg-green-50 border-green-200 text-green-800'
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}>
+              <p className="font-medium">{testResult.ok ? '✅ ' : '❌ '}{testResult.text}</p>
+              {testResult.note && <p className="mt-1 opacity-90">{testResult.note}</p>}
+            </div>
+          )}
         </section>
 
         {/* Every scheduled send, successful or not — the table that held the
