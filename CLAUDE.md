@@ -536,6 +536,28 @@ also call it with their JWT to send early, re-send (`force`), or preview
   The founder's two messages carry a **`Register:` link to
   `/admin/attendance`** — a summary that names a problem and then leaves the
   reader hunting for the place to fix it is half a message.
+- **There are two Abhisheks, and only device code `61` is the pantry one.**
+  `61` has been in `cb_ignored_device_codes` as "Abhishek - pantry staff"
+  from the start. The roster's **Abhishek kumar is `19`** — 193 days
+  recorded, and he stays in the report. The owner said "Abhishek kumar pantry
+  hai" on 22 September and the change was **not** made, because the evidence
+  points the other way and a name collision had already nearly cost the
+  wrong Amit his record: since August, `61` punched 41 days arriving around
+  **10:02** (earliest 09:12 — pantry staff open the office) while `19`
+  punched 23 days arriving around **11:03** (earliest 10:44 — the sales
+  floor's pattern). HR's own handwritten sheet for 3 September reads
+  "Abhishek Kumar - 11:23", which is `19`, and marks him Absent on 5
+  September and 29 August — so HR tracks him. The owner then confirmed: only
+  `61` is pantry.
+- **Seniority is decided by whether HR already counts them, not by job
+  title.** `Kamal Mishra` was marked senior off the strength of "Business
+  Head" and un-marked the next day: HR's own attendance sheets list him with
+  the sales team. The title was the wrong signal. The four seniors are
+  Neeraj Kulshrestha, Kalpana Kulshrestha, Manish Verma and Subrat.
+
+  HR's August/September sheets are also the reason to trust this flag at all
+  — not one Director appears in them. HR was already leaving seniors out by
+  hand; `is_senior` only makes that automatic.
 - **`cb_employees.is_senior` keeps a name out of the Absent list, and
   nothing else.** Senior staff account for their own movements straight to
   the founder, so the register printing their name under Absent is not
