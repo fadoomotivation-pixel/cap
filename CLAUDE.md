@@ -311,9 +311,10 @@ forwards to the function, not weakening anything here.
 
 ### Daily attendance report to WhatsApp
 
-`attendance-whatsapp` Edge Function, fired by **four pg_cron jobs**
+`attendance-whatsapp` Edge Function, fired by **five pg_cron jobs**
 (`cb-morning-checkin-whatsapp`, `cb-daily-attendance-whatsapp`,
-`cb-attendance-reminder`, `cb-daily-logout-whatsapp`) through
+`cb-absent-list-whatsapp`, `cb-attendance-reminder`,
+`cb-daily-logout-whatsapp`) through
 `cb_send_attendance_report(kind)` → `pg_net`. An admin can
 also call it with their JWT to send early, re-send (`force`), or preview
 (`dry_run`).
@@ -497,8 +498,9 @@ also call it with their JWT to send early, re-send (`force`), or preview
   |---|---|---|---|
   | 10:30 | `morning` | who has punched in so far | **group** |
   | 11:30 | `attendance` | arrivals by window, plus absent and on leave | **founder** |
+  | 11:31 | `absent` | the absent list alone, no arrival times | **group** |
   | 18:45 | `reminder` | whose attendance is still incomplete | **group** |
-  | 19:01 | `checkout` | who logged out, and who is still in | **founder** |
+  | 19:01 | `checkout` | who logged out, and who has no check-out | **founder** |
 
   Each target falls back to the other so a blank setting cannot silence a
   report.
@@ -615,10 +617,37 @@ also call it with their JWT to send early, re-send (`force`), or preview
   before, so an unenrolled person looked exactly like an absent one. Hiding
   them from the report without surfacing them here would mean nobody ever
   enrols them.
-- **Four messages a day, one function.** `kind` selects which:
+- **The absent list is published to the group at 11:31, on the founder's
+  explicit instruction.** He was told twice, plainly, that naming absent
+  colleagues in a fifty-person group is the scoreboard the rest of this module
+  avoids; he asked for it anyway, and it is his company. **Do not quietly
+  remove it** — if it is ever to come off, that is his decision too.
+
+  What is deliberately **not** published with it is the arrival roll-call: who
+  walked in at 11:07 and who at 11:52. He asked for the absent list, so the
+  absent list is what goes, and the minute-by-minute record of everybody else
+  stays in his own 11:30 message. `buildAbsentSummary` returns null when
+  nobody is absent, so a full-attendance day is silent rather than carrying a
+  "nobody is absent today" nobody reads. On leave rides along only when there
+  is an absent list to carry it — it is context, not news.
+
+  It closes with "If any name here is wrong, please speak to HR", **not** an
+  invitation to punch now: the 10:30 message said the register closes at
+  11:30 and this is sent after that. A route to a person is honest recourse;
+  reopening a register you just announced as closed is not.
+- **The logout message does not claim anybody is still in the office.** It
+  said "Still in office (15)", which is a fact the machine does not have: a
+  missing check-out means either the exit punch was missed or the person is
+  genuinely still there, and the two are identical from the register's side.
+  It now reads "No check-out recorded" with the line *"Either the exit punch
+  was missed, or they are still in the office."* — naming both possibilities
+  is shorter than being wrong, and it hands the founder a question rather
+  than a false conclusion.
+- **Five messages a day, one function.** `kind` selects which:
   `morning` at **10:30 IST** (05:00 UTC); `attendance` at **11:30 IST**
   (06:00 UTC) — arrivals by window, plus absent
-  and on leave; `reminder` at **18:45 IST** (13:15 UTC); `checkout` at
+  and on leave; `absent` at **11:31 IST** (06:01 UTC); `reminder` at
+  **18:45 IST** (13:15 UTC); `checkout` at
   **19:01 IST** (13:31 UTC) — who logged out and
   when, split `Before 18:00` / `18:00 – 19:00` / `19:00 onwards`, plus who is
   still checked in. `cb_report_log` is keyed on `(report_date, kind)`, so each
