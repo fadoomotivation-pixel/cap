@@ -739,9 +739,17 @@ attendance. Worse, the only evidence anything was wrong was a `503` inside
 
 - **The page never holds the bearer token.** It calls the **`wa-session` Edge
   Function**, which is admin-JWT-only, holds `WA_WEBHOOK_TOKEN`, and proxies
-  four actions: `status`, `qr`, `reconnect`, `test`. It derives the worker's
+  five actions: `status`, `qr`, `reconnect`, `test`, `groups`. It derives the worker's
   base URL by stripping `/send` off `WA_WEBHOOK_URL` rather than adding a
   second secret that can drift out of step; `WA_BASE_URL` overrides it.
+- **The group is picked from a list, never typed.** A group's JID is shown
+  nowhere inside WhatsApp, so setting `wa_group_id` used to mean SSHing into
+  the worker and curling `/groups`. Nobody repeats that, which is how a wrong
+  id sits in settings unnoticed — and a wrong id does not fail loudly, for the
+  reason below: Baileys returns a message id for an address nobody holds. The
+  `groups` action lists what the linked phone is in, and one click saves it.
+  An empty list means the phone is not linked or the sending number is in no
+  group at all.
 - **There is no cron path in `wa-session` and there must not be one.** Every
   action either reveals the state of a WhatsApp account or sends a message.
 - **The QR is polled, not fetched once.** It expires in seconds and the worker
