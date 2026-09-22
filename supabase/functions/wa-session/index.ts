@@ -9,13 +9,14 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // bearer token. None of that belongs in a browser, and none of it tells HR
 // whether *Capital Brix attendance* is working.
 //
-// So this proxies the four things the console needs, holds the token here, and
+// So this proxies the five things the console needs, holds the token here, and
 // answers in terms of this system:
 //
 //   status     is the WhatsApp link up, and which number is it
 //   qr         the pairing square, when the worker is offering one
 //   reconnect  ask the worker to start a session so a QR appears
 //   test       send one message to a number or a group, and say what came back
+//   groups     the groups the linked account is in, with their JIDs
 //
 // Admin JWT only. There is no cron path and there must not be one: everything
 // here either reveals the state of a WhatsApp account or sends a message.
@@ -140,6 +141,16 @@ Deno.serve(async (req) => {
 
     if (action === "reconnect") {
       const r = await call("/reconnect", { method: "POST" });
+      return json({ ok: r.ok, status: r.status, body: r.body });
+    }
+
+    // A group's JID is not visible anywhere in WhatsApp itself, so getting one
+    // used to mean SSHing into the worker and curling /groups by hand. That is
+    // not a step anybody repeats, which is why a wrong id can sit in settings
+    // unnoticed. The worker already exposes the list; this hands it to the
+    // console so a group is picked rather than typed.
+    if (action === "groups") {
+      const r = await call("/groups");
       return json({ ok: r.ok, status: r.status, body: r.body });
     }
 
