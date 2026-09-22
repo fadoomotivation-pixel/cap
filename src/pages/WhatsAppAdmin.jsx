@@ -6,7 +6,7 @@ import AdminNav from '../components/AdminNav';
 import { friendlyError } from '../lib/errors';
 import {
   MessageCircle, RefreshCw, LogOut, X, QrCode, Send, CheckCircle2,
-  AlertTriangle, Power, Info, Eye, Star, Users, Clock,
+  AlertTriangle, Power, Info, Eye, Star, Users, Clock, List,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -114,6 +114,7 @@ export default function WhatsAppAdmin() {
   const [log, setLog] = useState([]);
   const [people, setPeople] = useState([]);
   const [preview, setPreview] = useState(null);   // { kind, text, target, error }
+  const [groups, setGroups] = useState(null);     // null = never looked
   const [running, setRunning] = useState(null);   // kind currently previewing/sending
 
   useEffect(() => {
@@ -289,6 +290,30 @@ export default function WhatsAppAdmin() {
       setError(e.message);
     } finally {
       setRunning(null);
+    }
+  };
+
+  /**
+   * The groups the linked phone is in.
+   *
+   * A WhatsApp group's JID is shown nowhere in WhatsApp, so getting one meant
+   * SSHing into the worker. Nobody repeats that, which is how a wrong id can
+   * sit in settings unnoticed — and an id that is wrong by one character sends
+   * every report to an account that does not exist, with a message id back
+   * each time.
+   */
+  const loadGroups = async () => {
+    setError('');
+    setBusy(true);
+    try {
+      const data = await invoke({ action: 'groups' });
+      const list = Array.isArray(data?.body) ? data.body : (data?.body?.groups ?? []);
+      setGroups(Array.isArray(list) ? list : []);
+      if (!data.ok) setError('The worker would not list the groups — is the phone linked?');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -593,6 +618,53 @@ export default function WhatsAppAdmin() {
             <button onClick={() => saveSettings({ wa_group_id: groupId.trim() || null })}
               className="px-4 py-2 rounded-md border border-gray-200 text-gray-700 hover:border-[#D4AF37]">Save</button>
           </div>
+
+          {/*
+            Pick the group rather than type it. A JID is eighteen digits and
+            WhatsApp shows it nowhere, so it used to be copied off an SSH
+            session — and one wrong character does not fail: Baileys builds a
+            JID out of whatever it is handed and returns a message id for an
+            address nobody holds. That is the failure this module keeps
+            relearning, so the safest id is one nobody typed.
+          */}
+          <div className="mb-2">
+            <button onClick={loadGroups} disabled={busy}
+              className="inline-flex items-center gap-1.5 text-sm text-[#10243E] hover:text-[#D4AF37] disabled:opacity-50">
+              <List className="w-4 h-4" />
+              {groups === null ? 'Show the groups this phone is in' : 'Refresh the list'}
+            </button>
+          </div>
+
+          {groups !== null && (
+            groups.length === 0 ? (
+              <p className="text-xs text-gray-500 mb-5">
+                The worker returned no groups. Either the phone is not linked, or
+                the sending number has not been added to any group yet — WhatsApp
+                only lets an account post to groups it has joined.
+              </p>
+            ) : (
+              <ul className="mb-5 border border-gray-100 rounded-lg divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                {groups.map((g) => {
+                  const jid = g?.id || g?.jid || '';
+                  const name = g?.subject || g?.name || jid;
+                  const size = g?.size ?? (Array.isArray(g?.participants) ? g.participants.length : null);
+                  return (
+                    <li key={jid}>
+                      <button
+                        onClick={() => { setGroupId(jid); saveSettings({ wa_group_id: jid }); }}
+                        className={`w-full text-left px-3 py-2 hover:bg-gray-50 ${jid === groupId ? 'bg-[#D4AF37]/10' : ''}`}>
+                        <span className="block text-sm text-[#10243E]">
+                          {name}
+                          {size ? <span className="text-gray-400 font-normal"> · {size} members</span> : null}
+                        </span>
+                        <span className="block text-[11px] font-mono text-gray-400">{jid}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
+          )}
           <p className="text-xs text-gray-500 mb-5">
             The three group messages post here. Leave it empty and they go to the
             founder&apos;s number
