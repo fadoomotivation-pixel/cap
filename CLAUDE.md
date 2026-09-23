@@ -567,132 +567,58 @@ also call it with their JWT to send early, re-send (`force`), or preview
   daily message people stop reading. It sits fifteen minutes before the
   logout report on purpose: the reminder is the last chance to fix the day,
   the 19:01 summary is the record of it.
-- **Seven messages a day, two audiences, and the split is the product
-  decision.** Revised 23 September 2026 on the founder's instruction.
+- **Five messages a day, revised twice on 23 September 2026 at the founder's
+  instruction.**
 
   | Time | `kind` | What | To |
   |---|---|---|---|
   | 10:30 | `morning` | juniors punched in so far — provisional | **group** |
-  | 11:30 | `attendance` | everyone, arrivals by window, absent, on leave | **founder** |
-  | 11:30 | `present` | juniors present — the register as it closes | **group** |
+  | 11:30 | `attendance` | the whole company: arrivals by window, absent, on leave | **group AND founder** |
   | 11:32 | `absent` | juniors absent, no arrival times | **group** |
   | 13:00 | `late` | juniors who punched in after 11:30 | **group** |
-  | 18:45 | `reminder` | logged out so far, no check-out yet, no attendance | **group** |
-  | 19:01 | `checkout` | who logged out, and who has no check-out | **founder** |
+  | 19:02 | `evening` | logged out by departure window, no check-out, no attendance | **group** |
+
+  `present`, `reminder` and `checkout` still work if called by hand from
+  `/admin/whatsapp`; nothing schedules them.
 
   **Every group message names juniors only** (`is_senior = false`, via the
   `juniors()` helper). Senior staff account for their movements straight to
   the founder, so their arrival time in a fifty-person group is neither news
-  nor anybody's business — it is a name taking up room in a list the team is
-  meant to scan for its own. The founder's two stay unfiltered: he is reading
-  the whole company, which is what they are for. `cb_daily_attendance_report()`
-  therefore **returns** `is_senior` rather than applying it and discarding it,
-  so a juniors-only list needs no second query that could drift.
+  nor anybody's business. `cb_daily_attendance_report()` therefore **returns**
+  `is_senior` rather than applying it and discarding it, so a juniors-only
+  list needs no second query that could drift.
 
-  **10:30 and 11:30 both publish a present list, and that is deliberate.**
-  They were merged once, on the reasoning that a message repeating itself is
-  how people stop reading the first one; the founder asked for both back, and
-  the distinction carries them — **10:30 is provisional** ("your name is not
-  here, go and punch, the register closes at 11:30") and **11:30 is the
-  record** ("the register is now closed"). Each says which it is; without
-  that they read as the same list twice and the argument for merging returns.
+  **The 11:30 register is the exception and goes to both.** It is the whole
+  company, seniors included — which is what makes it the record rather than a
+  roll-call of the people being watched — and it is the only message with two
+  audiences, so the founder keeps his copy even if he ever leaves the group.
+  The two addresses are **sent and logged separately**: a group JID can be
+  wrong while his number is fine, and one `ok` covering both would hide
+  exactly that. The row is `ok` only when every address took it.
 
-  **The absent list moved 11:31 → 11:32.** One minute was too tight: the
-  11:30 fold and the present list need to land first, and a present list and
-  an absent list that disagree would be worse than either alone.
+  That also made a separate juniors-present list at 11:30 redundant — the
+  register is a superset of it, to the same people, in the same minute.
 
-  **Late arrivals are one message at 13:00, never a live feed.** ADMS runs
+  **The morning reads as a sequence, not three copies of one list:** 10:30 is
+  provisional and still worth walking to the machine for, 11:30 is the
+  register closing, 11:32 is who it closed without, 13:00 is who arrived after
+  and has since been corrected into it. The 13:00 message says that last part
+  explicitly — the difference between a correction and a second accusation.
+
+  **Late arrivals are one message, never a live feed.** ADMS runs
   `Realtime=1`, so a punch reaches us in seconds and "X arrived at 11:52"
-  *could* be posted the moment it happens. In a fifty-person group that is a
-  scoreboard arriving one name at a time, all morning. One list, once, says
-  the same thing and reads in a glance — and it closes by saying those names
-  have since been corrected in the register, which is the difference between
-  a correction and a second accusation.
+  *could* post the moment it happens. In a fifty-person group that is a
+  scoreboard arriving one name at a time, all morning.
 
-  Each target falls back to the other so a blank setting cannot silence a
-  report.
+  **The 18:45 reminder and the 19:01 logout record were merged into 19:02, and
+  the merge gave something up.** 18:45 sat *before* the shift ended precisely
+  so somebody who had forgotten to tap could still walk to the machine. At
+  19:02 they have gone home. So the evening message is a **record rather than
+  a request**, and closes with "speak to HR tomorrow morning" instead of
+  asking people who have left to fix something tonight. What it gained is the
+  departure windows: at 18:45, "19:00 onwards" described time that had not
+  happened yet.
 
-  **The group's two both ask somebody to act while they still can.** The
-  founder's two are the record and the decisions only he can make: fifty
-  people can do nothing with a roll-call, and a daily list of colleagues'
-  arrival times in a company group reads as surveillance however plainly it
-  is worded.
-
-  **The 10:30 message names who HAS punched, never who has not.** A list of
-  late names in a fifty-person group is the scoreboard this module keeps
-  being told not to become — but somebody scanning for their own name and not
-  finding it learns exactly the same thing without being held up in front of
-  colleagues, and can still walk to the machine. The deadline is stated
-  ("the register is finalised at 11:30") and the absent list that follows
-  goes to the founder. It returns null, and sends nothing, when nobody has
-  punched at all: at 10:30 that is a holiday or a broken feed, and "nobody is
-  in the office" is not a sentence to publish on the strength of a silent
-  machine.
-
-  **An owner's first sketch had five messages** — 10:30 and 11:15 present
-  lists, 11:30 absent, 19:00 logout, 19:10 missing-punch. Two were merged
-  because 11:15's list is the same list as 10:30's, and a message that
-  repeats itself is how people stop reading the first one; stating the 11:30
-  deadline inside the 10:30 message does the same work. And the evening nudge
-  stayed at **18:45, not 19:10**: the shift ends at 19:00, so at 19:10 the
-  person who forgot to tap has already left. The whole point of that message
-  is that they are still in the building.
-
-  **The broken-feed warning always goes to the founder**, whatever the kind.
-  It asks for a specific click inside eTimeTrackLite; in the group it is an
-  unactionable announcement that the company's attendance is broken.
-
-  The founder's two messages carry a **`Register:` link to
-  `/admin/attendance`** — a summary that names a problem and then leaves the
-  reader hunting for the place to fix it is half a message.
-
-  **The broken-feed warning always goes to the founder too**, whatever the
-  kind. It asks for a specific click inside eTimeTrackLite; in the group it
-  would be an unactionable announcement that the company's attendance is
-  broken.
-
-  The founder's two messages carry a **`Register:` link to
-  `/admin/attendance`** — a summary that names a problem and then leaves the
-  reader hunting for the place to fix it is half a message.
-- **There are two Abhisheks, and only device code `61` is the pantry one.**
-  `61` has been in `cb_ignored_device_codes` as "Abhishek - pantry staff"
-  from the start. The roster's **Abhishek kumar is `19`** — 193 days
-  recorded, and he stays in the report. The owner said "Abhishek kumar pantry
-  hai" on 22 September and the change was **not** made, because the evidence
-  points the other way and a name collision had already nearly cost the
-  wrong Amit his record: since August, `61` punched 41 days arriving around
-  **10:02** (earliest 09:12 — pantry staff open the office) while `19`
-  punched 23 days arriving around **11:03** (earliest 10:44 — the sales
-  floor's pattern). HR's own handwritten sheet for 3 September reads
-  "Abhishek Kumar - 11:23", which is `19`, and marks him Absent on 5
-  September and 29 August — so HR tracks him. The owner then confirmed: only
-  `61` is pantry.
-- **Seniority is decided by whether HR already counts them, not by job
-  title.** `Kamal Mishra` was marked senior off the strength of "Business
-  Head" and un-marked the next day: HR's own attendance sheets list him with
-  the sales team. The title was the wrong signal. The four seniors are
-  Neeraj Kulshrestha, Kalpana Kulshrestha, Manish Verma and Subrat.
-
-  HR's August/September sheets are also the reason to trust this flag at all
-  — not one Director appears in them. HR was already leaving seniors out by
-  hand; `is_senior` only makes that automatic.
-- **Who the messages name is HR's to change, from the Employees tab.**
-  `in_daily_report` had no control anywhere — it was only ever set by hand in
-  SQL, so every "keep so-and-so out of the report" needed a developer, which
-  is not an answer for a decision the founder makes about his own team. Each
-  roster row now carries the three switches that decide it, worded as what
-  they do rather than as column names:
-
-  | Switch | Effect |
-  |---|---|
-  | **In the report** (`in_daily_report`) | off → never named, even on days they punch |
-  | **Senior** (`is_senior`) | never printed under Absent; still in the arrival list and On leave |
-  | **Mark as left** (`is_active`) | gone from the register and every message; history kept |
-
-  The tab opens with a live count — "N names can appear in the WhatsApp
-  messages" — computed from the same three fields the server filters on, so
-  the console and the message cannot drift apart. All three take effect on
-  the next message; nothing is cached and there is nothing to re-publish.
 - **`cb_employees.is_senior` keeps a name out of the Absent list, and
   nothing else.** Senior staff account for their own movements straight to
   the founder, so the register printing their name under Absent is not
