@@ -299,6 +299,40 @@ machine --(HTTPS)--> www.capitalbrix.co.in/iclock/* --> essl-adms Edge Function
   every arrival 5½ hours early. The in/out `status` flag is **not** acted on —
   people tap the same key both ways; the register decides direction from the
   times.
+- **The terminal connected on 23 September 2026, and two silent bugs of ours
+  stood between that and a working register.** Both are the same shape — the
+  device was told `OK` and had no way to know otherwise:
+
+  1. **It asks for `cdata.aspx`, not `cdata`.** ZKTeco's push client was
+     written against an ASP.NET server and several builds keep the suffix.
+     Matching the bare segment sent every upload to "unhandled path", where
+     it was answered `OK` and discarded: forty uploads in two minutes, and
+     the register gained nothing. The extension is now stripped before
+     matching (`.aspx|.asp|.php|.cgi|.jsp|.htm(l)`).
+  2. **`ATTLOGStamp=9999` in the handshake is the device's upload cursor, and
+     `9999` means "send me your whole history".** Right once, a trap as a
+     permanent answer: the device uploaded 128 records, was told OK, re-read
+     9999 and uploaded the same 128 again — twice a second for six minutes.
+     The stamp now lives per device in **`cb_adms_state`** and advances as
+     batches are acknowledged (`cb_adms_stamp()`, service-role only).
+
+  **The loop cost nothing, and that is the point worth keeping.** Every one of
+  those repeats logged `stored: 0` — the punches were already in
+  `cb_device_punches` from the PC bridge, and the unique constraint on
+  `(device_code, punch_at)` absorbed all of it. The "two roads, neither can
+  double-count" design earned its keep on the first day the second road
+  opened.
+
+  Also: **the reply acknowledges what was received, not what was new.**
+  `stored` is legitimately zero for a batch the bridge already delivered, and
+  `OK: 0` tells the terminal none of its records were processed. The protocol
+  is asking "did you get them".
+
+  Diagnosing this took the **edge logs**, not our own table:
+  `select … from logs where source = 'function_edge_logs'` showed
+  `?SN=…&table=ATTLOG&Stamp=9999` on every request, which named the cause in
+  one line after two wrong guesses. `cb_adms_log` records what we decided;
+  the edge log records what the device actually asked for.
 - **`cb_adms_log` is the heartbeat**, one row per contact, pruned to 14 days,
   and surfaced on `/admin/attendance` → Settings as "Attendance machine". With
   the PC out of the loop there is no screen in the office that shows whether the
