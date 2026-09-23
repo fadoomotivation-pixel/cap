@@ -44,6 +44,40 @@ is wrong or the session is dead, because those are exactly the moments
 somebody is asking. It reveals a count per state and nothing about the
 account.
 
+## Not on Vercel — and Vercel will keep offering
+
+Vercel emails "a new project in fadoomotivation-pixel/cap is available to
+import" for any folder that looks like a server, and on **23 September 2026**
+it offered this one as `wa-worker · express`. **Do not import it.** The button
+works; the worker does not.
+
+Two things this needs that a serverless platform does not have:
+
+1. **A process that stays up.** Baileys holds an open WebSocket to WhatsApp
+   for as long as the number is linked. A Vercel function is started for one
+   request and torn down after it — there is nothing for the socket to live
+   in, so the session would be logged out between every send.
+2. **A disk that survives.** `WA_AUTH_DIR` *is* the WhatsApp account
+   (`useMultiFileAuthState`). On Vercel the filesystem is read-only apart from
+   `/tmp`, which is discarded — so every request would find no credentials and
+   ask for a fresh QR. Nobody can scan a code that is regenerated per request.
+
+The failure would not be loud, either, which is the part worth knowing: the
+import succeeds, the URL answers, `/health` returns, and sends fail or vanish.
+That is the same shape as every other WhatsApp failure in this module — a
+message id is not delivery.
+
+**What it needs instead** is any box that runs a process and keeps a
+directory: a small VPS with pm2 or systemd (below), or a container platform
+with a mounted volume — Railway, Render, Fly.io — with the volume mounted at
+`WA_AUTH_DIR` and the same care about the directory being the account. The
+office PC can host it, but it already took the attendance register down for
+five days by being switched off, so it is the weakest of the options.
+
+`vercel.json` in this repo is the *website's* config and has nothing to do
+with this folder. The `cap` Vercel project builds `vite` from the root and
+never looks in `integrations/`.
+
 ## Setting it up
 
 **1. Get a SIM for the company.** Any number that is not the founder's

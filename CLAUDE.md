@@ -878,6 +878,17 @@ company, code that can be read rather than guessed at.
   asking.
 - **`WA_AUTH_DIR` is the account.** Whoever copies that directory can post as
   this number.
+- **It cannot run on Vercel, and Vercel will keep offering.** On 23 September
+  2026 it emailed "a new project … available to import — `wa-worker ·
+  express`". The import works and the worker does not: Baileys holds an open
+  WebSocket for as long as the number is linked, and `WA_AUTH_DIR` **is** the
+  account. A serverless function has neither a process that stays up nor a
+  disk that survives, so the session would be logged out between sends and
+  every request would ask for a fresh QR. It fails quietly — the URL answers,
+  `/health` returns, and messages go nowhere, which is this module's oldest
+  failure shape. It needs a box that runs a process and keeps a directory: a
+  VPS with pm2/systemd, or Railway/Render/Fly with a volume mounted at
+  `WA_AUTH_DIR`.
 
 Setup, the proving order and the switchover steps are in that folder's
 README. The new number must be **added to the WhatsApp group** before the
