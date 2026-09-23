@@ -10,8 +10,6 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // which means the register is only as awake as that desktop. It has already
 // cost five silent days: eTimeTrackLite's download was set to manual, nobody
 // clicked it, and the register simply stopped while every check stayed green.
-// A PC that is switched off, asleep, updating or logged out is the same
-// failure with a different cause.
 //
 // The eSSL ZAM70 terminal in the office speaks the ZKTeco "push" (ADMS)
 // protocol - firmware ZAM70-NF24HA-Ver3.3.12, Push Ver 3.1.2S - which means it
@@ -24,12 +22,28 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 //   GET  /iclock/getrequest?SN=..          "any commands for me?"
 //   POST /iclock/devicecmd                 how the command went
 //
+// Two things about this firmware cost a morning each, and both were silent.
+//
+// It asks for those paths with an `.aspx` suffix - ZKTeco's push client was
+// written against an ASP.NET server and several builds keep it - so the
+// extension is stripped before matching. Matching the bare segment sent every
+// upload to "unhandled path", where it was answered OK and discarded: the
+// terminal reached us forty times in two minutes and the register gained
+// nothing, with nothing on the device to show for it.
+//
+// And the handshake's `ATTLOGStamp` is the device's upload cursor. Every
+// published example answers `9999`, which means "send me your whole history":
+// right once, a trap as a permanent answer. The device uploads, is told OK,
+// re-reads 9999 and uploads the same batch again - twice a second for six
+// minutes, 128 records, every one already stored. Nothing lost and nothing
+// gained, which is the hardest kind of loop to notice. The stamp is now kept
+// per device in cb_adms_state and moves forward as batches are acknowledged.
+//
 // getrequest used to always answer "no", and the reason it no longer does is
 // that every question this module has lost days to lives on that machine and
 // was invisible from here: who is actually enrolled and under which code,
 // whether the punches are still sitting in its memory, whether its clock has
-// drifted. Each answer cost a walk to the office and a Windows Forms menu -
-// and the five silent days in September were that walk not happening.
+// drifted. Each answer cost a walk to the office and a Windows Forms menu.
 //
 // The command channel is deliberately narrow, and the narrowness does not
 // live here: cb_queue_device_command builds the text from a whitelist of
@@ -177,18 +191,36 @@ function parseUsers(body: string) {
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   // Vercel rewrites /iclock/* here, and Supabase prefixes /functions/v1/<fn>,
-  // so match on the last meaningful segment rather than the whole path.
-  const path = url.pathname.replace(/\/+$/, "").split("/").pop()?.toLowerCase() ??
-    "";
+  // so match on the last meaningful segment rather than the whole path. The
+  // extension is stripped because this firmware asks for `cdata.aspx`,
+  // `getrequest.aspx` and `devicecmd.aspx`.
+  const path = (url.pathname.replace(/\/+$/, "").split("/").pop() ?? "")
+    .toLowerCase()
+    .replace(/\.(aspx|asp|php|cgi|jsp|html?)$/, "");
   const q = url.searchParams;
   const sn = (q.get("SN") ?? q.get("sn") ?? "").trim();
 
-  if (!sn || !allowedSerials().includes(sn.toUpperCase())) {
+  // Two different refusals, and they were logged identically until a line in
+  // this table was mistaken for the terminal finally calling in. A request
+  // carrying no serial at all is never the terminal - the firmware sends SN
+  // on every single request - so it is somebody testing the URL, and saying
+  // which is the difference between "it works now" and "that was us".
+  if (!sn) {
     await log({
       path,
       method: req.method,
-      sn: sn || null,
-      note: "refused - serial not allowed",
+      sn: null,
+      note: "refused - no serial sent (not the terminal; something fetched the URL)",
+    });
+    return text("Unauthorized", 401);
+  }
+
+  if (!allowedSerials().includes(sn.toUpperCase())) {
+    await log({
+      path,
+      method: req.method,
+      sn,
+      note: `refused - serial ${sn} is not in ADMS_ALLOWED_SN`,
     });
     return text("Unauthorized", 401);
   }
@@ -253,16 +285,21 @@ Deno.serve(async (req) => {
   if (path === "ping") return text("OK");
 
   if (path === "cdata" && req.method === "GET") {
-    await log({ path, method: "GET", sn, note: "handshake" });
+    // The stamp is the device's upload cursor, and it must move. See the
+    // header: a fixed 9999 is what made the terminal re-offer the same 128
+    // records twice a second for six minutes.
+    const { data: stamp } = await admin.rpc("cb_adms_stamp", { p_sn: sn });
+    const cursor = Number(stamp ?? 0) || Math.floor(Date.now() / 1000);
+    await log({ path, method: "GET", sn, note: `handshake, stamp ${cursor}` });
     // Realtime=1 is the point of the whole exercise: the terminal pushes each
     // punch as it happens instead of waiting to be asked. TransTimes is the
     // belt-and-braces catch-up window for anything a dropped connection lost.
     return text(
       [
         `GET OPTION FROM: ${sn}`,
-        "Stamp=9999",
-        "OpStamp=9999",
-        "ATTLOGStamp=9999",
+        `Stamp=${cursor}`,
+        `OpStamp=${cursor}`,
+        `ATTLOGStamp=${cursor}`,
         "ErrorDelay=30",
         "Delay=10",
         "TransTimes=00:00;12:00",
@@ -318,7 +355,7 @@ Deno.serve(async (req) => {
         sn,
         table_name: "ATTLOG",
         rows_in: 0,
-        note: "empty upload",
+        note: `empty upload | body: ${body.slice(0, 120).replace(/\s+/g, " ")}`,
       });
       return text("OK: 0");
     }
@@ -379,9 +416,38 @@ Deno.serve(async (req) => {
         .then(() => {}, () => {});
     }
 
-    return text(`OK: ${stored}`);
+    // The batch is acknowledged, so the cursor moves past it. Without this
+    // the device re-offers the same records on every cycle.
+    await admin
+      .rpc("cb_adms_stamp", {
+        p_sn: sn,
+        p_advance: Math.floor(Date.now() / 1000),
+      })
+      .then(() => {}, () => {});
+
+    // The count acknowledged is what we RECEIVED, not what was new. `stored`
+    // counts rows the unique constraint let through, and on a batch the PC
+    // bridge already delivered that is legitimately zero - answering "OK: 0"
+    // tells the terminal none of its records were processed. What the
+    // protocol is asking is "did you get them", and we did.
+    return text(`OK: ${punches.length}`);
   }
 
-  await log({ path, method: req.method, sn, note: "unhandled path" });
+  // Whatever this was, say what it was.
+  //
+  // "unhandled path" on its own is how forty real uploads were thrown away in
+  // two minutes with nothing to show for it. The full path and the first line
+  // of the body turn the next mismatch into a five-second diagnosis instead
+  // of a silent loss - and the answer stays OK, because a refusal would make
+  // the terminal retry this forever and block the punches behind it.
+  const peek = req.method === "POST"
+    ? (await req.text().catch(() => "")).slice(0, 120).replace(/\s+/g, " ")
+    : "";
+  await log({
+    path,
+    method: req.method,
+    sn,
+    note: `unhandled path ${url.pathname}${peek ? ` | body: ${peek}` : ""}`,
+  });
   return text("OK");
 });
