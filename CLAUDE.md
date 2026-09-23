@@ -500,7 +500,12 @@ also call it with their JWT to send early, re-send (`force`), or preview
   everything the icons did. Headline figures are now a plain
   `Strength 30 · Present 24 · Absent 5` line, the geofence section is
   "Punched away from the office" rather than a warning triangle, and both
-  reports sign off `— Capital Brix HR`.
+  reports sign off `— Capital Brix AI HR`. **"AI HR", not "HR"** — these
+  messages are composed and sent by software, and the founder named them
+  that on 23 September so the team knows nobody is typing them out. The two
+  one-tap WhatsApp links a person actually sends by hand — `CardsAdmin.jsx`
+  and `EmployeePortal.jsx` — still say `Capital Brix HR`, because a human is
+  sending those.
 
   Windows are computed from **IST explicitly**, never the browser's clock: an
   HR laptop left on another timezone would otherwise file people into the
