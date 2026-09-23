@@ -756,9 +756,37 @@ session on the Call Pro AI dashboard, which is their console, not this code.
 
 **The real fix is a WhatsApp number of our own.** One session serving two
 products means each can be blamed for the other's messages, and neither
-company can audit the other's dashboard. A separate number linked to the
-worker — or a separate worker — ends the confusion permanently. Until then
-this ambiguity is structural, not a bug to find.
+company can audit the other's dashboard. That is structural, not a bug to
+find — so the worker below exists to end it.
+
+### Our own WhatsApp number — `integrations/wa-worker/`
+
+The shared session is the root of both WhatsApp failures this module has had,
+so there is now a Baileys worker of our own to move to: one number, one
+company, code that can be read rather than guessed at.
+
+- **It speaks the contract `wa-session` already calls** — `/health`,
+  `/status`, `/qr`, `/reconnect`, `/send`, `/groups` — so switching over is
+  `WA_WEBHOOK_URL` and `WA_WEBHOOK_TOKEN` and nothing else. No change to
+  `attendance-whatsapp`, the five cron jobs, or `/admin/whatsapp`.
+- **It only sends.** No message handler, no history sync, answers nobody. A
+  number linked here cannot be used to read anyone's conversations, and no
+  other product's message can leave through it.
+- **`toJid` returns an address containing `@` untouched.** This is the 21
+  September group bug written into the replacement so it cannot come back.
+- **A send on a disconnected session answers 503, never `ok`**, and a
+  `loggedOut` close does not retry — looping hides the one fact that matters,
+  that somebody has to scan again.
+- **`/health` carries no bearer on purpose**: it must keep answering when the
+  token is wrong or the session is dead, which is exactly when somebody is
+  asking.
+- **`WA_AUTH_DIR` is the account.** Whoever copies that directory can post as
+  this number.
+
+Setup, the proving order and the switchover steps are in that folder's
+README. The new number must be **added to the WhatsApp group** before the
+group messages can be delivered — WhatsApp only lets an account post to
+groups it is in.
 
 ### The WhatsApp connection console
 
