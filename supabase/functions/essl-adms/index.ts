@@ -20,8 +20,24 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 //
 //   GET  /iclock/cdata?SN=..&options=all   handshake; we answer with config
 //   POST /iclock/cdata?SN=..&table=ATTLOG  the punches themselves
-//   GET  /iclock/getrequest?SN=..          "any commands for me?" - always no
-//   POST /iclock/devicecmd                 command results - accepted, ignored
+//   POST /iclock/cdata?SN=..&table=OPERLOG who is enrolled, and under which code
+//   GET  /iclock/getrequest?SN=..          "any commands for me?"
+//   POST /iclock/devicecmd                 how the command went
+//
+// getrequest used to always answer "no", and the reason it no longer does is
+// that every question this module has lost days to lives on that machine and
+// was invisible from here: who is actually enrolled and under which code,
+// whether the punches are still sitting in its memory, whether its clock has
+// drifted. Each answer cost a walk to the office and a Windows Forms menu -
+// and the five silent days in September were that walk not happening.
+//
+// The command channel is deliberately narrow, and the narrowness does not
+// live here: cb_queue_device_command builds the text from a whitelist of
+// kinds, and this function never accepts a command string from anywhere. So
+// there is no input by which clearing the device's data, clearing its logs or
+// releasing the door lock can be expressed - those kinds do not exist.
+// Enrolling still happens at the terminal, with a finger or a face in front
+// of it. Nothing here can create a person.
 //
 // It is deliberately a *second* road, not a replacement. cb_device_punches is
 // unique on (device_code, punch_at), so the PC bridge and the terminal can
@@ -125,6 +141,39 @@ function parseAttlog(body: string): { device_code: string; punch_at: string }[] 
   return out;
 }
 
+/**
+ * USER records out of an OPERLOG upload.
+ *
+ * The device answers `DATA QUERY USERINFO` by uploading lines shaped
+ * `USER PIN=11<tab>Name=Sandeep<tab>Pri=0<tab>Card=...`. This is the only way
+ * to learn what the machine itself believes, and it settles the question the
+ * roster cannot: on 23 September a new joiner's punch displayed code 11,
+ * which the roster says is Sandeep with 983 punches behind it. One of those
+ * two readings is wrong, and only the terminal knows which.
+ */
+function parseUsers(body: string) {
+  const out: Record<string, string>[] = [];
+  for (const raw of body.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!/^USER\b/i.test(line)) continue;
+    const f: Record<string, string> = {};
+    for (const part of line.replace(/^USER\s+/i, "").split("\t")) {
+      const eq = part.indexOf("=");
+      if (eq < 1) continue;
+      f[part.slice(0, eq).trim().toLowerCase()] = part.slice(eq + 1).trim();
+    }
+    if (!f.pin) continue;
+    out.push({
+      device_code: f.pin,
+      name: f.name ?? "",
+      privilege: f.pri ?? "",
+      card: f.card ?? "",
+      raw: line.slice(0, 500),
+    });
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   // Vercel rewrites /iclock/* here, and Supabase prefixes /functions/v1/<fn>,
@@ -144,14 +193,64 @@ Deno.serve(async (req) => {
     return text("Unauthorized", 401);
   }
 
-  // "Any commands for me?" - asked every few seconds. There are none, and
-  // there must not be: this endpoint receives attendance, it does not drive
-  // the terminal. Nothing here can enrol, delete or unlock anybody.
-  if (path === "getrequest") return text("OK");
+  // "Any commands for me?" - asked every few seconds.
+  //
+  // One at a time, oldest first. A terminal handed a batch reports a single
+  // result for the lot, so a failure could not be attributed to the
+  // instruction that caused it - and an unattributable failure in a console
+  // like this is worse than no console at all.
+  if (path === "getrequest") {
+    const { data: cmd } = await admin
+      .from("cb_device_commands")
+      .select("id, cmd")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
 
-  // The terminal reporting how a command went. We send none, so this only
-  // ever arrives after a reboot; accept it so the device does not retry.
-  if (path === "devicecmd" || path === "ping") return text("OK");
+    if (!cmd) return text("OK");
+
+    // Marked sent BEFORE it goes out, and conditionally on still being
+    // pending. If this write failed after the device already had the
+    // instruction, the same one would be handed over again on the next poll,
+    // every few seconds, forever.
+    const { error: markErr } = await admin
+      .from("cb_device_commands")
+      .update({ status: "sent", sent_at: new Date().toISOString() })
+      .eq("id", cmd.id)
+      .eq("status", "pending");
+    if (markErr) return text("OK");
+
+    await log({ path, method: "GET", sn, note: `sent command #${cmd.id}` });
+    return text(`C:${cmd.id}:${cmd.cmd}`);
+  }
+
+  // How it went. The terminal posts ID=<id>&Return=<code>&CMD=<what>, and
+  // Return=0 means it worked. Recording the non-zero codes is the point: an
+  // instruction that quietly did nothing is exactly the failure this console
+  // exists to stop being invisible.
+  if (path === "devicecmd") {
+    const raw = await req.text();
+    const f = new URLSearchParams(raw.replace(/\r?\n/g, "&"));
+    const id = Number(f.get("ID") ?? f.get("id"));
+    const ret = Number(f.get("Return") ?? f.get("return"));
+    if (Number.isFinite(id) && id > 0) {
+      await admin
+        .from("cb_device_commands")
+        .update({
+          status: ret === 0 ? "done" : "failed",
+          return_code: Number.isFinite(ret) ? ret : null,
+          replied_at: new Date().toISOString(),
+          reply: raw.slice(0, 500),
+        })
+        .eq("id", id)
+        .then(() => {}, () => {});
+      await log({ path, method: "POST", sn, note: `command #${id} returned ${ret}` });
+    }
+    return text("OK");
+  }
+
+  if (path === "ping") return text("OK");
 
   if (path === "cdata" && req.method === "GET") {
     await log({ path, method: "GET", sn, note: "handshake" });
@@ -181,17 +280,32 @@ Deno.serve(async (req) => {
     const table = (q.get("table") ?? "").toUpperCase();
     const body = await req.text();
 
-    // OPERLOG (door opened, menu entered, user enrolled) and ATTPHOTO are not
-    // attendance. Accept them so the terminal clears them from its queue -
-    // an unacknowledged upload is retried until it blocks the punches behind
-    // it - and record nothing.
+    // OPERLOG carries the terminal's own user table, which is the one thing
+    // the roster cannot tell us: what the machine believes about who is
+    // enrolled under which code. The rest of it (door opened, menu entered)
+    // and ATTPHOTO are not attendance, and are acknowledged so the terminal
+    // clears them - an unacknowledged upload is retried until it blocks the
+    // punches queued behind it.
     if (table && table !== "ATTLOG") {
+      const users = table === "OPERLOG" ? parseUsers(body) : [];
+      if (users.length) {
+        await admin
+          .from("cb_device_users")
+          .upsert(
+            users.map((u) => ({ ...u, seen_at: new Date().toISOString() })),
+            { onConflict: "device_code" },
+          )
+          .then(() => {}, () => {});
+      }
       await log({
         path,
         method: "POST",
         sn,
         table_name: table,
-        note: "accepted, not attendance",
+        rows_in: users.length || null,
+        note: users.length
+          ? `${users.length} enrolled users recorded`
+          : "accepted, not attendance",
       });
       return text("OK");
     }
