@@ -130,7 +130,7 @@ export function buildDailyWhatsAppSummary(rows, dateStr) {
   }
 
   L.push('');
-  L.push('— Capital Brix HR');
+  L.push('— Capital Brix AI HR');
   return L.join('\n');
 }
 

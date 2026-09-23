@@ -303,7 +303,7 @@ function buildSummary(rows: Row[], dateStr: string) {
   // which is why the line above exists for them.
   L.push("Register: https://www.capitalbrix.co.in/admin/attendance");
   L.push("");
-  L.push("\u2014 Capital Brix HR");
+  L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -349,7 +349,7 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
     L.push("");
     L.push("_No attendance was recorded today._");
     L.push("");
-    L.push("\u2014 Capital Brix HR");
+    L.push("\u2014 Capital Brix AI HR");
     return L.join("\n");
   }
 
@@ -394,7 +394,7 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
   L.push("");
   L.push("Register: https://www.capitalbrix.co.in/admin/attendance");
   L.push("");
-  L.push("\u2014 Capital Brix HR");
+  L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -435,7 +435,7 @@ function buildMorningSummary(rows: Row[], dateStr: string): string | null {
   L.push("If you are in the office and your name is not on this list, please");
   L.push("punch on the machine now. The register is finalised at 11:30.");
   L.push("");
-  L.push("\u2014 Capital Brix HR");
+  L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -472,7 +472,7 @@ function buildPresentSummary(rows: Row[], dateStr: string): string | null {
   L.push("");
   L.push("The register is now closed for today.");
   L.push("");
-  L.push("\u2014 Capital Brix HR");
+  L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -511,7 +511,7 @@ function buildLateSummary(rows: Row[], dateStr: string): string | null {
   L.push("These names appeared in the 11:32 absent list and have since");
   L.push("punched in. The register has been updated.");
   L.push("");
-  L.push("\u2014 Capital Brix HR");
+  L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -558,7 +558,7 @@ function buildAbsentSummary(rows: Row[], dateStr: string): string | null {
   // recourse; an invitation to reopen a closed register is not.
   L.push("If any name here is wrong, please speak to HR.");
   L.push("");
-  L.push("\u2014 Capital Brix HR");
+  L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -660,7 +660,7 @@ function buildEveningSummary(rows: Row[], dateStr: string): string | null {
   // could ask, and that is precisely what moving to 19:02 gave up.
   L.push("If anything here is wrong, please speak to HR tomorrow morning.");
   L.push("");
-  L.push("— Capital Brix HR");
+  L.push("— Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -848,7 +848,7 @@ Deno.serve(async (req) => {
         "_HR: please check eTimeTrackLite → Utilities → Device Management →",
         "Start Download._",
         "",
-        "— Capital Brix HR",
+        "— Capital Brix AI HR",
       ].join("\n")
       : kind === "checkout"
       ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
