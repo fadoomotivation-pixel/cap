@@ -183,12 +183,27 @@ Deno.serve(async (req) => {
   const q = url.searchParams;
   const sn = (q.get("SN") ?? q.get("sn") ?? "").trim();
 
-  if (!sn || !allowedSerials().includes(sn.toUpperCase())) {
+  // Two different refusals, and they were logged identically until a line in
+  // this table was mistaken for the terminal finally calling in. A request
+  // carrying no serial at all is never the terminal - the firmware sends SN
+  // on every single request - so it is somebody testing the URL, and saying
+  // which is the difference between "it works now" and "that was us".
+  if (!sn) {
     await log({
       path,
       method: req.method,
-      sn: sn || null,
-      note: "refused - serial not allowed",
+      sn: null,
+      note: "refused - no serial sent (not the terminal; something fetched the URL)",
+    });
+    return text("Unauthorized", 401);
+  }
+
+  if (!allowedSerials().includes(sn.toUpperCase())) {
+    await log({
+      path,
+      method: req.method,
+      sn,
+      note: `refused - serial ${sn} is not in ADMS_ALLOWED_SN`,
     });
     return text("Unauthorized", 401);
   }

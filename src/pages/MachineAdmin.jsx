@@ -251,13 +251,24 @@ export default function MachineAdmin() {
           <div className="grid sm:grid-cols-4 gap-4 mb-4">
             {[
               { label: 'Last contact', value: when(data?.last_contact) },
-              { label: 'Contacts, 24h', value: data?.contacts_24h ?? 0 },
+              {
+                label: 'Contacts, 24h',
+                value: data?.contacts_24h ?? 0,
+                note: data?.refused_24h ? `${data.refused_24h} refused` : null,
+              },
               { label: 'Punches today', value: data?.punches_today ?? 0 },
               { label: 'Newest punch', value: when(data?.last_punch) },
             ].map((s) => (
               <div key={s.label}>
                 <p className="text-[11px] uppercase tracking-wide text-gray-400 mb-0.5">{s.label}</p>
                 <p className="font-semibold text-[#10243E]">{s.value}</p>
+                {/*
+                  A refusal is not a contact, and it used to be counted as one:
+                  a single "refused" row made this panel announce that the
+                  machine was reaching us. Shown, because a request that was
+                  turned away is worth seeing — just never as success.
+                */}
+                {s.note && <p className="text-[11px] text-amber-700">{s.note}</p>}
               </div>
             ))}
           </div>
