@@ -283,9 +283,11 @@ machine --(HTTPS)--> www.capitalbrix.co.in/iclock/* --> essl-adms Edge Function
   punches, nothing more. The function reads
   `cb_integration_secrets.punch_bridge` server-side and calls the same RPC —
   the device never sees a key.
-- **`getrequest` always answers `OK` and there is no command path.** This
-  endpoint receives attendance; it must never be able to enrol, delete or
-  unlock anybody.
+- **`getrequest` now carries a command channel — see "Driving the machine"
+  below.** It answered `OK` and nothing else until 23 September 2026. The
+  line that used to sit here said there must never be a command path; what
+  that was protecting against is still protected, but by the whitelist in
+  `cb_queue_device_command` rather than by the channel not existing.
 - **A failed ingest answers 500, not `OK`.** An un-acknowledged batch stays on
   the terminal and is re-sent. Saying `OK` when the store failed throws those
   punches away.
@@ -303,9 +305,69 @@ machine --(HTTPS)--> www.capitalbrix.co.in/iclock/* --> essl-adms Edge Function
   machine is talking to anybody, and the September stall proved that an
   unanswerable "is it working?" is how five days disappear.
 
+### Driving the machine — `/admin/machine`
+
+Every question this module has lost days to lives on the terminal and was
+invisible from our side: who is actually enrolled and under which code,
+whether the punches are still sitting in its memory, whether its clock has
+drifted. Each answer cost a walk to the office and a Windows Forms menu — and
+the five silent days in September were that walk not happening.
+
+ADMS already carries a command channel: the terminal asks "anything for me?"
+every few seconds and a server may answer with one instruction. `essl-adms`
+answered "no" until 23 September 2026. It now answers, narrowly.
+
+- **The whitelist is the security model, and it lives in
+  `cb_queue_device_command`.** The browser sends a *kind* and arguments; the
+  command text is built in Postgres. No layer accepts a command string, so
+  there is no input by which clearing the device's data, clearing its logs or
+  releasing the door lock can be expressed — those kinds do not exist. This is
+  the difference between a console and a remote shell for the office door.
+- **Nothing here can create a person.** Enrolling needs a finger or a face at
+  the terminal. The console records and corrects what is there.
+- The kinds: `refresh_all` (`CHECK` — the terminal uploads everything it
+  holds, which is what replaces Device → Download Logs), `query_users`,
+  `query_attlog` for a date range, `rename_user`, `delete_user`, `sync_time`,
+  `reboot`.
+- **Deleting an enrolment is allowed and clearing the device is not**, for one
+  reason: a deleted user does not touch `cb_device_punches`, so the attendance
+  already recorded under that code survives and the person can be enrolled
+  again. It is recoverable; a wipe is not.
+- **One command at a time, oldest first.** A terminal handed a batch reports a
+  single result for the lot, so a failure could not be attributed to the
+  instruction that caused it — and an unattributable failure in a console like
+  this is worse than no console.
+- **Marked `sent` before it goes out**, conditionally on still being pending.
+  If that write failed after the device already had the instruction, the same
+  one would be handed over again every few seconds, forever.
+- **`cb_device_commands` records who asked and what came back.** A command
+  channel without an audit trail is a door with no lock. `Return=0` is done;
+  anything else is `failed` with the code, because an instruction that quietly
+  did nothing is exactly the failure this console exists to end.
+- **`cb_device_users` is what the machine itself believes**, filled from the
+  `USER` records in an OPERLOG upload — previously accepted and discarded. It
+  is the only thing that can settle a code the roster and the terminal
+  disagree about, which is not hypothetical: on 23 September a new joiner's
+  punch displayed code `11`, and the roster says `11` is **Sandeep**, with 983
+  punches over 223 days behind it. The console shows both columns side by side
+  for exactly that.
+- **A queued command for a terminal that has never contacted us never runs.**
+  The page says so in plain words rather than showing a hopeful "pending" —
+  `cb_adms_log` was empty for the whole of the ADMS work, and a console that
+  lets you believe an instruction is merely slow is worse than one that does
+  nothing.
+
 Device settings (Menu → Comm. → Cloud Server / ADMS): **Enable Domain Name ON**,
-Server Address `www.capitalbrix.co.in`, Server Port `443`. **If the terminal
-refuses 443** — a good many eSSL push builds are HTTP-only — the panel above
+Server Address `https://www.capitalbrix.co.in`, **Enable Proxy Server OFF**.
+
+**There is no Server Port field when Enable Domain Name is ON** — ZKTeco
+firmware hides it, and it only reappears with that switch off, where the
+address must then be an IP and Vercel has none. So the port is carried by the
+scheme, and the `https://` is load-bearing: without it the terminal uses port
+80, where `http://www.capitalbrix.co.in/iclock/…` answers **`308` redirect**
+to HTTPS — verified — and this firmware does not follow redirects. It fails
+silently, with nothing on its screen, which is the shape of the whole
+never-contacted-us story. **If the terminal refuses HTTPS entirely** — a good many eSSL push builds are HTTP-only — the panel above
 stays on "never contacted us", and the answer is a small HTTP front door that
 forwards to the function, not weakening anything here.
 

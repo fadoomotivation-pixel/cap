@@ -20,6 +20,7 @@ import EventRegistration from './pages/EventRegistration';
 import EmployeePortal from './pages/EmployeePortal';
 import InterviewAdmin from './pages/InterviewAdmin';
 import AttendanceAdmin from './pages/AttendanceAdmin';
+import MachineAdmin from './pages/MachineAdmin';
 import ExpenseAdmin from './pages/ExpenseAdmin';
 import LeadsAdmin from './pages/LeadsAdmin';
 import CardsAdmin from './pages/CardsAdmin';
@@ -72,6 +73,7 @@ export function AppContent() {
         {/* Interview Scheduler Routes */}
         <Route path="/admin/interviews" element={<PrivateRoute title="Interview Scheduler | Capital Brix"><InterviewAdmin /></PrivateRoute>} />
         <Route path="/admin/attendance" element={<PrivateRoute title="Attendance | Capital Brix"><AttendanceAdmin /></PrivateRoute>} />
+        <Route path="/admin/machine" element={<PrivateRoute title="Attendance machine | Capital Brix"><MachineAdmin /></PrivateRoute>} />
         <Route path="/admin/expenses" element={<PrivateRoute title="Petty Cash | Capital Brix"><ExpenseAdmin /></PrivateRoute>} />
         <Route path="/admin/leads" element={<PrivateRoute title="Website Leads | Capital Brix"><LeadsAdmin /></PrivateRoute>} />
         <Route path="/admin/cards" element={<PrivateRoute title="Card Requests | Capital Brix"><CardsAdmin /></PrivateRoute>} />
