@@ -9,7 +9,7 @@ import {
   Users, UserPlus, MapPin, Download, Search, LogOut, RefreshCw, CheckCircle, Clock,
   Building2, Navigation, Home, UserX, Power, Calendar, Send, KeyRound, Settings, AlertTriangle,
   Copy, BarChart3, Bell, Crosshair, X, Wallet, Star,
-  Inbox,
+  Inbox, Fingerprint,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
@@ -154,6 +154,58 @@ export default function AttendanceAdmin() {
       setError(err.message);
     }
     setCreatingFor(null);
+  };
+
+  /*
+    Assigning the machine's Emp Code used to be a SQL statement, and the one
+    mistake it invites is the expensive one: handing somebody a code another
+    person already punches on. The register resolves a person through
+    device_code at fold time, so a shared code silently merges two people's
+    attendance, and the only evidence is that one of them has a record nobody
+    can explain. It nearly happened twice — three Amits on the machine, and a
+    new joiner shown as "11" when 11 is Sandeep's, with 983 punches behind it.
+
+    So the console answers the question the SQL never did: what does this code
+    already carry, before anybody commits to it.
+  */
+  const [codeEditor, setCodeEditor] = useState(null); // { emp, value, info, busy, message }
+  const [freeCodes, setFreeCodes] = useState([]);
+
+  const openCodeEditor = async (emp) => {
+    setCodeEditor({ emp, value: emp.device_code || '', info: null, busy: false, message: '' });
+    const { data } = await supabase.rpc('cb_free_device_codes', { p_limit: 6 });
+    setFreeCodes((data || []).map((r) => r.device_code));
+  };
+
+  // Looked up as they type, because the answer only changes a decision before
+  // the code is saved. A code with a thousand punches behind it is somebody's
+  // record, not a free slot.
+  const lookUpCode = async (value) => {
+    setCodeEditor((c) => (c ? { ...c, value, info: null, message: '' } : c));
+    const code = value.trim();
+    if (!code) return;
+    const { data } = await supabase.rpc('cb_device_code_info', { p_code: code });
+    const row = Array.isArray(data) ? data[0] : data;
+    setCodeEditor((c) => (c && c.value.trim() === code ? { ...c, info: row || null } : c));
+  };
+
+  const saveCode = async () => {
+    if (!codeEditor) return;
+    setCodeEditor((c) => ({ ...c, busy: true, message: '' }));
+    const { data, error: err } = await supabase.rpc('cb_set_device_code', {
+      p_employee: codeEditor.emp.id,
+      p_code: codeEditor.value.trim() || null,
+    });
+    if (err) {
+      setCodeEditor((c) => ({ ...c, busy: false, message: friendlyError(err) }));
+      return;
+    }
+    if (data && data.ok === false) {
+      setCodeEditor((c) => ({ ...c, busy: false, message: data.message }));
+      return;
+    }
+    setCodeEditor(null);
+    await fetchData();
   };
 
   const toggleActive = async (emp) => {
@@ -583,9 +635,10 @@ export default function AttendanceAdmin() {
                 <span>
                   <strong>Not enrolled on the attendance machine:</strong>{' '}
                   {employees.filter((e) => e.is_active && !e.device_code).map((e) => e.full_name.trim()).join(', ')}.
-                  {' '}They cannot punch, so nothing will ever be recorded for them. Enrol them on the device, then put
-                  the machine&apos;s Emp Code against their name — until then they are left out of the daily WhatsApp
-                  report rather than listed absent every day.
+                  {' '}They cannot punch, so nothing will ever be recorded for them. Enrol them on the device under a
+                  free code, then tap <strong>Not on the machine</strong> on their row to save it — their past punches
+                  attach themselves. Until then they are left out of the daily WhatsApp report rather than listed
+                  absent every day.
                 </span>
               </div>
             )}
@@ -647,7 +700,8 @@ export default function AttendanceAdmin() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {employees.map((e) => (
-                    <tr key={e.id} className="hover:bg-gray-50/50">
+                    <React.Fragment key={e.id}>
+                    <tr className="hover:bg-gray-50/50">
                       <td className="p-3">
                         <p className="font-semibold text-[#10243E]">{e.full_name}</p>
                         {e.employee_code && <p className="text-xs text-gray-400">{e.employee_code}</p>}
@@ -661,13 +715,20 @@ export default function AttendanceAdmin() {
                           places, nobody ever enrols them.
                         */}
                         <div className="flex flex-wrap gap-1.5 mt-1">
-                          {e.device_code ? (
-                            <span className="text-[10px] text-gray-400">machine #{e.device_code}</span>
-                          ) : (
-                            <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
-                              Not on the machine
-                            </span>
-                          )}
+                          {/*
+                            The badge is the control. Seeing the gap and being
+                            able to close it belong in one place — a badge that
+                            reports "Not on the machine" and then leaves you
+                            hunting for where to fix it is half a console.
+                          */}
+                          <button
+                            onClick={() => openCodeEditor(e)}
+                            title="Set the code this person punches on"
+                            className={e.device_code
+                              ? 'text-[10px] text-gray-400 hover:text-[#9C7C1C] underline decoration-dotted underline-offset-2'
+                              : 'text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 hover:border-amber-400'}>
+                            {e.device_code ? `machine #${e.device_code}` : 'Not on the machine'}
+                          </button>
                           {e.in_daily_report === false && (
                             <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 rounded px-1.5 py-0.5">
                               Not in daily report
@@ -752,6 +813,99 @@ export default function AttendanceAdmin() {
                         </div>
                       </td>
                     </tr>
+
+                    {/*
+                      The editor opens on the row of the person it is about,
+                      and it leads with what the code already carries rather
+                      than with an empty box. "983 punches over 223 days,
+                      currently Sandeep" is the sentence that stops the
+                      mistake; a bare "code is taken" only postpones it.
+                    */}
+                    {codeEditor?.emp?.id === e.id && (
+                      <tr className="bg-[#FDFBF5]">
+                        <td colSpan="6" className="p-4 border-t border-[#D4AF37]/30">
+                          <p className="text-sm font-semibold text-[#10243E] mb-1 flex items-center gap-1.5">
+                            <Fingerprint size={15} className="text-[#9C7C1C]" />
+                            Machine code for {e.full_name.trim()}
+                          </p>
+                          <p className="text-xs text-gray-500 mb-3">
+                            The Emp Code the attendance machine shows when this person punches —
+                            not their employee code and not their email. Their past punches attach
+                            themselves as soon as it is saved.
+                          </p>
+
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <input
+                              value={codeEditor.value}
+                              onChange={(ev) => lookUpCode(ev.target.value)}
+                              inputMode="numeric"
+                              placeholder="e.g. 103"
+                              className="w-28 px-3 py-2 border border-gray-300 rounded-md outline-none focus:border-[#D4AF37] font-mono"
+                            />
+                            <button
+                              onClick={saveCode}
+                              disabled={codeEditor.busy}
+                              className="px-4 py-2 rounded-md bg-[#10243E] text-white text-sm font-medium hover:bg-[#1b3a63] disabled:opacity-50">
+                              {codeEditor.busy ? 'Saving…' : 'Save'}
+                            </button>
+                            <button
+                              onClick={() => setCodeEditor(null)}
+                              className="px-3 py-2 rounded-md border border-gray-200 text-gray-600 text-sm hover:border-gray-300">
+                              Cancel
+                            </button>
+                            {e.device_code && (
+                              <button
+                                onClick={() => lookUpCode('')}
+                                className="text-xs text-gray-400 hover:text-red-500 underline">
+                                clear it
+                              </button>
+                            )}
+                          </div>
+
+                          {/* What this code already is. */}
+                          {codeEditor.value.trim() && codeEditor.info && (
+                            codeEditor.info.owner_id && codeEditor.info.owner_id !== e.id ? (
+                              <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                                <strong>#{codeEditor.value.trim()} is {codeEditor.info.owner_name?.trim()}&apos;s code</strong>
+                                {Number(codeEditor.info.punches) > 0 && <> — {codeEditor.info.punches} punches over {codeEditor.info.days} days,
+                                  {' '}{codeEditor.info.first_seen} to {codeEditor.info.last_seen}</>}.
+                                {' '}Giving it to somebody else merges their two records. Enrol this
+                                person on a free code instead.
+                              </p>
+                            ) : Number(codeEditor.info.punches) > 0 ? (
+                              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                                #{codeEditor.value.trim()} has <strong>{codeEditor.info.punches} punches over {codeEditor.info.days} days</strong>
+                                {' '}({codeEditor.info.first_seen} to {codeEditor.info.last_seen}), and belongs to nobody on the roster.
+                                {codeEditor.info.ignored_note && <> It is on the ignore list as &ldquo;{codeEditor.info.ignored_note}&rdquo;.</>}
+                                {' '}Save it only if that history is genuinely this person&apos;s — it will all become their attendance.
+                              </p>
+                            ) : (
+                              <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                                #{codeEditor.value.trim()} is free — the machine has never recorded a punch on it.
+                              </p>
+                            )
+                          )}
+
+                          {codeEditor.message && (
+                            <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-2">
+                              {codeEditor.message}
+                            </p>
+                          )}
+
+                          {freeCodes.length > 0 && (
+                            <p className="text-xs text-gray-500 mt-3">
+                              Never used by anybody:{' '}
+                              {freeCodes.map((c) => (
+                                <button key={c} onClick={() => lookUpCode(c)}
+                                  className="font-mono text-[#9C7C1C] hover:underline mr-2">#{c}</button>
+                              ))}
+                              <br />Enrol the person on the machine under one of these, then save it here.
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   ))}
                   {employees.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-400">No employees added yet.</td></tr>}
                 </tbody>
