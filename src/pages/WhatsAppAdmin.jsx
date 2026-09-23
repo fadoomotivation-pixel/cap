@@ -47,15 +47,8 @@ const MESSAGES = [
     kind: 'attendance',
     time: '11:30 AM',
     to: 'both',
-    title: 'The full register',
-    blurb: 'Everyone, seniors included: arrivals grouped by window, then absent and on leave. The only message with two audiences — it goes to the group and to the founder, so he keeps his copy even if he leaves the group.',
-  },
-  {
-    kind: 'absent',
-    time: '11:32 AM',
-    to: 'group',
-    title: 'The absent list',
-    blurb: 'Juniors absent, and on leave — no arrival times. Two minutes after the register closes, never before it. Sends nothing when nobody is absent.',
+    title: 'The register',
+    blurb: 'Arrivals grouped by window, then absent, on leave and anyone who punched away from the office. The absent list is inside it — seniors with no punch are already dropped, so that section is juniors only. The only message with two audiences: it goes to the group and to the founder, so he keeps his copy even if he leaves the group.',
   },
   {
     kind: 'late',

@@ -4,21 +4,24 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // ─────────────────────────────────────────────────────────────
 // Posts the daily attendance messages to WhatsApp.
 //
-// Five a day, off one function. `kind` picks which:
+// Four a day, off one function. `kind` picks which:
 //   morning     10:30 IST — juniors punched in so far, so anyone missing can
 //                           still fix it before the register closes  → group
-//   attendance  11:30 IST — the whole company, arrivals by window, absent
-//                           and on leave                     → group AND founder
-//   absent      11:32 IST — the absent list alone, no arrival times   → group
+//   attendance  11:30 IST — the register: arrivals by window, absent, on
+//                           leave, and the HR line     → group AND founder
 //   late        13:00 IST — juniors who punched in after 11:30        → group
 //   evening     19:02 IST — the day's close: logged out with departure
 //                           windows, no check-out recorded, no attendance
 //                                                                     → group
 //
-// `present`, `reminder` and `checkout` still work if called by hand, but
-// nothing schedules them. The founder merged the 18:45 reminder and the 19:01
-// logout record into one evening message on 23 September, and the 11:30
-// register reaching the group made a separate juniors-present list redundant.
+// `present`, `absent`, `reminder` and `checkout` still work if called by
+// hand, but nothing schedules them. All four were folded into the two
+// messages above on 23 September, at the founder's instruction:
+//
+//   present  → the 11:30 register reaches the group now, and is a superset
+//   absent   → the register's Absent section IS that list (see buildSummary)
+//   reminder → merged into "evening"
+//   checkout → merged into "evening"
 //
 // WHAT THAT MERGE GAVE UP, so nobody restores it by accident: the 18:45
 // version sat before the shift ended precisely so somebody who had forgotten
@@ -37,10 +40,10 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // roll-call of the people being watched. It is also the only message with two
 // audiences, so the founder keeps his copy even if he ever leaves the group.
 //
-// So the morning reads as a sequence rather than three copies of one list:
-// 10:30 is provisional and still worth walking to the machine for, 11:30 is
-// the register closing, 11:32 is who it closed without, 13:00 is who arrived
-// after and has since been corrected into it.
+// So the day reads as a sequence rather than copies of one list: 10:30 is
+// provisional and still worth walking to the machine for, 11:30 is the
+// register closing with everything in it, 13:00 is who arrived after and has
+// since been corrected into it, 19:02 is how the day ended.
 //
 // Each has its own on/off switch in cb_hr_settings.wa_messages_enabled, set
 // from /admin/whatsapp; daily_report_enabled is the master switch above them.
@@ -191,6 +194,21 @@ const WINDOWS: { label: string; until: number | null }[] = [
 ];
 
 /**
+ * The 11:30 register — one message, both audiences, and since 23 September
+ * the only attendance message of the middle of the day.
+ *
+ * It absorbed the separate 11:32 absent list on the founder's instruction.
+ * Nothing was lost in that merge, and the reason is structural rather than
+ * editorial: `cb_daily_attendance_report()` already drops a senior who has
+ * neither a punch nor an `hr_status`, so **the Absent section here is juniors
+ * only by construction** — exactly what the 11:32 message published. Sending
+ * it twice was the same names, two minutes apart, to the same group.
+ *
+ * What the merge had to keep is the 11:32 message's closing line. A list of
+ * absent colleagues needs a route to a person who can correct it, and the
+ * register's `Register:` link is for the founder, not for the fifty people
+ * who cannot open it.
+ *
  * The same summary src/lib/attendanceReport.js builds for the HR console.
  * Change one and change the other, or the console and the cron disagree.
  */
@@ -246,6 +264,9 @@ function buildSummary(rows: Row[], dateStr: string) {
     inWindow.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`));
   }
 
+  // Absent is juniors only, because the report function has already dropped
+  // any senior with neither a punch nor an hr_status. This section IS the
+  // former 11:32 message.
   if (absent.length) {
     L.push("");
     L.push(`*Absent (${absent.length})*`);
@@ -267,6 +288,19 @@ function buildSummary(rows: Row[], dateStr: string) {
   }
 
   L.push("");
+  L.push("The register is now closed for today.");
+  // Carried over from the 11:32 message this absorbed. Not "you can still
+  // punch" \u2014 the 10:30 message said the register closes at 11:30 and this is
+  // that closure. A route to a person is honest recourse; reopening a
+  // register you have just announced as closed is not. Only printed when
+  // there is a name that could be wrong.
+  if (absent.length || onLeave.length) {
+    L.push("If any name here is wrong, please speak to HR.");
+  }
+
+  L.push("");
+  // For the founder. The fifty people who also receive this cannot open it,
+  // which is why the line above exists for them.
   L.push("Register: https://www.capitalbrix.co.in/admin/attendance");
   L.push("");
   L.push("\u2014 Capital Brix HR");
@@ -655,16 +689,16 @@ Deno.serve(async (req) => {
     // weeks, and the founder's full register is the safest thing to send by
     // accident.
     const KINDS = [
-      "attendance", // 11:30 BOTH  — arrivals by window, absent, on leave
+      "attendance", // 11:30 BOTH  — the register: windows, absent, on leave
       "morning", //    10:30 group — juniors punched in so far
-      "absent", //     11:32 group — juniors absent
       "late", //       13:00 group — juniors who arrived after 11:30
       "evening", //    19:02 group — logout record, no check-out, no punch
       // Kept so a manual send still works and an old cron cannot 500, but
-      // nothing schedules these any more:
-      "present", //    superseded — the 11:30 register now reaches the group
-      "reminder", //   merged into "evening" on the founder's instruction
-      "checkout", //   merged into "evening" on the founder's instruction
+      // nothing schedules these any more — all four fold into the two above:
+      "present", //    superseded — the 11:30 register is a superset
+      "absent", //     superseded — it IS the register's Absent section
+      "reminder", //   merged into "evening"
+      "checkout", //   merged into "evening"
     ];
     const kind = KINDS.includes(rawKind ?? "") ? rawKind! : "attendance";
 
