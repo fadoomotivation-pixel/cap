@@ -46,16 +46,9 @@ const MESSAGES = [
   {
     kind: 'attendance',
     time: '11:30 AM',
-    to: 'founder',
+    to: 'both',
     title: 'The full register',
-    blurb: 'Everyone, seniors included: arrivals grouped by window, then absent and on leave. The complete picture, with a link to the register.',
-  },
-  {
-    kind: 'present',
-    time: '11:30 AM',
-    to: 'group',
-    title: 'Present — the final list',
-    blurb: 'Juniors present as the register closes. The same names as 10:30, but this one is the record rather than a prompt, and says so. Sends nothing if nobody has punched.',
+    blurb: 'Everyone, seniors included: arrivals grouped by window, then absent and on leave. The only message with two audiences — it goes to the group and to the founder, so he keeps his copy even if he leaves the group.',
   },
   {
     kind: 'absent',
@@ -72,18 +65,11 @@ const MESSAGES = [
     blurb: 'Juniors who punched in after 11:30, in one message rather than a live feed — and it says their name has since been corrected in the register. Sends nothing when nobody was late.',
   },
   {
-    kind: 'reminder',
-    time: '6:45 PM',
+    kind: 'evening',
+    time: '7:02 PM',
     to: 'group',
-    title: 'Finish your attendance',
-    blurb: 'Who has logged out, who has no check-out yet, and whose attendance is missing — while they are still in the building and can fix it. Sends nothing when the day is already complete.',
-  },
-  {
-    kind: 'checkout',
-    time: '7:01 PM',
-    to: 'founder',
-    title: 'The logout record',
-    blurb: 'Who left and when, split by window, plus everyone with no check-out recorded.',
+    title: 'The day’s close',
+    blurb: 'Who left and when, split by departure window, plus everyone with no check-out recorded and everyone with no attendance at all. The 6:45 reminder and the 7:01 record merged into one. It reads as a record, not a request — at 7:02 the people it would ask have gone home. Sends nothing when the day is already complete.',
   },
 ];
 
@@ -480,7 +466,10 @@ export default function WhatsAppAdmin() {
           <div className="space-y-3">
             {MESSAGES.map((m) => {
               const on = messageOn(m.kind);
-              const isGroup = m.to === 'group';
+              // "both" is the 11:30 register, the one message with two
+              // audiences. It is styled as a group message because that is
+              // the consequential half — fifty people read it.
+              const isGroup = m.to === 'group' || m.to === 'both';
               return (
                 <div key={m.kind}
                   className={`border rounded-lg p-4 ${on ? 'border-gray-200' : 'border-gray-100 bg-gray-50'}`}>
@@ -493,7 +482,7 @@ export default function WhatsAppAdmin() {
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : 'bg-amber-50 text-amber-800 border-amber-200'
                         }`}>
-                          {isGroup ? 'Group' : 'Founder'}
+                          {m.to === 'both' ? 'Group + Founder' : isGroup ? 'Group' : 'Founder'}
                         </span>
                         {!on && (
                           <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-gray-200 text-gray-600 border-gray-300">

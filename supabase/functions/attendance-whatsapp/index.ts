@@ -4,32 +4,43 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // ─────────────────────────────────────────────────────────────
 // Posts the daily attendance messages to WhatsApp.
 //
-// Seven a day, off one function, and they do NOT share an audience — see the
-// routing block below. `kind` picks which:
+// Five a day, off one function. `kind` picks which:
 //   morning     10:30 IST — juniors punched in so far, so anyone missing can
 //                           still fix it before the register closes  → group
-//   attendance  11:30 IST — arrivals by window, and who is absent    → founder
-//   present     11:30 IST — juniors present, the register as it closes → group
+//   attendance  11:30 IST — the whole company, arrivals by window, absent
+//                           and on leave                     → group AND founder
 //   absent      11:32 IST — the absent list alone, no arrival times   → group
 //   late        13:00 IST — juniors who punched in after 11:30        → group
-//   reminder    18:45 IST — the evening picture: who has logged out, who
-//                           has no check-out yet, and whose attendance is
-//                           missing — while they can still fix it    → group
-//   checkout    19:01 IST — who logged out and when, and who is still in
-//                                                                    → founder
+//   evening     19:02 IST — the day's close: logged out with departure
+//                           windows, no check-out recorded, no attendance
+//                                                                     → group
+//
+// `present`, `reminder` and `checkout` still work if called by hand, but
+// nothing schedules them. The founder merged the 18:45 reminder and the 19:01
+// logout record into one evening message on 23 September, and the 11:30
+// register reaching the group made a separate juniors-present list redundant.
+//
+// WHAT THAT MERGE GAVE UP, so nobody restores it by accident: the 18:45
+// version sat before the shift ended precisely so somebody who had forgotten
+// to tap could still fix it. At 19:02 they have gone home, so the evening
+// message is a record rather than a request, and its closing line says so.
 //
 // ── The group's lists are juniors only ───────────────────────────────────
 // On the founder's instruction of 23 September, every message addressed to
 // the group names juniors only. Senior staff account for their movements
 // straight to him, so their arrival time in a fifty-person group is neither
 // news nor anybody's business — it is a name taking up room in a list the
-// team is meant to scan for its own. His own two messages stay unfiltered:
-// he is reading the whole company, which is what they are for.
+// team is meant to scan for its own.
 //
-// The 10:30 and 11:30 present lists were merged once, on the reasoning that a
-// message repeating itself is how people stop reading the first one. He asked
-// for both back, and the distinction carries them: 10:30 is provisional and
-// still worth walking to the machine for, 11:30 is the record. Each says so.
+// The 11:30 register is the exception, and deliberately so: it is the whole
+// company including seniors, which is what makes it the record rather than a
+// roll-call of the people being watched. It is also the only message with two
+// audiences, so the founder keeps his copy even if he ever leaves the group.
+//
+// So the morning reads as a sequence rather than three copies of one list:
+// 10:30 is provisional and still worth walking to the machine for, 11:30 is
+// the register closing, 11:32 is who it closed without, 13:00 is who arrived
+// after and has since been corrected into it.
 //
 // Each has its own on/off switch in cb_hr_settings.wa_messages_enabled, set
 // from /admin/whatsapp; daily_report_enabled is the master switch above them.
@@ -547,7 +558,7 @@ function buildAbsentSummary(rows: Row[], dateStr: string): string | null {
  * is not being forgetful. Returns null when all three lists are empty,
  * because a daily message that is usually empty is one people stop reading.
  */
-function buildReminderSummary(rows: Row[], dateStr: string): string | null {
+function buildEveningSummary(rows: Row[], dateStr: string): string | null {
   const jr = juniors(rows);
   const present = jr.filter((r) => r.check_in_at);
   const loggedOut = present.filter((r) => r.check_out_at);
@@ -557,45 +568,63 @@ function buildReminderSummary(rows: Row[], dateStr: string): string | null {
   if (!loggedOut.length && !noExit.length && !noPunch.length) return null;
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX — Attendance Reminder*");
+  L.push("*CAPITAL BRIX — Daily Logout*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push("Please complete today's attendance before you leave.");
+  L.push(`Logged out ${loggedOut.length}  ·  No check-out ${noExit.length}`);
 
+  // Departure windows, which the 18:45 version deliberately did not carry —
+  // before the shift ended, "19:00 onwards" described time that had not
+  // happened yet. At 19:02 it has, so the full breakdown belongs here.
   if (loggedOut.length) {
-    L.push("");
-    L.push(`*Logged out (${loggedOut.length})*`);
-    [...loggedOut]
-      .sort((a, b) => istMinutes(a.check_out_at) - istMinutes(b.check_out_at))
-      .forEach((r) =>
+    let remaining = [...loggedOut].sort(
+      (a, b) => istMinutes(a.check_out_at) - istMinutes(b.check_out_at),
+    );
+    for (const w of OUT_WINDOWS) {
+      const inWindow = w.until === null
+        ? remaining
+        : remaining.filter((r) => istMinutes(r.check_out_at) < w.until!);
+      remaining = w.until === null
+        ? []
+        : remaining.filter((r) => istMinutes(r.check_out_at) >= w.until!);
+
+      if (!inWindow.length) continue;
+      L.push("");
+      L.push(`*${w.label}* (${inWindow.length})`);
+      inWindow.forEach((r) =>
         L.push(
           `• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}, out ${
             fmtTime(r.check_out_at)
           }`,
         )
       );
+    }
   }
 
   if (noExit.length) {
     L.push("");
-    L.push(`*No check-out yet (${noExit.length})*`);
+    // The machine cannot tell a missed exit punch from somebody still at
+    // their desk, and printing only one of the two makes the message assert
+    // a fact it does not have. Naming both is shorter than being wrong.
+    L.push(`*No check-out recorded (${noExit.length})*`);
+    L.push("_Either the exit punch was missed, or they are still in the office._");
     noExit.forEach((r) =>
       L.push(`• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}`)
     );
-    L.push("");
-    L.push("Please punch on the machine on your way out, or the day is");
-    L.push("recorded as zero hours.");
   }
 
   if (noPunch.length) {
     L.push("");
     L.push(`*No attendance recorded today (${noPunch.length})*`);
     noPunch.forEach((r) => L.push(`• ${r.full_name.trim()}`));
-    L.push("");
-    L.push("If you are in the office and your name is here, please punch on");
-    L.push("the machine or tell HR — otherwise today will be marked absent.");
   }
 
+  L.push("");
+  // NOT "please punch on your way out". At 19:02 the shift has ended and the
+  // people this would ask are already gone — an instruction nobody can act on
+  // is what teaches a group to stop reading the message. The 18:45 version
+  // could ask, and that is precisely what moving to 19:02 gave up.
+  L.push("If anything here is wrong, please speak to HR tomorrow morning.");
   L.push("");
   L.push("— Capital Brix HR");
   return L.join("\n");
@@ -618,7 +647,7 @@ Deno.serve(async (req) => {
       kind?: string;
     };
 
-    // Seven messages a day off one function. cb_report_log is keyed on
+    // Five scheduled messages off one function. cb_report_log is keyed on
     // (report_date, kind), so each is sent once and none can suppress another.
     //
     // An unrecognised kind falls back to "attendance" rather than failing: a
@@ -626,13 +655,16 @@ Deno.serve(async (req) => {
     // weeks, and the founder's full register is the safest thing to send by
     // accident.
     const KINDS = [
-      "attendance", // 11:30 founder — arrivals by window, absent, on leave
-      "morning", //    10:30 group   — juniors punched in so far
-      "present", //    11:30 group   — juniors present, register closed
-      "absent", //     11:32 group   — juniors absent
-      "late", //       13:00 group   — juniors who arrived after 11:30
-      "reminder", //   18:45 group   — logged out / no check-out / no punch
-      "checkout", //   19:01 founder — the logout record
+      "attendance", // 11:30 BOTH  — arrivals by window, absent, on leave
+      "morning", //    10:30 group — juniors punched in so far
+      "absent", //     11:32 group — juniors absent
+      "late", //       13:00 group — juniors who arrived after 11:30
+      "evening", //    19:02 group — logout record, no check-out, no punch
+      // Kept so a manual send still works and an old cron cannot 500, but
+      // nothing schedules these any more:
+      "present", //    superseded — the 11:30 register now reaches the group
+      "reminder", //   merged into "evening" on the founder's instruction
+      "checkout", //   merged into "evening" on the founder's instruction
     ];
     const kind = KINDS.includes(rawKind ?? "") ? rawKind! : "attendance";
 
@@ -689,24 +721,31 @@ Deno.serve(async (req) => {
     // Who each message is FOR decides where it goes, and they are not the
     // same audience.
     //
-    // The group's messages ask somebody to act while they still can: at 10:30
-    // "your name is not on this list, go and punch", and at 18:45 "finish
-    // your attendance before you leave". The 11:32 absent list and the 13:00
-    // late list are the exceptions, and they are there because the founder
-    // asked for them directly.
+    // Only the 10:30 message still asks somebody to act — "your name is not
+    // on this list, go and punch". Everything after the register closes is a
+    // record, and the 19:02 evening message says so rather than asking people
+    // who have gone home to fix something.
     //
-    // The 11:30 roll-call and the 19:01 logout summary are management
-    // information — the whole company including seniors, who drifted in late,
-    // who left before the shift ended. Fifty people cannot act on either, and
-    // a daily list of colleagues' departure times in a company group reads as
-    // surveillance however plainly it is worded. Those go to the founder.
+    // The 11:30 register used to be the founder's alone, on the reasoning
+    // that a daily list of colleagues' arrival times reads as surveillance in
+    // a company group. He directed on 23 September that it go to BOTH — so it
+    // is the one message with two audiences, and the founder keeps his copy
+    // even if he ever leaves the group.
     const group = (settings?.wa_group_id || "").trim();
     const founder = (settings?.founder_whatsapp || "").replace(/\D/g, "");
+
     // Each falls back to the other: a summary that reaches one person beats
-    // one that reaches nobody because a number was never filled in.
-    const toGroup = ["morning", "present", "absent", "late", "reminder"];
-    let target = toGroup.includes(kind) ? (group || founder) : (founder || group);
-    if (!target) {
+    // one that reaches nobody because a number was never filled in. Duplicates
+    // are stripped, so a founder number that IS the group id sends once.
+    const toGroup = ["morning", "present", "absent", "late", "evening", "reminder"];
+    let targets = kind === "attendance"
+      ? [founder, group]
+      : toGroup.includes(kind)
+      ? [group || founder]
+      : [founder || group];
+    targets = [...new Set(targets.filter(Boolean))];
+
+    if (!targets.length) {
       return json({ sent: false, reason: "no WhatsApp group or founder number configured" });
     }
 
@@ -761,7 +800,7 @@ Deno.serve(async (req) => {
     // The broken-feed warning is HR's problem, never the group's. It asks for
     // a specific click inside eTimeTrackLite, which forty-nine of fifty people
     // cannot act on and would read as the company's attendance being broken.
-    if (punchCount === 0) target = founder || group;
+    if (punchCount === 0) targets = [founder || group].filter(Boolean);
 
     const text = punchCount === 0
       ? [
@@ -779,8 +818,8 @@ Deno.serve(async (req) => {
       ].join("\n")
       : kind === "checkout"
       ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
-      : kind === "reminder"
-      ? buildReminderSummary((rows ?? []) as Row[], reportDate)
+      : kind === "evening" || kind === "reminder"
+      ? buildEveningSummary((rows ?? []) as Row[], reportDate)
       : kind === "morning"
       ? buildMorningSummary((rows ?? []) as Row[], reportDate)
       : kind === "present"
@@ -799,7 +838,7 @@ Deno.serve(async (req) => {
         report_date: reportDate,
         kind,
         sent_at: new Date().toISOString(),
-        target,
+        target: targets.join(", "),
         ok: true,
         detail: kind === "morning"
           ? "nothing to post — nobody had punched in by 10:30"
@@ -809,7 +848,7 @@ Deno.serve(async (req) => {
           ? "nothing to post — nobody was absent"
           : kind === "late"
           ? "nothing to post — nobody arrived after 11:30"
-          : "nothing to remind — every attendance was complete",
+          : "nothing to report — every attendance was complete",
       });
       return json({
         sent: false,
@@ -821,12 +860,14 @@ Deno.serve(async (req) => {
           ? "nobody was absent"
           : kind === "late"
           ? "nobody was late"
-          : "nothing to remind",
+          : "nothing to report",
         kind,
       });
     }
 
-    if (dry_run && viaAdmin) return json({ sent: false, dry_run: true, kind, target, text });
+    if (dry_run && viaAdmin) {
+      return json({ sent: false, dry_run: true, kind, target: targets.join(", "), text });
+    }
 
     const url = Deno.env.get("WA_WEBHOOK_URL");
     if (!url) {
@@ -838,12 +879,6 @@ Deno.serve(async (req) => {
     // escaped values, so a message containing a quote or a newline cannot
     // break the template.
     const template = Deno.env.get("WA_PAYLOAD_TEMPLATE");
-    const payload = template
-      ? template
-        .replaceAll("{{to}}", JSON.stringify(target).slice(1, -1))
-        .replaceAll("{{text}}", JSON.stringify(text).slice(1, -1))
-      : JSON.stringify({ to: target, text });
-
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     const token = Deno.env.get("WA_WEBHOOK_TOKEN");
     if (token) {
@@ -851,16 +886,37 @@ Deno.serve(async (req) => {
       headers[name] = name.toLowerCase() === "authorization" ? `Bearer ${token}` : token;
     }
 
-    let ok = false;
-    let detail = "";
-    try {
-      const res = await fetch(url, { method: "POST", headers, body: payload });
-      detail = (await res.text()).slice(0, 400);
-      ok = res.ok;
-      if (!ok) detail = `HTTP ${res.status}: ${detail}`;
-    } catch (e) {
-      detail = String(e).slice(0, 400);
-    }
+    /**
+     * One send, reported honestly.
+     *
+     * The 11:30 register goes to two addresses, and the two can fail
+     * independently — a group JID can be wrong while the founder's number is
+     * fine. Recording a single ok for both would hide exactly that, which is
+     * the failure this module has had twice already in other forms.
+     */
+    const sendTo = async (to: string) => {
+      const payload = template
+        ? template
+          .replaceAll("{{to}}", JSON.stringify(to).slice(1, -1))
+          .replaceAll("{{text}}", JSON.stringify(text).slice(1, -1))
+        : JSON.stringify({ to, text });
+      try {
+        const res = await fetch(url, { method: "POST", headers, body: payload });
+        const body = (await res.text()).slice(0, 200);
+        return { to, ok: res.ok, detail: res.ok ? body : `HTTP ${res.status}: ${body}` };
+      } catch (e) {
+        return { to, ok: false, detail: String(e).slice(0, 200) };
+      }
+    };
+
+    const results = [];
+    for (const to of targets) results.push(await sendTo(to));
+
+    // ok only when EVERY address took it. A partial success logged as success
+    // is how "the report is working" and "half the company never sees it"
+    // become the same row.
+    const ok = results.every((r) => r.ok);
+    const detail = results.map((r) => `${r.to}: ${r.ok ? "ok" : r.detail}`).join(" | ");
 
     // Logged either way. A failed send that leaves no trace is how a team
     // discovers three weeks later that nobody has seen a report.
@@ -868,12 +924,18 @@ Deno.serve(async (req) => {
       report_date: reportDate,
       kind,
       sent_at: new Date().toISOString(),
-      target,
+      target: targets.join(", "),
       ok,
-      detail: detail || null,
+      detail: detail.slice(0, 400) || null,
     });
 
-    return json({ sent: ok, date: reportDate, kind, target, detail: ok ? undefined : detail });
+    return json({
+      sent: ok,
+      date: reportDate,
+      kind,
+      target: targets.join(", "),
+      detail: ok ? undefined : detail,
+    });
   } catch (e) {
     return json({ sent: false, reason: String(e).slice(0, 300) }, 500);
   }
