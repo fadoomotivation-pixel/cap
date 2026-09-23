@@ -41,35 +41,28 @@ const MESSAGES = [
     time: '10:30 AM',
     to: 'group',
     title: 'Who has punched in so far',
-    blurb: 'Names only the people who HAVE punched, so anybody missing can spot themselves and go to the machine. Nobody is named as late. Sends nothing if not one person has punched.',
+    blurb: 'Juniors who HAVE punched, so anybody missing can spot themselves and go to the machine. Provisional — it says the register closes at 11:30. Nobody is named as late. Sends nothing if not one person has punched.',
   },
   {
     kind: 'attendance',
     time: '11:30 AM',
-    to: 'founder',
-    title: 'The full register',
-    blurb: 'Arrivals grouped by window, then absent and on leave. The complete picture, with a link to the register.',
+    to: 'both',
+    title: 'The register',
+    blurb: 'Arrivals grouped by window, then absent, on leave and anyone who punched away from the office. The absent list is inside it — seniors with no punch are already dropped, so that section is juniors only. The only message with two audiences: it goes to the group and to the founder, so he keeps his copy even if he leaves the group.',
   },
   {
-    kind: 'absent',
-    time: '11:31 AM',
+    kind: 'late',
+    time: '1:00 PM',
     to: 'group',
-    title: 'The absent list',
-    blurb: 'Absent and on leave only — no arrival times. Sends nothing when nobody is absent.',
+    title: 'Late arrivals',
+    blurb: 'Juniors who punched in after 11:30, in one message rather than a live feed — and it says their name has since been corrected in the register. Sends nothing when nobody was late.',
   },
   {
-    kind: 'reminder',
-    time: '6:45 PM',
+    kind: 'evening',
+    time: '7:02 PM',
     to: 'group',
-    title: 'Finish your attendance',
-    blurb: 'Who has logged out, who has no check-out yet, and whose attendance is missing — while they are still in the building and can fix it. Sends nothing when the day is already complete.',
-  },
-  {
-    kind: 'checkout',
-    time: '7:01 PM',
-    to: 'founder',
-    title: 'The logout record',
-    blurb: 'Who left and when, split by window, plus everyone with no check-out recorded.',
+    title: 'The day’s close',
+    blurb: 'Who left and when, split by departure window, plus everyone with no check-out recorded and everyone with no attendance at all. The 6:45 reminder and the 7:01 record merged into one. It reads as a record, not a request — at 7:02 the people it would ask have gone home. Sends nothing when the day is already complete.',
   },
 ];
 
@@ -466,7 +459,10 @@ export default function WhatsAppAdmin() {
           <div className="space-y-3">
             {MESSAGES.map((m) => {
               const on = messageOn(m.kind);
-              const isGroup = m.to === 'group';
+              // "both" is the 11:30 register, the one message with two
+              // audiences. It is styled as a group message because that is
+              // the consequential half — fifty people read it.
+              const isGroup = m.to === 'group' || m.to === 'both';
               return (
                 <div key={m.kind}
                   className={`border rounded-lg p-4 ${on ? 'border-gray-200' : 'border-gray-100 bg-gray-50'}`}>
@@ -479,7 +475,7 @@ export default function WhatsAppAdmin() {
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : 'bg-amber-50 text-amber-800 border-amber-200'
                         }`}>
-                          {isGroup ? 'Group' : 'Founder'}
+                          {m.to === 'both' ? 'Group + Founder' : isGroup ? 'Group' : 'Founder'}
                         </span>
                         {!on && (
                           <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-gray-200 text-gray-600 border-gray-300">

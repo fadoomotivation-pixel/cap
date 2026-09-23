@@ -119,6 +119,17 @@ export function buildDailyWhatsAppSummary(rows, dateStr) {
   }
 
   L.push('');
+  L.push('The register is now closed for today.');
+  // Carried over from the 11:32 absent message the register absorbed on
+  // 23 September. A list of absent colleagues needs a route to a person who
+  // can correct it — and not "you can still punch", because the 10:30 message
+  // announced that the register closes at 11:30 and this is that closure.
+  // Only printed when there is a name that could be wrong.
+  if (absent.length || onLeave.length) {
+    L.push('If any name here is wrong, please speak to HR.');
+  }
+
+  L.push('');
   L.push('— Capital Brix HR');
   return L.join('\n');
 }
