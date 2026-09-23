@@ -567,16 +567,47 @@ also call it with their JWT to send early, re-send (`force`), or preview
   daily message people stop reading. It sits fifteen minutes before the
   logout report on purpose: the reminder is the last chance to fix the day,
   the 19:01 summary is the record of it.
-- **Four messages a day, two audiences, and the split is the product
-  decision.**
+- **Seven messages a day, two audiences, and the split is the product
+  decision.** Revised 23 September 2026 on the founder's instruction.
 
   | Time | `kind` | What | To |
   |---|---|---|---|
-  | 10:30 | `morning` | who has punched in so far | **group** |
-  | 11:30 | `attendance` | arrivals by window, plus absent and on leave | **founder** |
-  | 11:31 | `absent` | the absent list alone, no arrival times | **group** |
+  | 10:30 | `morning` | juniors punched in so far — provisional | **group** |
+  | 11:30 | `attendance` | everyone, arrivals by window, absent, on leave | **founder** |
+  | 11:30 | `present` | juniors present — the register as it closes | **group** |
+  | 11:32 | `absent` | juniors absent, no arrival times | **group** |
+  | 13:00 | `late` | juniors who punched in after 11:30 | **group** |
   | 18:45 | `reminder` | logged out so far, no check-out yet, no attendance | **group** |
   | 19:01 | `checkout` | who logged out, and who has no check-out | **founder** |
+
+  **Every group message names juniors only** (`is_senior = false`, via the
+  `juniors()` helper). Senior staff account for their movements straight to
+  the founder, so their arrival time in a fifty-person group is neither news
+  nor anybody's business — it is a name taking up room in a list the team is
+  meant to scan for its own. The founder's two stay unfiltered: he is reading
+  the whole company, which is what they are for. `cb_daily_attendance_report()`
+  therefore **returns** `is_senior` rather than applying it and discarding it,
+  so a juniors-only list needs no second query that could drift.
+
+  **10:30 and 11:30 both publish a present list, and that is deliberate.**
+  They were merged once, on the reasoning that a message repeating itself is
+  how people stop reading the first one; the founder asked for both back, and
+  the distinction carries them — **10:30 is provisional** ("your name is not
+  here, go and punch, the register closes at 11:30") and **11:30 is the
+  record** ("the register is now closed"). Each says which it is; without
+  that they read as the same list twice and the argument for merging returns.
+
+  **The absent list moved 11:31 → 11:32.** One minute was too tight: the
+  11:30 fold and the present list need to land first, and a present list and
+  an absent list that disagree would be worse than either alone.
+
+  **Late arrivals are one message at 13:00, never a live feed.** ADMS runs
+  `Realtime=1`, so a punch reaches us in seconds and "X arrived at 11:52"
+  *could* be posted the moment it happens. In a fifty-person group that is a
+  scoreboard arriving one name at a time, all morning. One list, once, says
+  the same thing and reads in a glance — and it closes by saying those names
+  have since been corrected in the register, which is the difference between
+  a correction and a second accusation.
 
   Each target falls back to the other so a blank setting cannot silence a
   report.

@@ -691,14 +691,15 @@ Deno.serve(async (req) => {
     //
     // The group's messages ask somebody to act while they still can: at 10:30
     // "your name is not on this list, go and punch", and at 18:45 "finish
-    // your attendance before you leave". The 11:31 absent list is the
-    // exception, and it is there because the founder asked for it directly.
+    // your attendance before you leave". The 11:32 absent list and the 13:00
+    // late list are the exceptions, and they are there because the founder
+    // asked for them directly.
     //
     // The 11:30 roll-call and the 19:01 logout summary are management
-    // information — who drifted in late, who left before the shift ended.
-    // Fifty people cannot act on either, and a daily list of colleagues'
-    // arrival times in a company group reads as surveillance however plainly
-    // it is worded. Those go to the founder.
+    // information — the whole company including seniors, who drifted in late,
+    // who left before the shift ended. Fifty people cannot act on either, and
+    // a daily list of colleagues' departure times in a company group reads as
+    // surveillance however plainly it is worded. Those go to the founder.
     const group = (settings?.wa_group_id || "").trim();
     const founder = (settings?.founder_whatsapp || "").replace(/\D/g, "");
     // Each falls back to the other: a summary that reaches one person beats
