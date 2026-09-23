@@ -631,6 +631,36 @@ also call it with their JWT to send early, re-send (`force`), or preview
   before, so an unenrolled person looked exactly like an absent one. Hiding
   them from the report without surfacing them here would mean nobody ever
   enrols them.
+- **HR assigns the machine code from the console, and the console refuses a
+  code somebody else punches on.** This was SQL-only, and the mistake it
+  invites is the expensive one: the fold resolves a person through
+  `device_code`, so two people on one code silently merge into one
+  attendance record and the only evidence is a history nobody can explain.
+  It nearly happened twice — three Amits enrolled on the machine, and on 23
+  September a new joiner's punch showed `11`, which is **Sandeep's** code
+  with 983 punches over 223 days behind it.
+
+  So the `machine #<code>` / **Not on the machine** badge on the Employees
+  tab is now the control, and it answers the question SQL never did —
+  *what does this code already carry* — before anything is saved:
+
+  | What the code is | What the console says |
+  |---|---|
+  | another roster member's | red, names them, refuses to save |
+  | unowned but with punches | amber, states the count and date range |
+  | never seen | green, safe |
+
+  Three objects back it: `cb_device_code_info()` (what a code carries),
+  `cb_free_device_codes()` (numbers nobody has ever used, offered as chips),
+  and `cb_set_device_code()`, which validates, sets, **and re-folds from that
+  code's first punch** — a code set without a fold looks like nothing
+  happened, because the punches are already stored and merely unattributed.
+  A partial unique index on `cb_employees.device_code` makes the refusal true
+  at the database rather than only in the UI.
+
+  **Enrolling is still a GUI action on the terminal itself.** The console
+  cannot create a person on the machine; it records which code they were
+  given.
 - **The absent list is published to the group at 11:31, on the founder's
   explicit instruction.** He was told twice, plainly, that naming absent
   colleagues in a fifty-person group is the scoreboard the rest of this module
