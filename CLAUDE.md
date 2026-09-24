@@ -782,6 +782,31 @@ also call it with their JWT to send early, re-send (`force`), or preview
   Anything the line still names is a real person nobody has mapped. Punches
   from ignored codes are still stored — deleting them would mean losing the
   evidence if one of those people ever does need tracking.
+- **A new `kind` must be added in THREE places or it never sends**, and on
+  23 September two of them were not: the four-message schedule went into the
+  Edge Function's `KINDS` and into pg_cron, but **not** into the whitelist
+  inside `cb_send_attendance_report()`, which keeps its own copy of the list.
+  Both new jobs fired into that guard and raised `unknown report kind:
+  evening` — **before** the HTTP call, so nothing reached `cb_report_log`
+  either. The 13:00 late list and the 19:02 logout record were simply never
+  sent, on the first evening they were meant to run, and the console showed
+  nothing wrong because the console only reads `cb_report_log`.
+
+  The three places: the whitelist in `cb_send_attendance_report()`, `KINDS`
+  in the Edge Function, and `MESSAGES` in `WhatsAppAdmin.jsx`.
+
+  **The SQL guard stays, despite being what broke this.** The Edge Function
+  falls back to `attendance` for a kind it does not recognise, so without the
+  guard a typo in a cron job would quietly publish the register at 19:02
+  instead of failing — the wrong message to fifty people, looking entirely
+  normal. A loud failure beats that.
+
+  **`cron.job_run_details` is where a message that never left shows up.**
+  `cb_report_log` records what the function decided; a failure upstream of
+  the HTTP call leaves no row there at all, and "no row" reads exactly like
+  "the job never ran". When a scheduled message does not arrive, check
+  `select … from cron.job_run_details where status = 'failed'` **before**
+  suspecting the WhatsApp session.
 - The register summary is duplicated in `src/lib/attendanceReport.js`
   (console) and the function (cron). **Change both or the two disagree** —
   the "register is now closed" and "speak to HR" lines added on 23 September
