@@ -538,6 +538,31 @@ also call it with their JWT to send early, re-send (`force`), or preview
   that silently drops the earliest person in the office would be worse than
   no report.
 
+  **The windows end at 11:30, and "Till 10:30" prints a count without
+  names** — both on the founder's instruction of 24 September, and both for
+  the same reason the 18:45 departure windows were dropped.
+
+  `11:00 – 12:00` and `After 12:00` described **time that had not happened
+  yet** in a message sent at 11:30 announcing the register closed. They are
+  now `11:00 – 11:30`, and anyone later belongs to the 13:00 late-arrivals
+  message, which exists for exactly that.
+
+  Everybody under `Till 10:30` was already named, to the minute, in the 10:30
+  message to the same group. Printing them again was the longest block in the
+  message and the one carrying the least news, and it pushed Absent — the
+  section that needs reading — down the screen. **The count stays**, with one
+  line saying where the names are, because the windows must still sum to
+  Present: a block that silently vanished would leave a message whose own
+  arithmetic does not add up.
+
+  **`After 11:30` is a safety net, not a window anybody should see.** At
+  11:30 it is empty by definition, and it prints only when it is not. It
+  exists because the register can also be sent by hand from
+  `/admin/whatsapp`, or by a cron that fired late — and it earned its place
+  the day it was written: the 24 September register went out after 11:30 and
+  that block held Anshika and Jai Prakash, who would otherwise have been
+  counted in Present and named in no list at all.
+
   **Headcount is not published.** The headline opened with
   `Strength 30`, and in a group this size that reads as a statement about how
   small the company is — a question nobody sent this report to ask. It is now
@@ -858,6 +883,31 @@ also call it with their JWT to send early, re-send (`force`), or preview
   "the job never ran". When a scheduled message does not arrive, check
   `select … from cron.job_run_details where status = 'failed'` **before**
   suspecting the WhatsApp session.
+- **The 13:00 message is headed "Register Update", not "Late Arrivals"**, on
+  the founder's instruction of 24 September: its job is the record — that
+  these people came in — not the lateness. A headline reading "Late Arrivals"
+  over a list of colleagues' names delivers a verdict before the reader is
+  past the first line, which is the scoreboard the rest of this module
+  avoids. The facts are identical either way, a name and a time, so the
+  heading is free to be the accurate one.
+
+  Its closing line says the **register** had already closed, never that these
+  people were "listed absent" — the old wording, which was not true of
+  somebody HR had marked on leave who then came in. That person appeared
+  under On leave, and the message would have called them absent to fifty
+  colleagues.
+
+  **It had never actually been sent until 24 September.** The cron fired on
+  the 23rd and died in the SQL whitelist ("unknown report kind: late"), which
+  left no row in `cb_report_log` at all — see the three-places note above.
+- **These Edge Function deploys are assembled by hand, so the repo is the
+  authority and the deployed copy can drift from it.** It already did: the
+  13:00 message's closing line read "11:32 absent list" in the repo and
+  "11:30 register" in production, and nobody could have seen that from either
+  side. Behaviour was checked and re-aligned on 24 September. The durable fix
+  is deploying from the repo with the Supabase CLI rather than pasting a
+  payload; until that exists, **after changing a message, read back what
+  actually went out** — `cb_report_log`, or Preview on `/admin/whatsapp`.
 - The register summary is duplicated in `src/lib/attendanceReport.js`
   (console) and the function (cron). **Change both or the two disagree** —
   the "register is now closed" and "speak to HR" lines added on 23 September

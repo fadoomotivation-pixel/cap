@@ -37,11 +37,25 @@ const fmtTime = (ts) =>
  * and a report that silently drops the earliest person in the office would be
  * worse than no report.
  */
+/** 11:30 IST in minutes — the moment the register is declared final. */
+const REGISTER_CLOSES = 11 * 60 + 30;
+
 const WINDOWS = [
-  { label: 'Till 10:30',    until: 10 * 60 + 30 },
+  // NAMES ARE NOT REPEATED HERE. Everybody in this block was already named,
+  // to the minute, in the 10:30 message to the same group. The count stays,
+  // because the windows must always sum to the Present figure above — a
+  // block that silently vanished would leave a message whose own arithmetic
+  // does not add up.
+  { label: 'Till 10:30',    until: 10 * 60 + 30, countOnly: true },
   { label: '10:30 – 11:00', until: 11 * 60 },
-  { label: '11:00 – 12:00', until: 12 * 60 },
-  { label: 'After 12:00',   until: null },
+  // 11:00 – 11:30, not 11:00 – 12:00. This message is sent at 11:30 and
+  // announces the register closed; the old windows described time that had
+  // not happened yet. Later arrivals go out in the 13:00 late message.
+  { label: '11:00 – 11:30', until: REGISTER_CLOSES },
+  // Empty at 11:30 by definition, and printed only when it is not: the
+  // console can send this by hand at any hour, and somebody who punched at
+  // 11:45 must not fall out of a report that just counted them.
+  { label: 'After 11:30',   until: null },
 ];
 
 /**
@@ -97,6 +111,11 @@ export function buildDailyWhatsAppSummary(rows, dateStr) {
     if (!inWindow.length) continue;
     L.push('');
     L.push(`*${w.label}* (${inWindow.length})`);
+    if (w.countOnly) {
+      // Said once, so the count is not mistaken for a list that went missing.
+      L.push('_Named in the 10:30 update._');
+      continue;
+    }
     inWindow.forEach((r) => L.push(`• ${r.full_name.trim()} — ${fmtTime(r.check_in_at)}`));
   }
 
