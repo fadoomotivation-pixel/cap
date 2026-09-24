@@ -333,6 +333,57 @@ machine --(HTTPS)--> www.capitalbrix.co.in/iclock/* --> essl-adms Edge Function
   `?SN=…&table=ATTLOG&Stamp=9999` on every request, which named the cause in
   one line after two wrong guesses. `cb_adms_log` records what we decided;
   the edge log records what the device actually asked for.
+- **We must never send the terminal a `TimeZone`, and the handshake no longer
+  does.** It answered `TimeZone=5.5`; the firmware reads that field as an
+  **integer number of hours**, so it became `5` and every contact set the
+  machine to GMT+5:00 — exactly **thirty minutes behind IST**. Arrivals were
+  filed half an hour early from **14:31 IST on 23 September**, minutes after
+  the handshake first worked: the bug arrived with ADMS, not before it.
+
+  **The measurement that named it in one query** is the gap between a punch's
+  own timestamp and when it reached us. ADMS is `Realtime=1`, so that gap is
+  a second or two. It was `00:30:01` on every punch, all day, to the second —
+  and a *constant* gap is a clock error, where a varying one would have been
+  upload batching.
+
+  **It also silently undid every repair.** A `sync_time` command sent the
+  correct wall clock at 15:43 on 23 September and returned `0`; the next
+  handshake, seconds later, pulled the clock back. A fix typed at the
+  terminal's own keypad would have been lost the same way — which is the part
+  worth keeping: while that line was in the handshake, the clock could not be
+  corrected from anywhere.
+
+  Absolute time is still ours to set, through `sync_time`. `SET OPTIONS
+  DateTime=` carries a wall clock with no timezone in it, so it cannot be
+  misparsed by half an hour.
+
+  **The 54 punches recorded while the clock was slow were shifted back by
+  thirty minutes**, on 24 September, after the fix. 16 codes, 23 Sep 14:01 →
+  24 Sep 10:09 by the device's reckoning. Four things made that safe, and a
+  correction of recorded history should not be attempted without all four:
+
+  1. **The boundary was exact, not estimated.** The last punch with a
+     batching gap is stamped 13:58:57 and the first with `00:30:01` is
+     stamped 14:01:29 — nothing ambiguous sits between them.
+  2. **Collisions were counted before anything moved.** The table is unique
+     on `(device_code, punch_at)`, so one landing on an existing punch would
+     abort the lot. There were none.
+  3. **`cb_device_punches_clockfix_backup` holds the original stamps**, and
+     the update is driven off it — so it touches only those 54 rows and
+     cannot double-apply however many times it is run.
+  4. **A re-fold alone does not fix the register**, which is the part that is
+     easy to miss: `cb_fold_punches_into_attendance` uses `least()` for
+     check-in, so the older, wrong, earlier time wins and the correction is
+     silently ignored. `cb_attendance` was updated first, and **only where
+     the stored time equalled the old punch exactly** — that proves the
+     machine wrote it, so a portal punch or an HR edit could not be
+     overwritten. `hr_status`, `work_mode`, notes, GPS and the selfie were
+     never in the statement.
+
+  Verified after: 23 September, 18 check-ins matching the corrected punches
+  and none mismatched; 24 September, all five mapped arrivals matching. Which timezone the terminal keeps is a setting
+  on its own menu, and a server that overrides it on every contact can only
+  ever be a source of this bug.
 - **`cb_adms_log` is the heartbeat**, one row per contact, pruned to 14 days,
   and surfaced on `/admin/attendance` → Settings as "Attendance machine". With
   the PC out of the loop there is no screen in the office that shows whether the

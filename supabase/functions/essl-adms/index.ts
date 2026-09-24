@@ -305,7 +305,28 @@ Deno.serve(async (req) => {
         "TransTimes=00:00;12:00",
         "TransInterval=1",
         "TransFlag=1111000000",
-        "TimeZone=5.5",
+        // NO TimeZone LINE, AND THAT IS THE FIX.
+        //
+        // This said `TimeZone=5.5`, and the firmware reads this field as an
+        // INTEGER NUMBER OF HOURS: 5.5 parsed to 5, so every handshake set the
+        // terminal to GMT+5:00 — exactly thirty minutes behind IST.
+        //
+        // Measured on 24 September: every ADMS punch arrived 30:01 after the
+        // time it was stamped with, all day, to the second. A constant gap is
+        // a clock error; a varying one would have been upload batching.
+        //
+        // It also silently undid the repair. A `sync_time` command sent the
+        // correct IST wall clock at 15:43 on 23 September and returned 0 — and
+        // the next handshake, seconds later, pulled the clock back again. Any
+        // fix applied at the terminal's own keypad would have been lost the
+        // same way.
+        //
+        // We do not send a timezone at all now. The terminal is a clock in an
+        // office in one country; which timezone it keeps is a setting on its
+        // own menu, and a server that overrides that on every contact can only
+        // ever be a source of this bug. Absolute time is still ours to set,
+        // through `sync_time` — `SET OPTIONS DateTime=` carries a wall clock
+        // with no timezone in it, so it cannot be misparsed by half an hour.
         "Realtime=1",
         "Encrypt=0",
         "",
