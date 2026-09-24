@@ -538,6 +538,31 @@ also call it with their JWT to send early, re-send (`force`), or preview
   that silently drops the earliest person in the office would be worse than
   no report.
 
+  **The windows end at 11:30, and "Till 10:30" prints a count without
+  names** — both on the founder's instruction of 24 September, and both for
+  the same reason the 18:45 departure windows were dropped.
+
+  `11:00 – 12:00` and `After 12:00` described **time that had not happened
+  yet** in a message sent at 11:30 announcing the register closed. They are
+  now `11:00 – 11:30`, and anyone later belongs to the 13:00 late-arrivals
+  message, which exists for exactly that.
+
+  Everybody under `Till 10:30` was already named, to the minute, in the 10:30
+  message to the same group. Printing them again was the longest block in the
+  message and the one carrying the least news, and it pushed Absent — the
+  section that needs reading — down the screen. **The count stays**, with one
+  line saying where the names are, because the windows must still sum to
+  Present: a block that silently vanished would leave a message whose own
+  arithmetic does not add up.
+
+  **`After 11:30` is a safety net, not a window anybody should see.** At
+  11:30 it is empty by definition, and it prints only when it is not. It
+  exists because the register can also be sent by hand from
+  `/admin/whatsapp`, or by a cron that fired late — and it earned its place
+  the day it was written: the 24 September register went out after 11:30 and
+  that block held Anshika and Jai Prakash, who would otherwise have been
+  counted in Present and named in no list at all.
+
   **Headcount is not published.** The headline opened with
   `Strength 30`, and in a group this size that reads as a statement about how
   small the company is — a question nobody sent this report to ask. It is now

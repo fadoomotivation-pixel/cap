@@ -186,11 +186,38 @@ const REGISTER_CLOSES = 11 * 60 + 30;
  * purpose: somebody arriving at 08:40 has to land somewhere, and a report
  * that silently drops the earliest person in the office is worse than none.
  */
-const WINDOWS: { label: string; until: number | null }[] = [
-  { label: "Till 10:30", until: 10 * 60 + 30 },
+const WINDOWS: {
+  label: string;
+  until: number | null;
+  /** Print the count only. See "Till 10:30" below. */
+  countOnly?: boolean;
+}[] = [
+  // NAMES ARE NOT REPEATED HERE. Everybody in this block was already named,
+  // by name and to the minute, in the 10:30 message to the same group two
+  // hours earlier. Printing them again is the longest part of this message
+  // and the part carrying the least news, and it pushes the sections that do
+  // need reading further down the screen.
+  //
+  // The COUNT stays, because the windows must always sum to the Present
+  // figure in the headline. A block that silently vanished would leave a
+  // message whose own arithmetic does not add up.
+  { label: "Till 10:30", until: 10 * 60 + 30, countOnly: true },
   { label: "10:30 \u2013 11:00", until: 11 * 60 },
-  { label: "11:00 \u2013 12:00", until: 12 * 60 },
-  { label: "After 12:00", until: null },
+  // 11:00 - 11:30, NOT 11:00 - 12:00, and nothing after it.
+  //
+  // This message is sent at 11:30 and announces that the register is closed.
+  // "11:00 - 12:00" and "After 12:00" described time that had not happened
+  // yet - the same mistake the 18:45 departure windows had, which is why
+  // they were dropped there too. Anyone arriving after this goes out in the
+  // 13:00 late-arrivals message, which exists for exactly that.
+  { label: "11:00 \u2013 11:30", until: REGISTER_CLOSES },
+  // A safety net, not a window anybody should see. At 11:30 it is empty by
+  // definition. It exists because the message can also be sent by hand from
+  // /admin/whatsapp, or by a cron that fired late - and then somebody who
+  // punched at 11:45 would belong to no window at all and drop out of a
+  // report that had just counted them. Printed only when it has somebody in
+  // it, so on an ordinary day it never appears.
+  { label: "After 11:30", until: null },
 ];
 
 /**
@@ -261,6 +288,11 @@ function buildSummary(rows: Row[], dateStr: string) {
     if (!inWindow.length) continue;
     L.push("");
     L.push(`*${w.label}* (${inWindow.length})`);
+    if (w.countOnly) {
+      // Said once, so the count is not mistaken for a list that went missing.
+      L.push("_Named in the 10:30 update._");
+      continue;
+    }
     inWindow.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`));
   }
 
