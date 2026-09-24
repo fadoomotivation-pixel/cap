@@ -745,6 +745,32 @@ also call it with their JWT to send early, re-send (`force`), or preview
   11:30 the register closing with everything in it, 13:00 who arrived after,
   19:02 how the day ended.
 
+- **A new joiner is welcomed once, ever, on the day they actually start.**
+  `kind = 'welcome'` at **13:05 IST**, to the group, on the founder's
+  instruction of 24 September. It is the only message in this module that is
+  not about compliance, and it is written that way — no times, no counts, no
+  register. A first day is the day a new colleague is most aware of being
+  watched, and a feed that can publish an absent list should be able to
+  publish a welcome.
+
+  **Who counts as new lives in `cb_new_joiners()`**, not in TypeScript: active,
+  junior, `in_daily_report`, `welcomed_at is null`, and **with at least one
+  attendance row** — somebody on the roster who has not turned up yet is
+  expected rather than new, and welcoming them would announce a person who is
+  not there.
+
+  **Once, ever, is `cb_employees.welcomed_at`, and it is stamped only after the
+  send succeeds.** Stamping first would cost somebody their welcome the first
+  time the WhatsApp session was down, and nothing would ever say so.
+
+  It was **backfilled for everyone whose first recorded day was before 24
+  September** — without that, switching it on would have welcomed the whole
+  company at once. A consequence worth knowing: Pranav Arora was backfilled,
+  because assigning him code `11` gave him an attendance row dated the 23rd.
+  Clear his `welcomed_at` if he should be named.
+
+  Seniors are excluded, like every other group message — the founder welcomes
+  them himself.
 - **`cb_employees.is_senior` keeps a name out of the Absent list, and
   nothing else.** Senior staff account for their own movements straight to
   the founder, so the register printing their name under Absent is not
@@ -1753,6 +1779,13 @@ Rules:
 4. If a schema was applied to Supabase by another tool, read the real schema
    (`information_schema`, `pg_policies`) and build against **that**, not against
    what a chat log describes — they drift.
+
+`docs/ATTENDANCE_BRIEF.md` is the handoff for the attendance module — the
+eSSL machine, the two roads punches travel, the five WhatsApp messages, the
+editorial rules behind their wording, the traps that have each cost a day,
+and the order to debug in when a message does not arrive. It is written to
+be pasted to another tool as a prompt on its own. Update it when the module
+moves on.
 
 `docs/ANTIGRAVITY_BRIEF.md` is the current handoff: what the SEO work changed,
 the project-photo task, and the list of load-bearing things not to "clean up".
