@@ -54,8 +54,15 @@ const MESSAGES = [
     kind: 'late',
     time: '1:00 PM',
     to: 'group',
-    title: 'Late arrivals',
-    blurb: 'Juniors who punched in after 11:30, in one message rather than a live feed — and it says their name has since been corrected in the register. Sends nothing when nobody was late.',
+    title: 'Register update',
+    blurb: 'Juniors recorded after 11:30, in one message rather than a live feed. Headed “Register Update”, not “Late Arrivals”: its job is the record, and a verdict in the headline is the scoreboard this module avoids. It says the register had already closed — not that they were listed absent, which would be untrue of somebody HR had marked on leave who then came in. Sends nothing when there is nobody.',
+  },
+  {
+    kind: 'welcome',
+    time: '1:05 PM',
+    to: 'group',
+    title: 'Welcome aboard',
+    blurb: 'Names anybody whose first day this is — active, junior, in the report, and with at least one punch, so nobody is announced before they have actually turned up. Once per person ever (cb_employees.welcomed_at), stamped only after the send succeeds. The one message here that is not about compliance. Sends nothing on the days nobody new started, which is almost every day.',
   },
   {
     kind: 'evening',

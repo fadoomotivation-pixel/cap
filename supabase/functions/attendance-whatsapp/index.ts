@@ -146,6 +146,15 @@ const fmtDate = (d: string) =>
     year: "numeric",
   }).format(new Date(`${d}T12:00:00+05:30`));
 
+/** What cb_new_joiners() returns. */
+type NewJoiner = {
+  id: string;
+  full_name: string;
+  role_title: string | null;
+  department: string | null;
+  first_day: string | null;
+};
+
 type Row = {
   full_name: string;
   department: string | null;
@@ -567,6 +576,64 @@ function buildLateSummary(rows: Row[], dateStr: string): string | null {
 }
 
 /**
+ * Welcome aboard, once per person, ever.
+ *
+ * The founder asked for this on 24 September: when somebody joins and turns
+ * up for the first time, the group should say so.
+ *
+ * It is the one message here that is not about compliance, and it is written
+ * that way — no times, no counts, no register. A first day is the day a new
+ * colleague is most aware of being watched, and a feed that can publish an
+ * absent list should be able to publish a welcome.
+ *
+ * WHO COUNTS AS NEW is decided in cb_new_joiners(), not here: active, junior,
+ * in the daily report, never welcomed, and with at least one attendance row —
+ * because somebody on the roster who has not turned up yet is expected rather
+ * than new, and welcoming them would announce a person who is not there.
+ *
+ * ONCE, EVER, is `cb_employees.welcomed_at`, stamped by the caller and only
+ * after the send succeeded. A failed send must not cost somebody their
+ * welcome, and a retry must not send it twice.
+ *
+ * Returns null when there is nobody, which is almost every day — and a daily
+ * message that is usually empty is one people stop reading.
+ */
+function buildWelcomeSummary(rows: NewJoiner[], dateStr: string): string | null {
+  if (!rows.length) return null;
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX \u2014 Welcome Aboard*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push(
+    rows.length === 1
+      ? "Please join us in welcoming our newest colleague:"
+      : "Please join us in welcoming our newest colleagues:",
+  );
+  L.push("");
+  rows.forEach((r) => {
+    // Role and department only when the roster actually holds them. A bare
+    // dash after somebody's name on their first day reads as a gap in their
+    // own record, which is not the impression this message exists to make.
+    // And they are not both printed when they are the same word — half this
+    // roster has role_title and department both set to "Sales".
+    const role = (r.role_title ?? "").trim();
+    const dept = (r.department ?? "").trim();
+    const tail = role && dept && role.toLowerCase() !== dept.toLowerCase()
+      ? `${role}, ${dept}`
+      : role || dept;
+    L.push(`\u2022 ${r.full_name.trim()}${tail ? ` \u2014 ${tail}` : ""}`);
+  });
+
+  L.push("");
+  L.push("We are delighted to have you on board. Wishing you a strong start");
+  L.push("and a long, successful innings with Capital Brix.");
+  L.push("");
+  L.push("\u2014 Capital Brix AI HR");
+  return L.join("\n");
+}
+
+/**
  * The absent list, published to the group at 11:31.
  *
  * The founder asked for this directly, twice, after being told plainly that
@@ -744,6 +811,7 @@ Deno.serve(async (req) => {
       "morning", //    10:30 group — juniors punched in so far
       "late", //       13:00 group — juniors who arrived after 11:30
       "evening", //    19:02 group — logout record, no check-out, no punch
+      "welcome", //   13:05 group - anybody whose first day this is
       // Kept so a manual send still works and an old cron cannot 500, but
       // nothing schedules these any more — all four fold into the two above:
       "present", //    superseded — the 11:30 register is a superset
@@ -822,7 +890,7 @@ Deno.serve(async (req) => {
     // Each falls back to the other: a summary that reaches one person beats
     // one that reaches nobody because a number was never filled in. Duplicates
     // are stripped, so a founder number that IS the group id sends once.
-    const toGroup = ["morning", "present", "absent", "late", "evening", "reminder"];
+    const toGroup = ["morning", "present", "absent", "late", "evening", "reminder", "welcome"];
     let targets = kind === "attendance"
       ? [founder, group]
       : toGroup.includes(kind)
@@ -863,6 +931,15 @@ Deno.serve(async (req) => {
     });
     if (error) return json({ error: error.message }, 500);
 
+    // Who has started and never been welcomed. Read from cb_new_joiners() so
+    // the rule for "new" lives in one place; see buildWelcomeSummary.
+    let newJoiners: NewJoiner[] = [];
+    if (kind === "welcome") {
+      const { data: nj, error: njErr } = await admin.rpc("cb_new_joiners");
+      if (njErr) return json({ error: njErr.message }, 500);
+      newJoiners = (nj ?? []) as NewJoiner[];
+    }
+
     // A DAY WITH NOT ONE PUNCH IS A BROKEN FEED UNTIL PROVEN OTHERWISE.
     //
     // Everything downstream of the eSSL machine can be green while the machine
@@ -885,9 +962,15 @@ Deno.serve(async (req) => {
     // The broken-feed warning is HR's problem, never the group's. It asks for
     // a specific click inside eTimeTrackLite, which forty-nine of fifty people
     // cannot act on and would read as the company's attendance being broken.
-    if (punchCount === 0) targets = [founder || group].filter(Boolean);
+    // `welcome` is not a register, so a day with no punches does not make it
+    // a broken feed - the joiner's first day was recorded on an earlier one.
+    if (punchCount === 0 && kind !== "welcome") {
+      targets = [founder || group].filter(Boolean);
+    }
 
-    const text = punchCount === 0
+    const text = kind === "welcome"
+      ? buildWelcomeSummary(newJoiners, reportDate)
+      : punchCount === 0
       ? [
         "*CAPITAL BRIX — Daily Attendance*",
         fmtDate(reportDate),
@@ -933,6 +1016,8 @@ Deno.serve(async (req) => {
           ? "nothing to post — nobody was absent"
           : kind === "late"
           ? "nothing to post — nobody was recorded after 11:30"
+          : kind === "welcome"
+          ? "nothing to post — nobody new started"
           : "nothing to report — every attendance was complete",
       });
       return json({
@@ -945,6 +1030,8 @@ Deno.serve(async (req) => {
           ? "nobody was absent"
           : kind === "late"
           ? "nobody recorded after 11:30"
+          : kind === "welcome"
+          ? "nobody new started"
           : "nothing to report",
         kind,
       });
@@ -1013,6 +1100,17 @@ Deno.serve(async (req) => {
       ok,
       detail: detail.slice(0, 400) || null,
     });
+
+    // Once, ever - but only once it actually went out. Stamping before the
+    // send would cost somebody their welcome the first time the WhatsApp
+    // session was down, and nothing would ever say so.
+    if (kind === "welcome" && ok && newJoiners.length) {
+      await admin
+        .from("cb_employees")
+        .update({ welcomed_at: new Date().toISOString() })
+        .in("id", newJoiners.map((j) => j.id))
+        .then(() => {}, () => {});
+    }
 
     return json({
       sent: ok,
