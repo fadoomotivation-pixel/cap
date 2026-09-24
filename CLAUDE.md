@@ -883,6 +883,31 @@ also call it with their JWT to send early, re-send (`force`), or preview
   "the job never ran". When a scheduled message does not arrive, check
   `select … from cron.job_run_details where status = 'failed'` **before**
   suspecting the WhatsApp session.
+- **The 13:00 message is headed "Register Update", not "Late Arrivals"**, on
+  the founder's instruction of 24 September: its job is the record — that
+  these people came in — not the lateness. A headline reading "Late Arrivals"
+  over a list of colleagues' names delivers a verdict before the reader is
+  past the first line, which is the scoreboard the rest of this module
+  avoids. The facts are identical either way, a name and a time, so the
+  heading is free to be the accurate one.
+
+  Its closing line says the **register** had already closed, never that these
+  people were "listed absent" — the old wording, which was not true of
+  somebody HR had marked on leave who then came in. That person appeared
+  under On leave, and the message would have called them absent to fifty
+  colleagues.
+
+  **It had never actually been sent until 24 September.** The cron fired on
+  the 23rd and died in the SQL whitelist ("unknown report kind: late"), which
+  left no row in `cb_report_log` at all — see the three-places note above.
+- **These Edge Function deploys are assembled by hand, so the repo is the
+  authority and the deployed copy can drift from it.** It already did: the
+  13:00 message's closing line read "11:32 absent list" in the repo and
+  "11:30 register" in production, and nobody could have seen that from either
+  side. Behaviour was checked and re-aligned on 24 September. The durable fix
+  is deploying from the repo with the Supabase CLI rather than pasting a
+  payload; until that exists, **after changing a message, read back what
+  actually went out** — `cb_report_log`, or Preview on `/admin/whatsapp`.
 - The register summary is duplicated in `src/lib/attendanceReport.js`
   (console) and the function (cron). **Change both or the two disagree** —
   the "register is now closed" and "speak to HR" lines added on 23 September

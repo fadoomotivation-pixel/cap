@@ -9,7 +9,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 //                           still fix it before the register closes  → group
 //   attendance  11:30 IST — the register: arrivals by window, absent, on
 //                           leave, and the HR line     → group AND founder
-//   late        13:00 IST — juniors who punched in after 11:30        → group
+//   late        13:00 IST — recorded after the register closed        → group
 //   evening     19:02 IST — the day's close: logged out with departure
 //                           windows, no check-out recorded, no attendance
 //                                                                     → group
@@ -209,7 +209,7 @@ const WINDOWS: {
   // "11:00 - 12:00" and "After 12:00" described time that had not happened
   // yet - the same mistake the 18:45 departure windows had, which is why
   // they were dropped there too. Anyone arriving after this goes out in the
-  // 13:00 late-arrivals message, which exists for exactly that.
+  // 13:00 register update, which exists for exactly that.
   { label: "11:00 \u2013 11:30", until: REGISTER_CLOSES },
   // A safety net, not a window anybody should see. At 11:30 it is empty by
   // definition. It exists because the message can also be sent by hand from
@@ -509,7 +509,11 @@ function buildPresentSummary(rows: Row[], dateStr: string): string | null {
 }
 
 /**
- * Who arrived after the register closed.
+ * The register, corrected: who was recorded after it closed.
+ *
+ * Its job is the record rather than the lateness - the founder asked for it
+ * in those words on 24 September - which is why it is headed "Register
+ * Update" and not "Late Arrivals".
  *
  * Sent once, at 13:00, rather than the moment each person taps. A live feed
  * of "X arrived at 11:52" through the morning is the scoreboard this module
@@ -529,19 +533,34 @@ function buildLateSummary(rows: Row[], dateStr: string): string | null {
   if (!late.length) return null;
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Late Arrivals*");
+  // "Register Update", NOT "Late Arrivals".
+  //
+  // The founder asked on 24 September for this to read professionally, and
+  // for its purpose to be the record: that these people came in. A headline
+  // reading "Late Arrivals" over a list of colleagues' names delivers a
+  // verdict before the reader is past the first line, and it is the
+  // scoreboard this module keeps being told not to become. The facts are
+  // identical either way - a name and a time - so the heading is free to be
+  // the accurate one, which is that the register changed after publication.
+  L.push("*CAPITAL BRIX \u2014 Register Update*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`*Punched in after 11:30 (${late.length})*`);
+  L.push(`*Recorded after 11:30 (${late.length})*`);
   late.forEach((r) =>
     L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`)
   );
 
   L.push("");
-  // They were marked absent at 11:32 and have since punched. Saying so is
-  // the difference between a correction and a second accusation.
-  L.push("These names appeared in the 11:32 absent list and have since");
-  L.push("punched in. The register has been updated.");
+  // Why they were missing from the 11:30 message, stated as a fact about the
+  // register rather than about them - and the correction is the point, so it
+  // is what the closing line says.
+  //
+  // "Had already closed" is also the only accurate wording. The old line said
+  // they had been listed absent, which is not true of somebody HR had marked
+  // on leave who then came in - that person appeared under On leave, and this
+  // message would have called them absent to fifty colleagues.
+  L.push("The 11:30 register had already closed when these check-ins were");
+  L.push("recorded. Their attendance for today now stands as present.");
   L.push("");
   L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
@@ -913,7 +932,7 @@ Deno.serve(async (req) => {
           : kind === "absent"
           ? "nothing to post — nobody was absent"
           : kind === "late"
-          ? "nothing to post — nobody arrived after 11:30"
+          ? "nothing to post — nobody was recorded after 11:30"
           : "nothing to report — every attendance was complete",
       });
       return json({
@@ -925,7 +944,7 @@ Deno.serve(async (req) => {
           : kind === "absent"
           ? "nobody was absent"
           : kind === "late"
-          ? "nobody was late"
+          ? "nobody recorded after 11:30"
           : "nothing to report",
         kind,
       });
