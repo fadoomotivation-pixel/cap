@@ -333,6 +333,31 @@ machine --(HTTPS)--> www.capitalbrix.co.in/iclock/* --> essl-adms Edge Function
   `?SN=…&table=ATTLOG&Stamp=9999` on every request, which named the cause in
   one line after two wrong guesses. `cb_adms_log` records what we decided;
   the edge log records what the device actually asked for.
+- **We must never send the terminal a `TimeZone`, and the handshake no longer
+  does.** It answered `TimeZone=5.5`; the firmware reads that field as an
+  **integer number of hours**, so it became `5` and every contact set the
+  machine to GMT+5:00 — exactly **thirty minutes behind IST**. Arrivals were
+  filed half an hour early from **14:31 IST on 23 September**, minutes after
+  the handshake first worked: the bug arrived with ADMS, not before it.
+
+  **The measurement that named it in one query** is the gap between a punch's
+  own timestamp and when it reached us. ADMS is `Realtime=1`, so that gap is
+  a second or two. It was `00:30:01` on every punch, all day, to the second —
+  and a *constant* gap is a clock error, where a varying one would have been
+  upload batching.
+
+  **It also silently undid every repair.** A `sync_time` command sent the
+  correct wall clock at 15:43 on 23 September and returned `0`; the next
+  handshake, seconds later, pulled the clock back. A fix typed at the
+  terminal's own keypad would have been lost the same way — which is the part
+  worth keeping: while that line was in the handshake, the clock could not be
+  corrected from anywhere.
+
+  Absolute time is still ours to set, through `sync_time`. `SET OPTIONS
+  DateTime=` carries a wall clock with no timezone in it, so it cannot be
+  misparsed by half an hour. Which timezone the terminal keeps is a setting
+  on its own menu, and a server that overrides it on every contact can only
+  ever be a source of this bug.
 - **`cb_adms_log` is the heartbeat**, one row per contact, pruned to 14 days,
   and surfaced on `/admin/attendance` → Settings as "Attendance machine". With
   the PC out of the loop there is no screen in the office that shows whether the
