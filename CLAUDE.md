@@ -691,7 +691,8 @@ also call it with their JWT to send early, re-send (`force`), or preview
   | 10:30 | `morning` | juniors punched in so far — provisional | **group** |
   | 11:30 | `attendance` | the register: arrivals by window, absent, on leave, geofence | **group AND founder** |
   | 13:00 | `late` | juniors who punched in after 11:30 | **group** |
-  | 19:02 | `evening` | logged out by departure window, no check-out, no attendance | **group** |
+  | 13:05 | `welcome` | a new colleague's first day | **group** |
+  | 19:02 | `evening` | logged out by departure window, no check-out | **group** |
 
   `present`, `absent`, `reminder` and `checkout` still work if called by hand
   from `/admin/whatsapp`; nothing schedules them. All four folded upward:
@@ -900,11 +901,53 @@ also call it with their JWT to send early, re-send (`force`), or preview
   **It had never actually been sent until 24 September.** The cron fired on
   the 23rd and died in the SQL whitelist ("unknown report kind: late"), which
   left no row in `cb_report_log` at all — see the three-places note above.
+- **Welcome Aboard — `kind = 'welcome'`, 13:05 IST.** When somebody joins,
+  the group says so once. The rule for who counts as new lives in
+  `cb_new_joiners()` (`supabase/sql/cb_new_joiners.sql`), not in the Edge
+  Function, so the cron, a manual send and anything written later cannot
+  disagree: active, junior, `in_daily_report`, `welcomed_at is null`, **and
+  with at least one attendance row**.
+
+  That last clause is the one worth keeping. Somebody added to the roster who
+  has not turned up yet is *expected*, not new — welcoming them announces a
+  colleague who is not in the building to fifty people who then look for them.
+
+  **`cb_employees.welcomed_at` is stamped only AFTER a successful send.** A
+  failed send must not cost somebody their welcome, and a retry must not send
+  it twice. It is also the only message not suppressed on a zero-punch day:
+  `welcome` is not a register, so a broken feed is not a reason to withhold
+  it — the joiner's first day was on an earlier one.
+
+- **No console link in the messages.** They carried
+  `Register: https://www.capitalbrix.co.in/admin/attendance`, and it came off
+  on the founder's instruction of 25 September 2026: he is the only one of
+  the fifty recipients who can open it, and a link nobody else can follow is
+  a dead end printed under a list of colleagues' names. **The "If any name
+  here is wrong, please speak to HR" line stays** — that is now the only
+  route to a person the group is given.
+
+- **The 19:02 evening message has no absent list**, on the same instruction.
+  The 11:30 register already named everybody absent, to the same group, hours
+  earlier; at 19:02 the name is no longer actionable by anybody, because the
+  person has gone home and HR cannot mark a leave against a finished day from
+  a WhatsApp message. So the evening message is about how the day **ended** —
+  who left, and when. Nothing is lost: the register, the console and the CSV
+  all still hold it. Its `return null` guard is now the two remaining lists;
+  if an absent section is ever restored, that guard has to come back with it.
+
 - **These Edge Function deploys are assembled by hand, so the repo is the
   authority and the deployed copy can drift from it.** It already did: the
   13:00 message's closing line read "11:32 absent list" in the repo and
   "11:30 register" in production, and nobody could have seen that from either
-  side. Behaviour was checked and re-aligned on 24 September. The durable fix
+  side. Behaviour was checked and re-aligned on 24 September. **It happened again,
+  worse, on 25 September:** the entire `welcome` message — the builder, the
+  `KINDS` entry, `cb_new_joiners()`, the cron job — was live in production
+  and in Postgres and had **never been committed to this repo at all**, so a
+  deploy built from the repo would have silently deleted a working feature.
+  It was caught only by reading the deployed source before deploying over it.
+  **Before deploying this function, fetch what is running and diff it against
+  the repo** — the database half of a feature surviving while the code half
+  does not is the shape to watch for. The durable fix
   is deploying from the repo with the Supabase CLI rather than pasting a
   payload; until that exists, **after changing a message, read back what
   actually went out** — `cb_report_log`, or Preview on `/admin/whatsapp`.

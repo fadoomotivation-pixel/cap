@@ -54,15 +54,22 @@ const MESSAGES = [
     kind: 'late',
     time: '1:00 PM',
     to: 'group',
-    title: 'Late arrivals',
-    blurb: 'Juniors who punched in after 11:30, in one message rather than a live feed — and it says their name has since been corrected in the register. Sends nothing when nobody was late.',
+    title: 'Register update',
+    blurb: 'Juniors who punched in after 11:30, in one message rather than a live feed — and it says the register had already closed when they were recorded, so their attendance now stands as present. Headed “Register Update” and not “Late Arrivals”: its job is the record, not a verdict. Sends nothing when nobody was late.',
+  },
+  {
+    kind: 'welcome',
+    time: '1:05 PM',
+    to: 'group',
+    title: 'Welcome aboard',
+    blurb: 'A new colleague, named once on the first day they actually turn up — never before, because somebody on the roster who has not arrived yet is expected rather than new. Sent once per person, ever. The only message here that is not about compliance. Sends nothing on a day nobody started.',
   },
   {
     kind: 'evening',
     time: '7:02 PM',
     to: 'group',
     title: 'The day’s close',
-    blurb: 'Who left and when, split by departure window, plus everyone with no check-out recorded and everyone with no attendance at all. The 6:45 reminder and the 7:01 record merged into one. It reads as a record, not a request — at 7:02 the people it would ask have gone home. Sends nothing when the day is already complete.',
+    blurb: 'Who left and when, split by departure window, plus everyone with no check-out recorded. No absent list — the 11:30 register already named them to the same group, and at 7:02 nobody can act on it. The 6:45 reminder and the 7:01 record merged into one, so it reads as a record rather than a request. Sends nothing when the day is already complete.',
   },
 ];
 
