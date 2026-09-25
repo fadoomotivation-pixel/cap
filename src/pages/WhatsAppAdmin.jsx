@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import { ADMIN_EMAILS } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
+import AttendanceHealth from '../components/AttendanceHealth';
 import { friendlyError } from '../lib/errors';
 import {
   MessageCircle, RefreshCw, LogOut, X, QrCode, Send, CheckCircle2,
@@ -387,6 +388,11 @@ export default function WhatsAppAdmin() {
         </div>
 
         <AdminNav className="mb-6" />
+
+        {/* The same panel as the attendance console. A message that never left
+            leaves no row in cb_report_log, so this page cannot show it on its
+            own - the cron failure count here is the only place it appears. */}
+        <AttendanceHealth className="mb-6" />
 
         {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-4 text-sm flex justify-between gap-3">{error}<button onClick={() => setError('')}><X size={16} /></button></div>}
         {ok && <div className="bg-green-50 text-green-700 border border-green-100 p-4 rounded-lg mb-4 text-sm">{ok}</div>}

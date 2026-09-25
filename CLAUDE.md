@@ -390,6 +390,43 @@ machine --(HTTPS)--> www.capitalbrix.co.in/iclock/* --> essl-adms Edge Function
   machine is talking to anybody, and the September stall proved that an
   unanswerable "is it working?" is how five days disappear.
 
+### The health panel — one answer to "is anything broken?"
+
+`cb_attendance_health()` (`supabase/sql/cb_attendance_health.sql`) rendered by
+`src/components/AttendanceHealth.jsx`, sitting above the tabs on **both**
+`/admin/attendance` and `/admin/whatsapp`.
+
+Every failure this module has had shared one shape: **a thing going wrong and
+a thing being fine produced the same screen.** The five silent days, the
+half-hour clock drift, the two cron jobs dying in a SQL whitelist — none was
+found by a check. Each was found by somebody typing SQL after the damage.
+
+- **It is quiet when healthy — one green line, collapsed — and opens itself
+  when it is not.** A status panel that always shows detail is one people
+  stop reading, which is the exact failure it exists to prevent.
+- **Each problem names the consequence, not just the fact.** "3 unmapped
+  codes" is not a sentence anybody can act on; "their attendance is stored
+  and attached to nobody" is.
+- **The clock check is the median gap between a punch's own time and its
+  arrival, never the average.** ADMS is `Realtime=1`, so that gap is seconds;
+  `TimeZone=5.5` made it exactly 30 minutes on every punch. The PC bridge
+  re-sends a 36-hour window in batches, and a batched punch legitimately
+  arrives long after its timestamp — a batch skews an average but cannot move
+  the middle of a normal day. This is the measurement that named the timezone
+  bug in one query after two wrong guesses.
+- **`cron.job_run_details` is in here because `cb_report_log` cannot be.** A
+  job that fails before its HTTP call leaves no row at all, and "no row"
+  reads exactly like "not due yet" — which is how the 13:00 and 19:02
+  messages were never sent on the first evening they existed, with the
+  console showing nothing wrong.
+- **Failures from other applications in this database are named, never
+  counted into ours.** SalesAutoCall runs its own jobs here; on 25 September
+  it had 97 failures in 24 hours and none of them were attendance. A number
+  that mixes them is one nobody can act on.
+- It also catches the two roster mistakes that are invisible by construction:
+  a machine code punching for nobody, and somebody in the daily report who is
+  not enrolled and so will read Absent every day forever.
+
 ### Driving the machine — `/admin/machine`
 
 Every question this module has lost days to lives on the terminal and was
