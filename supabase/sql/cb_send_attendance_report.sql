@@ -40,7 +40,7 @@ begin
   -- present / absent / reminder / checkout are unscheduled but stay callable
   -- by hand from /admin/whatsapp.
   if p_kind not in (
-    'morning', 'attendance', 'late', 'evening',
+    'morning', 'attendance', 'late', 'evening', 'welcome',
     'present', 'absent', 'reminder', 'checkout'
   ) then
     raise exception 'unknown report kind: %', p_kind;

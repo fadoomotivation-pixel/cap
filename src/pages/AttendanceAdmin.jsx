@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import AdminNav from '../components/AdminNav';
+import AttendanceHealth from '../components/AttendanceHealth';
 import { friendlyError } from '../lib/errors';
 import { ADMIN_EMAILS } from '../lib/admin';
 import { buildDailyWhatsAppSummary, whatsappLink, buildNudgeMessage } from '../lib/attendanceReport';
@@ -370,6 +371,10 @@ export default function AttendanceAdmin() {
         </div>
 
         <AdminNav className="mb-6" />
+
+        {/* Above the tabs on purpose: "is anything broken?" is the question
+            you have before you know which tab to open. */}
+        <AttendanceHealth className="mb-6" />
 
         {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-4 text-sm flex justify-between gap-3">{error}<button onClick={() => setError('')}><X size={16} /></button></div>}
         {ok && <div className="bg-green-50 text-green-700 border border-green-100 p-4 rounded-lg mb-4 text-sm">{ok}</div>}

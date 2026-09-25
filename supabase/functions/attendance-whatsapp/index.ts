@@ -4,15 +4,15 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // ─────────────────────────────────────────────────────────────
 // Posts the daily attendance messages to WhatsApp.
 //
-// Four a day, off one function. `kind` picks which:
+// Five a day, off one function. `kind` picks which:
 //   morning     10:30 IST — juniors punched in so far, so anyone missing can
 //                           still fix it before the register closes  → group
 //   attendance  11:30 IST — the register: arrivals by window, absent, on
 //                           leave, and the HR line     → group AND founder
 //   late        13:00 IST — recorded after the register closed        → group
-//   evening     19:02 IST — the day's close: logged out with departure
-//                           windows, no check-out recorded, no attendance
-//                                                                     → group
+//   welcome     13:05 IST — anybody whose first day this is           → group
+//   evening     19:02 IST — the day's close: logged out by departure
+//                           window, and who has no check-out          → group
 //
 // `present`, `absent`, `reminder` and `checkout` still work if called by
 // hand, but nothing schedules them. All four were folded into the two
@@ -146,6 +146,15 @@ const fmtDate = (d: string) =>
     year: "numeric",
   }).format(new Date(`${d}T12:00:00+05:30`));
 
+/** What cb_new_joiners() returns. */
+type NewJoiner = {
+  id: string;
+  full_name: string;
+  role_title: string | null;
+  department: string | null;
+  first_day: string | null;
+};
+
 type Row = {
   full_name: string;
   department: string | null;
@@ -232,9 +241,8 @@ const WINDOWS: {
  * it twice was the same names, two minutes apart, to the same group.
  *
  * What the merge had to keep is the 11:32 message's closing line. A list of
- * absent colleagues needs a route to a person who can correct it, and the
- * register's `Register:` link is for the founder, not for the fifty people
- * who cannot open it.
+ * absent colleagues needs a route to a person who can correct it, and this
+ * message is the only place fifty people are given one.
  *
  * The same summary src/lib/attendanceReport.js builds for the HR console.
  * Change one and change the other, or the console and the cron disagree.
@@ -331,10 +339,6 @@ function buildSummary(rows: Row[], dateStr: string) {
   }
 
   L.push("");
-  // For the founder. The fifty people who also receive this cannot open it,
-  // which is why the line above exists for them.
-  L.push("Register: https://www.capitalbrix.co.in/admin/attendance");
-  L.push("");
   L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
 }
@@ -423,8 +427,6 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
     );
   }
 
-  L.push("");
-  L.push("Register: https://www.capitalbrix.co.in/admin/attendance");
   L.push("");
   L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
@@ -567,6 +569,60 @@ function buildLateSummary(rows: Row[], dateStr: string): string | null {
 }
 
 /**
+ * Welcome aboard, once per person, ever.
+ *
+ * The founder asked for this on 24 September: when somebody joins and turns
+ * up for the first time, the group should say so.
+ *
+ * It is the one message here that is not about compliance, and it is written
+ * that way \u2014 no times, no counts, no register. A first day is the day a new
+ * colleague is most aware of being watched, and a feed that can publish an
+ * absent list should be able to publish a welcome.
+ *
+ * WHO COUNTS AS NEW is decided in cb_new_joiners(), not here: active, junior,
+ * in the daily report, never welcomed, and with at least one attendance row \u2014
+ * because somebody on the roster who has not turned up yet is expected rather
+ * than new, and welcoming them would announce a person who is not there.
+ *
+ * ONCE, EVER, is cb_employees.welcomed_at, stamped by the caller and only
+ * AFTER the send succeeded. A failed send must not cost somebody their
+ * welcome, and a retry must not send it twice.
+ */
+function buildWelcomeSummary(rows: NewJoiner[], dateStr: string): string | null {
+  if (!rows.length) return null;
+
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX \u2014 Welcome Aboard*");
+  L.push(fmtDate(dateStr));
+  L.push("");
+  L.push(
+    rows.length === 1
+      ? "Please join us in welcoming our newest colleague:"
+      : "Please join us in welcoming our newest colleagues:",
+  );
+  L.push("");
+  rows.forEach((r) => {
+    // Role and department only when the roster actually holds them. A bare
+    // dash after somebody's name on their first day reads as a gap in their
+    // own record. And they are not both printed when they are the same word \u2014
+    // half this roster has role_title and department both set to "Sales".
+    const role = (r.role_title ?? "").trim();
+    const dept = (r.department ?? "").trim();
+    const tail = role && dept && role.toLowerCase() !== dept.toLowerCase()
+      ? `${role}, ${dept}`
+      : role || dept;
+    L.push(`\u2022 ${r.full_name.trim()}${tail ? ` \u2014 ${tail}` : ""}`);
+  });
+
+  L.push("");
+  L.push("We are delighted to have you on board. Wishing you a strong start");
+  L.push("and a long, successful innings with Capital Brix.");
+  L.push("");
+  L.push("\u2014 Capital Brix AI HR");
+  return L.join("\n");
+}
+
+/**
  * The absent list, published to the group at 11:31.
  *
  * The founder asked for this directly, twice, after being told plainly that
@@ -614,43 +670,43 @@ function buildAbsentSummary(rows: Row[], dateStr: string): string | null {
 }
 
 /**
- * The evening picture, fifteen minutes before the shift ends — the group's
- * one message about how the day closed.
+ * The day's close, at 19:02 \u2014 the 18:45 reminder and the 19:01 logout record
+ * merged into one.
  *
- * Somebody who was in all day and forgot to tap is indistinguishable from
- * somebody who never came: the machine has nothing either way. The register
- * cannot solve that, but a person can — if they are told while they are still
- * in the building. At 19:01 it is too late, and the next morning it is a
- * dispute nobody can settle. That is why the combined message sits here and
- * not after the shift ends: 18:45 is the last moment at which anything in it
- * can still be acted on.
+ * WHAT THE MERGE GAVE UP: 18:45 sat BEFORE the shift ended precisely so
+ * somebody who had forgotten to tap could still walk to the machine. At 19:02
+ * they have gone home. So this is a record rather than a request, and its
+ * closing line says so. What it gained is the departure windows, which at
+ * 18:45 described time that had not happened yet.
  *
- * Three lists, and nothing else:
- *   logged out        who has already left, with their hours. At 18:45 that
- *                     is by definition the people who went early, which is
- *                     the part worth seeing
- *   no check-out yet  they are in and about to leave; without a tap on the
- *                     way out the day reads as zero hours
- *   no punch at all   either genuinely absent, or present and never tapped —
- *                     only they know which, which is exactly why they are
- *                     asked rather than marked
+ * Two lists, and nothing else:
+ *   logged out        who left, and when, by departure window
+ *   no check-out      in, with no tap on the way out \u2014 which the machine
+ *                     cannot tell from somebody still at their desk, so the
+ *                     message names both possibilities rather than choosing
  *
- * There are no departure windows here, unlike the 19:01 record: before the
- * shift has ended, "18:00 – 19:00" and "19:00 onwards" describe time that
- * has not happened yet. The founder's 19:01 message keeps the full breakdown.
+ * THERE IS NO ABSENT LIST HERE, on the founder's instruction of 25 September.
+ * See the note inside.
  *
- * Anyone HR has already accounted for is left out: somebody on approved leave
- * is not being forgetful. Returns null when all three lists are empty,
- * because a daily message that is usually empty is one people stop reading.
+ * Returns null when both lists are empty, because a daily message that is
+ * usually empty is one people stop reading.
  */
 function buildEveningSummary(rows: Row[], dateStr: string): string | null {
   const jr = juniors(rows);
   const present = jr.filter((r) => r.check_in_at);
   const loggedOut = present.filter((r) => r.check_out_at);
   const noExit = present.filter((r) => !r.check_out_at);
-  const noPunch = jr.filter((r) => !r.check_in_at && !r.hr_status);
 
-  if (!loggedOut.length && !noExit.length && !noPunch.length) return null;
+  // No absent list here, on the founder's instruction of 25 September. The
+  // 11:30 register already named everybody absent, to the same group, hours
+  // earlier — and at 19:02 the name is no longer actionable by anybody: the
+  // person has gone home and HR cannot mark a leave against a day that is
+  // over from a WhatsApp message. So the evening message is about how the
+  // day ENDED — who left, and when — and repeating the morning's absent list
+  // under a "Daily Logout" heading is a second public naming that carries no
+  // new fact. Nothing is lost: the register, the console and the CSV all
+  // still hold it.
+  if (!loggedOut.length && !noExit.length) return null;
 
   const L: string[] = [];
   L.push("*CAPITAL BRIX — Daily Logout*");
@@ -698,12 +754,6 @@ function buildEveningSummary(rows: Row[], dateStr: string): string | null {
     );
   }
 
-  if (noPunch.length) {
-    L.push("");
-    L.push(`*No attendance recorded today (${noPunch.length})*`);
-    noPunch.forEach((r) => L.push(`• ${r.full_name.trim()}`));
-  }
-
   L.push("");
   // NOT "please punch on your way out". At 19:02 the shift has ended and the
   // people this would ask are already gone — an instruction nobody can act on
@@ -743,7 +793,8 @@ Deno.serve(async (req) => {
       "attendance", // 11:30 BOTH  — the register: windows, absent, on leave
       "morning", //    10:30 group — juniors punched in so far
       "late", //       13:00 group — juniors who arrived after 11:30
-      "evening", //    19:02 group — logout record, no check-out, no punch
+      "welcome", //    13:05 group — anybody whose first day this is
+      "evening", //    19:02 group — logout record and no check-out
       // Kept so a manual send still works and an old cron cannot 500, but
       // nothing schedules these any more — all four fold into the two above:
       "present", //    superseded — the 11:30 register is a superset
@@ -822,7 +873,7 @@ Deno.serve(async (req) => {
     // Each falls back to the other: a summary that reaches one person beats
     // one that reaches nobody because a number was never filled in. Duplicates
     // are stripped, so a founder number that IS the group id sends once.
-    const toGroup = ["morning", "present", "absent", "late", "evening", "reminder"];
+    const toGroup = ["morning", "present", "absent", "late", "evening", "reminder", "welcome"];
     let targets = kind === "attendance"
       ? [founder, group]
       : toGroup.includes(kind)
@@ -863,6 +914,15 @@ Deno.serve(async (req) => {
     });
     if (error) return json({ error: error.message }, 500);
 
+    // Who has started and never been welcomed. Read from cb_new_joiners() so
+    // the rule for "new" lives in one place; see buildWelcomeSummary.
+    let newJoiners: NewJoiner[] = [];
+    if (kind === "welcome") {
+      const { data: nj, error: njErr } = await admin.rpc("cb_new_joiners");
+      if (njErr) return json({ error: njErr.message }, 500);
+      newJoiners = (nj ?? []) as NewJoiner[];
+    }
+
     // A DAY WITH NOT ONE PUNCH IS A BROKEN FEED UNTIL PROVEN OTHERWISE.
     //
     // Everything downstream of the eSSL machine can be green while the machine
@@ -885,9 +945,15 @@ Deno.serve(async (req) => {
     // The broken-feed warning is HR's problem, never the group's. It asks for
     // a specific click inside eTimeTrackLite, which forty-nine of fifty people
     // cannot act on and would read as the company's attendance being broken.
-    if (punchCount === 0) targets = [founder || group].filter(Boolean);
+    // `welcome` is not a register, so a day with no punches does not make it
+    // a broken feed — the joiner's first day was on an earlier one.
+    if (punchCount === 0 && kind !== "welcome") {
+      targets = [founder || group].filter(Boolean);
+    }
 
-    const text = punchCount === 0
+    const text = kind === "welcome"
+      ? buildWelcomeSummary(newJoiners, reportDate)
+      : punchCount === 0
       ? [
         "*CAPITAL BRIX — Daily Attendance*",
         fmtDate(reportDate),
@@ -933,6 +999,8 @@ Deno.serve(async (req) => {
           ? "nothing to post — nobody was absent"
           : kind === "late"
           ? "nothing to post — nobody was recorded after 11:30"
+          : kind === "welcome"
+          ? "nothing to post — nobody new started"
           : "nothing to report — every attendance was complete",
       });
       return json({
@@ -945,6 +1013,8 @@ Deno.serve(async (req) => {
           ? "nobody was absent"
           : kind === "late"
           ? "nobody recorded after 11:30"
+          : kind === "welcome"
+          ? "nobody new started"
           : "nothing to report",
         kind,
       });
@@ -1013,6 +1083,17 @@ Deno.serve(async (req) => {
       ok,
       detail: detail.slice(0, 400) || null,
     });
+
+    // Once, ever — but only once it actually went out. Stamping before the
+    // send would cost somebody their welcome the first time the WhatsApp
+    // session was down, and nothing would ever say so.
+    if (kind === "welcome" && ok && newJoiners.length) {
+      await admin
+        .from("cb_employees")
+        .update({ welcomed_at: new Date().toISOString() })
+        .in("id", newJoiners.map((j) => j.id))
+        .then(() => {}, () => {});
+    }
 
     return json({
       sent: ok,
