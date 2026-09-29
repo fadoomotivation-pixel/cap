@@ -514,16 +514,32 @@ export default function MachineAdmin() {
               with no date on it is the bug, not the rename. */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-xs text-gray-500">
-              {usersAsOf
-                ? `As of ${new Date(usersAsOf).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}`
+              {usersAsOf?.as_of
+                ? `As of ${new Date(usersAsOf.as_of).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}`
                 : 'The machine has never sent its enrolment list.'}
-              {usersAsOf && Date.now() - new Date(usersAsOf).getTime() > 36e5 * 24 && (
+              {usersAsOf?.as_of && Date.now() - new Date(usersAsOf.as_of).getTime() > 864e5 && (
                 <span className="text-amber-700">
-                  {' '}— {Math.floor((Date.now() - new Date(usersAsOf).getTime()) / 864e5)} days old.
+                  {' '}— {Math.floor((Date.now() - new Date(usersAsOf.as_of).getTime()) / 864e5)} days old.
                   Anything renamed since will still read as the old name here.
                 </span>
               )}
             </span>
+
+            {/* ASKED AND NOT ANSWERED is its own state and must not look like
+                "up to date". The daily refresh declines to stack a second
+                request, which is right - but a guard that returns quietly is
+                the same silent shape as the bug it replaced. */}
+            {usersAsOf?.awaiting_since && (
+              <span className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+                Asked {Math.round((Date.now() - new Date(usersAsOf.awaiting_since).getTime()) / 6e4)} min ago,
+                no answer yet
+              </span>
+            )}
+            {usersAsOf?.unconfirmed_names > 0 && (
+              <span className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-0.5">
+                {usersAsOf.unconfirmed_names} renamed here, awaiting the machine&apos;s own word
+              </span>
+            )}
             <button onClick={() => queue('query_users')} disabled={busy === 'query_users'}
               className="text-xs px-2.5 py-1 rounded border border-gray-200 text-[#10243E] hover:border-[#D4AF37] disabled:opacity-50">
               {busy === 'query_users' ? 'Asking…' : 'Ask the machine again'}
