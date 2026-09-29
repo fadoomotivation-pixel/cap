@@ -108,3 +108,152 @@ as $$
 $$;
 
 grant execute on function cb_device_users_as_of() to authenticated;
+
+-- ── THE ROSTER AND THE TERMINAL NOW TALK BOTH WAYS ─────────────────────
+--
+-- Until now it was one direction and a manual one: somebody had to NOTICE a
+-- name was wrong, open /admin/machine and rename it. Nobody notices, which is
+-- how fifteen names drifted apart.
+--
+--   roster name changes  --> DATA UPDATE USERINFO  --> terminal
+--   terminal replies 0   --> our copy moves, marked 'console'
+--                        --> one query_users queued
+--   terminal reports     --> our copy becomes 'machine' = confirmed
+--
+-- The loop closes on its own, and every step is recorded in
+-- cb_device_commands, so a rename that quietly did nothing is visible rather
+-- than assumed to have worked.
+create or replace function cb_employee_name_to_device()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_name text := nullif(btrim(coalesce(new.full_name, '')), '');
+  v_machine text;
+  v_pending bigint;
+begin
+  -- Only somebody who CURRENTLY holds a code. A leaver's code may already
+  -- belong to the next person, and renaming it would put the wrong name on
+  -- their enrolment.
+  if new.device_code is null or v_name is null
+     or new.left_on is not null or not new.is_active then
+    return new;
+  end if;
+
+  select u.name into v_machine from cb_device_users u
+   where u.device_code = new.device_code;
+  if lower(btrim(coalesce(v_machine, ''))) = lower(v_name) then
+    return new;
+  end if;
+
+  -- ONE INSTRUCTION PER PERSON, AND THE LAST EDIT WINS.
+  --
+  -- Two quick corrections to a spelling must not queue two renames - the
+  -- second would be reported as a failure of the first. But SKIPPING the
+  -- second is worse: the machine would end up with the EARLIER name, which is
+  -- the opposite of what was just typed. So a rename still waiting to go out
+  -- is rewritten in place. Only while it is `pending`: once it is `sent` the
+  -- terminal already has it, and editing the row would misreport what was
+  -- actually asked for.
+  select id into v_pending from cb_device_commands
+   where kind = 'rename_user' and status = 'pending'
+     and args ->> 'pin' = new.device_code
+   order by created_at desc limit 1;
+
+  if v_pending is not null then
+    update cb_device_commands
+       set cmd = format('DATA UPDATE USERINFO PIN=%s%sName=%s', new.device_code, chr(9), v_name),
+           args = jsonb_build_object('pin', new.device_code, 'name', v_name),
+           created_at = now()
+     where id = v_pending;
+    return new;
+  end if;
+
+  if exists (
+    select 1 from cb_device_commands
+     where kind = 'rename_user' and status = 'sent'
+       and args ->> 'pin' = new.device_code
+       and args ->> 'name' = v_name
+  ) then
+    return new;
+  end if;
+
+  -- Built here, exactly as cb_queue_device_command builds it. The whitelist
+  -- principle holds: no layer accepts a command string, and this trigger can
+  -- express nothing but a rename.
+  insert into cb_device_commands (kind, cmd, args, created_by)
+  values (
+    'rename_user',
+    format('DATA UPDATE USERINFO PIN=%s%sName=%s', new.device_code, chr(9), v_name),
+    jsonb_build_object('pin', new.device_code, 'name', v_name),
+    coalesce(auth.jwt() ->> 'email', 'roster sync')
+  );
+
+  return new;
+end;
+$$;
+
+drop trigger if exists cb_employee_name_to_device_t on cb_employees;
+create trigger cb_employee_name_to_device_t
+after insert or update of full_name, device_code, is_active, left_on on cb_employees
+for each row execute function cb_employee_name_to_device();
+
+-- ── THE SNAPSHOT MUST NEVER GO STALE AGAIN ─────────────────────────────
+--
+-- cb_device_users was read from the terminal exactly ONCE, on 23 September,
+-- and nothing re-read it for a week. That single fact is the whole of the
+-- "the rename went back to the old name" report. A refresh nobody has to
+-- remember is the only fix that holds.
+--
+-- pg_cron: cb-device-users-refresh, '0 4 * * *' = 09:30 IST.
+create or replace function cb_refresh_device_users()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Never stack. If yesterday's question is still unanswered the terminal is
+  -- not talking to us, and a queue of identical requests hides that rather
+  -- than fixing it. cb_device_users_as_of() surfaces the unanswered one, so
+  -- this guard is not itself silent.
+  if exists (
+    select 1 from cb_device_commands
+    where kind = 'query_users' and status in ('pending', 'sent')
+  ) then
+    return;
+  end if;
+
+  insert into cb_device_commands (kind, cmd, args, status, created_by)
+  values ('query_users', 'DATA QUERY USERINFO', '{}'::jsonb, 'pending', 'daily refresh');
+end;
+$$;
+
+-- How old our copy is, AND whether the question we asked is still unanswered.
+drop function if exists cb_device_users_as_of();
+
+create function cb_device_users_as_of()
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'as_of', (select max(seen_at) from cb_device_users),
+    'rows', (select count(*) from cb_device_users),
+    'awaiting_since', (
+      select min(created_at) from cb_device_commands
+      where kind = 'query_users' and status in ('pending', 'sent')
+    ),
+    -- Renames we have sent that the terminal has not reported back. Beliefs,
+    -- not facts, and the page says so.
+    'unconfirmed_names', (
+      select count(*) from cb_device_users where name_source = 'console'
+    )
+  )
+  where cb_is_admin();
+$$;
+
+grant execute on function cb_device_users_as_of() to authenticated;

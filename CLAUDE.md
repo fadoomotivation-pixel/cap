@@ -564,6 +564,47 @@ answered "no" until 23 September 2026. It now answers, narrowly.
   person — the terminal takes one at a time, oldest first, so each failure
   stays attributable to its own instruction.
 
+- **The roster and the terminal talk BOTH ways, and neither has to be
+  remembered.** Change somebody's name on the roster and a `rename_user` is
+  queued automatically (`cb_employee_name_to_device`, a trigger on
+  `cb_employees`). Until this existed the direction was one-way and manual —
+  somebody had to *notice* a name was wrong and go and fix it. Nobody notices,
+  which is exactly how fifteen names drifted apart.
+
+  ```
+  roster name changes --> DATA UPDATE USERINFO --> terminal
+  terminal replies 0  --> our copy moves, marked 'console'
+                      --> one query_users queued
+  terminal reports    --> our copy becomes 'machine' = confirmed
+  ```
+
+  Three rules inside it, each one a bug avoided:
+
+  - **Only a CURRENT holder.** A leaver's code may already belong to the next
+    person, so marking somebody left must never rename that code.
+  - **The last edit wins.** Two quick corrections to a spelling must not queue
+    two renames — the second would be reported as a failure of the first — but
+    *skipping* the second is worse, because the machine would end up with the
+    **earlier** name, the opposite of what was just typed. A rename still
+    `pending` is rewritten in place; one already `sent` is left alone, or the
+    log would misreport what was actually asked for.
+  - **It can express nothing but a rename.** The command text is built here
+    the same way `cb_queue_device_command` builds it, so the whitelist
+    principle holds: no layer anywhere accepts a command string.
+
+- **`cb-device-users-refresh` (09:30 IST daily) is why the stale snapshot
+  cannot come back.** `cb_device_users` had been read from the terminal
+  exactly once, and nothing re-read it for a week — that one fact is the whole
+  of the "the rename went back to the old name" report. A refresh nobody has
+  to remember is the only fix that holds.
+
+  It declines to stack a second request when one is outstanding, which is
+  right — **and a guard that returns quietly is the same silent shape as the
+  bug it replaced**, so `cb_device_users_as_of()` returns `awaiting_since` and
+  the page prints "Asked N min ago, no answer yet" as its own state. It also
+  returns `unconfirmed_names`, the count of names we set from the console that
+  the terminal has not yet said back.
+
 - **A queued command for a terminal that has never contacted us never runs.**
   The page says so in plain words rather than showing a hopeful "pending" —
   `cb_adms_log` was empty for the whole of the ADMS work, and a console that
