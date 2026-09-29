@@ -29,7 +29,10 @@ returns table (
   full_name text,
   role_title text,
   department text,
-  first_day date
+  first_day date,
+  -- A backend joiner is welcomed by backend, not announced to the whole
+  -- company. Same rule as the register: one person, one group.
+  team_wa_group_id text
 )
 language sql
 security definer
@@ -40,8 +43,10 @@ as $$
          e.role_title,
          e.department,
          (select min(a.work_date) from public.cb_attendance a
-           where a.employee_id = e.id) as first_day
+           where a.employee_id = e.id) as first_day,
+         t.wa_group_id
     from public.cb_employees e
+    left join public.cb_teams t on t.id = e.team_id and t.is_active
    where e.is_active
      and e.welcomed_at is null
      -- Seniors are left to the founder to welcome himself. Same reasoning as

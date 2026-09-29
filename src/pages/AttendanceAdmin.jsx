@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import AdminNav from '../components/AdminNav';
 import AttendanceHealth from '../components/AttendanceHealth';
+import MonthlyAttendanceReport from '../components/MonthlyAttendanceReport';
+import { buildMonthly, monthlyCsv } from '../lib/monthlyAttendance';
 import { friendlyError } from '../lib/errors';
 import { ADMIN_EMAILS } from '../lib/admin';
 import { buildDailyWhatsAppSummary, whatsappLink, buildNudgeMessage } from '../lib/attendanceReport';
@@ -10,7 +12,7 @@ import {
   Users, UserPlus, MapPin, Download, Search, LogOut, RefreshCw, CheckCircle, Clock,
   Building2, Navigation, Home, UserX, Power, Calendar, Send, KeyRound, Settings, AlertTriangle,
   Copy, BarChart3, Bell, Crosshair, X, Wallet, Star,
-  Inbox, Fingerprint,
+  Inbox, Fingerprint, Printer,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
@@ -34,7 +36,8 @@ export default function AttendanceAdmin() {
   const [tab, setTab] = useState('today'); // today | roster | monthly | settings
   const [employees, setEmployees] = useState([]);
   const [day, setDay] = useState([]);
-  const [monthly, setMonthly] = useState([]);
+  const [monthly, setMonthly] = useState(null); // null = still loading
+  const [monthlyAll, setMonthlyAll] = useState(false);
   const [settings, setSettings] = useState(null);
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'));
@@ -50,6 +53,10 @@ export default function AttendanceAdmin() {
   // The terminal's own contact log. See the Device link panel below for why
   // this is on screen at all.
   const [deviceLog, setDeviceLog] = useState(null);
+
+  // Which WhatsApp group each person's attendance is published to. Loaded
+  // here rather than hardcoded because a team is a row, not a deploy.
+  const [teams, setTeams] = useState([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -67,23 +74,32 @@ export default function AttendanceAdmin() {
   const fetchData = useCallback(async () => {
     if (!isAdmin) return;
     setRefreshing(true);
-    const [{ data: emps }, { data: dayRows }, { data: settingsRow }] = await Promise.all([
+    const [{ data: emps }, { data: dayRows }, { data: settingsRow }, { data: teamRows }] = await Promise.all([
       supabase.from('cb_employees').select('*').order('full_name'),
       supabase.rpc('cb_daily_attendance', { p_date: date }),
       supabase.from('cb_hr_settings').select('*').eq('id', 1).maybeSingle(),
+      supabase.from('cb_teams').select('id, name, wa_group_id, is_active').eq('is_active', true).order('sort'),
     ]);
     setEmployees(emps || []);
     setDay(dayRows || []);
+    setTeams(teamRows || []);
     if (settingsRow) setSettings(settingsRow);
     setRefreshing(false);
   }, [isAdmin, date]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // The per-day matrix, not the totals RPC. Every figure on the monthly page
+  // is summed from this one array, so the charts, the grid, the table and the
+  // CSV cannot disagree — the same rule the daily register follows.
   useEffect(() => {
     if (!isAdmin || tab !== 'monthly') return;
-    supabase.rpc('cb_monthly_attendance', { p_month: `${month}-01` })
-      .then(({ data }) => setMonthly(data || []));
+    setMonthly(null);
+    supabase.rpc('cb_monthly_matrix', { p_month: month })
+      .then(({ data, error: err }) => {
+        if (err) { setError(friendlyError(err)); setMonthly([]); return; }
+        setMonthly(data || []);
+      });
   }, [isAdmin, tab, month]);
 
   useEffect(() => {
@@ -100,6 +116,43 @@ export default function AttendanceAdmin() {
   };
 
   const flash = (msg) => { setOk(msg); setTimeout(() => setOk(''), 4000); };
+
+  const monthlyData = useMemo(
+    () => (monthly ? buildMonthly(monthly, { onlyReported: !monthlyAll }) : null),
+    [monthly, monthlyAll],
+  );
+
+  // Printed on the report so the word "late" is never mysterious. Two thirds
+  // of this month's check-ins are after it, which is a fact about the setting
+  // as much as about the team — and the reader can only weigh that if the
+  // page says what the setting is.
+  const lateAfter = useMemo(() => {
+    if (!settings?.shift_start) return null;
+    const [h, m] = String(settings.shift_start).split(':').map(Number);
+    const t = h * 60 + m + (settings.late_grace_minutes ?? 0);
+    return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+  }, [settings]);
+
+  /**
+   * Move somebody to a team, which decides WHICH WhatsApp group their
+   * attendance is published to — not an extra copy of it. A person belongs to
+   * one group, so moving them to Backend takes their name out of the main
+   * junior group and puts it in theirs.
+   *
+   * This is the whole "easy option" for a new joiner: add them to the roster
+   * as usual, then pick their team here. Nothing else has to change, and no
+   * deploy is involved.
+   */
+  const setTeam = async (emp, teamId) => {
+    const { error: err } = await supabase.from('cb_employees')
+      .update({ team_id: teamId || null }).eq('id', emp.id);
+    if (err) { setError(friendlyError(err)); return; }
+    const name = teams.find((t) => t.id === teamId)?.name;
+    flash(name
+      ? `${emp.full_name.trim()} now reports to the ${name} group.`
+      : `${emp.full_name.trim()} is back in the main group.`);
+    await fetchData();
+  };
 
   // ── Roster ─────────────────────────────────────────────────────────
   // One action: add the person AND give them a login. A roster row on its own
@@ -308,13 +361,15 @@ export default function AttendanceAdmin() {
     downloadCsv([header, ...body], `capitalbrix-attendance-${date}.csv`);
   };
 
+  // Built from the same folded object the page renders, so the spreadsheet
+  // and the printout are the same report rather than two that nearly agree.
   const exportMonthlyCsv = () => {
-    const header = ['Employee', 'Code', 'Department', 'Present Days', 'Leave Days', 'Site Visits', 'WFH', 'Late Days', 'Total Hours', 'Avg Hours'];
-    const body = monthly.map((r) => [
-      r.full_name, r.employee_code || '', r.department || '',
-      r.present_days, r.leave_days, r.site_visits, r.wfh_days, r.late_days, r.total_hours, r.avg_hours,
-    ]);
-    downloadCsv([header, ...body], `capitalbrix-attendance-${month}.csv`);
+    if (!monthlyData) return;
+    const csv = monthlyCsv(monthlyData, month);
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `capitalbrix-attendance-${month}.csv`; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const downloadCsv = (rows, filename) => {
@@ -370,11 +425,11 @@ export default function AttendanceAdmin() {
           </div>
         </div>
 
-        <AdminNav className="mb-6" />
+        <AdminNav className="mb-6 cb-no-print" />
 
         {/* Above the tabs on purpose: "is anything broken?" is the question
             you have before you know which tab to open. */}
-        <AttendanceHealth className="mb-6" />
+        <AttendanceHealth className="mb-6 cb-no-print" />
 
         {error && <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-lg mb-4 text-sm flex justify-between gap-3">{error}<button onClick={() => setError('')}><X size={16} /></button></div>}
         {ok && <div className="bg-green-50 text-green-700 border border-green-100 p-4 rounded-lg mb-4 text-sm">{ok}</div>}
@@ -412,7 +467,7 @@ export default function AttendanceAdmin() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="cb-no-print flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
           {[['today', 'Daily Register', Calendar], ['roster', 'Employees', Users], ['monthly', 'Monthly Report', BarChart3], ['settings', 'Settings', Settings]].map(([key, label, Icon]) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition ${
@@ -790,6 +845,29 @@ export default function AttendanceAdmin() {
                                 <Star size={11} /> {e.is_senior ? 'Senior — never absent' : 'Mark senior'}
                               </button>
                             )}
+                            {/* WHICH GROUP, not whether. A person belongs to one
+                                group: picking Backend takes their name out of the
+                                main junior group and puts it in Backend's. This is
+                                the one control a new joiner needs. */}
+                            {/* Shown even when they are not in the report, or the
+                                control would be hidden for exactly the person you
+                                are setting up — team first, then switch them on. */}
+                            {teams.length > 0 && (
+                              <select
+                                value={e.team_id || ''}
+                                onChange={(ev) => setTeam(e, ev.target.value)}
+                                title="Which WhatsApp group this person's attendance is posted to. They appear in that group only, never in both."
+                                className={`text-[11px] font-medium px-2 py-1 rounded border outline-none transition ${
+                                  e.team_id
+                                    ? 'bg-sky-50 text-sky-700 border-sky-200'
+                                    : 'bg-white text-gray-400 border-gray-200 hover:border-sky-200'
+                                }`}>
+                                <option value="">Main group</option>
+                                {teams.map((t) => (
+                                  <option key={t.id} value={t.id}>{t.name} group</option>
+                                ))}
+                              </select>
+                            )}
                           </div>
                         )}
                       </td>
@@ -922,57 +1000,40 @@ export default function AttendanceAdmin() {
         {/* ── MONTHLY ── */}
         {tab === 'monthly' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex flex-wrap gap-3 justify-between items-center mb-5">
+            <div className="cb-no-print flex flex-wrap gap-3 justify-between items-center mb-5">
               <h2 className="text-xl font-semibold text-[#10243E] flex items-center gap-2">
                 <BarChart3 size={20} className="text-[#f26522]" /> Monthly Report
               </h2>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
+                <label className="flex items-center gap-1.5 text-xs text-gray-500 mr-1">
+                  <input type="checkbox" checked={monthlyAll}
+                    onChange={(e) => setMonthlyAll(e.target.checked)} />
+                  Include people the messages never name
+                </label>
                 <input type="month" value={month} onChange={(e) => setMonth(e.target.value)}
                   className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
-                <button onClick={exportMonthlyCsv} disabled={monthly.length === 0}
-                  className="flex items-center gap-2 bg-[#10243E] text-white px-4 py-2 rounded-md text-sm hover:bg-[#1a365d] disabled:opacity-40">
+                <button onClick={exportMonthlyCsv} disabled={!monthlyData?.days.length}
+                  className="flex items-center gap-2 bg-white border border-gray-200 text-[#10243E] px-4 py-2 rounded-md text-sm hover:border-[#f26522] disabled:opacity-40">
                   <Download size={16} /> CSV
+                </button>
+                {/* The founder asked to be able to print this. It is the whole
+                    reason the report is laid out as pages rather than as a
+                    dashboard — see the print rules in the component. */}
+                <button onClick={() => window.print()} disabled={!monthlyData?.days.length}
+                  className="flex items-center gap-2 bg-[#10243E] text-white px-4 py-2 rounded-md text-sm hover:bg-[#1a365d] disabled:opacity-40">
+                  <Printer size={16} /> Print
                 </button>
               </div>
             </div>
-            <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
-                  <tr>
-                    <th className="p-3 font-medium">Employee</th>
-                    <th className="p-3 font-medium">Present</th>
-                    <th className="p-3 font-medium">Leave</th>
-                    <th className="p-3 font-medium">Site</th>
-                    <th className="p-3 font-medium">WFH</th>
-                    <th className="p-3 font-medium">Late</th>
-                    <th className="p-3 font-medium">Total Hrs</th>
-                    <th className="p-3 font-medium">Avg Hrs</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {monthly.map((r) => (
-                    <tr key={r.employee_id} className="hover:bg-gray-50/50">
-                      <td className="p-3">
-                        <p className="font-semibold text-[#10243E]">{r.full_name}</p>
-                        <p className="text-xs text-gray-400">{r.department}</p>
-                      </td>
-                      <td className="p-3 font-semibold text-green-700">{r.present_days}</td>
-                      <td className="p-3 text-gray-600">{r.leave_days}</td>
-                      <td className="p-3 text-gray-600">{r.site_visits}</td>
-                      <td className="p-3 text-gray-600">{r.wfh_days}</td>
-                      <td className={`p-3 font-medium ${r.late_days > 3 ? 'text-red-600' : 'text-gray-600'}`}>{r.late_days}</td>
-                      <td className="p-3 text-gray-600">{r.total_hours}</td>
-                      <td className="p-3 text-gray-600">{r.avg_hours}</td>
-                    </tr>
-                  ))}
-                  {monthly.length === 0 && <tr><td colSpan="8" className="p-8 text-center text-gray-400">No data for this month.</td></tr>}
-                </tbody>
-              </table>
-            </div>
+
+            {monthly === null ? (
+              <p className="p-8 text-center text-gray-400">Reading the register…</p>
+            ) : (
+              <MonthlyAttendanceReport data={monthlyData} month={month} lateAfter={lateAfter} />
+            )}
           </div>
         )}
 
-        {/* ── SETTINGS ── */}
         {tab === 'settings' && (
           <DeviceLink rows={deviceLog} />
         )}

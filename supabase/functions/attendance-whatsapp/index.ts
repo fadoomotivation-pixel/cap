@@ -153,6 +153,8 @@ type NewJoiner = {
   role_title: string | null;
   department: string | null;
   first_day: string | null;
+  /** Their team's group, so a backend joiner is welcomed by their own team. */
+  team_wa_group_id: string | null;
 };
 
 type Row = {
@@ -168,7 +170,43 @@ type Row = {
   outside_geofence: boolean | null;
   note: string | null;
   is_senior: boolean | null;
+  team_id: string | null;
+  team_name: string | null;
+  team_wa_group_id: string | null;
 };
+
+/** One finished message and the address it goes to. */
+type Delivery = { to: string; text: string; label: string };
+
+/**
+ * Split the day's rows by the WhatsApp group each person's attendance is
+ * published to.
+ *
+ * The founder added a "Backend C.B" group on 29 September 2026 and asked for
+ * the backend team's attendance to go there. This is NOT a second copy of the
+ * register: a person belongs to exactly one group, so backend names leave the
+ * main junior group and appear only in theirs. Naming two colleagues in a
+ * fifty-person group and again in their own group is the scoreboard this
+ * module keeps being told not to become.
+ *
+ * Anybody with no team, or on a team whose group HR has not picked yet, falls
+ * back to the main group. A team configured halfway must never make somebody's
+ * attendance disappear - a name in no list at all is the one outcome none of
+ * these messages may produce.
+ */
+function splitByGroup(rows: Row[], mainGroup: string): { to: string; rows: Row[]; label: string }[] {
+  const out = new Map<string, { to: string; rows: Row[]; label: string }>();
+  for (const r of rows) {
+    const own = (r.team_wa_group_id ?? "").trim();
+    const to = own || mainGroup;
+    if (!to) continue;
+    if (!out.has(to)) {
+      out.set(to, { to, rows: [], label: own ? (r.team_name ?? "team") : "main group" });
+    }
+    out.get(to)!.rows.push(r);
+  }
+  return [...out.values()];
+}
 
 /**
  * The group's lists are about juniors.
@@ -870,18 +908,11 @@ Deno.serve(async (req) => {
     const group = (settings?.wa_group_id || "").trim();
     const founder = (settings?.founder_whatsapp || "").replace(/\D/g, "");
 
-    // Each falls back to the other: a summary that reaches one person beats
-    // one that reaches nobody because a number was never filled in. Duplicates
-    // are stripped, so a founder number that IS the group id sends once.
+    // Which kinds address a group at all. A team split only applies to these;
+    // everything else is the founder's alone.
     const toGroup = ["morning", "present", "absent", "late", "evening", "reminder", "welcome"];
-    let targets = kind === "attendance"
-      ? [founder, group]
-      : toGroup.includes(kind)
-      ? [group || founder]
-      : [founder || group];
-    targets = [...new Set(targets.filter(Boolean))];
 
-    if (!targets.length) {
+    if (!group && !founder) {
       return json({ sent: false, reason: "no WhatsApp group or founder number configured" });
     }
 
@@ -926,99 +957,136 @@ Deno.serve(async (req) => {
     // A DAY WITH NOT ONE PUNCH IS A BROKEN FEED UNTIL PROVEN OTHERWISE.
     //
     // Everything downstream of the eSSL machine can be green while the machine
-    // itself has stopped reaching the office PC. On 21 September the scheduled
-    // task's last result was 0x0 and the sync read every table without error,
-    // and the register had been five days stale — eTimeTrackLite's download is
-    // manual and nobody had clicked it.
+    // itself has stopped reaching us. On 28 September the terminal went silent
+    // at 15:30 the previous day and the register would have called all
+    // thirty-two people absent.
     //
     // The register cannot tell that apart from a day nobody came, and its
     // answer either way is "Absent" against every name, which is the single
-    // most damaging thing this message could say. So when no punch has arrived
-    // for the day, say that instead of reading out a roll-call nobody should
-    // act on. On a real holiday it is still true and still the right message.
+    // most damaging thing this message could say.
     const { count: punchCount } = await admin
       .from("cb_device_punches")
       .select("id", { count: "exact", head: true })
       .gte("punch_at", `${reportDate}T00:00:00+05:30`)
       .lt("punch_at", `${nextIstDay(reportDate)}T00:00:00+05:30`);
 
-    // The broken-feed warning is HR's problem, never the group's. It asks for
-    // a specific click inside eTimeTrackLite, which forty-nine of fifty people
-    // cannot act on and would read as the company's attendance being broken.
-    // `welcome` is not a register, so a day with no punches does not make it
-    // a broken feed — the joiner's first day was on an earlier one.
-    if (punchCount === 0 && kind !== "welcome") {
-      targets = [founder || group].filter(Boolean);
+    // WHO GETS WHAT. Until 29 September this was one address list and one
+    // block of text. It is now one block of text PER ADDRESS, because the
+    // backend team publishes to its own group and must see its own names, not
+    // the whole company's.
+    //
+    // The founder's copy of the 11:30 register stays the whole company across
+    // every team - that is what makes it the record rather than a roll-call of
+    // one group. He directed on 23 September that the register go to both.
+    const deliveries: Delivery[] = [];
+    let builder: ((rows: Row[], d: string) => string | null) | null = null;
+    switch (kind) {
+      case "checkout": builder = buildCheckoutSummary; break;
+      case "evening":
+      case "reminder": builder = buildEveningSummary; break;
+      case "morning": builder = buildMorningSummary; break;
+      case "present": builder = buildPresentSummary; break;
+      case "absent": builder = buildAbsentSummary; break;
+      case "late": builder = buildLateSummary; break;
+      default: builder = buildSummary;
     }
 
-    const text = kind === "welcome"
-      ? buildWelcomeSummary(newJoiners, reportDate)
-      : punchCount === 0
-      ? [
-        "*CAPITAL BRIX — Daily Attendance*",
-        fmtDate(reportDate),
-        "",
-        "No attendance records were received for today, so the register is not",
-        "being published. This is either a non-working day, or the biometric",
-        "system has stopped sending to the office computer.",
-        "",
-        "_HR: please check eTimeTrackLite → Utilities → Device Management →",
-        "Start Download._",
-        "",
-        "— Capital Brix AI HR",
-      ].join("\n")
-      : kind === "checkout"
-      ? buildCheckoutSummary((rows ?? []) as Row[], reportDate)
-      : kind === "evening" || kind === "reminder"
-      ? buildEveningSummary((rows ?? []) as Row[], reportDate)
-      : kind === "morning"
-      ? buildMorningSummary((rows ?? []) as Row[], reportDate)
-      : kind === "present"
-      ? buildPresentSummary((rows ?? []) as Row[], reportDate)
-      : kind === "absent"
-      ? buildAbsentSummary((rows ?? []) as Row[], reportDate)
-      : kind === "late"
-      ? buildLateSummary((rows ?? []) as Row[], reportDate)
-      : buildSummary((rows ?? []) as Row[], reportDate);
+    const all = (rows ?? []) as Row[];
 
-    // Nothing to remind anyone about is the good day, and it gets no message.
-    // Logged as ok so the console shows the reminder ran and found nothing,
-    // rather than looking like it never fired.
-    if (text === null) {
+    if (punchCount === 0 && kind !== "welcome") {
+      // The broken-feed warning is HR's problem, never any group's: it asks
+      // for a click inside eTimeTrackLite that forty-nine of fifty people
+      // cannot act on, and it would read as the company's attendance being
+      // broken. One address, and it is his.
+      const to = founder || group;
+      if (to) {
+        deliveries.push({
+          to,
+          label: "founder",
+          text: [
+            "*CAPITAL BRIX \u2014 Daily Attendance*",
+            fmtDate(reportDate),
+            "",
+            "No attendance records were received for today, so the register is not",
+            "being published. This is either a non-working day, or the biometric",
+            "system has stopped sending to the office computer.",
+            "",
+            "_HR: please check eTimeTrackLite \u2192 Utilities \u2192 Device Management \u2192",
+            "Start Download._",
+            "",
+            "\u2014 Capital Brix AI HR",
+          ].join("\n"),
+        });
+      }
+    } else if (kind === "welcome") {
+      // A backend joiner is welcomed by backend. Same rule as the register:
+      // one person, one group.
+      const byGroup = new Map<string, NewJoiner[]>();
+      for (const j of newJoiners) {
+        const to = (j.team_wa_group_id ?? "").trim() || group || founder;
+        if (!to) continue;
+        if (!byGroup.has(to)) byGroup.set(to, []);
+        byGroup.get(to)!.push(j);
+      }
+      for (const [to, js] of byGroup) {
+        const t = buildWelcomeSummary(js, reportDate);
+        if (t) deliveries.push({ to, label: "welcome", text: t });
+      }
+    } else if (kind === "attendance") {
+      const founderText = buildSummary(all, reportDate);
+      if (founder && founderText) {
+        deliveries.push({ to: founder, label: "founder", text: founderText });
+      }
+      for (const part of splitByGroup(all, group)) {
+        // A group whose own JID IS the founder's number would send twice.
+        if (part.to === founder) continue;
+        const t = buildSummary(part.rows, reportDate);
+        if (t) deliveries.push({ to: part.to, label: part.label, text: t });
+      }
+    } else if (toGroup.includes(kind)) {
+      for (const part of splitByGroup(all, group || founder)) {
+        const t = builder(part.rows, reportDate);
+        if (t) deliveries.push({ to: part.to, label: part.label, text: t });
+      }
+    } else {
+      const to = founder || group;
+      const t = builder(all, reportDate);
+      if (to && t) deliveries.push({ to, label: "founder", text: t });
+    }
+
+    // Nothing to say is the good day, and it gets no message. Logged as ok so
+    // the console shows the job ran and found nothing, rather than looking
+    // like it never fired.
+    if (!deliveries.length) {
+      const why = kind === "morning"
+        ? "nobody had punched in by 10:30"
+        : kind === "present"
+        ? "nobody had punched in by 11:30"
+        : kind === "absent"
+        ? "nobody was absent"
+        : kind === "late"
+        ? "nobody was recorded after 11:30"
+        : kind === "welcome"
+        ? "nobody new started"
+        : "every attendance was complete";
       await admin.from("cb_report_log").upsert({
         report_date: reportDate,
         kind,
         sent_at: new Date().toISOString(),
-        target: targets.join(", "),
+        target: "",
         ok: true,
-        detail: kind === "morning"
-          ? "nothing to post — nobody had punched in by 10:30"
-          : kind === "present"
-          ? "nothing to post — nobody had punched in by 11:30"
-          : kind === "absent"
-          ? "nothing to post — nobody was absent"
-          : kind === "late"
-          ? "nothing to post — nobody was recorded after 11:30"
-          : kind === "welcome"
-          ? "nothing to post — nobody new started"
-          : "nothing to report — every attendance was complete",
+        detail: `nothing to post \u2014 ${why}`,
       });
-      return json({
-        sent: false,
-        reason: kind === "morning"
-          ? "nobody punched in yet"
-          : kind === "present"
-          ? "nobody punched in by 11:30"
-          : kind === "absent"
-          ? "nobody was absent"
-          : kind === "late"
-          ? "nobody recorded after 11:30"
-          : kind === "welcome"
-          ? "nobody new started"
-          : "nothing to report",
-        kind,
-      });
+      return json({ sent: false, reason: why, kind });
     }
+
+    const targets = deliveries.map((d) => d.to);
+    // Preview shows every message that would go out, separated, because a
+    // page that previewed only the first would hide the one a team is about
+    // to read.
+    const text = deliveries.length === 1
+      ? deliveries[0].text
+      : deliveries.map((d) => `[\u2192 ${d.label}]\n${d.text}`).join("\n\n\u2014\u2014\u2014\n\n");
 
     if (dry_run && viaAdmin) {
       return json({ sent: false, dry_run: true, kind, target: targets.join(", "), text });
@@ -1044,28 +1112,32 @@ Deno.serve(async (req) => {
     /**
      * One send, reported honestly.
      *
-     * The 11:30 register goes to two addresses, and the two can fail
-     * independently — a group JID can be wrong while the founder's number is
-     * fine. Recording a single ok for both would hide exactly that, which is
-     * the failure this module has had twice already in other forms.
+     * The 11:30 register goes to the founder and to every team's group, and
+     * each can fail independently — a team's JID can be wrong while the
+     * founder's number is fine. Recording a single ok for all of them would
+     * hide exactly that, which is the failure this module has had twice
+     * already in other forms.
      */
-    const sendTo = async (to: string) => {
+    // EACH DELIVERY CARRIES ITS OWN TEXT. It used to be one body sent to a
+    // list of addresses, which is exactly wrong once teams exist: the backend
+    // group would have received the whole company's register.
+    const sendTo = async (d: Delivery) => {
       const payload = template
         ? template
-          .replaceAll("{{to}}", JSON.stringify(to).slice(1, -1))
-          .replaceAll("{{text}}", JSON.stringify(text).slice(1, -1))
-        : JSON.stringify({ to, text });
+          .replaceAll("{{to}}", JSON.stringify(d.to).slice(1, -1))
+          .replaceAll("{{text}}", JSON.stringify(d.text).slice(1, -1))
+        : JSON.stringify({ to: d.to, text: d.text });
       try {
         const res = await fetch(url, { method: "POST", headers, body: payload });
         const body = (await res.text()).slice(0, 200);
-        return { to, ok: res.ok, detail: res.ok ? body : `HTTP ${res.status}: ${body}` };
+        return { to: d.to, ok: res.ok, detail: res.ok ? body : `HTTP ${res.status}: ${body}` };
       } catch (e) {
-        return { to, ok: false, detail: String(e).slice(0, 200) };
+        return { to: d.to, ok: false, detail: String(e).slice(0, 200) };
       }
     };
 
     const results = [];
-    for (const to of targets) results.push(await sendTo(to));
+    for (const d of deliveries) results.push(await sendTo(d));
 
     // ok only when EVERY address took it. A partial success logged as success
     // is how "the report is working" and "half the company never sees it"
