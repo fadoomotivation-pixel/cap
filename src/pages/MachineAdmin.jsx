@@ -114,6 +114,10 @@ export default function MachineAdmin() {
   const [directory, setDirectory] = useState([]);
   const [freeCodes, setFreeCodes] = useState([]);
   const [dirFilter, setDirFilter] = useState('all');
+  // Where the machine's idea of a name and the roster's disagree, and how old
+  // our copy of the machine's list actually is.
+  const [mismatches, setMismatches] = useState([]);
+  const [usersAsOf, setUsersAsOf] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -137,12 +141,16 @@ export default function MachineAdmin() {
     // Read straight from the punches, not only from what an OPERLOG upload
     // happened to tell us — a code can punch every day and never appear in an
     // upload, and 53 codes on this terminal do exactly that.
-    const [dir, free] = await Promise.all([
+    const [dir, free, mism, asOf] = await Promise.all([
       supabase.rpc('cb_device_code_directory'),
       supabase.rpc('cb_free_device_codes', { p_limit: 12 }),
+      supabase.rpc('cb_device_name_mismatches'),
+      supabase.rpc('cb_device_users_as_of'),
     ]);
     setDirectory(dir.data || []);
     setFreeCodes(free.data || []);
+    setMismatches(mism.data || []);
+    setUsersAsOf(asOf.data || null);
   }, [isAdmin]);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -492,11 +500,88 @@ export default function MachineAdmin() {
         {/* ── Who the machine says is enrolled ─────────────────────────── */}
         <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
           <h2 className="font-semibold text-[#10243E] mb-1">Enrolled on the machine</h2>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 mb-3">
             What the terminal itself reports, beside what the roster says. Where the
             two disagree, this column is the one that decides — the roster only
             records what somebody typed.
           </p>
+
+          {/* HOW OLD THIS IS, said out loud.
+              A rename on 23 September worked — the terminal answered Return=0 —
+              and this table still showed the old name, because it had been
+              filled once, 55 minutes earlier, and nothing had re-read the
+              machine since. It read as "the change did not stick". A snapshot
+              with no date on it is the bug, not the rename. */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="text-xs text-gray-500">
+              {usersAsOf
+                ? `As of ${new Date(usersAsOf).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}`
+                : 'The machine has never sent its enrolment list.'}
+              {usersAsOf && Date.now() - new Date(usersAsOf).getTime() > 36e5 * 24 && (
+                <span className="text-amber-700">
+                  {' '}— {Math.floor((Date.now() - new Date(usersAsOf).getTime()) / 864e5)} days old.
+                  Anything renamed since will still read as the old name here.
+                </span>
+              )}
+            </span>
+            <button onClick={() => queue('query_users')} disabled={busy === 'query_users'}
+              className="text-xs px-2.5 py-1 rounded border border-gray-200 text-[#10243E] hover:border-[#D4AF37] disabled:opacity-50">
+              {busy === 'query_users' ? 'Asking…' : 'Ask the machine again'}
+            </button>
+          </div>
+
+          {/* WHERE THE TWO DISAGREE — and one tap to settle it.
+              Fifteen of them right now, and three are plain typos on the
+              terminal: "Swarn" for Swaran, "Krishn" for Krishan, "Sakashi" for
+              Sakshi. Each one is a person reading a register and not finding
+              themselves. Renaming was already possible one at a time; what was
+              missing is being shown that it needs doing. */}
+          {mismatches.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <p className="text-sm font-medium text-amber-900">
+                  {mismatches.length} name{mismatches.length > 1 ? 's' : ''} on the machine
+                  {mismatches.length > 1 ? ' do' : ' does'} not match the roster
+                </p>
+                <button
+                  onClick={async () => {
+                    // Queued one per person. The terminal takes one command at
+                    // a time, oldest first, so these drain in order and each
+                    // failure stays attributable to its own instruction.
+                    for (const m of mismatches) {
+                      await queue('rename_user', { pin: m.device_code, name: m.roster_name });
+                    }
+                  }}
+                  disabled={!!busy}
+                  className="text-xs px-3 py-1.5 rounded bg-[#10243E] text-white hover:bg-[#1a365d] disabled:opacity-50">
+                  Make the machine match the roster
+                </button>
+              </div>
+              <ul className="space-y-1">
+                {mismatches.map((m) => (
+                  <li key={m.device_code} className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-mono text-amber-900">#{m.device_code}</span>
+                    <span className="text-gray-500">{m.machine_name}</span>
+                    <span className="text-gray-400">&rarr;</span>
+                    <span className="text-[#10243E] font-medium">{m.roster_name}</span>
+                    {/* A name we set from here is a belief until the terminal
+                        reports it back. Saying so is the difference between
+                        this console and the one that looked like it lied. */}
+                    {m.name_source === 'console' && (
+                      <span className="text-[10px] uppercase tracking-wide bg-white border border-amber-300 text-amber-800 px-1 py-0.5 rounded">
+                        renamed here, not yet confirmed
+                      </span>
+                    )}
+                    <button onClick={() => queue('rename_user', { pin: m.device_code, name: m.roster_name })}
+                      disabled={!!busy}
+                      className="text-amber-800 underline hover:text-amber-900 disabled:opacity-50">
+                      fix
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {users.length === 0 ? (
             <p className="text-sm text-gray-400">
