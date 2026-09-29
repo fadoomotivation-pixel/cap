@@ -110,6 +110,10 @@ export default function MachineAdmin() {
   const [busy, setBusy] = useState('');
   const [range, setRange] = useState({ from: '', to: '' });
   const [renaming, setRenaming] = useState(null); // { code, name }
+  // Every ID the machine has ever seen, and which numbers are free to give out.
+  const [directory, setDirectory] = useState([]);
+  const [freeCodes, setFreeCodes] = useState([]);
+  const [dirFilter, setDirFilter] = useState('all');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -129,6 +133,16 @@ export default function MachineAdmin() {
     const { data: d, error: err } = await supabase.rpc('cb_machine_console');
     if (err) return setError(friendlyError(err));
     setData(d);
+
+    // Read straight from the punches, not only from what an OPERLOG upload
+    // happened to tell us — a code can punch every day and never appear in an
+    // upload, and 53 codes on this terminal do exactly that.
+    const [dir, free] = await Promise.all([
+      supabase.rpc('cb_device_code_directory'),
+      supabase.rpc('cb_free_device_codes', { p_limit: 12 }),
+    ]);
+    setDirectory(dir.data || []);
+    setFreeCodes(free.data || []);
   }, [isAdmin]);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -345,6 +359,133 @@ export default function MachineAdmin() {
                 </button>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── Every ID on the machine, and which are free ──────────────── */}
+        <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
+          <h2 className="font-semibold text-[#10243E] mb-1">
+            Every ID on the machine
+            <span className="text-gray-400 font-normal text-sm"> — {directory.length}</span>
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Built from the punches themselves, not only from what the terminal has
+            uploaded about itself — a code can punch every day and never appear in
+            an enrolment upload.
+          </p>
+
+          {/* THE QUESTION THIS PAGE COULD NOT ANSWER: which number do I give the
+              new joiner. It was a walk to the office and a guess, and a guess is
+              how code 11 was nearly handed to a new joiner when it is Sandeep's
+              with 983 punches behind it. */}
+          <div className="rounded-lg border border-green-200 bg-green-50/60 p-3 mb-4">
+            <p className="text-sm font-medium text-green-900">Free to give a new joiner</p>
+            <p className="text-[11px] text-green-800/80 mb-2">
+              Enrol them on the terminal under one of these, then set the same number
+              on the Attendance console&apos;s Employees tab.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {freeCodes.filter((c) => c.kind === 'never-used').map((c) => (
+                <span key={c.device_code}
+                  className="font-mono text-sm px-2 py-1 rounded bg-white border border-green-300 text-green-900">
+                  {c.device_code}
+                </span>
+              ))}
+              {freeCodes.filter((c) => c.kind === 'never-used').length === 0 && (
+                <span className="text-xs text-gray-500">
+                  No unused number under 200 — every one carries history. Use a
+                  released one below and check who held it.
+                </span>
+              )}
+            </div>
+            {freeCodes.some((c) => c.kind === 'released') && (
+              <>
+                {/* Offered SEPARATELY and with the previous holder named. A
+                    released number is reusable but carries somebody's history,
+                    and the handover date is what keeps the two apart. */}
+                <p className="text-[11px] text-green-900 mt-3 mb-1">
+                  Released by somebody leaving — reusable, but it carries their history:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {freeCodes.filter((c) => c.kind === 'released').map((c) => (
+                    <span key={c.device_code}
+                      className="font-mono text-xs px-2 py-1 rounded bg-white border border-amber-300 text-amber-900">
+                      {c.device_code}
+                      <span className="font-sans text-[10px] text-amber-700"> · was {c.previous_holder}</span>
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {[
+              ['all', `All ${directory.length}`],
+              ['assigned', `On the roster ${directory.filter((d) => d.status === 'assigned').length}`],
+              ['unowned', `Nobody ${directory.filter((d) => d.status === 'unowned').length}`],
+              ['released', `Released ${directory.filter((d) => d.status === 'released').length}`],
+              ['ignored', `Not tracked ${directory.filter((d) => d.status === 'ignored').length}`],
+            ].map(([k, label]) => (
+              <button key={k} onClick={() => setDirFilter(k)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                  dirFilter === k
+                    ? 'bg-[#10243E] text-white border-[#10243E]'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-[#D4AF37]'
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="w-full text-sm">
+              <thead className="text-left text-gray-500 border-b border-gray-100">
+                <tr>
+                  <th className="py-2 pr-3 font-medium">ID</th>
+                  <th className="py-2 pr-3 font-medium">Whose</th>
+                  <th className="py-2 pr-3 font-medium">On the machine</th>
+                  <th className="py-2 pr-3 font-medium text-right">Punches</th>
+                  <th className="py-2 pr-3 font-medium">Last punch</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {directory
+                  .filter((d) => dirFilter === 'all' || d.status === dirFilter)
+                  .map((d) => (
+                    <tr key={d.device_code} className="hover:bg-gray-50/50">
+                      <td className="py-2 pr-3 font-mono font-semibold text-[#10243E]">#{d.device_code}</td>
+                      <td className="py-2 pr-3">
+                        {d.status === 'assigned' && (
+                          <span className="text-gray-800">{d.roster_name}</span>
+                        )}
+                        {d.status === 'released' && (
+                          <span className="text-amber-800">
+                            Free — was {d.previous_holder}
+                            {d.left_on ? `, left ${d.left_on}` : ''}
+                          </span>
+                        )}
+                        {d.status === 'ignored' && (
+                          <span className="text-gray-500">{d.note || 'Not tracked'}</span>
+                        )}
+                        {d.status === 'unowned' && (
+                          // The consequence, not the fact. "Unowned" is not a
+                          // sentence anybody can act on.
+                          <span className="text-red-700">
+                            Nobody — their attendance is stored and attached to no one
+                          </span>
+                        )}
+                        {d.status === 'free' && <span className="text-gray-400">Never punched</span>}
+                      </td>
+                      <td className="py-2 pr-3 text-gray-600">
+                        {d.machine_name || <span className="text-gray-300">not in an upload</span>}
+                      </td>
+                      <td className="py-2 pr-3 text-right tabular-nums text-gray-700">{d.punches}</td>
+                      <td className="py-2 pr-3 text-gray-500 text-xs">{d.last_seen || '—'}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
         </section>
 

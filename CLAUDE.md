@@ -476,6 +476,56 @@ answered "no" until 23 September 2026. It now answers, narrowly.
   punch displayed code `11`, and the roster says `11` is **Sandeep**, with 983
   punches over 223 days behind it. The console shows both columns side by side
   for exactly that.
+- **Every ID the machine has ever seen, and which numbers are free** —
+  `cb_device_code_directory()` + `cb_free_device_codes()`
+  (`supabase/sql/cb_device_code_directory.sql`). The console could only show
+  what an OPERLOG upload had told it (`cb_device_users`), so a code that
+  punches every day but was never in an upload appeared nowhere. On this
+  terminal that is not a corner case: **53 codes carry 9,994 punches with
+  nobody on the roster behind them.** The directory is the union of the
+  punches, what the machine says about itself and what the roster says —
+  the gaps between those three are exactly the mistakes worth seeing.
+
+  **"Which ID do I give the new joiner" had no screen at all**, and a guess is
+  how code `11` was nearly handed to a new starter when it is Sandeep's with
+  983 punches behind it. Free numbers are now offered in two lists, never one:
+  **never-used** (the only fully safe answer — no history to mix) and
+  **released** by somebody leaving, shown separately with the previous holder
+  named, because this office does re-use numbers and hiding that only moves
+  the decision back to a guess.
+
+  Sorted by the code as a **number**, not as text — otherwise 100 sits between
+  10 and 11, which is unreadable for the one person scanning it for a free ID.
+  An unowned code states the consequence, not the status: "their attendance is
+  stored and attached to no one".
+
+- **Somebody who leaves releases their code, and keeps their history** —
+  `cb_employees.left_on` + `device_code_since`, and the one predicate
+  `cb_held_code_on(employee, day)`: **a punch belongs to whoever held the code
+  that day.**
+
+  `is_active = false` was the only tool HR had and it is the wrong one alone.
+  It stops the fold, which is right, but every report filters on `is_active`,
+  so recording a resignation **erased that person from the months they had
+  actually worked** — last month's muster roll lost a name the day they
+  resigned. And their code stayed locked to them forever, so it could never be
+  handed on; code `41` is noted "Gaurav — left the company" on a terminal that
+  now calls it "Shubham".
+
+  So: `left_on` is the last working day, inclusive. `cb_monthly_matrix` keeps
+  them for the days they worked and reads later days as `off` — exactly as it
+  already treats days before somebody joined, because neither is an absence.
+  `device_code_since` bounds a re-issued code from below so the new holder
+  cannot inherit the previous one's punches. The unique index binds only a
+  **current** holder (`where device_code is not null and left_on is null`),
+  which is what makes a code re-issuable at all, and `cb_set_device_code`
+  refuses a current owner by name, accepts a released one, and stamps the
+  handover.
+
+  `cb_mark_employee_left` / `cb_rejoin_employee` do it from the Employees tab,
+  with the date **asked for rather than assumed to be today** — somebody is
+  usually marked left a few days after they actually stopped coming.
+
 - **A queued command for a terminal that has never contacted us never runs.**
   The page says so in plain words rather than showing a hopeful "pending" —
   `cb_adms_log` was empty for the whole of the ADMS work, and a console that
