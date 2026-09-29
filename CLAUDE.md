@@ -526,6 +526,44 @@ answered "no" until 23 September 2026. It now answers, narrowly.
   with the date **asked for rather than assumed to be today** — somebody is
   usually marked left a few days after they actually stopped coming.
 
+- **A rename DOES reach the machine — and the console made it look like it
+  did not.** On 23 September `DATA UPDATE USERINFO PIN=95 Name='Shubham kad'`
+  went out and the terminal answered `Return=0`. The page still showed the old
+  name, which reads as "the change did not stick".
+
+  **It had stuck.** `cb_device_users` was filled exactly once, at 08:35 that
+  morning, from the only `query_users` that has ever run — and the rename was
+  sent at 09:30. Every row still carried that one `seen_at`. The page was
+  showing a snapshot from *before* the change and presenting it as today's
+  truth. **A snapshot with no date on it is the bug, not the rename.**
+
+  Three things now (`supabase/sql/cb_device_name_truth.sql`):
+
+  1. **A trigger on `cb_device_commands`** moves our copy the moment a rename
+     comes back `Return=0`, and stamps `cb_device_users.name_source =
+     'console'` — *we set this, the terminal has not said it back yet*. The
+     page prints that distinction rather than hiding it, because `Return=0`
+     means "command accepted", not "applied".
+  2. **It auto-queues one `query_users`** so the machine confirms the name
+     itself. That is what turns a belief into a fact, and it is also how a
+     rename the device silently ignored gets caught. Guarded, so fifteen
+     renames queue one confirmation and not fifteen.
+  3. **The page says how old the list is** and offers "Ask the machine again".
+
+  Done as a **trigger, not in `essl-adms`**: those deploys are assembled by
+  hand and have drifted from the repo twice. Behaviour in Postgres cannot be
+  lost to a deploy.
+
+- **`cb_device_name_mismatches()` — where the terminal and the roster disagree
+  about a name.** Fifteen on 30 September, three of them plain typos on the
+  machine: "Swarn" for Swaran, "Krishn" for Krishan, "Sakashi" for Sakshi.
+  Each is a person reading a register and not finding themselves. Renaming one
+  at a time already worked; what was missing was **being shown that it needs
+  doing**, so the console lists them with a per-row fix and one
+  "Make the machine match the roster". The batch queues one command per
+  person — the terminal takes one at a time, oldest first, so each failure
+  stays attributable to its own instruction.
+
 - **A queued command for a terminal that has never contacted us never runs.**
   The page says so in plain words rather than showing a hopeful "pending" —
   `cb_adms_log` was empty for the whole of the ADMS work, and a console that
