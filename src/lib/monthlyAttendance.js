@@ -135,6 +135,57 @@ function median(xs) {
   return quantile(xs, 0.5);
 }
 
+/** Mon-first, because a working week starts on Monday and the founder's
+ *  question is literally "what time does he get in on Mondays". */
+export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+/** JS getDay() is Sunday-first; this repo is not. */
+const weekdayIndex = (dateStr) => (new Date(`${dateStr}T12:00:00+05:30`).getDay() + 6) % 7;
+
+/**
+ * One person's month, split by day of the week.
+ *
+ * This is the answer to a question the grid could not give: "he says he is on
+ * time — what about Mondays?" A monthly median hides it completely, because
+ * four bad Mondays inside twenty-six good days barely move the middle. Split
+ * by weekday, four out of four late on a Monday is unmissable.
+ *
+ * Only weekdays that actually have a working day are returned — this office
+ * works some Saturdays and Sundays and not others, and printing an empty
+ * "Sun" column would read as somebody skipping it.
+ */
+export function weekdayBreakdown(person, days) {
+  return WEEKDAYS.map((label, i) => {
+    const dates = days.filter((d) => weekdayIndex(d) === i);
+    const rows = dates.map((d) => person.cells.get(d)).filter(Boolean);
+    const arrivals = rows.map((r) => istMinutes(r.check_in_at)).filter((v) => v != null);
+    return {
+      label,
+      days: dates.length,
+      present: rows.filter((r) => r.state === 'on-time' || r.state === 'late').length,
+      late: rows.filter((r) => r.state === 'late').length,
+      absent: rows.filter((r) => r.state === 'absent').length,
+      typical: median(arrivals),
+    };
+  }).filter((w) => w.days > 0);
+}
+
+/** A person's month as rows, oldest first — the day-by-day record. */
+export function personDays(person, days) {
+  return days.map((d) => {
+    const r = person.cells.get(d);
+    return {
+      date: d,
+      weekday: WEEKDAYS[weekdayIndex(d)],
+      state: r?.state ?? 'off',
+      checkIn: r?.check_in_at ?? null,
+      checkOut: r?.check_out_at ?? null,
+      hours: r?.hours ?? null,
+      lateMinutes: r?.late_minutes ?? null,
+    };
+  });
+}
+
 /** Linear-interpolated quantile. Returns null rather than 0 for no data —
  *  0 would plot as midnight and read as somebody arriving at 00:00. */
 function quantile(xs, q) {
