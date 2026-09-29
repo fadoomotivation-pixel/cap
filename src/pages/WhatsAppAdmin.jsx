@@ -94,6 +94,37 @@ const TONE = {
 };
 const tone = (key) => TONE[key] || { cls: 'bg-gray-50 text-gray-700 border-gray-200', Icon: AlertTriangle, label: key || 'Unknown' };
 
+/**
+ * A dry-run response, split back into one message per address.
+ *
+ * Since teams exist, a preview is several different messages: the founder's
+ * copy, the main group's, and one per team. The Edge Function joins them into
+ * a single string with a `[→ label]` header on each and the addresses
+ * comma-joined in `target`, because that is the shape the field has always
+ * had — so the page unpicks it here rather than the whole payload changing.
+ *
+ * THIS PARSER MUST DEGRADE, NOT BREAK. If the markers are ever absent — a
+ * single-delivery preview, or a function older than this page — it returns the
+ * text exactly as it came, which is precisely what the page used to show.
+ * That is the difference between a preview that looks odd for a day and one
+ * that shows nothing on the day somebody needs it.
+ */
+export function splitPreview({ text = '', target = '' } = {}) {
+  const addresses = String(target).split(',').map((t) => t.trim()).filter(Boolean);
+  const parts = String(text).split('\n\n———\n\n');
+
+  const parsed = parts.map((part, i) => {
+    const m = part.match(/^\[→ ([^\]]+)\]\n([\s\S]*)$/);
+    return {
+      label: m ? m[1] : (addresses.length > 1 ? `Message ${i + 1}` : 'Goes to'),
+      text: m ? m[2] : part,
+      to: addresses[i] ?? addresses[0] ?? '',
+    };
+  });
+
+  return parsed;
+}
+
 export default function WhatsAppAdmin() {
   const [session, setSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -531,6 +562,32 @@ export default function WhatsAppAdmin() {
                       </div>
                       <p className={`text-sm font-medium ${on ? 'text-[#10243E]' : 'text-gray-500'}`}>{m.title}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{m.blurb}</p>
+
+                      {/* WHERE IT ACTUALLY LANDS, named. "Group" stopped being
+                          one address the day teams arrived, and a card that
+                          still says "Group" does not tell you whether Backend
+                          gets its own copy. Each team with a group of its own
+                          is listed, because its people leave the main list and
+                          appear only there. */}
+                      {isGroup && (
+                        <p className="text-[11px] text-gray-500 mt-1.5 flex flex-wrap items-center gap-1">
+                          <span className="text-gray-400">Lands in:</span>
+                          <span className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200">
+                            Main group
+                          </span>
+                          {teams.filter((t) => t.wa_group_id).map((t) => (
+                            <span key={t.id}
+                              className="px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">
+                              {t.name}
+                            </span>
+                          ))}
+                          {m.to === 'both' && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                              Founder — whole company
+                            </span>
+                          )}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap gap-2 shrink-0">
@@ -568,12 +625,25 @@ export default function WhatsAppAdmin() {
                       ) : (
                         <>
                           <p className="text-xs text-gray-500 mb-2">
-                            Would go to <span className="font-mono">{preview.target}</span> — this is the
-                            exact text, not an approximation.
+                            This is the exact text, not an approximation.
                           </p>
-                          <pre className="text-xs bg-gray-50 border border-gray-100 rounded-md p-3 whitespace-pre-wrap font-sans text-gray-800 max-h-80 overflow-auto">
-{preview.text}
-                          </pre>
+                          {/* ONE BLOCK PER ADDRESS. Since teams exist, a
+                              preview is several different messages, and
+                              stacking them in one box with the addresses
+                              comma-joined at the top answers neither "what
+                              does Backend get" nor "what does the main group
+                              get". */}
+                          {splitPreview(preview).map((d, i) => (
+                            <div key={`${d.to}-${i}`} className="mb-3 last:mb-0">
+                              <p className="text-[11px] text-gray-500 mb-1 flex flex-wrap items-baseline gap-x-1.5">
+                                <span className="font-semibold text-[#10243E]">{d.label}</span>
+                                <span className="font-mono">{d.to}</span>
+                              </p>
+                              <pre className="text-xs bg-gray-50 border border-gray-100 rounded-md p-3 whitespace-pre-wrap font-sans text-gray-800 max-h-80 overflow-auto">
+{d.text}
+                              </pre>
+                            </div>
+                          ))}
                         </>
                       )}
                       <button onClick={() => setPreview(null)} className="text-xs text-gray-400 hover:text-gray-600 mt-2">
