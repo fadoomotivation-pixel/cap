@@ -1081,10 +1081,46 @@ and understand — who is late, how often, and whether it is a pattern.
   printout for one conversation must never quietly change the second thing.
   Chips rather than a checkbox list: a greyed-out name still shows what was
   switched off, where a list of ticked boxes hides it.
+
+  **It is the ONE control, and every active person is on it** \u2014 seniors,
+  pantry, anybody `in_daily_report = false`. It used to list only the people
+  the messages name, with a separate "Include people the messages never name"
+  checkbox beside it; that checkbox is gone. The picker seeds from the
+  report's own default and shows everybody else greyed out **with the reason
+  on the chip** \u2014 "Senior", "Not in messages". A name greyed out for no
+  visible reason reads as a bug; a reason reads as a setting you may
+  overrule, which is the whole point of the control.
+
+- **"On the machine, not on the roster" is in the picker, because that is
+  where the question gets asked.** `cb_unmapped_device_codes()` lists codes
+  that punch with nobody behind them; `cb_adopt_device_code()` gives one a
+  name (`supabase/sql/cb_adopt_device_code.sql`). Their attendance is already
+  stored \u2014 the fold resolves a person through `device_code`, so an unowned
+  code's punches are recorded and attached to nobody, and can therefore
+  appear on **no** register, CSV or message. Nothing on this console said so.
+
+  Three things hold it together: the suggested name is parsed from
+  `cb_ignored_device_codes.note` ("Abhishek - pantry staff" \u2192 "Abhishek"), so
+  the list is actionable rather than a column of bare numbers;
+  `cb_set_device_code` **re-folds from that code's first punch**, or the new
+  name shows a blank month and reads as somebody who never comes in; and the
+  new row lands **`in_daily_report = false`** \u2014 naming a machine code must
+  never quietly start naming somebody in a message fifty colleagues read.
+
+  **Adopting does not re-seed the picker.** Re-seeding would wipe every chip
+  switched on or off in that sitting. The new name is simply not in the
+  exclusion set, so it appears.
 - **`\u2014` inside JSX *text* renders literally.** It is fine inside a JS
   string (`'\u2014'`) and a bug in markup, where it printed
   "Attendance register \u2014 every name" on screen and on paper. Write the
   real character in JSX text.
+
+  **An editing tool can write the escape without meaning to.** That is how
+  all three of these got in. After any edit that puts a non-ASCII character
+  into JSX text or a JSX string attribute, check the bytes \u2014 `cat -A` shows
+  an em-dash as `M-bM-^@M-^T` and a middle dot as `M-BM-7`; a literal
+  `\u2014` shows as itself. A build passes either way, and the only other
+  evidence is the founder reading it on paper.
 - **Before somebody joined is `off`, not absent** — otherwise every new
   colleague's first month is three weeks of red.
 - **Leave is out of the attendance denominator.** A person is scored on the

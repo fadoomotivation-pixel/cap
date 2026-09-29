@@ -641,7 +641,7 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
       {view === 'register' ? (
         <section>
           <h2 className="text-sm font-semibold mb-2" style={{ color: INK }}>
-            Attendance register \u2014 every name, every working day
+            Attendance register — every name, every working day
           </h2>
 
           {/* A key, not a paragraph. The reader is about to scan eight hundred
@@ -654,7 +654,7 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
               label={lateAfter ? `after ${lateAfter}` : 'late'} />
             <Key swatch={`${STATES.absent.color}22`} ink="#8c2020" sample="A" label="absent" />
             <Key swatch="#86b6ef33" ink={INK_2} sample="L" label="leave or holiday" />
-            <Key swatch="transparent" ink={MUTED} sample="\u00B7" label="not a working day" />
+            <Key swatch="transparent" ink={MUTED} sample="·" label="not a working day" />
           </div>
 
           {lowTurnoutDays.length > 0 && (
@@ -674,7 +674,7 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
           )}
 
           <p className="text-[11px] mb-3" style={{ color: MUTED }}>
-            Prints as one document \u2014 A4 landscape, with the dates repeated at the
+            Prints as one document — A4 landscape, with the dates repeated at the
             top of every sheet.
           </p>
           <MusterRoll days={days} people={people} lateAfterMin={lateAfterMin} />
