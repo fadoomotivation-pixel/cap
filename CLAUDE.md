@@ -1934,3 +1934,25 @@ empty boxes.
 - Run `npx vite build` before pushing — it's the only build check in the repo.
 - Content copy lives in `src/data/site.js` (projects, FAQs, stats) and
   `src/data/blogs.js` — edit content there, not in components.
+
+### How work reaches the site — one PR per piece of work, into `main`
+
+**The owner's standing instruction (29 September 2026): every new feature or
+fix gets its own pull request into `main`. Do not batch several unrelated
+things behind one, and do not leave finished work sitting on a branch with no
+PR.**
+
+`main` auto-deploys to production on Vercel, so a branch with no PR is work
+that exists and is invisible — which has already happened twice in this repo
+for other reasons, and is the failure mode this rule exists to end.
+
+Two things follow from it, and both were learned the hard way on the same day:
+
+- **A merged PR cannot carry new work.** Once it is merged it is finished; the
+  next change needs a *new* PR, even on the same branch. Pushing more commits
+  to a branch whose PR has already merged leaves them on the remote with no
+  route to `main` and nothing on screen saying so.
+- **Never push straight to `main`.** The owner's Claude Code settings refuse
+  it ("Merge Without Review") and that guard is deliberate. If a push to
+  `main` is ever blocked, the answer is a PR — not a workaround, and not
+  leaving the commit stranded on a branch.
