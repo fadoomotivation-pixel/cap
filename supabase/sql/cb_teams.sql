@@ -56,3 +56,9 @@ where not exists (select 1 from public.cb_teams where name = 'Backend');
 --
 -- cb_new_joiners() carries team_wa_group_id for the same reason: a backend
 -- joiner is welcomed by backend, not announced to the whole company.
+
+-- Case-insensitive uniqueness on the name. "Backend" and "backend" both
+-- existed for a few hours on 29 September 2026, one carrying the group and one
+-- empty — two teams with the same name and different groups is a silent way to
+-- send somebody's attendance to the wrong place.
+create unique index if not exists cb_teams_name_key_ci on public.cb_teams (lower(name));

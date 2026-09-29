@@ -38,6 +38,9 @@ export default function AttendanceAdmin() {
   const [day, setDay] = useState([]);
   const [monthly, setMonthly] = useState(null); // null = still loading
   const [monthlyAll, setMonthlyAll] = useState(false);
+  // 'summary' = the one-or-two-page read; 'register' = everybody's month with
+  // times, the sheet you file. What is on screen is exactly what prints.
+  const [monthlyView, setMonthlyView] = useState('summary');
   const [settings, setSettings] = useState(null);
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'));
@@ -1008,6 +1011,18 @@ export default function AttendanceAdmin() {
                 <BarChart3 size={20} className="text-[#f26522]" /> Monthly Report
               </h2>
               <div className="flex flex-wrap gap-2 items-center">
+                {/* Two documents, one button. Print gives you whatever is on
+                    screen — no hidden "what will it actually print" question. */}
+                <div className="flex rounded-md border border-gray-200 overflow-hidden">
+                  {[['summary', 'Summary'], ['register', 'Full register']].map(([k, label]) => (
+                    <button key={k} onClick={() => setMonthlyView(k)}
+                      className={`px-3 py-2 text-sm font-medium transition ${
+                        monthlyView === k ? 'bg-[#10243E] text-white' : 'bg-white text-gray-600 hover:text-[#10243E]'
+                      }`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <label className="flex items-center gap-1.5 text-xs text-gray-500 mr-1">
                   <input type="checkbox" checked={monthlyAll}
                     onChange={(e) => setMonthlyAll(e.target.checked)} />
@@ -1032,7 +1047,8 @@ export default function AttendanceAdmin() {
             {monthly === null ? (
               <p className="p-8 text-center text-gray-400">Reading the register…</p>
             ) : (
-              <MonthlyAttendanceReport data={monthlyData} month={month} lateAfter={lateAfter} lateAfterMin={lateAfterMin} />
+              <MonthlyAttendanceReport data={monthlyData} month={month} lateAfter={lateAfter}
+                lateAfterMin={lateAfterMin} view={monthlyView} />
             )}
           </div>
         )}
