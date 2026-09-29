@@ -66,6 +66,8 @@ export default function AttendanceAdmin() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [showAdd, setShowAdd] = useState(false);
+  // { id, date } while HR is picking somebody's last working day.
+  const [leaving, setLeaving] = useState(null);
   const [showMore, setShowMore] = useState(false);
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', department: '', role_title: '', employee_code: '', date_of_joining: '' });
   const [credential, setCredential] = useState(null); // {email, password, existed}
@@ -349,9 +351,38 @@ export default function AttendanceAdmin() {
     await fetchData();
   };
 
-  const toggleActive = async (emp) => {
-    await supabase.from('cb_employees').update({ is_active: !emp.is_active }).eq('id', emp.id);
-    fetchData();
+  /**
+   * Somebody has left — and a leaving DATE, not just a switch.
+   *
+   * This button used to flip `is_active` and promise "their history stays".
+   * It did not: every report filters on is_active, so a resignation erased the
+   * person from the months they had actually worked, and last month's muster
+   * roll lost a name the day they resigned.
+   *
+   * `cb_mark_employee_left` records the last working day instead. A punch
+   * belongs to whoever held the code THAT DAY, so the months they worked keep
+   * their name, nothing after it is attributed to them, and their machine code
+   * is released for the next joiner — which the office does re-use.
+   */
+  const markLeft = async (emp, lastDay) => {
+    const { data, error: err } = await supabase.rpc('cb_mark_employee_left', {
+      p_employee: emp.id, p_left_on: lastDay,
+    });
+    if (err) { setError(friendlyError(err)); return; }
+    setLeaving(null);
+    flash(data?.code_released
+      ? `${data.name} marked as left on ${lastDay}. Machine code ${data.code_released} is free for a new joiner.`
+      : `${data?.name ?? emp.full_name.trim()} marked as left on ${lastDay}.`);
+    await fetchData();
+  };
+
+  const rejoin = async (emp) => {
+    const { data, error: err } = await supabase.rpc('cb_rejoin_employee', { p_employee: emp.id });
+    if (err) { setError(friendlyError(err)); return; }
+    flash(data?.code_taken_by
+      ? `${emp.full_name.trim()} is back — but their old machine code now belongs to ${data.code_taken_by}, so give them a new one.`
+      : `${emp.full_name.trim()} is back.`);
+    await fetchData();
   };
 
   // Senior staff account for their own movements straight to the founder, so
@@ -973,13 +1004,37 @@ export default function AttendanceAdmin() {
                               <KeyRound size={14} /> {creatingFor === e.id ? 'Working…' : e.user_id ? 'Reset password' : 'Create login'}
                             </button>
                           )}
-                          <button onClick={() => toggleActive(e)}
-                            title={e.is_active
-                              ? 'They have left. Their history stays; they stop appearing in the register and in every WhatsApp message from the next one onward.'
-                              : 'They are back. They start appearing again from the next message.'}
-                            className="text-gray-400 hover:text-red-500 flex items-center gap-1 text-xs">
-                            <Power size={14} /> {e.is_active ? 'Mark as left' : 'Bring back'}
-                          </button>
+                          {e.is_active ? (
+                            leaving?.id === e.id ? (
+                              // THE DATE IS THE WHOLE POINT, so it is asked for
+                              // rather than assumed to be today. Somebody is
+                              // usually marked left a few days after they
+                              // actually stopped coming.
+                              <span className="flex items-center gap-1.5">
+                                <input type="date" value={leaving.date} max={format(new Date(), 'yyyy-MM-dd')}
+                                  onChange={(ev) => setLeaving({ id: e.id, date: ev.target.value })}
+                                  className="border border-gray-200 rounded px-1.5 py-1 text-xs outline-none focus:border-[#f26522]" />
+                                <button onClick={() => markLeft(e, leaving.date)}
+                                  className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">
+                                  Last day
+                                </button>
+                                <button onClick={() => setLeaving(null)}
+                                  className="text-xs text-gray-400 hover:text-gray-600">cancel</button>
+                              </span>
+                            ) : (
+                              <button onClick={() => setLeaving({ id: e.id, date: format(new Date(), 'yyyy-MM-dd') })}
+                                title="Record their last working day. The months they worked keep their name; nothing after that day is attributed to them, and their machine code is freed for a new joiner."
+                                className="text-gray-400 hover:text-red-500 flex items-center gap-1 text-xs">
+                                <Power size={14} /> Mark as left
+                              </button>
+                            )
+                          ) : (
+                            <button onClick={() => rejoin(e)}
+                              title="They are back. They start appearing again from the next message."
+                              className="text-gray-400 hover:text-green-600 flex items-center gap-1 text-xs">
+                              <Power size={14} /> Bring back
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
