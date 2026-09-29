@@ -126,12 +126,15 @@ export default function AttendanceAdmin() {
   // of this month's check-ins are after it, which is a fact about the setting
   // as much as about the team — and the reader can only weigh that if the
   // page says what the setting is.
-  const lateAfter = useMemo(() => {
+  const lateAfterMin = useMemo(() => {
     if (!settings?.shift_start) return null;
     const [h, m] = String(settings.shift_start).split(':').map(Number);
-    const t = h * 60 + m + (settings.late_grace_minutes ?? 0);
-    return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+    return h * 60 + m + (settings.late_grace_minutes ?? 0);
   }, [settings]);
+
+  const lateAfter = useMemo(() => (lateAfterMin == null ? null
+    : `${String(Math.floor(lateAfterMin / 60)).padStart(2, '0')}:${String(lateAfterMin % 60).padStart(2, '0')}`),
+  [lateAfterMin]);
 
   /**
    * Move somebody to a team, which decides WHICH WhatsApp group their
@@ -1029,7 +1032,7 @@ export default function AttendanceAdmin() {
             {monthly === null ? (
               <p className="p-8 text-center text-gray-400">Reading the register…</p>
             ) : (
-              <MonthlyAttendanceReport data={monthlyData} month={month} lateAfter={lateAfter} />
+              <MonthlyAttendanceReport data={monthlyData} month={month} lateAfter={lateAfter} lateAfterMin={lateAfterMin} />
             )}
           </div>
         )}

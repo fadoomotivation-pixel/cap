@@ -222,9 +222,14 @@ export default function MachineAdmin() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Seo title="Attendance machine" noIndex />
-      <AdminNav />
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* INSIDE the padded container, like every other console. It used to
+            sit outside it with no margin, so on this one page the nav was
+            flush against the viewport edge with no gap under it and read as
+            missing. Nine consoles render it the same way; this was the tenth. */}
+        <AdminNav className="mb-6" />
+
         <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
           <h1 className="text-2xl font-semibold text-[#10243E] flex items-center gap-2">
             <Cpu size={22} className="text-[#f26522]" /> Attendance machine
