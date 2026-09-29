@@ -8,6 +8,23 @@
 -- the charts and the printout therefore cannot disagree: there is one source
 -- and it is this.
 --
+-- A DAY ALMOST NOBODY CAME TO IS NOT A DAY EVERYBODY WAS ABSENT. The register
+-- printed 15 September 2026 as one arrival and twenty-eight absences, and
+-- 1 September as one and twenty-six. Neither is a working day - they are days
+-- the office was shut and somebody tapped the machine, or days the feed was
+-- broken. So a day needs a QUORUM before anyone can be called absent on it:
+-- at least a quarter of the people who could punch, never fewer than three.
+-- The September spread makes the line obvious - 1, 1, 3, 3, 5, 5, then 11, 12,
+-- 14, 14, 15, 15, 16 ... there is a clean gap and the rule sits in it.
+--
+-- NOTHING IS HIDDEN. The day stays, whoever came still shows their time, and
+-- only the people who did not are 'off' rather than 'absent'. `low_turnout` is
+-- returned so the page can NAME those dates - a day quietly dropped is a
+-- correction nobody can argue with, and this one should be arguable.
+--
+-- Today is always exempt: a month in progress is read at 10am with four people
+-- in, and no rule may decide from that that the office is shut.
+--
 -- WHAT COUNTS AS A WORKING DAY is read from the data, never assumed. This
 -- office worked Saturday 26 and Sunday 27 September 2026, so a hardcoded
 -- Mon-Fri would have marked two real working days as weekend and everybody

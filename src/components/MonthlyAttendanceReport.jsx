@@ -535,6 +535,25 @@ function MusterRoll({ days, people, lateAfterMin }) {
   );
 }
 
+/** One entry in the register's key: the mark exactly as it appears in a cell,
+ *  then what it means. Showing the real thing beats describing it. */
+function Key({ swatch, ink, sample, label }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className="inline-block rounded text-[10px] font-semibold px-1.5 py-0.5 border"
+        style={{
+          background: swatch, color: ink, minWidth: 30, textAlign: 'center',
+          borderColor: '#e1e0d9', fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {sample}
+      </span>
+      {label}
+    </span>
+  );
+}
+
 function Tile({ label, value, note }) {
   return (
     <div className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
@@ -546,7 +565,7 @@ function Tile({ label, value, note }) {
 }
 
 export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAfterMin, view = 'summary' }) {
-  const { days, people, perDay, totals } = data;
+  const { days, people, perDay, totals, lowTurnoutDays = [] } = data;
   const [pickedId, setPickedId] = useState('');
   const picked = people.find((p) => p.id === pickedId) || null;
   const monthLabel = new Date(`${month}-01T12:00:00+05:30`)
@@ -621,18 +640,42 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
 
       {view === 'register' ? (
         <section>
-          <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>
+          <h2 className="text-sm font-semibold mb-2" style={{ color: INK }}>
             Attendance register \u2014 every name, every working day
           </h2>
-          <p className="text-[11px] mb-1" style={{ color: MUTED }}>
-            The time in each box is when they came in.
-            {' '}<strong>A</strong> = absent, <strong>L</strong> = leave or holiday,
-            {' '}<strong>\u00B7</strong> = not a working day for them.
-            {lateAfter ? ` Amber is after ${lateAfter}.` : ''}
-          </p>
+
+          {/* A key, not a paragraph. The reader is about to scan eight hundred
+              boxes and needs to know what one means without reading a
+              sentence about it. */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-2 text-[11px]"
+            style={{ color: INK_2 }}>
+            <Key swatch={`${STATES['on-time'].color}1f`} ink="#0a5c0a" sample="10:12" label="on time" />
+            <Key swatch={`${STATES.late.color}33`} ink="#7a4f00" sample="11:24"
+              label={lateAfter ? `after ${lateAfter}` : 'late'} />
+            <Key swatch={`${STATES.absent.color}22`} ink="#8c2020" sample="A" label="absent" />
+            <Key swatch="#86b6ef33" ink={INK_2} sample="L" label="leave or holiday" />
+            <Key swatch="transparent" ink={MUTED} sample="\u00B7" label="not a working day" />
+          </div>
+
+          {lowTurnoutDays.length > 0 && (
+            /* Named, never silently dropped. The founder is entitled to
+               disagree with the rule, and he cannot if the page does not say
+               which dates it applied to. */
+            <p className="text-[11px] mb-2 px-2.5 py-1.5 rounded border"
+              style={{ color: INK_2, borderColor: '#e1e0d9', background: '#faf9f5' }}>
+              <strong>
+                {lowTurnoutDays.map((d) => fmtDay(d)).join(', ')}
+              </strong>
+              {lowTurnoutDays.length === 1 ? ' had ' : ' had '}
+              almost nobody in, so the office was treated as closed and nobody is
+              marked absent on {lowTurnoutDays.length === 1 ? 'it' : 'them'}. Whoever
+              did come still shows their time.
+            </p>
+          )}
+
           <p className="text-[11px] mb-3" style={{ color: MUTED }}>
-            Prints as one document \u2014 A4 landscape, dates repeated at the top of
-            every sheet.
+            Prints as one document \u2014 A4 landscape, with the dates repeated at the
+            top of every sheet.
           </p>
           <MusterRoll days={days} people={people} lateAfterMin={lateAfterMin} />
         </section>
@@ -693,7 +736,7 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
               charts above lands here too. */}
           <select value={pickedId} onChange={(e) => setPickedId(e.target.value)}
             className="cb-no-print border border-gray-200 rounded-md px-2 py-1.5 text-xs outline-none focus:border-[#f26522]">
-            <option value="">Pick a name\u2026</option>
+            <option value="">Pick a name…</option>
             {[...people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
@@ -711,7 +754,7 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         ) : (
           <p className="text-[11px]" style={{ color: MUTED }}>
             Pick a name above, or tap any name in the two charts, to see every working
-            day of the month \u2014 the time they came in, the time they left, and how
+            day of the month — the time they came in, the time they left, and how
             late. This is the answer to &ldquo;what time did he get in on Monday?&rdquo;.
           </p>
         )}

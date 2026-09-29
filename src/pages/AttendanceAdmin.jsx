@@ -41,6 +41,16 @@ export default function AttendanceAdmin() {
   // 'summary' = the one-or-two-page read; 'register' = everybody's month with
   // times, the sheet you file. What is on screen is exactly what prints.
   const [monthlyView, setMonthlyView] = useState('summary');
+  // Names the founder has taken off this report. Ids, not names — two people
+  // can share a first name and the roster already has three Amits.
+  const [excluded, setExcluded] = useState(() => new Set());
+  const [showPicker, setShowPicker] = useState(false);
+
+  const toggleExcluded = (id) => setExcluded((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
   const [settings, setSettings] = useState(null);
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'));
@@ -120,9 +130,17 @@ export default function AttendanceAdmin() {
 
   const flash = (msg) => { setOk(msg); setTimeout(() => setOk(''), 4000); };
 
-  const monthlyData = useMemo(
-    () => (monthly ? buildMonthly(monthly, { onlyReported: !monthlyAll }) : null),
+  // The full cast the picker offers, built WITHOUT the exclusions — otherwise
+  // a name you switch off disappears from the list that would let you switch
+  // it back on.
+  const allMonthlyPeople = useMemo(
+    () => (monthly ? buildMonthly(monthly, { onlyReported: !monthlyAll }).people : []),
     [monthly, monthlyAll],
+  );
+
+  const monthlyData = useMemo(
+    () => (monthly ? buildMonthly(monthly, { onlyReported: !monthlyAll, exclude: excluded }) : null),
+    [monthly, monthlyAll, excluded],
   );
 
   // Printed on the report so the word "late" is never mysterious. Two thirds
@@ -1028,6 +1046,20 @@ export default function AttendanceAdmin() {
                     onChange={(e) => setMonthlyAll(e.target.checked)} />
                   Include people the messages never name
                 </label>
+                {/* WHO IS ON THIS REPORT, decided here and nowhere else.
+                    Deliberately NOT the same switch as "In the report" on the
+                    Employees tab: taking a name off a printout for one
+                    conversation must not quietly change who the whole company
+                    gets messaged about every morning. */}
+                <button onClick={() => setShowPicker((v) => !v)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${
+                    excluded.size
+                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#f26522]'
+                  }`}>
+                  <Users size={15} />
+                  {excluded.size ? `${excluded.size} name${excluded.size > 1 ? 's' : ''} hidden` : 'Choose names'}
+                </button>
                 <input type="month" value={month} onChange={(e) => setMonth(e.target.value)}
                   className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
                 <button onClick={exportMonthlyCsv} disabled={!monthlyData?.days.length}
@@ -1043,6 +1075,48 @@ export default function AttendanceAdmin() {
                 </button>
               </div>
             </div>
+
+            {/* Chips rather than a checkbox list: thirty names read as one
+                block you scan, and a greyed-out name still shows what you
+                switched off — a list of ticked boxes hides that. */}
+            {showPicker && allMonthlyPeople.length > 0 && (
+              <div className="cb-no-print border border-gray-200 rounded-xl p-4 mb-5 bg-gray-50/60">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <p className="text-sm font-medium text-[#10243E]">
+                    Who appears on this report
+                    <span className="text-gray-400 font-normal">
+                      {' '}— {allMonthlyPeople.length - excluded.size} of {allMonthlyPeople.length}
+                    </span>
+                  </p>
+                  <div className="flex gap-3 text-xs">
+                    <button onClick={() => setExcluded(new Set())}
+                      className="text-[#10243E] hover:text-[#f26522] underline">Everyone</button>
+                    <button onClick={() => setExcluded(new Set(allMonthlyPeople.map((p) => p.id)))}
+                      className="text-gray-500 hover:text-[#10243E] underline">Nobody</button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {allMonthlyPeople.map((p) => {
+                    const on = !excluded.has(p.id);
+                    return (
+                      <button key={p.id} onClick={() => toggleExcluded(p.id)}
+                        title={on ? 'Click to take off this report' : 'Click to put back on'}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                          on
+                            ? 'bg-white text-[#10243E] border-gray-300 hover:border-[#f26522]'
+                            : 'bg-gray-100 text-gray-400 border-gray-200 line-through'
+                        }`}>
+                        {p.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-gray-500 mt-3">
+                  This only changes what you see and print here. It does not change
+                  who the WhatsApp messages name — that is the Employees tab.
+                </p>
+              </div>
+            )}
 
             {monthly === null ? (
               <p className="p-8 text-center text-gray-400">Reading the register…</p>
