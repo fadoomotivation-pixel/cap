@@ -1059,6 +1059,32 @@ and understand — who is late, how often, and whether it is a pattern.
   on it or HR recorded a status against it.
 - **The month in progress stops at today**, or every remaining day would read
   as Absent against every name.
+- **A day almost nobody came to is not a day everybody was absent.** The
+  register printed 15 September as one arrival and **twenty-eight absences**,
+  and 1 September as one and twenty-six — days the office was shut and
+  somebody tapped the machine, or the feed was broken. It is the same mistake
+  the daily WhatsApp report already guards against, one level up. So a day
+  needs a **quorum** before anyone can be called absent on it: a quarter of
+  the people who could punch, never fewer than three. September's spread makes
+  the line obvious — 1, 1, 3, 3, 5, 5, then 11, 12, 14, 14, 15, 15, 16.
+
+  **Nothing is hidden.** The day stays, whoever came still shows their time,
+  only the people who did not are `off`, and `low_turnout` is returned so the
+  page **names those dates**. A day quietly dropped is a correction nobody can
+  argue with, and this one should be arguable. Today is always exempt — a
+  month in progress read at 10am with four people in must not conclude the
+  office is shut.
+- **The founder picks who appears, and it is not the same switch as the
+  messages.** "Choose names" on the Monthly Report hides people from what he
+  sees and prints; `in_daily_report` on the Employees tab decides who the
+  whole company gets messaged about every morning. Taking a name off a
+  printout for one conversation must never quietly change the second thing.
+  Chips rather than a checkbox list: a greyed-out name still shows what was
+  switched off, where a list of ticked boxes hides it.
+- **`\u2014` inside JSX *text* renders literally.** It is fine inside a JS
+  string (`'\u2014'`) and a bug in markup, where it printed
+  "Attendance register \u2014 every name" on screen and on paper. Write the
+  real character in JSX text.
 - **Before somebody joined is `off`, not absent** — otherwise every new
   colleague's first month is three weeks of red.
 - **Leave is out of the attendance denominator.** A person is scored on the
