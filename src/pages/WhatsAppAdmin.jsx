@@ -116,6 +116,8 @@ export default function WhatsAppAdmin() {
   const [people, setPeople] = useState([]);
   const [preview, setPreview] = useState(null);   // { kind, text, target, error }
   const [groups, setGroups] = useState(null);     // null = never looked
+  const [teams, setTeams] = useState([]);
+  const [newTeam, setNewTeam] = useState('');
   const [running, setRunning] = useState(null);   // kind currently previewing/sending
 
   useEffect(() => {
@@ -163,6 +165,12 @@ export default function WhatsAppAdmin() {
       setGroupId(data.wa_group_id || '');
       setTestTo((t) => t || data.founder_whatsapp || '');
     }
+    const { data: teamRows } = await supabase
+      .from('cb_teams')
+      .select('id, name, wa_group_id, is_active')
+      .eq('is_active', true).order('sort');
+    setTeams(teamRows || []);
+
     const { data: rows } = await supabase
       .from('cb_report_log')
       .select('report_date, kind, target, ok, detail, sent_at')
@@ -303,6 +311,31 @@ export default function WhatsAppAdmin() {
    * every report to an account that does not exist, with a message id back
    * each time.
    */
+  /**
+   * Point a team at a WhatsApp group.
+   *
+   * Picked from the list, never typed — a group's JID is shown nowhere inside
+   * WhatsApp, and a wrong one does not fail loudly: Baileys returns a message
+   * id for an address nobody holds, so the send is logged ok and nobody ever
+   * sees the message. That is not hypothetical; it happened to every group
+   * report for as long as the main group was misconfigured.
+   */
+  const saveTeamGroup = async (teamId, jid) => {
+    const { error: err } = await supabase.from('cb_teams')
+      .update({ wa_group_id: jid || null }).eq('id', teamId);
+    if (err) { setError(err.message); return; }
+    await loadSettings();
+  };
+
+  const addTeam = async () => {
+    const name = newTeam.trim();
+    if (!name) return;
+    const { error: err } = await supabase.from('cb_teams').insert([{ name }]);
+    if (err) { setError(err.message); return; }
+    setNewTeam('');
+    await loadSettings();
+  };
+
   const loadGroups = async () => {
     setError('');
     setBusy(true);
@@ -682,6 +715,79 @@ export default function WhatsAppAdmin() {
             Who is named in them is set per person on the Attendance console&apos;s
             Employees tab.
           </p>
+
+          {/* TEAM GROUPS.
+              A team is not a second copy of the register — a person belongs to
+              one group, so moving somebody to Backend takes their name OUT of
+              the main group. Naming the same two colleagues in a fifty-person
+              group and again in their own is the scoreboard this module keeps
+              being told not to become. */}
+          <div className="border-t border-gray-100 pt-5 mb-5">
+            <h3 className="text-sm font-semibold text-[#10243E] mb-1">Team groups</h3>
+            <p className="text-xs text-gray-500 mb-3">
+              A team posts its own attendance to its own group, and its people
+              stop appearing in the main one. The founder&apos;s 11:30 register
+              stays the whole company across every team. Put people on a team
+              from the Attendance console&apos;s Employees tab.
+            </p>
+
+            <ul className="border border-gray-100 rounded-lg divide-y divide-gray-100 mb-3">
+              {teams.map((t) => {
+                const match = (groups || []).find((g) => (g?.id || g?.jid) === t.wa_group_id);
+                return (
+                  <li key={t.id} className="px-3 py-2.5 flex flex-wrap items-center gap-2 justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm text-[#10243E] font-medium">{t.name}</p>
+                      {t.wa_group_id ? (
+                        <p className="text-[11px] text-gray-400 font-mono truncate">
+                          {match?.subject || match?.name ? `${match.subject || match.name} · ` : ''}{t.wa_group_id}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-amber-700">
+                          No group yet — these people still post to the main group.
+                        </p>
+                      )}
+                    </div>
+                    {groups === null ? (
+                      <span className="text-[11px] text-gray-400">
+                        Load the group list below to pick one
+                      </span>
+                    ) : (
+                      <select
+                        value={t.wa_group_id || ''}
+                        onChange={(e) => saveTeamGroup(t.id, e.target.value)}
+                        className="border border-gray-200 rounded-md px-2 py-1.5 text-xs outline-none focus:border-[#D4AF37] max-w-[15rem]">
+                        <option value="">— main group —</option>
+                        {groups.map((g) => {
+                          const jid = g?.id || g?.jid || '';
+                          return (
+                            <option key={jid} value={jid}>
+                              {g?.subject || g?.name || jid}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
+                  </li>
+                );
+              })}
+              {teams.length === 0 && (
+                <li className="px-3 py-3 text-xs text-gray-400">
+                  No teams yet. Everybody posts to the main group.
+                </li>
+              )}
+            </ul>
+
+            <div className="flex gap-2">
+              <input value={newTeam} onChange={(e) => setNewTeam(e.target.value)}
+                placeholder="New team name"
+                className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#D4AF37] flex-1 min-w-0" />
+              <button onClick={addTeam} disabled={!newTeam.trim()}
+                className="bg-[#10243E] text-white px-4 py-2 rounded-md text-sm hover:bg-[#1a365d] disabled:opacity-40">
+                Add team
+              </button>
+            </div>
+          </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={!!settings?.daily_report_enabled}

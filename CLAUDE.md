@@ -995,6 +995,77 @@ also call it with their JWT to send early, re-send (`force`), or preview
   function: the console has no Send button for them, and a copy nothing calls
   is a copy that drifts.
 
+### Teams — a slice of the company with its own WhatsApp group
+
+`cb_teams` (`supabase/sql/cb_teams.sql`) + `cb_employees.team_id`. The founder
+added a **"Backend C.B"** group on 29 September 2026 and asked for the backend
+team's attendance to go there.
+
+- **A team is not a second copy of the register.** A person belongs to ONE
+  group, so moving somebody to Backend takes their name **out** of the main
+  junior group. Naming the same two colleagues in a fifty-person group and
+  again in their own is the scoreboard the rest of this module avoids.
+- **The founder's 11:30 register stays the whole company**, across every team.
+  That is what makes it the record rather than a roll-call of one group, and
+  it is why `attendance` remains the one message with two audiences.
+- **Every delivery now carries its own text.** `attendance-whatsapp` used to
+  send one body to a list of addresses; with teams that is exactly wrong — the
+  backend group would have received the whole company's register. `splitByGroup()`
+  produces `{to, rows}` pairs and each is built and **logged separately**, so a
+  team's wrong JID cannot hide behind the main group's success.
+- **A team with no group yet falls back to the main group.** A half-configured
+  team must never make somebody's attendance disappear: a name in no list at
+  all is the one outcome none of these messages may produce.
+- **An inactive team routes nobody** — switching a team off returns its people
+  to the main group rather than stranding them in a group nobody reads.
+- HR sets the team **per person** from the Attendance console's Employees tab
+  (a dropdown beside the report/senior toggles, shown even for somebody not in
+  the report — or the control would be hidden for exactly the person you are
+  setting up). The team's **group is picked from the list** on `/admin/whatsapp`,
+  never typed: a JID is shown nowhere inside WhatsApp and a wrong one does not
+  fail loudly.
+- `cb_new_joiners()` carries `team_wa_group_id` for the same reason — a backend
+  joiner is welcomed by backend, not announced to the whole company.
+
+### The monthly report — built to be read on paper
+
+`/admin/attendance` → Monthly Report. `cb_monthly_matrix(month)`
+(`supabase/sql/cb_monthly_matrix.sql`) → `src/lib/monthlyAttendance.js` →
+`src/components/MonthlyAttendanceReport.jsx`.
+
+The founder asked on 29 September 2026 for one or two pages he can look at once
+and understand — who is late, how often, and whether it is a pattern.
+
+- **One source, everything summed from it.** The RPC returns a row per person
+  per working day with the day's state already decided; the headline numbers,
+  both charts, the grid, the table and the CSV are all folded from that same
+  array. The old totals RPC answered "how many"; the question was "who, and is
+  it a pattern".
+- **A working day is read from the data, never assumed.** This office worked
+  Saturday 26 and Sunday 27 September, so a hardcoded Mon–Fri would have
+  marked two real working days as weekend. A day counts when somebody punched
+  on it or HR recorded a status against it.
+- **The month in progress stops at today**, or every remaining day would read
+  as Absent against every name.
+- **Before somebody joined is `off`, not absent** — otherwise every new
+  colleague's first month is three weeks of red.
+- **Leave is out of the attendance denominator.** A person is scored on the
+  days they were expected, so approved leave does not lower their percentage.
+- **The typical arrival is a MEDIAN, not a mean.** One 3pm site visit would
+  drag an average half an hour and make a punctual person look late on paper.
+- **The charts are inline SVG, not a library.** Nothing here needs a 150KB
+  dependency, and SVG is the only thing that prints crisp — a canvas chart
+  prints at screen resolution. `print-color-adjust: exact` is load-bearing:
+  browsers drop background fills when printing, and a heatmap with no fills is
+  a blank grid. The page prints **A4 landscape** because a month is 26+ columns.
+- **Colour means the same thing everywhere** — amber is late in the ranking and
+  amber is late in the grid. Amber is under 3:1 on white, so every amber mark
+  carries a visible number; colour never carries meaning alone.
+- **The page prints what "late" means.** Late is `shift_start + late_grace`,
+  currently **after 10:45**, and two thirds of September's check-ins are after
+  it. That is a fact about the setting as much as about the team, and the
+  reader can only weigh it if the page says what the setting is.
+
 ### `/admin/whatsapp` is the control room, not just a status page
 
 Every recurring request in this module's first week was the same shape: *stop
