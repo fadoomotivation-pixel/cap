@@ -45,10 +45,23 @@ export const fmtMinutes = (mins) => {
  * printout is asking the report's question, so the page offers the switch and
  * defaults to the short list.
  */
-export function buildMonthly(rows, { onlyReported = true } = {}) {
-  const used = rows.filter((r) => (onlyReported ? r.in_daily_report : true));
+export function buildMonthly(rows, { onlyReported = true, exclude } = {}) {
+  // `exclude` is the founder's own list — names he has switched off for this
+  // register. It is deliberately separate from `in_daily_report`, which is a
+  // standing HR setting about the WhatsApp messages: turning somebody off a
+  // printout for one conversation must not quietly change who the company
+  // gets messaged about every morning.
+  const off = exclude instanceof Set ? exclude : new Set(exclude ?? []);
+  const used = rows.filter((r) => (onlyReported ? r.in_daily_report : true))
+    .filter((r) => !off.has(r.employee_id));
 
   const days = [...new Set(used.map((r) => r.work_date))].sort();
+
+  // Days the office was plainly not open — see the quorum rule in
+  // cb_monthly_matrix. Named on the page rather than silently dropped.
+  const lowTurnoutDays = [...new Set(
+    used.filter((r) => r.low_turnout).map((r) => r.work_date),
+  )].sort();
 
   const byPerson = new Map();
   for (const r of used) {
@@ -128,7 +141,7 @@ export function buildMonthly(rows, { onlyReported = true } = {}) {
     ? Math.round((totals.late / totals.present) * 100) : null;
   totals.medianArrival = median(people.map((p) => p.medianArrival).filter((v) => v != null));
 
-  return { days, people, perDay, totals };
+  return { days, people, perDay, totals, lowTurnoutDays };
 }
 
 function median(xs) {
