@@ -37,7 +37,6 @@ export default function AttendanceAdmin() {
   const [employees, setEmployees] = useState([]);
   const [day, setDay] = useState([]);
   const [monthly, setMonthly] = useState(null); // null = still loading
-  const [monthlyAll, setMonthlyAll] = useState(false);
   // 'summary' = the one-or-two-page read; 'register' = everybody's month with
   // times, the sheet you file. What is on screen is exactly what prints.
   const [monthlyView, setMonthlyView] = useState('summary');
@@ -45,6 +44,15 @@ export default function AttendanceAdmin() {
   // can share a first name and the roster already has three Amits.
   const [excluded, setExcluded] = useState(() => new Set());
   const [showPicker, setShowPicker] = useState(false);
+  // Which month the exclusions were seeded for. The picker starts at the
+  // report's own default — the people the messages name — and everybody else
+  // is a chip you can switch ON. Seeding once per month rather than on every
+  // render is what lets a switched-on senior stay switched on.
+  const [seededFor, setSeededFor] = useState(null);
+  // Machine codes punching every day with nobody on the roster behind them.
+  const [unmapped, setUnmapped] = useState([]);
+  const [adoptName, setAdoptName] = useState({});
+  const [adopting, setAdopting] = useState(null);
 
   const toggleExcluded = (id) => setExcluded((prev) => {
     const next = new Set(prev);
@@ -115,6 +123,17 @@ export default function AttendanceAdmin() {
       });
   }, [isAdmin, tab, month]);
 
+  // Codes that punch every day with nobody on the roster behind them — the
+  // founder's own IDs, pantry staff, a senior nobody enrolled. Their
+  // attendance is already stored; it is attached to nothing, so it can appear
+  // on no report until somebody gives the code a name. Loaded when the picker
+  // is opened, which is the one screen where that is the question being asked.
+  useEffect(() => {
+    if (!isAdmin || !showPicker) return;
+    supabase.rpc('cb_unmapped_device_codes', { p_since: `${month}-01` })
+      .then(({ data }) => setUnmapped(data || []));
+  }, [isAdmin, showPicker, month, refreshing]);
+
   useEffect(() => {
     if (!isAdmin || tab !== 'settings') return;
     supabase.from('cb_adms_log').select('*').order('at', { ascending: false }).limit(8)
@@ -133,14 +152,26 @@ export default function AttendanceAdmin() {
   // The full cast the picker offers, built WITHOUT the exclusions — otherwise
   // a name you switch off disappears from the list that would let you switch
   // it back on.
+  // EVERYBODY active, seniors and pantry included — the picker is the one
+  // control, so a name that is off by default still has to be on the list
+  // that would let you switch it on.
   const allMonthlyPeople = useMemo(
-    () => (monthly ? buildMonthly(monthly, { onlyReported: !monthlyAll }).people : []),
-    [monthly, monthlyAll],
+    () => (monthly ? buildMonthly(monthly, { onlyReported: false }).people : []),
+    [monthly],
   );
 
+  // Start where the report's own default is: the people the messages name.
+  // Everyone else arrives greyed out with a badge saying why, so switching
+  // on a senior or the pantry is one tap and is visibly a choice.
+  useEffect(() => {
+    if (!monthly || seededFor === month) return;
+    setExcluded(new Set(allMonthlyPeople.filter((p) => !p.inReport).map((p) => p.id)));
+    setSeededFor(month);
+  }, [monthly, month, seededFor, allMonthlyPeople]);
+
   const monthlyData = useMemo(
-    () => (monthly ? buildMonthly(monthly, { onlyReported: !monthlyAll, exclude: excluded }) : null),
-    [monthly, monthlyAll, excluded],
+    () => (monthly ? buildMonthly(monthly, { onlyReported: false, exclude: excluded }) : null),
+    [monthly, excluded],
   );
 
   // Printed on the report so the word "late" is never mysterious. Two thirds
@@ -175,6 +206,38 @@ export default function AttendanceAdmin() {
     flash(name
       ? `${emp.full_name.trim()} now reports to the ${name} group.`
       : `${emp.full_name.trim()} is back in the main group.`);
+    await fetchData();
+  };
+
+  /**
+   * Give a punching machine code a name.
+   *
+   * The new row lands with `in_daily_report = false` on purpose — adopting a
+   * code must never silently start naming somebody in a message fifty people
+   * read. They appear on this report the moment you switch their chip on, and
+   * HR decides separately whether the messages name them.
+   *
+   * cb_adopt_device_code re-folds from that code's first punch, so the months
+   * already in cb_device_punches attach themselves. Without that the new name
+   * would show a blank month and read as somebody who never comes in.
+   */
+  const adoptCode = async (row) => {
+    const name = (adoptName[row.device_code] ?? row.suggested_name ?? '').trim();
+    if (!name) { setError('Give the code a name first.'); return; }
+    setAdopting(row.device_code);
+    const { error: err } = await supabase.rpc('cb_adopt_device_code', {
+      p_code: row.device_code, p_name: name, p_senior: false,
+    });
+    setAdopting(null);
+    if (err) { setError(friendlyError(err)); return; }
+    flash(`${name} added on machine #${row.device_code} — their punches are now on this report. The WhatsApp messages still do not name them.`);
+    setUnmapped((prev) => prev.filter((u) => u.device_code !== row.device_code));
+    // Deliberately NOT re-seeding the picker: seeding would wipe every chip
+    // the founder has switched on or off in this sitting. The new name is not
+    // in `excluded`, so it simply appears — which is what you just asked for.
+    setMonthly(null);
+    const { data } = await supabase.rpc('cb_monthly_matrix', { p_month: month });
+    setMonthly(data || []);
     await fetchData();
   };
 
@@ -1041,11 +1104,6 @@ export default function AttendanceAdmin() {
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-1.5 text-xs text-gray-500 mr-1">
-                  <input type="checkbox" checked={monthlyAll}
-                    onChange={(e) => setMonthlyAll(e.target.checked)} />
-                  Include people the messages never name
-                </label>
                 {/* WHO IS ON THIS REPORT, decided here and nowhere else.
                     Deliberately NOT the same switch as "In the report" on the
                     Employees tab: taking a name off a printout for one
@@ -1058,7 +1116,9 @@ export default function AttendanceAdmin() {
                       : 'bg-white text-gray-600 border-gray-200 hover:border-[#f26522]'
                   }`}>
                   <Users size={15} />
-                  {excluded.size ? `${excluded.size} name${excluded.size > 1 ? 's' : ''} hidden` : 'Choose names'}
+                  {allMonthlyPeople.length
+                    ? `${allMonthlyPeople.length - excluded.size} of ${allMonthlyPeople.length} names`
+                    : 'Choose names'}
                 </button>
                 <input type="month" value={month} onChange={(e) => setMonth(e.target.value)}
                   className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
@@ -1098,23 +1158,82 @@ export default function AttendanceAdmin() {
                 <div className="flex flex-wrap gap-1.5">
                   {allMonthlyPeople.map((p) => {
                     const on = !excluded.has(p.id);
+                    // Why somebody is off by default, said on the chip. A name
+                    // greyed out with no reason reads as a bug; "Senior" and
+                    // "Not in messages" read as a setting you may overrule.
+                    const why = !p.inReport ? 'Not in messages' : (p.isSenior ? 'Senior' : null);
                     return (
                       <button key={p.id} onClick={() => toggleExcluded(p.id)}
-                        title={on ? 'Click to take off this report' : 'Click to put back on'}
-                        className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                        title={on ? 'Click to take off this report' : 'Click to put on this report'}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition inline-flex items-center gap-1.5 ${
                           on
                             ? 'bg-white text-[#10243E] border-gray-300 hover:border-[#f26522]'
-                            : 'bg-gray-100 text-gray-400 border-gray-200 line-through'
+                            : 'bg-gray-100 text-gray-400 border-gray-200'
                         }`}>
-                        {p.name}
+                        <span className={on ? '' : 'line-through'}>{p.name}</span>
+                        {why && (
+                          <span className={`text-[9px] uppercase tracking-wide px-1 py-0.5 rounded ${
+                            on ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-500'
+                          }`}>
+                            {why}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
                 <p className="text-[11px] text-gray-500 mt-3">
-                  This only changes what you see and print here. It does not change
-                  who the WhatsApp messages name — that is the Employees tab.
+                  Everyone active is here, seniors and pantry included. This only
+                  changes what you see and print. It does not change who the
+                  WhatsApp messages name — that is the Employees tab.
                 </p>
+
+                {/* ON THE MACHINE, NOT ON THE ROSTER.
+                    These codes punch every day and their attendance is stored
+                    and attached to nobody, so no report can ever show them —
+                    and nothing on this console said so. Naming a code is the
+                    only thing that can put them on a register. */}
+                {unmapped.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-sm font-medium text-[#10243E]">
+                      On the machine, not on the roster
+                      <span className="text-gray-400 font-normal"> — {unmapped.length}</span>
+                    </p>
+                    <p className="text-[11px] text-gray-500 mt-0.5 mb-3">
+                      These codes are punching. Their attendance is already stored and
+                      attached to nobody, so it can appear on no report until the code
+                      has a name. Adding one attaches every punch it has ever made.
+                    </p>
+                    <div className="space-y-1.5">
+                      {unmapped.map((u) => (
+                        <div key={u.device_code}
+                          className="flex flex-wrap items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                          <span className="text-xs font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                            #{u.device_code}
+                          </span>
+                          <input
+                            value={adoptName[u.device_code] ?? u.suggested_name ?? ''}
+                            onChange={(e) => setAdoptName((p) => ({ ...p, [u.device_code]: e.target.value }))}
+                            placeholder="Who is this?"
+                            className="flex-1 min-w-[10rem] border border-gray-200 rounded-md px-2 py-1 text-sm outline-none focus:border-[#f26522]" />
+                          <span className="text-[11px] text-gray-500">
+                            {u.punches} punch{u.punches === 1 ? '' : 'es'}
+                            {u.days ? ` · ${u.days} day${u.days === 1 ? '' : 's'}` : ''}
+                            {u.note ? ` · ${u.note}` : ''}
+                          </span>
+                          <button onClick={() => adoptCode(u)} disabled={adopting === u.device_code}
+                            className="text-xs px-3 py-1.5 rounded-md bg-[#10243E] text-white hover:bg-[#1a365d] disabled:opacity-40">
+                            {adopting === u.device_code ? 'Adding…' : 'Add'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-2">
+                      Added this way, a person is on this report and <strong>not</strong> in
+                      the WhatsApp messages. Switch that on from the Employees tab.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

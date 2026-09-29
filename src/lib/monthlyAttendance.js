@@ -72,6 +72,9 @@ export function buildMonthly(rows, { onlyReported = true, exclude } = {}) {
         department: (r.department || '').trim(),
         team: r.team_name || null,
         isSenior: !!r.is_senior,
+        // Why somebody may be off this report by default — shown on their chip
+        // so the founder can see what he is switching on rather than guessing.
+        inReport: r.in_daily_report !== false,
         cells: new Map(),
         onTime: 0, late: 0, absent: 0, leave: 0, off: 0,
         arrivals: [],
