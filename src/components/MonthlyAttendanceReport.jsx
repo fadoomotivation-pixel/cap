@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
-  STATES, fmtMinutes, istMinutes, weekdayBreakdown, personDays,
+  STATES, fmtMinutes, istMinutes, weekdayBreakdown, personDays, arrivalDrift,
 } from '../lib/monthlyAttendance';
 
 /**
@@ -554,6 +554,52 @@ function Key({ swatch, ink, sample, label }) {
   );
 }
 
+/**
+ * WHO CHANGED — the one question the rest of this page cannot answer.
+ *
+ * Everything above describes where a person IS. This describes where they are
+ * GOING, by comparing each person's typical arrival in the second half of the
+ * month with their own in the first. See `arrivalDrift` for why that is the
+ * version still worth a conversation.
+ *
+ * It is drawn as a MOVE, not as a bar: the old time, an arrow, the new time,
+ * and the size of the gap. A bar would need a zero, and there is no meaningful
+ * zero in a time of day — the same reason the in-time chart is a dot plot.
+ *
+ * Silent when nobody moved. A panel that prints "no significant changes" every
+ * month is a panel people stop reading, which is the failure this whole module
+ * is built around.
+ */
+function Drift({ rows, tone, onPick }) {
+  const worse = tone === 'worse';
+  const color = worse ? STATES.late.color : STATES['on-time'].color;
+  return (
+    <ul className="space-y-1">
+      {rows.map((r) => (
+        <li key={r.id}>
+          <button onClick={() => onPick?.(r.id)}
+            className="w-full text-left flex items-baseline gap-2 py-0.5 hover:opacity-70">
+            <span className="text-xs flex-1 truncate" style={{ color: INK }}>{r.name}</span>
+            <span className="text-[11px] tabular-nums" style={{ color: MUTED }}>
+              {fmtMinutes(r.was)}
+            </span>
+            <span className="text-[11px]" style={{ color: AXIS }}>→</span>
+            <span className="text-[11px] tabular-nums font-medium" style={{ color: INK }}>
+              {fmtMinutes(r.now)}
+            </span>
+            {/* The number carries the meaning, never the colour alone — amber
+                is under 3:1 on white and this page is printed. */}
+            <span className="text-[11px] tabular-nums font-semibold w-14 text-right"
+              style={{ color }}>
+              {worse ? '+' : ''}{Math.round(r.shift)} min
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Tile({ label, value, note }) {
   return (
     <div className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
@@ -568,6 +614,9 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
   const { days, people, perDay, totals, lowTurnoutDays = [] } = data;
   const [pickedId, setPickedId] = useState('');
   const picked = people.find((p) => p.id === pickedId) || null;
+  // Folded from the same array as everything else on the page, so the panel
+  // and the charts can never describe two different months.
+  const drift = useMemo(() => arrivalDrift(people, days), [people, days]);
   const monthLabel = new Date(`${month}-01T12:00:00+05:30`)
     .toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
@@ -691,6 +740,47 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         <Tile label="Approved leave" value={totals.leave}
           note="days HR accounted for" />
       </div>
+
+      {/* FIRST, because it is the only section that names somebody you can
+          still catch. Everything below describes where people are; this
+          describes where they are heading. */}
+      {(drift.slipped.length > 0 || drift.improved.length > 0) && (
+        <section className="cb-keep mb-6">
+          <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>
+            Who changed this month
+          </h2>
+          <p className="text-[11px] mb-3" style={{ color: MUTED }}>
+            Each person against their own earlier self — their typical arrival in the
+            second half of the month against the first, not against anybody else.
+            This is the only part of the page that names somebody before they are
+            late enough to appear on a ranking.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+            {drift.slipped.length > 0 && (
+              <div>
+                <p className="text-[11px] font-semibold mb-1" style={{ color: INK_2 }}>
+                  Coming in later ({drift.slipped.length})
+                </p>
+                <Drift rows={drift.slipped} tone="worse" onPick={setPickedId} />
+              </div>
+            )}
+            {drift.improved.length > 0 && (
+              <div>
+                <p className="text-[11px] font-semibold mb-1" style={{ color: INK_2 }}>
+                  Coming in earlier ({drift.improved.length})
+                </p>
+                <Drift rows={drift.improved} tone="better" onPick={setPickedId} />
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] mt-3" style={{ color: MUTED }}>
+            Typical arrival is a median, and a name appears only with at least three
+            arrivals in each half and a shift of 15 minutes or more — so a fortnight
+            of approved leave cannot read as a change somebody made. Tap a name for
+            their day-by-day record.
+          </p>
+        </section>
+      )}
 
       <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>Every working day</h2>

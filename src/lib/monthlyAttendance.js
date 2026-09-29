@@ -186,6 +186,66 @@ export function weekdayBreakdown(person, days) {
   }).filter((w) => w.days > 0);
 }
 
+/**
+ * WHO CHANGED — each person against their own earlier self, not against
+ * each other.
+ *
+ * Everything else on this page answers "who is late". A ranking, a median, a
+ * grid of colour: all of them describe where somebody IS. None of them
+ * describes where somebody is GOING, and that is the only version of the
+ * question still worth a conversation — by the time a person is at the top of
+ * a late ranking, the habit is months old and the talk is a reprimand.
+ *
+ * The month is split into two halves of working days and each person's median
+ * arrival is compared with their own. September proves why it is worth a
+ * panel: **Shubham moved 10:25 → 11:16.** In the first half he was inside the
+ * 10:45 grace — on time, invisible to every late list on this page — and he
+ * is now three quarters of an hour later. A ranking would have found him next
+ * month.
+ *
+ * It cuts both ways on purpose. Vishal went 13:27 → 11:00 and Tanu, Sandeep
+ * and Ankit Jha each came in twenty minutes earlier. A panel that only ever
+ * named people getting worse would be one nobody wants to open, and improvement
+ * that nobody notices is improvement that does not continue.
+ *
+ * THE GUARDS, all three earned from this module's own history:
+ *  - a median per half, never a mean — one 3pm site visit would invent a slip;
+ *  - `minEach` real arrivals in BOTH halves, or somebody who was on leave for
+ *    a fortnight reads as a dramatic change they did not make;
+ *  - `thresholdMin`, because everybody's median moves a few minutes and a
+ *    panel naming twenty people is a panel nobody reads.
+ */
+export function arrivalDrift(people, days, { minEach = 3, thresholdMin = 15 } = {}) {
+  // Split by working day, not by calendar date: this office works some
+  // Saturdays and not others, so halving the dates would put unequal amounts
+  // of actual attendance either side.
+  const cut = Math.floor(days.length / 2);
+  if (cut < minEach) return { slipped: [], improved: [], firstHalf: null, secondHalf: null };
+  const early = days.slice(0, cut);
+  const late = days.slice(cut);
+
+  const rows = people.map((p) => {
+    const mins = (ds) => ds
+      .map((d) => p.cells.get(d))
+      .filter((r) => r?.check_in_at)
+      .map((r) => istMinutes(r.check_in_at));
+    const a = mins(early);
+    const b = mins(late);
+    if (a.length < minEach || b.length < minEach) return null;
+    const was = median(a);
+    const now = median(b);
+    if (was == null || now == null) return null;
+    return { id: p.id, name: p.name, was, now, shift: now - was, days: a.length + b.length };
+  }).filter(Boolean);
+
+  return {
+    firstHalf: { from: early[0], to: early[early.length - 1] },
+    secondHalf: { from: late[0], to: late[late.length - 1] },
+    slipped: rows.filter((r) => r.shift >= thresholdMin).sort((a, b) => b.shift - a.shift),
+    improved: rows.filter((r) => r.shift <= -thresholdMin).sort((a, b) => a.shift - b.shift),
+  };
+}
+
 /** A person's month as rows, oldest first — the day-by-day record. */
 export function personDays(person, days) {
   return days.map((d) => {
