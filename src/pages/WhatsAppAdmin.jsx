@@ -196,10 +196,16 @@ export default function WhatsAppAdmin() {
       setGroupId(data.wa_group_id || '');
       setTestTo((t) => t || data.founder_whatsapp || '');
     }
-    const { data: teamRows } = await supabase
-      .from('cb_teams')
-      .select('id, name, wa_group_id, is_active')
-      .eq('is_active', true).order('sort');
+    // cb_team_board(), not a select on cb_teams: it also answers the question
+    // the table cannot — whether this team's message would actually go out.
+    // The Backend group was created, picked and wired on 29 September and
+    // would still have sent nothing, because its only member was switched out
+    // of the daily report, and no screen said so.
+    //
+    // INACTIVE TEAMS ARE LISTED TOO. The old query filtered them out, which
+    // meant switching a team off made it vanish from the one page that could
+    // switch it back on.
+    const { data: teamRows } = await supabase.rpc('cb_team_board');
     setTeams(teamRows || []);
 
     const { data: rows } = await supabase
@@ -351,20 +357,36 @@ export default function WhatsAppAdmin() {
    * sees the message. That is not hypothetical; it happened to every group
    * report for as long as the main group was misconfigured.
    */
-  const saveTeamGroup = async (teamId, jid) => {
-    const { error: err } = await supabase.from('cb_teams')
-      .update({ wa_group_id: jid || null }).eq('id', teamId);
-    if (err) { setError(err.message); return; }
+  /**
+   * Every team edit goes through cb_upsert_team, never a table write.
+   *
+   * The function holds the rules a direct update cannot: an admin check, a
+   * name that cannot be blank, and the case-insensitive unique name that
+   * stops "Backend" and "backend" both existing with different groups —
+   * which is a silent way to send somebody's attendance to the wrong place,
+   * and did happen for a few hours on 29 September.
+   */
+  const saveTeam = async (patch) => {
+    const { error: err } = await supabase.rpc('cb_upsert_team', {
+      p_id: patch.id ?? null,
+      p_name: patch.name ?? null,
+      // null means "leave it"; '' means "clear it, fall back to the main
+      // group". The function distinguishes the two deliberately.
+      p_wa_group_id: patch.wa_group_id === undefined ? null : patch.wa_group_id,
+      p_is_active: patch.is_active ?? null,
+      p_include_seniors: patch.include_seniors ?? null,
+    });
+    if (err) { setError(friendlyError(err)); return; }
     await loadSettings();
   };
+
+  const saveTeamGroup = (teamId, jid) => saveTeam({ id: teamId, wa_group_id: jid || '' });
 
   const addTeam = async () => {
     const name = newTeam.trim();
     if (!name) return;
-    const { error: err } = await supabase.from('cb_teams').insert([{ name }]);
-    if (err) { setError(err.message); return; }
+    await saveTeam({ name });
     setNewTeam('');
-    await loadSettings();
   };
 
   const loadGroups = async () => {
@@ -575,7 +597,13 @@ export default function WhatsAppAdmin() {
                           <span className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200">
                             Main group
                           </span>
-                          {teams.filter((t) => t.wa_group_id).map((t) => (
+                          {/* An INACTIVE team routes nobody — its people are
+                              back in the main group — so it must not be named
+                              here as somewhere this message lands. The list
+                              now carries inactive teams so they can be
+                              switched back on, which is why this filter is
+                              no longer just "has a group". */}
+                          {teams.filter((t) => t.is_active && t.wa_group_id).map((t) => (
                             <span key={t.id}
                               className="px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">
                               {t.name}
@@ -799,45 +827,98 @@ export default function WhatsAppAdmin() {
               stop appearing in the main one. The founder&apos;s 11:30 register
               stays the whole company across every team. Put people on a team
               from the Attendance console&apos;s Employees tab.
+              <br />
+              Everything a team needs is here — name it, pick its group, switch
+              it on or off, and decide whether its message names seniors and
+              directors as well. No code change, whichever group comes next.
             </p>
 
             <ul className="border border-gray-100 rounded-lg divide-y divide-gray-100 mb-3">
               {teams.map((t) => {
                 const match = (groups || []).find((g) => (g?.id || g?.jid) === t.wa_group_id);
+                // THE ONE SENTENCE THE TABLE COULD NOT SAY. Three things have
+                // to be true before a team's message exists at all, and every
+                // one of them has been the missing one at some point.
+                const blocker = !t.is_active
+                  ? 'Switched off — these people are back in the main group.'
+                  : !t.wa_group_id
+                    ? 'No group picked yet — these people still post to the main group.'
+                    : !t.will_send
+                      ? (t.members === 0
+                        ? 'Nobody is on this team yet, so nothing will be sent.'
+                        : t.include_seniors
+                          ? 'Nobody on this team is in the daily report, so nothing will be sent.'
+                          : 'Everybody on this team is either senior or out of the daily report, so nothing will be sent. Turn on "Names seniors too", or put them in the report.')
+                      : null;
                 return (
-                  <li key={t.id} className="px-3 py-2.5 flex flex-wrap items-center gap-2 justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm text-[#10243E] font-medium">{t.name}</p>
-                      {t.wa_group_id ? (
-                        <p className="text-[11px] text-gray-400 font-mono truncate">
-                          {match?.subject || match?.name ? `${match.subject || match.name} · ` : ''}{t.wa_group_id}
+                  <li key={t.id} className={`px-3 py-3 ${t.is_active ? '' : 'bg-gray-50/70'}`}>
+                    <div className="flex flex-wrap items-start gap-2 justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm text-[#10243E] font-medium flex items-center gap-2">
+                          {t.name}
+                          {t.will_send ? (
+                            <span className="text-[9px] uppercase tracking-wide bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
+                              Sending
+                            </span>
+                          ) : (
+                            <span className="text-[9px] uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                              Not sending
+                            </span>
+                          )}
                         </p>
+                        {t.wa_group_id && (
+                          <p className="text-[11px] text-gray-400 font-mono truncate">
+                            {match?.subject || match?.name ? `${match.subject || match.name} · ` : ''}{t.wa_group_id}
+                          </p>
+                        )}
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {t.members} on the team · {t.in_report} in the report
+                          {t.seniors ? ` · ${t.seniors} senior` : ''}
+                        </p>
+                        {blocker && (
+                          <p className="text-[11px] text-amber-700 mt-0.5">{blocker}</p>
+                        )}
+                      </div>
+                      {groups === null ? (
+                        <span className="text-[11px] text-gray-400">
+                          Load the group list below to pick one
+                        </span>
                       ) : (
-                        <p className="text-[11px] text-amber-700">
-                          No group yet — these people still post to the main group.
-                        </p>
+                        <select
+                          value={t.wa_group_id || ''}
+                          onChange={(e) => saveTeamGroup(t.id, e.target.value)}
+                          className="border border-gray-200 rounded-md px-2 py-1.5 text-xs outline-none focus:border-[#D4AF37] max-w-[15rem]">
+                          <option value="">— main group —</option>
+                          {groups.map((g) => {
+                            const jid = g?.id || g?.jid || '';
+                            return (
+                              <option key={jid} value={jid}>
+                                {g?.subject || g?.name || jid}
+                              </option>
+                            );
+                          })}
+                        </select>
                       )}
                     </div>
-                    {groups === null ? (
-                      <span className="text-[11px] text-gray-400">
-                        Load the group list below to pick one
-                      </span>
-                    ) : (
-                      <select
-                        value={t.wa_group_id || ''}
-                        onChange={(e) => saveTeamGroup(t.id, e.target.value)}
-                        className="border border-gray-200 rounded-md px-2 py-1.5 text-xs outline-none focus:border-[#D4AF37] max-w-[15rem]">
-                        <option value="">— main group —</option>
-                        {groups.map((g) => {
-                          const jid = g?.id || g?.jid || '';
-                          return (
-                            <option key={jid} value={jid}>
-                              {g?.subject || g?.name || jid}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    )}
+
+                    {/* SENIORS AND DIRECTORS. Every group list is juniors
+                        only, because a senior's arrival time in a
+                        fifty-person group is a name taking up space in a list
+                        the team scans for its own. A four-person team group
+                        is a different room, and that is the founder's call to
+                        make per team rather than a code change each time. */}
+                    <div className="flex flex-wrap gap-4 mt-2">
+                      <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
+                        <input type="checkbox" checked={!!t.include_seniors}
+                          onChange={(e) => saveTeam({ id: t.id, include_seniors: e.target.checked })} />
+                        Names seniors &amp; directors too
+                      </label>
+                      <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
+                        <input type="checkbox" checked={!!t.is_active}
+                          onChange={(e) => saveTeam({ id: t.id, is_active: e.target.checked })} />
+                        Active
+                      </label>
+                    </div>
                   </li>
                 );
               })}
