@@ -1034,6 +1034,54 @@ team's attendance to go there.
   sent nothing, because its only member was switched out of the report. Three
   things have to be true for a team's message to exist at all: the team has a
   group, somebody is on the team, and that somebody is in the report.
+- **A team group MAY name its seniors and directors — `cb_teams.include_seniors`**
+  (`supabase/sql/cb_teams_self_serve.sql`). This was the gap that made "send
+  the senior team's attendance to a new group" a developer request every time:
+  **every group message is juniors only** (`juniors()`), so putting a director
+  on a team meant their attendance was never sent, with nothing saying so.
+
+  **The whole thing is enforced in `cb_daily_attendance_report()`, in one
+  expression, and the Edge Function was not touched.** That function returns
+  `is_senior` as `e.is_senior and not include_seniors` — which there means
+  *"keep this person out of the group lists"*, **not** *"this person is
+  senior"*. Every group message already filters on it through `juniors()`, so
+  flattening it once serves the team without any of the six message builders
+  checking a second column, and **a builder written next year cannot forget a
+  filter it never sees**. The founder's 11:30 register does not filter on it at
+  all — it is the whole company — so flattening cannot change what he receives.
+
+  **That this function has exactly one consumer is what makes it safe.** Every
+  other `is_senior` in the repo reads `cb_employees` directly (both consoles'
+  Senior/Junior toggles) or `cb_monthly_matrix` (the monthly report); the
+  roster column is untouched. Check that before adding a second consumer.
+
+  It also had to stop dropping the person: a senior with neither a punch nor an
+  `hr_status` is dropped, because that row reads as Absent and a senior's
+  absence is not news to the founder — so without a matching clause the founder
+  would switch the setting on and the name would still never appear. And
+  `include_seniors` is only joined for a team **with a group of its own**:
+  somebody falling back to the main group is in the fifty-person room, where
+  the junior-only rule holds. Off by default, so no existing team changes.
+
+  **Doing it in SQL instead of the Edge Function was deliberate.** The
+  alternative — clearing the flag per delivery inside `splitByGroup` — works
+  and was written first, but these deploys are assembled by hand and drift
+  from the repo (see the `welcome` message, twice). A behaviour that lives
+  entirely in Postgres cannot be lost to a deploy.
+
+- **Everything a team needs is on `/admin/whatsapp`; nothing needs SQL.**
+  `cb_upsert_team()` creates and edits (never a table write from the browser —
+  the admin check and the case-insensitive unique name live in the function),
+  and **`cb_team_board()` answers the question the table cannot: will this
+  team's message actually go out.** Three things must be true and each has
+  been the missing one — active, has a group, and somebody on it would be
+  named — so the card states which one is missing in words rather than
+  showing a team that looks configured.
+
+  **Inactive teams are listed.** Switching one off used to make it vanish from
+  the only page that could switch it back on. They are filtered out of a
+  message card's "Lands in:", because an inactive team routes nobody.
+
 - **`cb_teams.name` is unique case-insensitively** (`cb_teams_name_key_ci`).
   "Backend" and "backend" both existed for a few hours on 29 September, one
   with the group and one without — two teams with the same name and different
@@ -1121,6 +1169,12 @@ and understand — who is late, how often, and whether it is a pattern.
   an em-dash as `M-bM-^@M-^T` and a middle dot as `M-BM-7`; a literal
   `\u2014` shows as itself. A build passes either way, and the only other
   evidence is the founder reading it on paper.
+
+  **The check is `grep -nF '\u' <file>`** \u2014 fixed-string, because a regex
+  written with the wrong number of backslashes silently matches nothing and
+  reports a clean file, which is worse than not checking. Then read each hit:
+  inside a JS string or a template literal it is **fine** (this file has a
+  dozen that render correctly); only a hit in raw JSX text is the bug.
 - **Before somebody joined is `off`, not absent** — otherwise every new
   colleague's first month is three weeks of red.
 - **Leave is out of the attendance denominator.** A person is scored on the
@@ -1181,6 +1235,30 @@ and understand — who is late, how often, and whether it is a pattern.
   the dates repeat on every sheet; a second page with no dates across the top
   is unreadable. **What is on screen is exactly what prints** — no hidden
   "what will it actually give me" question.
+- **"Who changed this month" is the only section that names somebody you can
+  still catch.** `arrivalDrift()` compares each person's typical arrival in the
+  second half of the month with **their own** in the first. Everything else on
+  the page — the ranking, the medians, the grid — describes where a person
+  **is**; by the time somebody tops a late ranking the habit is months old and
+  the conversation is a reprimand.
+
+  September is the argument for it: **Shubham moved 10:25 → 11:16.** In the
+  first half he was inside the 10:45 grace — on time, invisible to every late
+  list on the page — and he is now three quarters of an hour later. Lalit,
+  Roshan and Krishan moved 25–30 minutes the same way.
+
+  **It names improvement too, and that is not decoration.** Vishal went
+  13:27 → 11:00; Tanu, Sandeep and Ankit Jha each came in ~25 minutes earlier.
+  A panel that only ever named people getting worse is one nobody opens.
+
+  Three guards, each earned here: a **median** per half (one 3pm site visit
+  would invent a slip from a mean); **at least three arrivals in both halves**
+  (or a fortnight of approved leave reads as a change somebody made); and a
+  **15-minute threshold** (everybody's median moves a few minutes, and a panel
+  naming twenty people is one nobody reads). It is **silent when nobody
+  moved**. Drawn as a move — was, arrow, now, gap — never a bar: there is no
+  meaningful zero in a time of day, the same reason the in-time chart is a dot
+  plot.
 - **The page prints what "late" means.** Late is `shift_start + late_grace`,
   currently **after 10:45**, and two thirds of September's check-ins are after
   it. That is a fact about the setting as much as about the team, and the

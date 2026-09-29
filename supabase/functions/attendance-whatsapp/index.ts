@@ -173,8 +173,6 @@ type Row = {
   team_id: string | null;
   team_name: string | null;
   team_wa_group_id: string | null;
-  /** Whether this person's team names its seniors too — see splitByGroup. */
-  team_include_seniors?: boolean | null;
 };
 
 /** One finished message and the address it goes to. */
@@ -195,22 +193,6 @@ type Delivery = { to: string; text: string; label: string };
  * back to the main group. A team configured halfway must never make somebody's
  * attendance disappear - a name in no list at all is the one outcome none of
  * these messages may produce.
- *
- * SENIORS. Every group list is juniors only, for the reason under `juniors()`
- * below - a senior's arrival time in a fifty-person group is a name taking up
- * space in a list the team scans for its own. A four-person team group is a
- * different room, and the founder may want the whole team in it, directors
- * included. `cb_teams.include_seniors` says so per team.
- *
- * It is applied HERE, by clearing `is_senior` on that delivery's copy of the
- * rows, rather than by threading a flag through all six message builders. That
- * is exactly what the setting means - inside this group there is no senior and
- * junior - and it leaves `juniors()` as the single filter it has always been,
- * so a builder written later cannot forget to honour it.
- *
- * The copy matters: the same row object is never shared between two deliveries
- * (one person is in one group), but mutating the caller's array would leak a
- * cleared flag into the founder's own unfiltered copy of the register.
  */
 function splitByGroup(rows: Row[], mainGroup: string): { to: string; rows: Row[]; label: string }[] {
   const out = new Map<string, { to: string; rows: Row[]; label: string }>();
@@ -221,11 +203,7 @@ function splitByGroup(rows: Row[], mainGroup: string): { to: string; rows: Row[]
     if (!out.has(to)) {
       out.set(to, { to, rows: [], label: own ? (r.team_name ?? "team") : "main group" });
     }
-    // include_seniors only has meaning on a team with its own group. Somebody
-    // falling back to the main group is in the fifty-person room, where the
-    // rule the founder set on 23 September still holds.
-    const flat = own && r.team_include_seniors;
-    out.get(to)!.rows.push(flat ? { ...r, is_senior: false } : r);
+    out.get(to)!.rows.push(r);
   }
   return [...out.values()];
 }
