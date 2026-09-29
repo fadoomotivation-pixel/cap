@@ -1075,6 +1075,25 @@ and understand — who is late, how often, and whether it is a pattern.
 - **Colour means the same thing everywhere** — amber is late in the ranking and
   amber is late in the grid. Amber is under 3:1 on white, so every amber mark
   carries a visible number; colour never carries meaning alone.
+- **One person, day by day — and the weekday strip above it.** The grid
+  carried each day's time in a *hover tooltip*, which is no use on paper and
+  no use on a phone, and the table carried monthly totals, which is the wrong
+  altitude entirely. The founder put the gap plainly on 29 September: *"if I
+  ask, on Monday he did not come in until such a time"* — and nothing on the
+  page could answer it. **A colour is not evidence; a date and a time is.**
+  Picking a name (from the dropdown, or by tapping it in either chart) lists
+  every working day with in, out, hours and **how many minutes past the
+  grace** — minutes rather than a flag, because "late" is a verdict and
+  "9 minutes" is a fact the person can answer.
+
+  **The weekday strip is the part a monthly median actively hides.** Four bad
+  Mondays inside twenty-six good days barely move the middle, so "he is
+  usually on time" survives a pattern the office can already see. Split by
+  weekday it is unmissable — September: Vivek is 10:16 on Wednesdays and
+  never late, and 11:49 on Tuesdays and late every time, against a flat
+  ~10:45 every day for Jai Prakash. Only weekdays with a real working day are
+  printed; this office works some Saturdays and not others, and an empty
+  "Sun" column would read as somebody skipping it.
 - **The page prints what "late" means.** Late is `shift_start + late_grace`,
   currently **after 10:45**, and two thirds of September's check-ins are after
   it. That is a fact about the setting as much as about the team, and the

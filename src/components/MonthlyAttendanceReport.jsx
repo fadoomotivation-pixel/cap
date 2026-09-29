@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react';
-import { STATES, fmtMinutes, istMinutes } from '../lib/monthlyAttendance';
+import React, { useMemo, useState } from 'react';
+import {
+  STATES, fmtMinutes, istMinutes, weekdayBreakdown, personDays,
+} from '../lib/monthlyAttendance';
 
 /**
  * The monthly attendance report, built to be READ ON PAPER.
@@ -148,7 +150,7 @@ function DailyColumns({ perDay }) {
  * Sorted earliest first, so the page reads top-to-bottom from most punctual to
  * least — which is the order the question is actually asked in.
  */
-function ArrivalDots({ people, lateAfterMin }) {
+function ArrivalDots({ people, lateAfterMin, onPick }) {
   const ranked = useMemo(
     () => people
       .filter((p) => p.medianArrival != null)
@@ -205,7 +207,8 @@ function ArrivalDots({ people, lateAfterMin }) {
         const b = x(p.arrivalP75 ?? p.medianArrival);
         return (
           <g key={p.id}>
-            <text x={labelW - 8} y={y + 4} textAnchor="end" fontSize="10.5" fill={INK}>
+            <text x={labelW - 8} y={y + 4} textAnchor="end" fontSize="10.5" fill={INK}
+              className="cb-pick" onClick={() => onPick?.(p.id)}>
               {p.name.length > 24 ? `${p.name.slice(0, 23)}\u2026` : p.name}
             </text>
             {/* The middle half, drawn thin so the dot stays the thing you read. */}
@@ -295,7 +298,7 @@ function LateRanking({ people, limit = 12 }) {
  * they were fine until the 12th. Nothing else on the page can show that, and
  * it is the reason this report exists rather than another table of totals.
  */
-function Heatmap({ days, people }) {
+function Heatmap({ days, people, onPick }) {
   const cell = 15, gap = 2, labelW = 150;
   const step = cell + gap;
   const W = labelW + days.length * step;
@@ -314,7 +317,8 @@ function Heatmap({ days, people }) {
       ))}
       {people.map((p, r) => (
         <g key={p.id}>
-          <text x={labelW - 8} y={18 + r * step + cell - 3} textAnchor="end" fontSize="10" fill={INK}>
+          <text x={labelW - 8} y={18 + r * step + cell - 3} textAnchor="end" fontSize="10" fill={INK}
+            className="cb-pick" onClick={() => onPick?.(p.id)}>
             {p.name.length > 24 ? `${p.name.slice(0, 23)}…` : p.name}
           </text>
           {days.map((d, c) => {
@@ -336,6 +340,122 @@ function Heatmap({ days, people }) {
   );
 }
 
+const fmtDay = (d) =>
+  new Date(`${d}T12:00:00+05:30`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+const fmtClock = (ts) => (ts ? fmtMinutes(istMinutes(ts)) : '\u2014');
+
+function StateBadge({ state }) {
+  const s = STATES[state];
+  return (
+    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold"
+      style={{ background: `${s.color}22`, color: state === 'late' ? '#8a5a00' : s.color }}>
+      {s.label}
+    </span>
+  );
+}
+
+/**
+ * ONE PERSON, DAY BY DAY — the question the grid could not answer.
+ *
+ * The founder put it plainly on 29 September: "if I ask, on Monday he did not
+ * come in until such a time" — and nothing on this page could tell him. The
+ * grid carried the times in a hover tooltip, which is no use on paper and no
+ * use on a phone, and the table carried monthly totals, which is the wrong
+ * altitude entirely. A colour is not evidence; a date and a time is.
+ *
+ * So this is built the way the conversation actually goes. Somebody says they
+ * were on time. You pick their name, and you have every working day of the
+ * month with the clock reading beside it — in, out, hours, and how late.
+ *
+ * ABOVE THAT SITS THE WEEKDAY STRIP, which is the part a monthly median
+ * actively hides: four bad Mondays inside twenty-six good days barely move the
+ * middle, so "he is usually on time" survives a pattern anybody in the office
+ * could already see. Split by weekday it is unmissable, and it is the
+ * difference between a number and a reason to have a conversation.
+ */
+function PersonMonth({ person, days, lateAfterMin }) {
+  const week = useMemo(() => weekdayBreakdown(person, days), [person, days]);
+  const rows = useMemo(() => personDays(person, days), [person, days]);
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-3">
+        <h3 className="text-base font-semibold" style={{ color: INK }}>{person.name}</h3>
+        <span className="text-[11px]" style={{ color: INK_2 }}>
+          {person.team || 'Main'}{person.department ? ` \u00B7 ${person.department}` : ''}
+        </span>
+        <span className="text-[11px]" style={{ color: INK_2 }}>
+          Typically <strong>{fmtMinutes(person.medianArrival)}</strong>
+          {' \u00B7 '}Present {person.present}/{person.expected}
+          {' \u00B7 '}Late {person.late}
+        </span>
+      </div>
+
+      {/* The weekday answer, before the day list, because it is the one a
+          month of dates does not give you by itself. */}
+      <p className="text-[11px] mb-1.5" style={{ color: MUTED }}>
+        Typical arrival by day of the week
+      </p>
+      <div className="flex flex-wrap gap-2 mb-5">
+        {week.map((w) => {
+          const late = lateAfterMin != null && w.typical != null && w.typical > lateAfterMin;
+          return (
+            <div key={w.label}
+              className="border rounded-lg px-3 py-2 min-w-[78px]"
+              style={{ borderColor: late ? STATES.late.color : '#e5e5e0' }}>
+              <p className="text-[10px] uppercase tracking-wide" style={{ color: MUTED }}>{w.label}</p>
+              <p className="text-sm font-semibold" style={{ color: INK, fontVariantNumeric: 'tabular-nums' }}>
+                {w.typical == null ? '\u2014' : fmtMinutes(w.typical)}
+              </p>
+              <p className="text-[10px]" style={{ color: late ? '#8a5a00' : MUTED }}>
+                {w.late ? `${w.late}/${w.present} late` : `${w.present}/${w.days} in`}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <table className="w-full text-left text-[11px]" style={{ borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ color: MUTED, borderBottom: `1px solid ${AXIS}` }}>
+            <th className="py-1.5 pr-2 font-medium">Date</th>
+            <th className="py-1.5 px-2 font-medium">Day</th>
+            <th className="py-1.5 px-2 font-medium">In</th>
+            <th className="py-1.5 px-2 font-medium">Out</th>
+            <th className="py-1.5 px-2 font-medium text-right">Hours</th>
+            <th className="py-1.5 px-2 font-medium text-right">How late</th>
+            <th className="py-1.5 pl-2 font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {rows.map((r) => (
+            <tr key={r.date} style={{ borderBottom: `1px solid ${GRID}`, color: INK_2 }}>
+              <td className="py-1.5 pr-2" style={{ color: INK, fontWeight: 600 }}>{fmtDay(r.date)}</td>
+              <td className="py-1.5 px-2">{r.weekday}</td>
+              <td className="py-1.5 px-2" style={{ color: r.state === 'late' ? '#8a5a00' : INK_2, fontWeight: r.checkIn ? 600 : 400 }}>
+                {fmtClock(r.checkIn)}
+              </td>
+              <td className="py-1.5 px-2">{fmtClock(r.checkOut)}</td>
+              <td className="py-1.5 px-2 text-right">{r.hours ?? '\u2014'}</td>
+              {/* Minutes past the grace, not a flag, and not minutes past the
+                  shift start. "Late" is a verdict; "9 minutes" is a fact the
+                  person can answer, and the two read very differently when the
+                  page is put in front of them. */}
+              <td className="py-1.5 px-2 text-right">
+                {r.state === 'late' && r.checkIn && lateAfterMin != null
+                  ? `${Math.max(0, istMinutes(r.checkIn) - lateAfterMin)} min`
+                  : '\u2014'}
+              </td>
+              <td className="py-1.5 pl-2"><StateBadge state={r.state} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function Tile({ label, value, note }) {
   return (
     <div className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
@@ -348,6 +468,8 @@ function Tile({ label, value, note }) {
 
 export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAfterMin }) {
   const { days, people, perDay, totals } = data;
+  const [pickedId, setPickedId] = useState('');
+  const picked = people.find((p) => p.id === pickedId) || null;
   const monthLabel = new Date(`${month}-01T12:00:00+05:30`)
     .toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
@@ -375,7 +497,11 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
           .cb-report * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .cb-page-break { break-before: page; page-break-before: always; }
           .cb-keep { break-inside: avoid; page-break-inside: avoid; }
+          /* A name is only clickable on screen; on paper it is just a name. */
+          .cb-pick { text-decoration: none !important; }
         }
+        .cb-pick { cursor: pointer; }
+        .cb-pick:hover { text-decoration: underline; }
       `}</style>
 
       <header className="cb-keep mb-4">
@@ -418,7 +544,7 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
           their arrivals, so a short bar means they come in at the same time every day.
           Anyone right of the amber line is typically late.
         </p>
-        <ArrivalDots people={people} lateAfterMin={lateAfterMin} />
+        <ArrivalDots people={people} lateAfterMin={lateAfterMin} onPick={setPickedId} />
       </section>
 
       <section className="cb-keep mb-6">
@@ -436,7 +562,39 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
           One square per person per working day. A run of amber is a habit; a scatter of it is a bad week.
         </p>
         <Legend keys={['on-time', 'late', 'absent', 'leave', 'off']} />
-        <Heatmap days={days} people={people} />
+        <Heatmap days={days} people={people} onPick={setPickedId} />
+      </section>
+
+      <section className="cb-page-break mb-6">
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <h2 className="text-sm font-semibold" style={{ color: INK }}>One person, day by day</h2>
+          {/* A plain select, not a search box: thirty names is a list you
+              scroll, not one you have to spell. Clicking any name in the two
+              charts above lands here too. */}
+          <select value={pickedId} onChange={(e) => setPickedId(e.target.value)}
+            className="cb-no-print border border-gray-200 rounded-md px-2 py-1.5 text-xs outline-none focus:border-[#f26522]">
+            <option value="">Pick a name\u2026</option>
+            {[...people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          {picked && (
+            <button onClick={() => setPickedId('')}
+              className="cb-no-print text-xs text-gray-500 hover:text-[#10243E] underline">
+              clear
+            </button>
+          )}
+        </div>
+
+        {picked ? (
+          <PersonMonth person={picked} days={days} lateAfterMin={lateAfterMin} />
+        ) : (
+          <p className="text-[11px]" style={{ color: MUTED }}>
+            Pick a name above, or tap any name in the two charts, to see every working
+            day of the month \u2014 the time they came in, the time they left, and how
+            late. This is the answer to &ldquo;what time did he get in on Monday?&rdquo;.
+          </p>
+        )}
       </section>
 
       <section>
