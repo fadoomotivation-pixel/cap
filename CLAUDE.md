@@ -173,7 +173,10 @@ Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
 `/book/:token`, `/book/confirm/:bookingId`.
 
 Every admin console renders `<AdminNav />` (`src/components/AdminNav.jsx`),
-which is the **one** place the console links live. Each page used to carry its
+which is the **one** place the console links live. **Render it inside the
+page's padded container with `className="mb-6"`**, the way the other nine do —
+`/admin/machine` had it outside, so on that one page the nav sat flush against
+the viewport edge with no gap under it and read as missing. Each page used to carry its
 own hand-written row, so they drifted — and the Admin Command Center at
 `/employee-kyc`, where HR actually lands after logging in, linked to nothing at
 all. Add a new console to `ADMIN_LINKS`, not to each page.
@@ -1053,6 +1056,17 @@ and understand — who is late, how often, and whether it is a pattern.
   days they were expected, so approved leave does not lower their percentage.
 - **The typical arrival is a MEDIAN, not a mean.** One 3pm site visit would
   drag an average half an hour and make a punctual person look late on paper.
+- **In-time is drawn as position on a clock, never as a bar.** A bar starts at
+  midnight and makes 10:15 look like a large quantity of something; there is
+  no meaningful zero in a time of day. Each person is a row, the dot is their
+  median arrival, and **one vertical line marks where "late" begins** — left of
+  it is on time, and that comparison needs no reading. The bar through the dot
+  is the 25th–75th percentile of their arrivals, which is what makes the chart
+  worth more than a column of times: **a short bar is somebody who walks in at
+  the same minute every day, a long one is somebody whose arrival is a coin
+  toss**, and those are different conversations at an identical median. Real
+  example from September: Munish Tyagi 09:22 with a 09:20–09:38 band and no
+  late days, against Vivek at 10:49 with a 10:34–11:34 band and 12.
 - **The charts are inline SVG, not a library.** Nothing here needs a 150KB
   dependency, and SVG is the only thing that prints crisp — a canvas chart
   prints at screen resolution. `print-color-adjust: exact` is load-bearing:
@@ -1920,3 +1934,25 @@ empty boxes.
 - Run `npx vite build` before pushing — it's the only build check in the repo.
 - Content copy lives in `src/data/site.js` (projects, FAQs, stats) and
   `src/data/blogs.js` — edit content there, not in components.
+
+### How work reaches the site — one PR per piece of work, into `main`
+
+**The owner's standing instruction (29 September 2026): every new feature or
+fix gets its own pull request into `main`. Do not batch several unrelated
+things behind one, and do not leave finished work sitting on a branch with no
+PR.**
+
+`main` auto-deploys to production on Vercel, so a branch with no PR is work
+that exists and is invisible — which has already happened twice in this repo
+for other reasons, and is the failure mode this rule exists to end.
+
+Two things follow from it, and both were learned the hard way on the same day:
+
+- **A merged PR cannot carry new work.** Once it is merged it is finished; the
+  next change needs a *new* PR, even on the same branch. Pushing more commits
+  to a branch whose PR has already merged leaves them on the remote with no
+  route to `main` and nothing on screen saying so.
+- **Never push straight to `main`.** The owner's Claude Code settings refuse
+  it ("Merge Without Review") and that guard is deliberate. If a push to
+  `main` is ever blocked, the answer is a PR — not a workaround, and not
+  leaving the commit stranded on a branch.

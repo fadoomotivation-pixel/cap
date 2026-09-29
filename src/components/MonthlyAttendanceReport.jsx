@@ -126,6 +126,118 @@ function DailyColumns({ perDay }) {
 }
 
 /**
+ * EVERYBODY'S IN-TIME, on one line each.
+ *
+ * The founder asked on 29 September for everyone's monthly in-time to be easy
+ * to understand at a glance. A column of times in a table is not that — you
+ * have to read thirty numbers and hold a threshold in your head while you do.
+ *
+ * So arrival is drawn as POSITION ON A CLOCK, not as a bar. A bar would start
+ * at midnight and make 10:15 look like a large quantity of something; there is
+ * no meaningful zero in a time of day. Each person is a row, the dot is their
+ * typical (median) arrival, and one vertical line marks the moment "late"
+ * begins. Left of the line is on time. That comparison is the whole chart, and
+ * it needs no reading.
+ *
+ * The bar THROUGH the dot is the middle half of their arrivals — 25th to 75th
+ * percentile. It is what makes this worth more than a list of times: a short
+ * bar is somebody who walks in at the same minute every day, a long one is
+ * somebody whose arrival is a coin toss, and those are different conversations
+ * even when the median is identical.
+ *
+ * Sorted earliest first, so the page reads top-to-bottom from most punctual to
+ * least — which is the order the question is actually asked in.
+ */
+function ArrivalDots({ people, lateAfterMin }) {
+  const ranked = useMemo(
+    () => people
+      .filter((p) => p.medianArrival != null)
+      .sort((a, b) => a.medianArrival - b.medianArrival || a.name.localeCompare(b.name)),
+    [people],
+  );
+  if (!ranked.length) {
+    return <p className="text-sm" style={{ color: MUTED }}>Nobody has an arrival time this month.</p>;
+  }
+
+  const rowH = 19, labelW = 150, valueW = 118;
+  const W = 1000, H = ranked.length * rowH + 24;
+  const plotW = W - labelW - valueW;
+
+  // The axis is padded half an hour either side of the real range and snapped
+  // to the half hour, so the earliest and latest dots are never jammed against
+  // an edge where they cannot be read.
+  const lo = Math.min(...ranked.map((p) => p.arrivalP25 ?? p.medianArrival), lateAfterMin ?? 645);
+  const hi = Math.max(...ranked.map((p) => p.arrivalP75 ?? p.medianArrival), lateAfterMin ?? 645);
+  const from = Math.floor((lo - 30) / 30) * 30;
+  const to = Math.ceil((hi + 30) / 30) * 30;
+  const x = (m) => labelW + ((m - from) / (to - from)) * plotW;
+
+  const ticks = [];
+  for (let m = from; m <= to; m += 30) ticks.push(m);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img"
+      aria-label="Each person's typical arrival time, earliest first">
+      {ticks.map((m) => (
+        <g key={m}>
+          <line x1={x(m)} x2={x(m)} y1={16} y2={H - 4} stroke={GRID} strokeWidth="1" />
+          <text x={x(m)} y={10} textAnchor="middle" fontSize="9" fill={MUTED}
+            style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtMinutes(m)}</text>
+        </g>
+      ))}
+
+      {/* The one line that turns thirty times into one question. */}
+      {lateAfterMin != null && (
+        <g>
+          <line x1={x(lateAfterMin)} x2={x(lateAfterMin)} y1={14} y2={H - 4}
+            stroke={STATES.late.color} strokeWidth="2" />
+          <text x={x(lateAfterMin) + 4} y={10} fontSize="9" fill={INK_2} fontWeight="600">
+            late after {fmtMinutes(lateAfterMin)}
+          </text>
+        </g>
+      )}
+
+      {ranked.map((p, i) => {
+        const y = 22 + i * rowH + rowH / 2 - 4;
+        const late = lateAfterMin != null && p.medianArrival > lateAfterMin;
+        const c = late ? STATES.late.color : STATES['on-time'].color;
+        const a = x(p.arrivalP25 ?? p.medianArrival);
+        const b = x(p.arrivalP75 ?? p.medianArrival);
+        return (
+          <g key={p.id}>
+            <text x={labelW - 8} y={y + 4} textAnchor="end" fontSize="10.5" fill={INK}>
+              {p.name.length > 24 ? `${p.name.slice(0, 23)}\u2026` : p.name}
+            </text>
+            {/* The middle half, drawn thin so the dot stays the thing you read. */}
+            <line x1={a} x2={b} y1={y} y2={y} stroke={c} strokeWidth="3"
+              strokeLinecap="round" opacity="0.32" />
+            {/* A surface ring, so a dot overlapping the band still reads as one mark. */}
+            <circle cx={x(p.medianArrival)} cy={y} r="4.5" fill={c}
+              stroke="#ffffff" strokeWidth="1.5" />
+            <title>
+              {`${p.name} \u2014 typically ${fmtMinutes(p.medianArrival)}`}
+              {p.arrivalP25 != null
+                ? `, usually between ${fmtMinutes(p.arrivalP25)} and ${fmtMinutes(p.arrivalP75)}`
+                : ''}
+              {` \u00B7 ${p.present} days in, ${p.late} late`}
+            </title>
+            {/* Amber is under 3:1 on white, so the time is never colour-only. */}
+            <text x={W - valueW + 8} y={y + 4} fontSize="10.5" fill={INK} fontWeight="600"
+              style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {fmtMinutes(p.medianArrival)}
+            </text>
+            <text x={W - valueW + 52} y={y + 4} fontSize="9.5" fill={MUTED}
+              style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {p.late}/{p.present} late
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/**
  * Who is late most, ranked. This is the founder's actual question, so it gets
  * its own chart rather than a column in a table he has to sort himself.
  *
@@ -234,7 +346,7 @@ function Tile({ label, value, note }) {
   );
 }
 
-export default function MonthlyAttendanceReport({ data, month, lateAfter }) {
+export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAfterMin }) {
   const { days, people, perDay, totals } = data;
   const monthLabel = new Date(`${month}-01T12:00:00+05:30`)
     .toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
@@ -297,6 +409,18 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter }) {
         <DailyColumns perDay={perDay} />
       </section>
 
+      <section className="cb-page-break mb-6">
+        <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>
+          In-time — everybody, earliest first
+        </h2>
+        <p className="text-[11px] mb-2" style={{ color: MUTED }}>
+          The dot is their typical arrival; the bar through it is the middle half of
+          their arrivals, so a short bar means they come in at the same time every day.
+          Anyone right of the amber line is typically late.
+        </p>
+        <ArrivalDots people={people} lateAfterMin={lateAfterMin} />
+      </section>
+
       <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>Late arrivals, most first</h2>
         <p className="text-[11px] mb-2" style={{ color: MUTED }}>
@@ -329,6 +453,7 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter }) {
               <th className="py-1.5 px-2 font-medium text-right">Leave</th>
               <th className="py-1.5 px-2 font-medium text-right">Attendance</th>
               <th className="py-1.5 px-2 font-medium text-right">Typical arrival</th>
+              <th className="py-1.5 px-2 font-medium text-right">Usually between</th>
               <th className="py-1.5 pl-2 font-medium text-right">Avg hrs</th>
             </tr>
           </thead>
@@ -346,6 +471,9 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter }) {
                 <td className="py-1.5 px-2 text-right">{p.leave}</td>
                 <td className="py-1.5 px-2 text-right">{p.attendancePct == null ? '—' : `${p.attendancePct}%`}</td>
                 <td className="py-1.5 px-2 text-right">{fmtMinutes(p.medianArrival)}</td>
+                <td className="py-1.5 px-2 text-right">
+                  {p.arrivalP25 == null ? '—' : `${fmtMinutes(p.arrivalP25)}–${fmtMinutes(p.arrivalP75)}`}
+                </td>
                 <td className="py-1.5 pl-2 text-right">{p.avgHours ?? '—'}</td>
               </tr>
             ))}

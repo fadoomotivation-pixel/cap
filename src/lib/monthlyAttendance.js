@@ -92,6 +92,13 @@ export function buildMonthly(rows, { onlyReported = true } = {}) {
       // The median, not the mean: one 3pm site visit would drag an average
       // half an hour and make a punctual person look late on paper.
       medianArrival: median(p.arrivals),
+      // The middle half of their arrivals. This is what makes the in-time
+      // chart worth more than a column of times: a narrow band is somebody
+      // who arrives at the same time every day, a wide one is somebody whose
+      // arrival is a coin toss — and those are different conversations even
+      // when the median is identical.
+      arrivalP25: quantile(p.arrivals, 0.25),
+      arrivalP75: quantile(p.arrivals, 0.75),
       latePct: present ? Math.round((p.late / present) * 100) : null,
       avgHours: present ? Math.round((p.hours / present) * 10) / 10 : null,
     };
@@ -125,10 +132,19 @@ export function buildMonthly(rows, { onlyReported = true } = {}) {
 }
 
 function median(xs) {
+  return quantile(xs, 0.5);
+}
+
+/** Linear-interpolated quantile. Returns null rather than 0 for no data —
+ *  0 would plot as midnight and read as somebody arriving at 00:00. */
+function quantile(xs, q) {
   const v = xs.filter((x) => x != null).sort((a, b) => a - b);
   if (!v.length) return null;
-  const i = Math.floor(v.length / 2);
-  return v.length % 2 ? v[i] : Math.round((v[i - 1] + v[i]) / 2);
+  if (v.length === 1) return v[0];
+  const pos = (v.length - 1) * q;
+  const lo = Math.floor(pos);
+  const hi = Math.ceil(pos);
+  return Math.round(v[lo] + (v[hi] - v[lo]) * (pos - lo));
 }
 
 /** One row per person, matching what the page shows — so the spreadsheet and
@@ -136,14 +152,17 @@ function median(xs) {
 export function monthlyCsv({ people, days }, month) {
   const head = [
     'Name', 'Department', 'Team', 'Working days', 'Present', 'On time', 'Late',
-    'Absent', 'Leave', 'Attendance %', 'Late %', 'Median arrival', 'Avg hours',
+    'Absent', 'Leave', 'Attendance %', 'Late %', 'Typical arrival',
+    'Usually between', 'Avg hours',
   ];
   const lines = people.map((p) => [
     p.name, p.department, p.team || 'Main', days.length, p.present, p.onTime,
     p.late, p.absent, p.leave,
     p.attendancePct == null ? '' : `${p.attendancePct}%`,
     p.latePct == null ? '' : `${p.latePct}%`,
-    fmtMinutes(p.medianArrival), p.avgHours ?? '',
+    fmtMinutes(p.medianArrival),
+    p.arrivalP25 == null ? '' : `${fmtMinutes(p.arrivalP25)}-${fmtMinutes(p.arrivalP75)}`,
+    p.avgHours ?? '',
   ]);
   return [head, ...lines]
     .map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
