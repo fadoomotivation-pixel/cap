@@ -317,7 +317,10 @@ export default function AttendanceAdmin() {
   const openCodeEditor = async (emp) => {
     setCodeEditor({ emp, value: emp.device_code || '', info: null, busy: false, message: '' });
     const { data } = await supabase.rpc('cb_free_device_codes', { p_limit: 6 });
-    setFreeCodes((data || []).map((r) => r.device_code));
+    // The rows carry `kind` now — a released code is reusable but carries the
+    // previous holder's history, so it must not sit in the same list as a
+    // number nobody has ever punched on.
+    setFreeCodes(data || []);
   };
 
   // Looked up as they type, because the answer only changes a decision before
@@ -1117,14 +1120,31 @@ export default function AttendanceAdmin() {
                             </p>
                           )}
 
-                          {freeCodes.length > 0 && (
+                          {freeCodes.some((c) => c.kind === 'never-used') && (
                             <p className="text-xs text-gray-500 mt-3">
                               Never used by anybody:{' '}
-                              {freeCodes.map((c) => (
-                                <button key={c} onClick={() => lookUpCode(c)}
-                                  className="font-mono text-[#9C7C1C] hover:underline mr-2">#{c}</button>
+                              {freeCodes.filter((c) => c.kind === 'never-used').map((c) => (
+                                <button key={c.device_code} onClick={() => lookUpCode(c.device_code)}
+                                  className="font-mono text-[#9C7C1C] hover:underline mr-2">#{c.device_code}</button>
                               ))}
                               <br />Enrol the person on the machine under one of these, then save it here.
+                            </p>
+                          )}
+
+                          {/* Separate, and with the previous holder named. A
+                              released number is safe to re-use because the
+                              handover date keeps the two people's punches
+                              apart — but only if whoever picks it knows. */}
+                          {freeCodes.some((c) => c.kind === 'released') && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              Released by somebody leaving:{' '}
+                              {freeCodes.filter((c) => c.kind === 'released').map((c) => (
+                                <button key={c.device_code} onClick={() => lookUpCode(c.device_code)}
+                                  className="font-mono text-amber-700 hover:underline mr-2"
+                                  title={`Was ${c.previous_holder}. Their punches stay theirs; this person starts from the handover date.`}>
+                                  #{c.device_code}
+                                </button>
+                              ))}
                             </p>
                           )}
                         </td>
