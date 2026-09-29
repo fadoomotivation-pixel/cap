@@ -1029,6 +1029,15 @@ team's attendance to go there.
   fail loudly.
 - `cb_new_joiners()` carries `team_wa_group_id` for the same reason — a backend
   joiner is welcomed by backend, not announced to the whole company.
+- **A team is nothing until somebody on it is `in_daily_report`.** The Backend
+  group was created, picked and wired on 29 September and still would have
+  sent nothing, because its only member was switched out of the report. Three
+  things have to be true for a team's message to exist at all: the team has a
+  group, somebody is on the team, and that somebody is in the report.
+- **`cb_teams.name` is unique case-insensitively** (`cb_teams_name_key_ci`).
+  "Backend" and "backend" both existed for a few hours on 29 September, one
+  with the group and one without — two teams with the same name and different
+  groups is a silent way to send somebody's attendance to the wrong place.
 
 ### The monthly report — built to be read on paper
 
@@ -1094,6 +1103,22 @@ and understand — who is late, how often, and whether it is a pattern.
   ~10:45 every day for Jai Prakash. Only weekdays with a real working day are
   printed; this office works some Saturdays and not others, and an empty
   "Sun" column would read as somebody skipping it.
+- **Two documents, one Print button — Summary and Full register.** The founder
+  asked how he would print the whole company's whole month at once. The
+  per-person view answers one name at a time and thirty-two of those is
+  thirty-two page-turns, not a document; the grid is one page but carries
+  colour, and **a colour cannot be filed, signed or handed to somebody in a
+  dispute**.
+
+  So "Full register" is the muster roll every Indian office already knows —
+  names down the side, dates across the top, **and the arrival time in the
+  cell**. A tick answers "did they come"; the question here has always been
+  "when". Absent, leave and not-yet-joined print as `A`, `L` and `·`, so a
+  blank never has to be interpreted — a blank box in an attendance register is
+  the thing people argue about. `thead` is `display: table-header-group`, so
+  the dates repeat on every sheet; a second page with no dates across the top
+  is unreadable. **What is on screen is exactly what prints** — no hidden
+  "what will it actually give me" question.
 - **The page prints what "late" means.** Late is `shift_start + late_grace`,
   currently **after 10:45**, and two thirds of September's check-ins are after
   it. That is a fact about the setting as much as about the team, and the

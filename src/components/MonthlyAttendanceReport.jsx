@@ -456,6 +456,85 @@ function PersonMonth({ person, days, lateAfterMin }) {
   );
 }
 
+/**
+ * THE MUSTER ROLL — everybody's whole month, with times, on one document.
+ *
+ * The founder asked on 29 September how he would print the full month for the
+ * whole company in one go. The per-person view answers one name at a time, and
+ * thirty-two of those is thirty-two page-turns, not a document. The grid above
+ * is one page but carries colour rather than clock readings, and a colour
+ * cannot be filed, signed or handed to somebody in a dispute.
+ *
+ * So this is the register in the shape every Indian office already knows: names
+ * down the side, dates across the top, and **the actual in-time in the cell**.
+ * One or two sheets of A4 landscape for the entire company and the entire
+ * month.
+ *
+ * WHAT IS IN A CELL is the arrival time, not a tick. A tick answers "did they
+ * come"; the founder's question has always been "when". Absent, leave and
+ * days before joining get a letter instead, so a blank never has to be
+ * interpreted — a blank cell in an attendance register is the thing people
+ * argue about.
+ *
+ * The tint behind each cell is the same colour language as the rest of the
+ * page, and it survives printing because of `print-color-adjust: exact`. It is
+ * deliberately pale: the time has to stay the thing you read.
+ */
+function MusterRoll({ days, people, lateAfterMin }) {
+  const mark = (row) => {
+    if (!row) return { text: '\u00B7', bg: 'transparent', ink: MUTED };
+    if (row.state === 'leave') return { text: 'L', bg: '#86b6ef33', ink: INK_2 };
+    if (row.state === 'absent') return { text: 'A', bg: `${STATES.absent.color}22`, ink: '#8c2020' };
+    if (row.state === 'off') return { text: '\u00B7', bg: 'transparent', ink: MUTED };
+    const mins = istMinutes(row.check_in_at);
+    const late = lateAfterMin != null && mins > lateAfterMin;
+    return {
+      text: fmtMinutes(mins),
+      bg: late ? `${STATES.late.color}33` : `${STATES['on-time'].color}1f`,
+      ink: late ? '#7a4f00' : '#0a5c0a',
+    };
+  };
+
+  return (
+    <div className="cb-wide">
+      <table className="cb-muster" style={{ borderCollapse: 'collapse', width: '100%' }}>
+        <thead>
+          <tr>
+            <th className="cb-name" style={{ color: MUTED }}>Name</th>
+            {days.map((d) => (
+              <th key={d} style={{ color: MUTED }}>
+                <span className="block">{dayNum(d)}</span>
+                <span className="block cb-dow">{dayShort(d)}</span>
+              </th>
+            ))}
+            <th style={{ color: MUTED }}>P</th>
+            <th style={{ color: MUTED }}>Late</th>
+          </tr>
+        </thead>
+        <tbody>
+          {people.map((p) => (
+            <tr key={p.id}>
+              <td className="cb-name" style={{ color: INK, fontWeight: 600 }}>
+                {p.name.length > 20 ? `${p.name.slice(0, 19)}\u2026` : p.name}
+              </td>
+              {days.map((d) => {
+                const m = mark(p.cells.get(d));
+                return (
+                  <td key={d} style={{ background: m.bg, color: m.ink }}>{m.text}</td>
+                );
+              })}
+              <td style={{ color: INK, fontWeight: 600 }}>{p.present}</td>
+              <td style={{ color: p.late ? '#7a4f00' : MUTED, fontWeight: p.late ? 600 : 400 }}>
+                {p.late}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function Tile({ label, value, note }) {
   return (
     <div className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
@@ -466,7 +545,7 @@ function Tile({ label, value, note }) {
   );
 }
 
-export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAfterMin }) {
+export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAfterMin, view = 'summary' }) {
   const { days, people, perDay, totals } = data;
   const [pickedId, setPickedId] = useState('');
   const picked = people.find((p) => p.id === pickedId) || null;
@@ -502,6 +581,28 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         }
         .cb-pick { cursor: pointer; }
         .cb-pick:hover { text-decoration: underline; }
+
+        /* The register is 28 columns wide. On screen it scrolls sideways; on
+           paper it must not, so the scroller is unwrapped for print and the
+           type steps down to fit A4 landscape. */
+        .cb-wide { overflow-x: auto; }
+        .cb-muster { font-size: 9px; table-layout: fixed; font-variant-numeric: tabular-nums; }
+        .cb-muster th, .cb-muster td {
+          border: 1px solid #e1e0d9; padding: 2px 1px; text-align: center;
+          white-space: nowrap; width: 34px;
+        }
+        .cb-muster .cb-name { text-align: left; width: 132px; padding-left: 5px; }
+        .cb-muster .cb-dow { font-size: 7px; opacity: 0.6; }
+        /* The header repeats on every printed sheet — a register whose second
+           page has no dates across the top is unreadable. */
+        .cb-muster thead { display: table-header-group; }
+        .cb-muster tr { break-inside: avoid; page-break-inside: avoid; }
+        @media print {
+          .cb-wide { overflow: visible; }
+          .cb-muster { font-size: 7px; }
+          .cb-muster th, .cb-muster td { padding: 1px 0; width: auto; }
+          .cb-muster .cb-name { width: 108px; }
+        }
       `}</style>
 
       <header className="cb-keep mb-4">
@@ -518,6 +619,25 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         </p>
       </header>
 
+      {view === 'register' ? (
+        <section>
+          <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>
+            Attendance register \u2014 every name, every working day
+          </h2>
+          <p className="text-[11px] mb-1" style={{ color: MUTED }}>
+            The time in each box is when they came in.
+            {' '}<strong>A</strong> = absent, <strong>L</strong> = leave or holiday,
+            {' '}<strong>\u00B7</strong> = not a working day for them.
+            {lateAfter ? ` Amber is after ${lateAfter}.` : ''}
+          </p>
+          <p className="text-[11px] mb-3" style={{ color: MUTED }}>
+            Prints as one document \u2014 A4 landscape, dates repeated at the top of
+            every sheet.
+          </p>
+          <MusterRoll days={days} people={people} lateAfterMin={lateAfterMin} />
+        </section>
+      ) : (
+      <>
       <div className="cb-keep grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <Tile label="Attendance" value={totals.attendancePct == null ? '—' : `${totals.attendancePct}%`}
           note={`${totals.present} present · ${totals.absent} absent`} />
@@ -638,6 +758,8 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
           </tbody>
         </table>
       </section>
+      </>
+      )}
     </div>
   );
 }
