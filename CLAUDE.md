@@ -1180,6 +1180,18 @@ all four.
   because the question is asked while looking at the messages, not while
   looking at the roster. Adding, removing and machine-code mapping stay on
   the Attendance console, and the page says so.
+- **Preview is one block per address, not one box.** Since teams exist a
+  preview is several different messages — the founder's copy, the main
+  group's, and one per team — and stacking them in a single box with the
+  addresses comma-joined at the top answers neither "what does Backend get"
+  nor "what does the main group get". `splitPreview()` unpicks the Edge
+  Function's `[→ label]` markers, and **degrades rather than breaks**: with no
+  markers it returns the text exactly as it came, which is what the page
+  always showed. A preview that looks odd for a day beats one that shows
+  nothing on the day somebody needs it.
+- **Each card names the groups it lands in.** "Group" stopped being one
+  address the day teams arrived, and a card that still said "Group" could not
+  tell you whether Backend gets its own copy.
 - **The schedule is deliberately not editable here.** A schedule two screens
   can change is one nobody can trust; the times live in pg_cron. The page also
   no longer carries a second copy of the schedule list — it used to, and it
