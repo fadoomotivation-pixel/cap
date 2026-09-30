@@ -605,6 +605,50 @@ answered "no" until 23 September 2026. It now answers, narrowly.
   returns `unconfirmed_names`, the count of names we set from the console that
   the terminal has not yet said back.
 
+- **"Still enrolled, long gone" — the comparison nobody had made.** We ask
+  *who is missing from the machine* constantly and had **never** asked *who is
+  still on it who should not be*. On 30 September 2026 that was **32
+  enrolments**, the oldest last punched in April: their finger still works on
+  the terminal (`cb_device_stale_enrolments`, in
+  `supabase/sql/cb_machine_control.sql`).
+
+  Deleting an enrolment is the one destructive command that is safe here, and
+  only because **it does not touch `cb_device_punches`** — the attendance
+  survives, the monthly register keeps their name, and the person can be
+  enrolled again with a finger at the terminal. The console says that above
+  the buttons, because "remove" on an attendance screen reads as "delete their
+  attendance" to anybody who has not been told otherwise.
+
+  **The three exclusions are the whole safety of it:** a code any current
+  roster member holds; anything in `cb_ignored_device_codes` (the founder's
+  two IDs, pantry staff, the not-tracked — deliberately off the report and
+  very much still here, so deleting Abhishek-pantry's finger is the worst
+  thing this could do); and anything that punched recently. The quiet period
+  is a **parameter, not a constant**, so the console is cautious by default at
+  60 days and widening it is a deliberate act — and `greatest(p_quiet_days, 7)`
+  means no caller can turn it into "delete everything".
+
+- **"Seen today" — the payoff for `Realtime=1` that was never collected.** A
+  punch reaches us in seconds and the console only ever showed *"13 punches
+  today"*, which is a number, not people. It now lists them in arrival order.
+
+  **It says "last seen", never "is in".** A missing exit punch and somebody
+  still at their desk are identical from the machine's side — the same fact
+  that made the 19:02 message stop claiming "Still in office (15)". It uses
+  the register's own sixty-minute rule so the panel and the register can never
+  disagree about the same person on the same day, and resolves the name
+  through `cb_held_code_on` so a re-issued code shows today's holder. Somebody
+  the roster does not know is badged, not alarmed about: the pantry and the
+  founder's own IDs are deliberately off it.
+
+- **A "buddy punching" detector was investigated and deliberately NOT built.**
+  Two different codes punching within three seconds of each other looks like a
+  shared finger, and there are 96 such pairs across 27 code-pairs in 30 days —
+  but that is the morning queue at the machine, not fraud. A detector built on
+  it would accuse colleagues on the strength of standing in a line, which is
+  the scoreboard the whole module avoids. If this is ever revisited it needs a
+  signal that a queue cannot produce.
+
 - **A queued command for a terminal that has never contacted us never runs.**
   The page says so in plain words rather than showing a hopeful "pending" —
   `cb_adms_log` was empty for the whole of the ADMS work, and a console that
