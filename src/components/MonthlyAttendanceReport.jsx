@@ -517,19 +517,30 @@ function PersonMonth({ person, days, lateAfterMin, compact = false }) {
  * The tint behind each cell is the same colour language as the rest of the
  * page, and it survives printing because of `print-color-adjust: exact`. It is
  * deliberately pale: the time has to stay the thing you read.
+ *
+ * THE TIMES ARE DARK AND BOLD, not tinted text. They were mid-greys and soft
+ * greens at 7px on paper \u2014 legible held at arm's length and not from across a
+ * desk, which is how a register is actually read. The tint stayed pale (right)
+ * and the ink went pale with it (wrong): the background carries the state, the
+ * ink only has to carry the digits.
  */
+const INK_OK = '#06450a';   // on time
+const INK_LATE = '#6b3d00'; // late
+const INK_ABS = '#7a1414';  // absent
+
 function MusterRoll({ days, people, lateAfterMin }) {
   const mark = (row) => {
-    if (!row) return { text: '\u00B7', bg: 'transparent', ink: MUTED };
-    if (row.state === 'leave') return { text: 'L', bg: '#86b6ef33', ink: INK_2 };
-    if (row.state === 'absent') return { text: 'A', bg: `${STATES.absent.color}22`, ink: '#8c2020' };
-    if (row.state === 'off') return { text: '\u00B7', bg: 'transparent', ink: MUTED };
+    if (!row) return { text: '\u00B7', bg: 'transparent', ink: MUTED, bold: false };
+    if (row.state === 'leave') return { text: 'L', bg: '#86b6ef33', ink: INK, bold: true };
+    if (row.state === 'absent') return { text: 'A', bg: `${STATES.absent.color}22`, ink: INK_ABS, bold: true };
+    if (row.state === 'off') return { text: '\u00B7', bg: 'transparent', ink: MUTED, bold: false };
     const mins = istMinutes(row.check_in_at);
     const late = lateAfterMin != null && mins > lateAfterMin;
     return {
       text: fmtMinutes(mins),
       bg: late ? `${STATES.late.color}33` : `${STATES['on-time'].color}1f`,
-      ink: late ? '#7a4f00' : '#0a5c0a',
+      ink: late ? INK_LATE : INK_OK,
+      bold: true,
     };
   };
 
@@ -538,15 +549,15 @@ function MusterRoll({ days, people, lateAfterMin }) {
       <table className="cb-muster" style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th className="cb-name" style={{ color: MUTED }}>Name</th>
+            <th className="cb-name" style={{ color: INK_2 }}>Name</th>
             {days.map((d) => (
-              <th key={d} style={{ color: MUTED }}>
+              <th key={d} style={{ color: INK, fontWeight: 700 }}>
                 <span className="block">{dayNum(d)}</span>
                 <span className="block cb-dow">{dayShort(d)}</span>
               </th>
             ))}
-            <th style={{ color: MUTED }}>P</th>
-            <th style={{ color: MUTED }}>Late</th>
+            <th style={{ color: INK, fontWeight: 700 }}>P</th>
+            <th style={{ color: INK, fontWeight: 700 }}>Late</th>
           </tr>
         </thead>
         <tbody>
@@ -558,11 +569,13 @@ function MusterRoll({ days, people, lateAfterMin }) {
               {days.map((d) => {
                 const m = mark(p.cells.get(d));
                 return (
-                  <td key={d} style={{ background: m.bg, color: m.ink }}>{m.text}</td>
+                  <td key={d} style={{ background: m.bg, color: m.ink, fontWeight: m.bold ? 700 : 400 }}>
+                    {m.text}
+                  </td>
                 );
               })}
-              <td style={{ color: INK, fontWeight: 600 }}>{p.present}</td>
-              <td style={{ color: p.late ? '#7a4f00' : MUTED, fontWeight: p.late ? 600 : 400 }}>
+              <td style={{ color: INK, fontWeight: 700 }}>{p.present}</td>
+              <td style={{ color: p.late ? INK_LATE : INK_2, fontWeight: 700 }}>
                 {p.late}
               </td>
             </tr>
@@ -673,6 +686,13 @@ export const REPORT_SECTIONS = [
     sheets: 0.1, per: 0.26 },
   { key: 'table', label: 'The numbers table', note: 'Every figure per person',
     sheets: 0.2, per: 0.015 },
+  // THE REGISTER IS A SECTION TOO, not only its own view. The founder wanted
+  // the numbers table and the muster roll on one print job, and with the
+  // register reachable only through the view toggle that was two trips to the
+  // printer and two documents to staple together.
+  { key: 'register', label: 'Full register (muster roll)',
+    note: 'Names down, dates across, arrival time in the cell — the sheet you file',
+    sheets: 0.45, per: 0.038 },
 ];
 
 /** Sections that print by default: the page that answers the month in three or
@@ -690,6 +710,58 @@ export function estimateSheets({ sections, view, peopleCount }) {
     .filter((s) => on.has(s.key))
     .reduce((n, s) => n + s.sheets + s.per * peopleCount, 0.25); // 0.25 = the header
   return Math.max(total > 0.25 ? 1 : 0, Math.ceil(total));
+}
+
+/**
+ * THE REGISTER AS A COMPONENT, so the "Full register" view and the printable
+ * section render exactly the same document. A second copy of eight hundred
+ * cells is a second copy that drifts.
+ */
+function RegisterDoc({ days, people, lateAfter, lateAfterMin, lowTurnoutDays = [], standalone = false }) {
+  return (
+        <section className={standalone ? undefined : "cb-page-break"}>
+        <h2 className="text-sm font-semibold mb-2" style={{ color: INK }}>
+          Attendance register — every name, every working day
+        </h2>
+
+        {/* A key, not a paragraph. The reader is about to scan eight hundred
+            boxes and needs to know what one means without reading a
+            sentence about it. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-2 text-[11px]"
+          style={{ color: INK_2 }}>
+          <Key swatch={`${STATES['on-time'].color}1f`} ink={INK_OK} sample="10:12" label="on time" />
+          <Key swatch={`${STATES.late.color}33`} ink={INK_LATE} sample="11:24"
+            label={lateAfter ? `after ${lateAfter}` : 'late'} />
+          <Key swatch={`${STATES.absent.color}22`} ink={INK_ABS} sample="A" label="absent" />
+          <Key swatch="#86b6ef33" ink={INK} sample="L" label="leave or holiday" />
+          <Key swatch="transparent" ink={MUTED} sample="·" label="not a working day" />
+        </div>
+
+        {lowTurnoutDays.length > 0 && (
+          /* Named, never silently dropped. The founder is entitled to
+             disagree with the rule, and he cannot if the page does not say
+             which dates it applied to. */
+          <p className="text-[11px] mb-2 px-2.5 py-1.5 rounded border"
+            style={{ color: INK_2, borderColor: '#e1e0d9', background: '#faf9f5' }}>
+            <strong>
+              {lowTurnoutDays.map((d) => fmtDay(d)).join(', ')}
+            </strong>
+            {lowTurnoutDays.length === 1 ? ' had ' : ' had '}
+            almost nobody in, so the office was treated as closed and nobody is
+            marked absent on {lowTurnoutDays.length === 1 ? 'it' : 'them'}. Whoever
+            did come still shows their time.
+          </p>
+        )}
+
+        {standalone && (
+          <p className="text-[11px] mb-3" style={{ color: MUTED }}>
+            Prints as one document — A4 landscape, with the dates repeated at the
+            top of every sheet.
+          </p>
+        )}
+        <MusterRoll days={days} people={people} lateAfterMin={lateAfterMin} />
+      </section>
+  );
 }
 
 function Tile({ label, value, note }) {
@@ -759,22 +831,32 @@ export default function MonthlyAttendanceReport({
            paper it must not, so the scroller is unwrapped for print and the
            type steps down to fit A4 landscape. */
         .cb-wide { overflow-x: auto; }
-        .cb-muster { font-size: 9px; table-layout: fixed; font-variant-numeric: tabular-nums; }
+        /* A register is read from across a desk, not held at arm's length, so
+           the digits are as large as 29 date columns on A4 landscape allow and
+           the negative tracking is what buys that last millimetre. */
+        .cb-muster {
+          font-size: 10.5px; table-layout: fixed; font-variant-numeric: tabular-nums;
+          letter-spacing: -0.2px;
+        }
         .cb-muster th, .cb-muster td {
-          border: 1px solid #e1e0d9; padding: 2px 1px; text-align: center;
+          border: 1px solid #d5d4cb; padding: 2px 1px; text-align: center;
           white-space: nowrap; width: 34px;
         }
         .cb-muster .cb-name { text-align: left; width: 132px; padding-left: 5px; }
-        .cb-muster .cb-dow { font-size: 7px; opacity: 0.6; }
+        .cb-muster .cb-dow { font-size: 7.5px; opacity: 0.75; font-weight: 400; }
         /* The header repeats on every printed sheet — a register whose second
            page has no dates across the top is unreadable. */
         .cb-muster thead { display: table-header-group; }
         .cb-muster tr { break-inside: avoid; page-break-inside: avoid; }
         @media print {
           .cb-wide { overflow: visible; }
-          .cb-muster { font-size: 7px; }
-          .cb-muster th, .cb-muster td { padding: 1px 0; width: auto; }
-          .cb-muster .cb-name { width: 108px; }
+          /* Was 7px, which prints legibly only close up. 8.5px bold is the
+             largest that still fits 29 dates plus two totals across A4
+             landscape — measured, not guessed. */
+          .cb-muster { font-size: 8.5px; }
+          .cb-muster th, .cb-muster td { padding: 1.5px 0; width: auto; }
+          .cb-muster .cb-name { width: 96px; font-size: 8px; }
+          .cb-muster .cb-dow { font-size: 6.5px; }
         }
       `}</style>
 
@@ -793,46 +875,8 @@ export default function MonthlyAttendanceReport({
       </header>
 
       {view === 'register' ? (
-        <section>
-          <h2 className="text-sm font-semibold mb-2" style={{ color: INK }}>
-            Attendance register — every name, every working day
-          </h2>
-
-          {/* A key, not a paragraph. The reader is about to scan eight hundred
-              boxes and needs to know what one means without reading a
-              sentence about it. */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-2 text-[11px]"
-            style={{ color: INK_2 }}>
-            <Key swatch={`${STATES['on-time'].color}1f`} ink="#0a5c0a" sample="10:12" label="on time" />
-            <Key swatch={`${STATES.late.color}33`} ink="#7a4f00" sample="11:24"
-              label={lateAfter ? `after ${lateAfter}` : 'late'} />
-            <Key swatch={`${STATES.absent.color}22`} ink="#8c2020" sample="A" label="absent" />
-            <Key swatch="#86b6ef33" ink={INK_2} sample="L" label="leave or holiday" />
-            <Key swatch="transparent" ink={MUTED} sample="·" label="not a working day" />
-          </div>
-
-          {lowTurnoutDays.length > 0 && (
-            /* Named, never silently dropped. The founder is entitled to
-               disagree with the rule, and he cannot if the page does not say
-               which dates it applied to. */
-            <p className="text-[11px] mb-2 px-2.5 py-1.5 rounded border"
-              style={{ color: INK_2, borderColor: '#e1e0d9', background: '#faf9f5' }}>
-              <strong>
-                {lowTurnoutDays.map((d) => fmtDay(d)).join(', ')}
-              </strong>
-              {lowTurnoutDays.length === 1 ? ' had ' : ' had '}
-              almost nobody in, so the office was treated as closed and nobody is
-              marked absent on {lowTurnoutDays.length === 1 ? 'it' : 'them'}. Whoever
-              did come still shows their time.
-            </p>
-          )}
-
-          <p className="text-[11px] mb-3" style={{ color: MUTED }}>
-            Prints as one document — A4 landscape, with the dates repeated at the
-            top of every sheet.
-          </p>
-          <MusterRoll days={days} people={people} lateAfterMin={lateAfterMin} />
-        </section>
+        <RegisterDoc days={days} people={people} lateAfter={lateAfter}
+          lateAfterMin={lateAfterMin} lowTurnoutDays={lowTurnoutDays} standalone />
       ) : (
       <>
       {on.has('numbers') && (
@@ -993,37 +1037,40 @@ export default function MonthlyAttendanceReport({
       {on.has('table') && (
       <section>
         <h2 className="text-sm font-semibold mb-2" style={{ color: INK }}>The numbers</h2>
-        <table className="w-full text-left text-[11px]" style={{ borderCollapse: 'collapse' }}>
+        {/* THE FIGURES ARE INK, not grey. Every number here was INK_2 at 11px,
+            which is a mid-grey read across a desk as smudge. The label column
+            can be quiet; the numbers are the document. */}
+        <table className="w-full text-left text-[12px]" style={{ borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ color: MUTED, borderBottom: `1px solid ${AXIS}` }}>
-              <th className="py-1.5 pr-2 font-medium">Name</th>
-              <th className="py-1.5 px-2 font-medium">Team</th>
-              <th className="py-1.5 px-2 font-medium text-right">Present</th>
-              <th className="py-1.5 px-2 font-medium text-right">On time</th>
-              <th className="py-1.5 px-2 font-medium text-right">Late</th>
-              <th className="py-1.5 px-2 font-medium text-right">Absent</th>
-              <th className="py-1.5 px-2 font-medium text-right">Leave</th>
-              <th className="py-1.5 px-2 font-medium text-right">Attendance</th>
-              <th className="py-1.5 px-2 font-medium text-right">Typical arrival</th>
-              <th className="py-1.5 px-2 font-medium text-right">Usually between</th>
-              <th className="py-1.5 pl-2 font-medium text-right">Avg hrs</th>
+            <tr style={{ color: INK_2, borderBottom: `1.5px solid ${INK_2}` }}>
+              <th className="py-1.5 pr-2 font-semibold">Name</th>
+              <th className="py-1.5 px-2 font-semibold">Team</th>
+              <th className="py-1.5 px-2 font-semibold text-right">Present</th>
+              <th className="py-1.5 px-2 font-semibold text-right">On time</th>
+              <th className="py-1.5 px-2 font-semibold text-right">Late</th>
+              <th className="py-1.5 px-2 font-semibold text-right">Absent</th>
+              <th className="py-1.5 px-2 font-semibold text-right">Leave</th>
+              <th className="py-1.5 px-2 font-semibold text-right">Attendance</th>
+              <th className="py-1.5 px-2 font-semibold text-right">Typical arrival</th>
+              <th className="py-1.5 px-2 font-semibold text-right">Usually between</th>
+              <th className="py-1.5 pl-2 font-semibold text-right">Avg hrs</th>
             </tr>
           </thead>
           <tbody style={{ fontVariantNumeric: 'tabular-nums' }}>
             {people.map((p) => (
-              <tr key={p.id} style={{ borderBottom: `1px solid ${GRID}`, color: INK_2 }}>
+              <tr key={p.id} style={{ borderBottom: `1px solid ${GRID}`, color: INK, fontWeight: 600 }}>
                 <td className="py-1.5 pr-2" style={{ color: INK, fontWeight: 600 }}>{p.name}</td>
-                <td className="py-1.5 px-2">{p.team || 'Main'}</td>
+                <td className="py-1.5 px-2" style={{ color: INK_2, fontWeight: 400 }}>{p.team || 'Main'}</td>
                 <td className="py-1.5 px-2 text-right">{p.present}</td>
                 <td className="py-1.5 px-2 text-right">{p.onTime}</td>
-                <td className="py-1.5 px-2 text-right" style={{ color: p.late ? INK : MUTED, fontWeight: p.late ? 600 : 400 }}>
+                <td className="py-1.5 px-2 text-right" style={{ color: p.late ? INK_LATE : INK_2, fontWeight: 700 }}>
                   {p.late}
                 </td>
                 <td className="py-1.5 px-2 text-right">{p.absent}</td>
                 <td className="py-1.5 px-2 text-right">{p.leave}</td>
                 <td className="py-1.5 px-2 text-right">{p.attendancePct == null ? '—' : `${p.attendancePct}%`}</td>
                 <td className="py-1.5 px-2 text-right">{fmtMinutes(p.medianArrival)}</td>
-                <td className="py-1.5 px-2 text-right">
+                <td className="py-1.5 px-2 text-right" style={{ color: INK_2, fontWeight: 400 }}>
                   {p.arrivalP25 == null ? '—' : `${fmtMinutes(p.arrivalP25)}–${fmtMinutes(p.arrivalP75)}`}
                 </td>
                 <td className="py-1.5 pl-2 text-right">{p.avgHours ?? '—'}</td>
@@ -1032,6 +1079,11 @@ export default function MonthlyAttendanceReport({
           </tbody>
         </table>
       </section>
+      )}
+
+      {on.has('register') && (
+        <RegisterDoc days={days} people={people} lateAfter={lateAfter}
+          lateAfterMin={lateAfterMin} lowTurnoutDays={lowTurnoutDays} />
       )}
 
       {/* NOTHING SELECTED IS A STATE, not a blank page. */}
