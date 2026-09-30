@@ -118,6 +118,11 @@ export default function MachineAdmin() {
   // our copy of the machine's list actually is.
   const [mismatches, setMismatches] = useState([]);
   const [usersAsOf, setUsersAsOf] = useState(null);
+  // Who the terminal has seen today, and enrolments it still holds for people
+  // who are long gone.
+  const [inOffice, setInOffice] = useState([]);
+  const [stale, setStale] = useState([]);
+  const [quietDays, setQuietDays] = useState(60);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -151,7 +156,14 @@ export default function MachineAdmin() {
     setFreeCodes(free.data || []);
     setMismatches(mism.data || []);
     setUsersAsOf(asOf.data || null);
-  }, [isAdmin]);
+
+    const [live, old] = await Promise.all([
+      supabase.rpc('cb_in_office_now'),
+      supabase.rpc('cb_device_stale_enrolments', { p_quiet_days: quietDays }),
+    ]);
+    setInOffice(live.data || []);
+    setStale(old.data || []);
+  }, [isAdmin, quietDays]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -369,6 +381,136 @@ export default function MachineAdmin() {
             ))}
           </div>
         </section>
+
+        {/* ── Who the terminal has seen today ──────────────────────────── */}
+        <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
+          <h2 className="font-semibold text-[#10243E] mb-1">
+            Seen today
+            <span className="text-gray-400 font-normal text-sm"> — {inOffice.length}</span>
+          </h2>
+          {/* The terminal runs Realtime=1, so a punch reaches us in seconds —
+              and nothing anywhere showed the one thing that makes that worth
+              having. "13 punches today" is a number; these are people.
+
+              IT SAYS "LAST SEEN", NOT "IS IN". A missing exit punch and a
+              person still at their desk are identical from the machine's side
+              — the same fact that made the evening WhatsApp message stop
+              claiming "Still in office (15)". This reports what the machine
+              saw and when, and leaves the conclusion to somebody in the room. */}
+          <p className="text-sm text-gray-500 mb-4">
+            What the machine has recorded today, in the order people arrived. A missing
+            exit punch and somebody still at their desk look identical from here, so
+            this says when they were last seen rather than who is in.
+          </p>
+
+          {inOffice.length === 0 ? (
+            <p className="text-sm text-gray-400">Nobody has punched yet today.</p>
+          ) : (
+            <ul className="divide-y divide-gray-50">
+              {inOffice.map((r) => (
+                <li key={r.device_code} className="py-2 flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                    #{r.device_code}
+                  </span>
+                  <span className="text-sm text-[#10243E] flex-1 min-w-0 truncate">{r.who}</span>
+                  {/* Somebody the roster does not know is not an alarm — the
+                      pantry and the founder's own IDs are deliberately off it.
+                      It is worth seeing, not worth shouting about. */}
+                  {!r.on_roster && (
+                    <span className="text-[10px] uppercase tracking-wide bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                      not on the roster
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500 tabular-nums">
+                    in {new Date(r.first_punch).toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {r.looks_present ? (
+                    <span className="text-xs text-green-700">no exit punch yet</span>
+                  ) : (
+                    <span className="text-xs text-gray-500 tabular-nums">
+                      last seen {new Date(r.last_punch).toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* ── Enrolments the terminal still holds for people who are gone ── */}
+        {stale.length > 0 && (
+          <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
+            <h2 className="font-semibold text-[#10243E] mb-1">
+              Still enrolled, long gone
+              <span className="text-gray-400 font-normal text-sm"> — {stale.length}</span>
+            </h2>
+            {/* The comparison nobody had made. We ask "who is missing from the
+                machine" constantly; we had never asked "who is still ON it who
+                should not be". Their finger still works on the terminal. */}
+            <p className="text-sm text-gray-500 mb-1">
+              Nobody on the roster holds these codes and nothing has punched on them
+              in a long time — but the terminal still has the enrolment, so the
+              finger still works.
+            </p>
+            <p className="text-xs text-gray-500 mb-4">
+              <strong>Deleting an enrolment does not delete any attendance.</strong>{' '}
+              The punches stay, the monthly register keeps their name, and the person
+              can be enrolled again. That is why this is offered and wiping the device
+              is not. The founder&apos;s own IDs, pantry staff and anyone marked
+              not-tracked are excluded from this list — they are still here.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="text-xs text-gray-500">Quiet for at least</span>
+              {[60, 90, 120, 180].map((d) => (
+                <button key={d} onClick={() => setQuietDays(d)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                    quietDays === d
+                      ? 'bg-[#10243E] text-white border-[#10243E]'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#D4AF37]'
+                  }`}>
+                  {d} days
+                </button>
+              ))}
+            </div>
+
+            <ul className="divide-y divide-gray-50">
+              {stale.map((r) => (
+                <li key={r.device_code} className="py-2 flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                    #{r.device_code}
+                  </span>
+                  <span className="text-sm text-[#10243E] flex-1 min-w-0 truncate">
+                    {r.machine_name || <span className="text-gray-400">no name on the machine</span>}
+                    {r.previous_holder && (
+                      <span className="text-gray-500"> · was {r.previous_holder}</span>
+                    )}
+                  </span>
+                  <span className="text-xs text-gray-500 tabular-nums">
+                    {r.punches} punches
+                    {r.last_punch ? ` · last ${r.last_punch}` : ' · never'}
+                  </span>
+                  <button
+                    onClick={() => {
+                      // Confirmed by name, not by code. "#46" is a number
+                      // somebody can agree to without reading it.
+                      const label = r.machine_name || r.previous_holder || `code ${r.device_code}`;
+                      if (!window.confirm(
+                        `Remove ${label} (code ${r.device_code}) from the terminal?\n\n`
+                        + 'Their attendance history is NOT deleted. They can be enrolled again '
+                        + 'with a finger at the machine.',
+                      )) return;
+                      queue('delete_user', { pin: r.device_code });
+                    }}
+                    disabled={!!busy}
+                    className="text-xs px-2.5 py-1 rounded border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-50">
+                    Remove from machine
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* ── Every ID on the machine, and which are free ──────────────── */}
         <section className="bg-white border border-gray-100 rounded-xl p-5 mb-6">
