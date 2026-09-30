@@ -1284,6 +1284,12 @@ export default function AttendanceAdmin() {
                       className="text-[#10243E] hover:text-[#f26522] underline">Default</button>
                     <button onClick={() => setSectionsTo(['numbers', 'grid'])}
                       className="text-[#10243E] hover:text-[#f26522] underline">One sheet</button>
+                    {/* The two documents the founder actually files: the
+                        per-person figures and the muster roll, one print job. */}
+                    <button onClick={() => setSectionsTo(['table', 'register'])}
+                      className="text-[#10243E] hover:text-[#f26522] underline">
+                      Numbers + register
+                    </button>
                     <button onClick={() => setSectionsTo([])}
                       className="text-gray-500 hover:text-[#10243E] underline">Nothing</button>
                   </div>

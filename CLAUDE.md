@@ -1426,6 +1426,23 @@ and understand — who is late, how often, and whether it is a pattern.
   default — at roughly a quarter-sheet each it is the most expensive block on the
   page, and the estimate says so.
 
+- **The register is a printable section as well as its own view**, so the
+  numbers table and the muster roll — the two documents the founder actually
+  files — come off the printer as one job instead of two trips. `RegisterDoc`
+  is the one component both render, because a second copy of eight hundred
+  cells is a second copy that drifts. Preset: **Numbers + register**.
+
+- **The figures are dark and bold, because a register is read from across a
+  desk.** The muster roll printed at 7px in soft greens and mid-greys, and the
+  numbers table's every figure was `INK_2`. The tint behind a cell carries the
+  state and is right to stay pale; the ink went pale with it, which was not.
+  So: `INK_OK` / `INK_LATE` / `INK_ABS` (`#06450a` / `#6b3d00` / `#7a1414`),
+  weight 700 on every time, 8.5px on paper and 10.5px on screen, and the
+  numbers table at 12px in `INK`. **8.5px is the largest that still fits 29
+  date columns plus two totals across A4 landscape** — measured, and the
+  `letter-spacing: -0.2px` is what buys the last millimetre. A larger figure
+  that wraps the register onto a second sheet is a worse register.
+
 - **The in-time chart was reported as complicated, and is off by default.** Two
   fixes rather than a redesign: only the **hours** are labelled (every half hour
   was, which put nine numbers across the top and collided one of them with the
