@@ -1432,6 +1432,25 @@ and understand — who is late, how often, and whether it is a pattern.
   is the one component both render, because a second copy of eight hundred
   cells is a second copy that drifts. Preset: **Numbers + register**.
 
+- **Every block carries "Print only this", and it changes nothing.** The
+  section switches answer *what is this report*, which is the right control for
+  that and the wrong one for *print me the register, just the register, now* —
+  that meant unticking six things, printing, and ticking them back, and the one
+  you forget is on the next printout.
+
+  So `solo` is a **one-shot**: the class goes on, the browser prints, the class
+  comes off, and nothing is saved. Every other block is **hidden rather than
+  unmounted**, so the page that comes back after the dialog is the page exactly
+  as it was. Forced page breaks are neutralised in solo mode — a break before
+  the only thing being printed is a blank first sheet — and the header's
+  working-day explanation is dropped while **the month stays**: a register with
+  no month on it cannot be filed.
+
+  `Sec` is declared at **module scope, not inside the report**. A component
+  declared during render is a new type every render, and React remounts its
+  whole subtree each time — which drops focus out of the per-person dropdown
+  mid-use.
+
 - **The figures are dark and bold, because a register is read from across a
   desk.** The muster roll printed at 7px in soft greens and mid-greys, and the
   numbers table's every figure was `INK_2`. The tint behind a cell carries the
