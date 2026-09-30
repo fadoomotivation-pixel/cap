@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   STATES, fmtMinutes, istMinutes, weekdayBreakdown, personDays, arrivalDrift,
 } from '../lib/monthlyAttendance';
@@ -764,6 +764,33 @@ function RegisterDoc({ days, people, lateAfter, lateAfterMin, lowTurnoutDays = [
   );
 }
 
+/**
+ * Wraps one block of the report so it can be printed on its own, and gives it
+ * its own button. Defined at module scope, not inside the report: a component
+ * declared during render is a new type on every render, and React unmounts and
+ * remounts its whole subtree each time - which would drop focus out of the
+ * per-person dropdown mid-use.
+ */
+function Sec({ k, on, solo, setSolo, children }) {
+  if (!on.has(k)) return null;
+  return (
+    <div className={`cb-sec${solo === k ? ' cb-solo' : ''}`}>
+      <div className="cb-no-print flex justify-end">
+        <button onClick={() => setSolo(k)}
+          title="Print this block by itself, without changing what is switched on"
+          className="text-[11px] text-gray-400 hover:text-[#f26522] inline-flex items-center gap-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2.5" aria-hidden="true">
+            <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+          </svg>
+          Print only this
+        </button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function Tile({ label, value, note }) {
   return (
     <div className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
@@ -784,6 +811,30 @@ export default function MonthlyAttendanceReport({
   // Folded from the same array as everything else on the page, so the panel
   // and the charts can never describe two different months.
   const drift = useMemo(() => arrivalDrift(people, days), [people, days]);
+
+  /**
+   * PRINT ONE BLOCK ON ITS OWN, without touching what is switched on.
+   *
+   * The section switches answer "what is this report", and they are the right
+   * control for that. They are the wrong control for "print me the register,
+   * just the register, now" — that meant untick six things, print, then tick
+   * them all back, and the sixth one you forget is on the next printout.
+   *
+   * So `solo` is a one-shot: the class goes on, the browser prints, the class
+   * comes off. Nothing is saved and the page looks the same afterwards.
+   */
+  const [solo, setSolo] = useState(null);
+  useEffect(() => {
+    if (!solo) return undefined;
+    // One frame, so React has committed the class before the dialog measures
+    // the page. Cleared on `afterprint` as well as after the call, because
+    // Safari returns from print() before the dialog has closed.
+    const done = () => setSolo(null);
+    window.addEventListener('afterprint', done);
+    const t = setTimeout(() => { window.print(); setSolo(null); }, 50);
+    return () => { window.removeEventListener('afterprint', done); clearTimeout(t); };
+  }, [solo]);
+
   const monthLabel = new Date(`${month}-01T12:00:00+05:30`)
     .toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
@@ -796,7 +847,7 @@ export default function MonthlyAttendanceReport({
   }
 
   return (
-    <div className="cb-report">
+    <div className={`cb-report${solo ? ' cb-solo-mode' : ''}`}>
       <style>{`
         /* PRINT IS THE POINT, so it is not an afterthought. Landscape because
            a month is 26+ columns wide and portrait would either shrink the
@@ -816,6 +867,23 @@ export default function MonthlyAttendanceReport({
         }
         .cb-pick { cursor: pointer; }
         .cb-pick:hover { text-decoration: underline; }
+
+        /* PRINT ONE BLOCK ON ITS OWN. Every other block is hidden rather than
+           unmounted, so what comes back after the dialog closes is the page
+           exactly as it was — no state to restore and nothing to forget to
+           switch back on. */
+        @media print {
+          .cb-solo-mode .cb-sec:not(.cb-solo) { display: none !important; }
+          /* A forced break before the only thing being printed is a blank
+             first sheet. */
+          .cb-solo-mode .cb-page-break {
+            break-before: auto !important; page-break-before: auto !important;
+          }
+          /* The month still has to be on the paper - a register with no month
+             on it cannot be filed - but the paragraph explaining how working
+             days are counted is not what was asked for. */
+          .cb-solo-mode .cb-hdr-note { display: none !important; }
+        }
 
         /* EACH PERSON, DAY BY DAY — two to a row, so thirty-five names are not
            thirty-five sheets. A person's block never splits across a column or
@@ -867,7 +935,7 @@ export default function MonthlyAttendanceReport({
         <p className="text-sm" style={{ color: INK_2 }}>
           {monthLabel} · {days.length} working days · {people.length} people
         </p>
-        <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
+        <p className="cb-hdr-note text-[11px] mt-0.5" style={{ color: MUTED }}>
           A day counts as a working day when somebody punched on it or HR recorded a status against it —
           this office works some Saturdays and Sundays, so the calendar is read from the register rather than assumed.
           {lateAfter ? ` “Late” means arriving after ${lateAfter}, from the shift timing in Settings.` : ''}
@@ -879,7 +947,7 @@ export default function MonthlyAttendanceReport({
           lateAfterMin={lateAfterMin} lowTurnoutDays={lowTurnoutDays} standalone />
       ) : (
       <>
-      {on.has('numbers') && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="numbers">
       <div className="cb-keep grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <Tile label="Attendance" value={totals.attendancePct == null ? '—' : `${totals.attendancePct}%`}
           note={`${totals.present} present · ${totals.absent} absent`} />
@@ -890,12 +958,13 @@ export default function MonthlyAttendanceReport({
         <Tile label="Approved leave" value={totals.leave}
           note="days HR accounted for" />
       </div>
-      )}
+      </Sec>
 
       {/* FIRST, because it is the only section that names somebody you can
           still catch. Everything below describes where people are; this
           describes where they are heading. */}
-      {on.has('drift') && (drift.slipped.length > 0 || drift.improved.length > 0) && (
+      {(drift.slipped.length > 0 || drift.improved.length > 0) && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="drift">
         <section className="cb-keep mb-6">
           <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>
             Who changed this month
@@ -931,17 +1000,18 @@ export default function MonthlyAttendanceReport({
             their day-by-day record.
           </p>
         </section>
+      </Sec>
       )}
 
-      {on.has('daily') && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="daily">
       <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>Every working day</h2>
         <Legend keys={['on-time', 'late', 'absent']} />
         <DailyColumns perDay={perDay} />
       </section>
-      )}
+      </Sec>
 
-      {on.has('intime') && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="intime">
       <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>
           In-time — everybody, earliest first
@@ -959,9 +1029,9 @@ export default function MonthlyAttendanceReport({
         </p>
         <ArrivalDots people={people} lateAfterMin={lateAfterMin} onPick={setPickedId} />
       </section>
-      )}
+      </Sec>
 
-      {on.has('late') && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="late">
       <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>Late arrivals, most first</h2>
         <p className="text-[11px] mb-2" style={{ color: MUTED }}>
@@ -970,9 +1040,9 @@ export default function MonthlyAttendanceReport({
         </p>
         <LateRanking people={people} />
       </section>
-      )}
+      </Sec>
 
-      {on.has('grid') && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="grid">
       <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>The month, person by person</h2>
         <p className="text-[11px] mb-2" style={{ color: MUTED }}>
@@ -981,7 +1051,7 @@ export default function MonthlyAttendanceReport({
         <Legend keys={['on-time', 'late', 'absent', 'leave', 'off']} />
         <Heatmap days={days} people={people} onPick={setPickedId} />
       </section>
-      )}
+      </Sec>
 
       {/* EACH PERSON, DAY BY DAY — every name, not one from a dropdown.
           It was one person at a time behind a select, which reads on paper as
@@ -989,7 +1059,7 @@ export default function MonthlyAttendanceReport({
           you got whichever single name happened to be picked, or a sentence
           asking you to pick one. The dropdown is still here, and it now NARROWS
           this section to one name rather than being the only way to see any. */}
-      {on.has('person') && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="person">
       <section className="cb-page-break mb-6">
         <div className="flex flex-wrap items-center gap-2 mb-1">
           <h2 className="text-sm font-semibold" style={{ color: INK }}>
@@ -1032,9 +1102,9 @@ export default function MonthlyAttendanceReport({
           </div>
         )}
       </section>
-      )}
+      </Sec>
 
-      {on.has('table') && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="table">
       <section>
         <h2 className="text-sm font-semibold mb-2" style={{ color: INK }}>The numbers</h2>
         {/* THE FIGURES ARE INK, not grey. Every number here was INK_2 at 11px,
@@ -1079,12 +1149,12 @@ export default function MonthlyAttendanceReport({
           </tbody>
         </table>
       </section>
-      )}
+      </Sec>
 
-      {on.has('register') && (
+      <Sec on={on} solo={solo} setSolo={setSolo} k="register">
         <RegisterDoc days={days} people={people} lateAfter={lateAfter}
           lateAfterMin={lateAfterMin} lowTurnoutDays={lowTurnoutDays} />
-      )}
+      </Sec>
 
       {/* NOTHING SELECTED IS A STATE, not a blank page. */}
       {on.size === 0 && (
