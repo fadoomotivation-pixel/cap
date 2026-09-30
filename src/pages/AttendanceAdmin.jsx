@@ -3,7 +3,9 @@ import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
 import AdminNav from '../components/AdminNav';
 import AttendanceHealth from '../components/AttendanceHealth';
-import MonthlyAttendanceReport from '../components/MonthlyAttendanceReport';
+import MonthlyAttendanceReport, {
+  REPORT_SECTIONS, DEFAULT_SECTIONS, estimateSheets,
+} from '../components/MonthlyAttendanceReport';
 import { buildMonthly, monthlyCsv } from '../lib/monthlyAttendance';
 import { friendlyError } from '../lib/errors';
 import { ADMIN_EMAILS } from '../lib/admin';
@@ -12,7 +14,7 @@ import {
   Users, UserPlus, MapPin, Download, Search, LogOut, RefreshCw, CheckCircle, Clock,
   Building2, Navigation, Home, UserX, Power, Calendar, Send, KeyRound, Settings, AlertTriangle,
   Copy, BarChart3, Bell, Crosshair, X, Wallet, Star,
-  Inbox, Fingerprint, Printer,
+  Inbox, Fingerprint, Printer, SlidersHorizontal, Check,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
@@ -44,6 +46,18 @@ export default function AttendanceAdmin() {
   // can share a first name and the roster already has three Amits.
   const [excluded, setExcluded] = useState(() => new Set());
   const [showPicker, setShowPicker] = useState(false);
+  // WHICH BLOCKS APPEAR, and therefore which get printed. The September report
+  // came to ten sheets of paper and the one Print button gave no way to say
+  // which parts were wanted. Kept in localStorage: a choice that resets every
+  // time the page is opened is a choice nobody makes twice.
+  const [sections, setSections] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('cbMonthlySections') || 'null');
+      if (Array.isArray(saved)) return saved;
+    } catch { /* private window, blocked storage — the default is correct */ }
+    return DEFAULT_SECTIONS;
+  });
+  const [showSections, setShowSections] = useState(false);
   // Which month the exclusions were seeded for. The picker starts at the
   // report's own default — the people the messages name — and everybody else
   // is a chip you can switch ON. Seeding once per month rather than on every
@@ -64,6 +78,14 @@ export default function AttendanceAdmin() {
   const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+
+  const setSectionsTo = (next) => {
+    setSections(next);
+    try { localStorage.setItem('cbMonthlySections', JSON.stringify(next)); } catch { /* ignore */ }
+  };
+  const toggleSection = (key) => setSectionsTo(
+    sections.includes(key) ? sections.filter((k) => k !== key) : [...sections, key],
+  );
 
   const [showAdd, setShowAdd] = useState(false);
   // { id, date } while HR is picking somebody's last working day.
@@ -174,6 +196,15 @@ export default function AttendanceAdmin() {
   const monthlyData = useMemo(
     () => (monthly ? buildMonthly(monthly, { onlyReported: false, exclude: excluded }) : null),
     [monthly, excluded],
+  );
+
+  // Folded from the same list the switches read, so the number on the Print
+  // button and the number in the panel cannot disagree.
+  const sheets = useMemo(
+    () => (monthlyData?.days.length
+      ? estimateSheets({ sections, view: monthlyView, peopleCount: monthlyData.people.length })
+      : 0),
+    [monthlyData, sections, monthlyView],
   );
 
   // Printed on the report so the word "late" is never mysterious. Two thirds
@@ -1195,6 +1226,20 @@ export default function AttendanceAdmin() {
                     ? `${allMonthlyPeople.length - excluded.size} of ${allMonthlyPeople.length} names`
                     : 'Choose names'}
                 </button>
+                {/* WHAT PRINTS. The companion to "who" — the founder asked for
+                    both in the same sentence, and they are two different
+                    questions that were each answered by one button before. */}
+                {monthlyView === 'summary' && (
+                  <button onClick={() => setShowSections((v) => !v)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${
+                      sections.length === REPORT_SECTIONS.length
+                        ? 'bg-white text-gray-600 border-gray-200 hover:border-[#f26522]'
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}>
+                    <SlidersHorizontal size={15} />
+                    {sections.length} of {REPORT_SECTIONS.length} sections
+                  </button>
+                )}
                 <input type="month" value={month} onChange={(e) => setMonth(e.target.value)}
                   className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]" />
                 <button onClick={exportMonthlyCsv} disabled={!monthlyData?.days.length}
@@ -1204,12 +1249,85 @@ export default function AttendanceAdmin() {
                 {/* The founder asked to be able to print this. It is the whole
                     reason the report is laid out as pages rather than as a
                     dashboard — see the print rules in the component. */}
+                {/* THE SHEET COUNT IS ON THE BUTTON. Ten sheets came as a
+                    surprise in Chrome's dialog, which is one screen too late to
+                    do anything about it. */}
                 <button onClick={() => window.print()} disabled={!monthlyData?.days.length}
                   className="flex items-center gap-2 bg-[#10243E] text-white px-4 py-2 rounded-md text-sm hover:bg-[#1a365d] disabled:opacity-40">
                   <Printer size={16} /> Print
+                  {sheets > 0 && (
+                    <span className="text-white/60 text-xs">
+                      ~{sheets} sheet{sheets === 1 ? '' : 's'}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
+
+            {/* A row per section, with what it is and what it costs in paper.
+                Not chips: eight rows with a sentence each is a list you read
+                once and then leave alone, and the sentence is the part that
+                makes "In-time chart" a decision rather than a guess. */}
+            {showSections && monthlyView === 'summary' && (
+              <div className="cb-no-print border border-gray-200 rounded-xl p-4 mb-5 bg-gray-50/60">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <p className="text-sm font-medium text-[#10243E]">
+                    What appears on this report
+                    <span className="text-gray-400 font-normal">
+                      {' '}— about {sheets} sheet{sheets === 1 ? '' : 's'} of paper
+                    </span>
+                  </p>
+                  <div className="flex gap-3 text-xs">
+                    <button onClick={() => setSectionsTo(REPORT_SECTIONS.map((s) => s.key))}
+                      className="text-[#10243E] hover:text-[#f26522] underline">Everything</button>
+                    <button onClick={() => setSectionsTo(DEFAULT_SECTIONS)}
+                      className="text-[#10243E] hover:text-[#f26522] underline">Default</button>
+                    <button onClick={() => setSectionsTo(['numbers', 'grid'])}
+                      className="text-[#10243E] hover:text-[#f26522] underline">One sheet</button>
+                    <button onClick={() => setSectionsTo([])}
+                      className="text-gray-500 hover:text-[#10243E] underline">Nothing</button>
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-1.5">
+                  {REPORT_SECTIONS.map((s) => {
+                    const on = sections.includes(s.key);
+                    const cost = s.sheets + s.per * (monthlyData?.people.length || 0);
+                    return (
+                      <button key={s.key} onClick={() => toggleSection(s.key)}
+                        className={`text-left px-3 py-2 rounded-lg border transition flex items-start gap-2.5 ${
+                          on ? 'bg-white border-gray-300 hover:border-[#f26522]'
+                             : 'bg-gray-100 border-gray-200'
+                        }`}>
+                        <span className={`mt-0.5 w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border ${
+                          on ? 'bg-[#10243E] border-[#10243E]' : 'bg-white border-gray-300'
+                        }`}>
+                          {on && <Check size={11} className="text-white" strokeWidth={3} />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className={`block text-sm font-medium ${on ? 'text-[#10243E]' : 'text-gray-400'}`}>
+                            {s.label}
+                            {cost >= 0.75 && (
+                              <span className="ml-1.5 text-[10px] font-normal text-amber-700">
+                                ~{Math.max(1, Math.round(cost))} sheet{Math.round(cost) === 1 ? '' : 's'}
+                              </span>
+                            )}
+                          </span>
+                          <span className={`block text-[11px] ${on ? 'text-gray-500' : 'text-gray-400'}`}>
+                            {s.note}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-gray-500 mt-3">
+                  What is on screen is exactly what prints — there is no second set of
+                  print settings. This choice is remembered on this computer. The
+                  <strong> Full register</strong> above is its own one-or-two-sheet
+                  document and is not affected by these switches.
+                </p>
+              </div>
+            )}
 
             {/* Chips rather than a checkbox list: thirty names read as one
                 block you scan, and a greyed-out name still shows what you
@@ -1316,7 +1434,7 @@ export default function AttendanceAdmin() {
               <p className="p-8 text-center text-gray-400">Reading the register…</p>
             ) : (
               <MonthlyAttendanceReport data={monthlyData} month={month} lateAfter={lateAfter}
-                lateAfterMin={lateAfterMin} view={monthlyView} />
+                lateAfterMin={lateAfterMin} view={monthlyView} sections={sections} />
             )}
           </div>
         )}

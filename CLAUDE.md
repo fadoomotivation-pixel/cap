@@ -1392,6 +1392,49 @@ and understand — who is late, how often, and whether it is a pattern.
   ~10:45 every day for Jai Prakash. Only weekdays with a real working day are
   printed; this office works some Saturdays and not others, and an empty
   "Sun" column would read as somebody skipping it.
+- **Every block is a switch, and the sheet count is on the Print button.** The
+  founder printed September and Chrome offered him **ten sheets of paper**. Each
+  block was worth having on some day and none was worth having on every day, and
+  the report gave him no way to say which — the one button printed all of it.
+
+  `REPORT_SECTIONS` in `MonthlyAttendanceReport.jsx` is the **one** list: the
+  switches on the console, the gates in the component and the paper estimate all
+  read it, so a section cannot exist in one place and be missing from another.
+  Each entry carries a `sheets` cost and a `per`-person cost, and
+  `estimateSheets()` puts the total **on the Print button** — ten sheets arriving
+  as a surprise in Chrome's dialog is one screen too late to do anything about.
+  It does not need to be exact; it needs to be visible before the paper is spent.
+
+  **What is on screen is still exactly what prints.** The switches hide a block
+  from both, rather than becoming a second set of print-only settings — a report
+  with a hidden "what will it actually give me" is the thing this page was built
+  not to be. Presets: Everything / Default / One sheet / Nothing. Stored in
+  `localStorage`, because a choice that resets on every page load is one nobody
+  makes twice.
+
+  **The three forced `cb-page-break`s in the summary are gone.** They were most
+  of the ten sheets: each pushed the next block to a fresh page whether or not
+  there was room. Only the per-person section breaks now.
+
+- **"Each person, day by day" is every name, not one from a dropdown.** It was a
+  single person behind a `select`, which on paper reads as individual attendance
+  having been **removed** — print it and you got whichever one name happened to
+  be picked, or a sentence asking you to pick one. It now prints a block per
+  person, two to a row (`columns: 2`) with `break-inside: avoid`, so thirty-five
+  names are not thirty-five sheets and no block is ever split from its own name.
+  The dropdown remains, and now **narrows** the section to one name. It is off by
+  default — at roughly a quarter-sheet each it is the most expensive block on the
+  page, and the estimate says so.
+
+- **The in-time chart was reported as complicated, and is off by default.** Two
+  fixes rather than a redesign: only the **hours** are labelled (every half hour
+  was, which put nine numbers across the top and collided one of them with the
+  "late after 10:45" flag), and that flag's label moved **below** the plot where
+  it cannot overlap a tick. The one-line reading instruction — *left of the amber
+  line is on time* — now sits **above** the picture; arriving after it was part
+  of why the chart needed explaining. The p25–p75 band stays: it is the only
+  thing here a column of times cannot tell you.
+
 - **Two documents, one Print button — Summary and Full register.** The founder
   asked how he would print the whole company's whole month at once. The
   per-person view answers one name at a time and thirty-two of those is

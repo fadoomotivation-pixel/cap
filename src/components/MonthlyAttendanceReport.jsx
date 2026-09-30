@@ -162,7 +162,9 @@ function ArrivalDots({ people, lateAfterMin, onPick }) {
   }
 
   const rowH = 19, labelW = 150, valueW = 118;
-  const W = 1000, H = ranked.length * rowH + 24;
+  // +38 rather than +24: the grace label now sits under the plot and needs a
+  // strip of its own below the last row.
+  const W = 1000, H = ranked.length * rowH + 38;
   const plotW = W - labelW - valueW;
 
   // The axis is padded half an hour either side of the real range and snapped
@@ -174,6 +176,10 @@ function ArrivalDots({ people, lateAfterMin, onPick }) {
   const to = Math.ceil((hi + 30) / 30) * 30;
   const x = (m) => labelW + ((m - from) / (to - from)) * plotW;
 
+  // ONLY THE HOURS ARE LABELLED. Every half hour was, which put nine numbers
+  // across the top and collided one of them with the "late after 10:45" flag —
+  // the chart was reported as complicated, and a row of numbers nobody needs is
+  // most of why. Half hours keep their gridline, faintly, and lose the label.
   const ticks = [];
   for (let m = from; m <= to; m += 30) ticks.push(m);
 
@@ -182,18 +188,23 @@ function ArrivalDots({ people, lateAfterMin, onPick }) {
       aria-label="Each person's typical arrival time, earliest first">
       {ticks.map((m) => (
         <g key={m}>
-          <line x1={x(m)} x2={x(m)} y1={16} y2={H - 4} stroke={GRID} strokeWidth="1" />
-          <text x={x(m)} y={10} textAnchor="middle" fontSize="9" fill={MUTED}
-            style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtMinutes(m)}</text>
+          <line x1={x(m)} x2={x(m)} y1={16} y2={H - 14} stroke={GRID} strokeWidth="1"
+            opacity={m % 60 === 0 ? 1 : 0.45} />
+          {m % 60 === 0 && (
+            <text x={x(m)} y={10} textAnchor="middle" fontSize="9" fill={MUTED}
+              style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtMinutes(m)}</text>
+          )}
         </g>
       ))}
 
-      {/* The one line that turns thirty times into one question. */}
+      {/* The one line that turns thirty times into one question. Its label sits
+          BELOW the plot: at the top it sat on the same baseline as the hour
+          labels and overlapped whichever one the grace happened to fall near. */}
       {lateAfterMin != null && (
         <g>
-          <line x1={x(lateAfterMin)} x2={x(lateAfterMin)} y1={14} y2={H - 4}
+          <line x1={x(lateAfterMin)} x2={x(lateAfterMin)} y1={14} y2={H - 14}
             stroke={STATES.late.color} strokeWidth="2" />
-          <text x={x(lateAfterMin) + 4} y={10} fontSize="9" fill={INK_2} fontWeight="600">
+          <text x={x(lateAfterMin) + 4} y={H - 4} fontSize="9" fill={INK_2} fontWeight="600">
             late after {fmtMinutes(lateAfterMin)}
           </text>
         </g>
@@ -374,13 +385,20 @@ function StateBadge({ state }) {
  * could already see. Split by weekday it is unmissable, and it is the
  * difference between a number and a reason to have a conversation.
  */
-function PersonMonth({ person, days, lateAfterMin }) {
+/**
+ * `compact` is for the every-person section, where thirty-five of these are
+ * stacked. It keeps the same facts and the same weekday answer, but prints the
+ * weekday medians as one line of text instead of a row of boxes — the boxes are
+ * 60px tall each and repeating them thirty-five times is most of a sheet of
+ * paper per person, spent on whitespace.
+ */
+function PersonMonth({ person, days, lateAfterMin, compact = false }) {
   const week = useMemo(() => weekdayBreakdown(person, days), [person, days]);
   const rows = useMemo(() => personDays(person, days), [person, days]);
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-3">
+      <div className={`flex flex-wrap items-baseline gap-x-4 gap-y-1 ${compact ? 'mb-1' : 'mb-3'}`}>
         <h3 className="text-base font-semibold" style={{ color: INK }}>{person.name}</h3>
         <span className="text-[11px]" style={{ color: INK_2 }}>
           {person.team || 'Main'}{person.department ? ` \u00B7 ${person.department}` : ''}
@@ -394,6 +412,23 @@ function PersonMonth({ person, days, lateAfterMin }) {
 
       {/* The weekday answer, before the day list, because it is the one a
           month of dates does not give you by itself. */}
+      {compact ? (
+        <p className="text-[10px] mb-1.5" style={{ color: INK_2, fontVariantNumeric: 'tabular-nums' }}>
+          {week.map((w) => (
+            <span key={w.label} className="mr-3 inline-block">
+              <span style={{ color: MUTED }}>{w.label} </span>
+              <span style={{
+                color: lateAfterMin != null && w.typical != null && w.typical > lateAfterMin
+                  ? '#8a5a00' : INK,
+                fontWeight: 600,
+              }}>
+                {w.typical == null ? '—' : fmtMinutes(w.typical)}
+              </span>
+            </span>
+          ))}
+        </p>
+      ) : (
+      <>
       <p className="text-[11px] mb-1.5" style={{ color: MUTED }}>
         Typical arrival by day of the week
       </p>
@@ -415,8 +450,11 @@ function PersonMonth({ person, days, lateAfterMin }) {
           );
         })}
       </div>
+      </>
+      )}
 
-      <table className="w-full text-left text-[11px]" style={{ borderCollapse: 'collapse' }}>
+      <table className={`w-full text-left ${compact ? 'text-[10px] cb-tight' : 'text-[11px]'}`}
+        style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ color: MUTED, borderBottom: `1px solid ${AXIS}` }}>
             <th className="py-1.5 pr-2 font-medium">Date</th>
@@ -600,6 +638,60 @@ function Drift({ rows, tone, onPick }) {
   );
 }
 
+/**
+ * WHAT GOES ON THE PAGE, and therefore on the paper.
+ *
+ * The founder printed the September report on 30 September and Chrome offered
+ * him TEN SHEETS. Everything on the page was worth having on some day and none
+ * of it was worth having on every day, and the report gave him no way to say so
+ * — the one button printed all of it.
+ *
+ * So each block is now a switch. The list is exported because the panel that
+ * renders the switches lives on the console page, and a second hand-written
+ * copy of it there is how a section ends up in one place and missing from the
+ * other.
+ *
+ * `sheets` is a rough cost in A4 landscape sheets, used for the estimate beside
+ * the Print button. It does not have to be exact; it has to make "this will be
+ * nine sheets" visible BEFORE the paper is spent, which is the whole complaint.
+ * `per` is the part that grows with the number of names.
+ */
+export const REPORT_SECTIONS = [
+  { key: 'numbers', label: 'Headline numbers', note: 'Attendance, late, typical arrival, leave',
+    sheets: 0.15, per: 0 },
+  { key: 'drift', label: 'Who changed this month', note: 'Each person against their own earlier self',
+    sheets: 0.3, per: 0 },
+  { key: 'daily', label: 'Every working day', note: 'One column per day — turnout and lateness',
+    sheets: 0.35, per: 0 },
+  { key: 'intime', label: 'In-time chart', note: 'A dot per person on a clock. Detailed — off by default',
+    sheets: 0.2, per: 0.02 },
+  { key: 'late', label: 'Late arrivals, most first', note: 'The ranking',
+    sheets: 0.35, per: 0 },
+  { key: 'grid', label: 'The month, person by person', note: 'The colour grid',
+    sheets: 0.3, per: 0.012 },
+  { key: 'person', label: 'Each person, day by day', note: 'A block per name: in, out, hours, minutes late',
+    sheets: 0.1, per: 0.26 },
+  { key: 'table', label: 'The numbers table', note: 'Every figure per person',
+    sheets: 0.2, per: 0.015 },
+];
+
+/** Sections that print by default: the page that answers the month in three or
+ *  four sheets. The chart the founder called complicated and the per-person
+ *  blocks (a quarter of a sheet each) are opt-in. */
+export const DEFAULT_SECTIONS = ['numbers', 'drift', 'daily', 'late', 'grid', 'table'];
+
+export function estimateSheets({ sections, view, peopleCount }) {
+  if (view === 'register') {
+    // The muster roll prints ~26 names to a landscape sheet at 7px.
+    return Math.max(1, Math.ceil(0.4 + peopleCount / 26));
+  }
+  const on = new Set(sections);
+  const total = REPORT_SECTIONS
+    .filter((s) => on.has(s.key))
+    .reduce((n, s) => n + s.sheets + s.per * peopleCount, 0.25); // 0.25 = the header
+  return Math.max(total > 0.25 ? 1 : 0, Math.ceil(total));
+}
+
 function Tile({ label, value, note }) {
   return (
     <div className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
@@ -610,10 +702,13 @@ function Tile({ label, value, note }) {
   );
 }
 
-export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAfterMin, view = 'summary' }) {
+export default function MonthlyAttendanceReport({
+  data, month, lateAfter, lateAfterMin, view = 'summary', sections = DEFAULT_SECTIONS,
+}) {
   const { days, people, perDay, totals, lowTurnoutDays = [] } = data;
   const [pickedId, setPickedId] = useState('');
   const picked = people.find((p) => p.id === pickedId) || null;
+  const on = useMemo(() => new Set(sections), [sections]);
   // Folded from the same array as everything else on the page, so the panel
   // and the charts can never describe two different months.
   const drift = useMemo(() => arrivalDrift(people, days), [people, days]);
@@ -649,6 +744,16 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         }
         .cb-pick { cursor: pointer; }
         .cb-pick:hover { text-decoration: underline; }
+
+        /* EACH PERSON, DAY BY DAY — two to a row, so thirty-five names are not
+           thirty-five sheets. A person's block never splits across a column or
+           a page (.cb-keep), because half a day list with no name at the top of
+           it is not a record anybody can read. */
+        .cb-people { columns: 2; column-gap: 26px; }
+        .cb-person { break-inside: avoid; page-break-inside: avoid; margin-bottom: 14px; }
+        .cb-tight td, .cb-tight th { padding-top: 1px !important; padding-bottom: 1px !important; }
+        @media (max-width: 900px) { .cb-people { columns: 1; } }
+        @media print { .cb-people { columns: 2; column-gap: 20px; } }
 
         /* The register is 28 columns wide. On screen it scrolls sideways; on
            paper it must not, so the scroller is unwrapped for print and the
@@ -730,6 +835,7 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         </section>
       ) : (
       <>
+      {on.has('numbers') && (
       <div className="cb-keep grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <Tile label="Attendance" value={totals.attendancePct == null ? '—' : `${totals.attendancePct}%`}
           note={`${totals.present} present · ${totals.absent} absent`} />
@@ -740,11 +846,12 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         <Tile label="Approved leave" value={totals.leave}
           note="days HR accounted for" />
       </div>
+      )}
 
       {/* FIRST, because it is the only section that names somebody you can
           still catch. Everything below describes where people are; this
           describes where they are heading. */}
-      {(drift.slipped.length > 0 || drift.improved.length > 0) && (
+      {on.has('drift') && (drift.slipped.length > 0 || drift.improved.length > 0) && (
         <section className="cb-keep mb-6">
           <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>
             Who changed this month
@@ -782,24 +889,35 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         </section>
       )}
 
+      {on.has('daily') && (
       <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>Every working day</h2>
         <Legend keys={['on-time', 'late', 'absent']} />
         <DailyColumns perDay={perDay} />
       </section>
+      )}
 
-      <section className="cb-page-break mb-6">
+      {on.has('intime') && (
+      <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>
           In-time — everybody, earliest first
         </h2>
-        <p className="text-[11px] mb-2" style={{ color: MUTED }}>
-          The dot is their typical arrival; the bar through it is the middle half of
-          their arrivals, so a short bar means they come in at the same time every day.
-          Anyone right of the amber line is typically late.
+        {/* HOW TO READ IT, in one sentence, first. This chart was reported as
+            complicated, and an explanation that arrived after the picture was
+            part of why. */}
+        <p className="text-[11px] mb-2" style={{ color: INK_2 }}>
+          <strong>Left of the amber line is on time; right of it is late.</strong>{' '}
+          <span style={{ color: MUTED }}>
+            The dot is their usual arrival. The faint bar through it is how much that
+            arrival moves about — a short bar is somebody who walks in at the same
+            minute every day, a long one is somebody you cannot predict.
+          </span>
         </p>
         <ArrivalDots people={people} lateAfterMin={lateAfterMin} onPick={setPickedId} />
       </section>
+      )}
 
+      {on.has('late') && (
       <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>Late arrivals, most first</h2>
         <p className="text-[11px] mb-2" style={{ color: MUTED }}>
@@ -808,8 +926,10 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         </p>
         <LateRanking people={people} />
       </section>
+      )}
 
-      <section className="cb-page-break mb-6">
+      {on.has('grid') && (
+      <section className="cb-keep mb-6">
         <h2 className="text-sm font-semibold mb-1" style={{ color: INK }}>The month, person by person</h2>
         <p className="text-[11px] mb-2" style={{ color: MUTED }}>
           One square per person per working day. A run of amber is a habit; a scatter of it is a bad week.
@@ -817,39 +937,60 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
         <Legend keys={['on-time', 'late', 'absent', 'leave', 'off']} />
         <Heatmap days={days} people={people} onPick={setPickedId} />
       </section>
+      )}
 
+      {/* EACH PERSON, DAY BY DAY — every name, not one from a dropdown.
+          It was one person at a time behind a select, which reads on paper as
+          individual attendance having been removed from the report: print it and
+          you got whichever single name happened to be picked, or a sentence
+          asking you to pick one. The dropdown is still here, and it now NARROWS
+          this section to one name rather than being the only way to see any. */}
+      {on.has('person') && (
       <section className="cb-page-break mb-6">
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          <h2 className="text-sm font-semibold" style={{ color: INK }}>One person, day by day</h2>
+        <div className="flex flex-wrap items-center gap-2 mb-1">
+          <h2 className="text-sm font-semibold" style={{ color: INK }}>
+            {picked ? `${picked.name} — day by day` : 'Each person, day by day'}
+          </h2>
           {/* A plain select, not a search box: thirty names is a list you
-              scroll, not one you have to spell. Clicking any name in the two
-              charts above lands here too. */}
+              scroll, not one you have to spell. Clicking any name in the charts
+              above lands here too. */}
           <select value={pickedId} onChange={(e) => setPickedId(e.target.value)}
             className="cb-no-print border border-gray-200 rounded-md px-2 py-1.5 text-xs outline-none focus:border-[#f26522]">
-            <option value="">Pick a name…</option>
+            <option value="">Everybody</option>
             {[...people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p.id} value={p.id}>{p.name} only</option>
             ))}
           </select>
           {picked && (
             <button onClick={() => setPickedId('')}
               className="cb-no-print text-xs text-gray-500 hover:text-[#10243E] underline">
-              clear
+              show everybody
             </button>
           )}
         </div>
+        <p className="text-[11px] mb-3" style={{ color: MUTED }}>
+          Every working day for {picked ? 'this person' : `all ${people.length} names`} — the
+          time they came in, the time they left, the hours, and how many minutes past
+          the grace. Minutes rather than a flag: &ldquo;late&rdquo; is a verdict,
+          &ldquo;9 minutes&rdquo; is a fact the person can answer.
+          {!picked && ' Pick one name above to print just theirs.'}
+        </p>
 
         {picked ? (
           <PersonMonth person={picked} days={days} lateAfterMin={lateAfterMin} />
         ) : (
-          <p className="text-[11px]" style={{ color: MUTED }}>
-            Pick a name above, or tap any name in the two charts, to see every working
-            day of the month — the time they came in, the time they left, and how
-            late. This is the answer to &ldquo;what time did he get in on Monday?&rdquo;.
-          </p>
+          <div className="cb-people">
+            {[...people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
+              <div key={p.id} className="cb-keep cb-person">
+                <PersonMonth person={p} days={days} lateAfterMin={lateAfterMin} compact />
+              </div>
+            ))}
+          </div>
         )}
       </section>
+      )}
 
+      {on.has('table') && (
       <section>
         <h2 className="text-sm font-semibold mb-2" style={{ color: INK }}>The numbers</h2>
         <table className="w-full text-left text-[11px]" style={{ borderCollapse: 'collapse' }}>
@@ -891,6 +1032,15 @@ export default function MonthlyAttendanceReport({ data, month, lateAfter, lateAf
           </tbody>
         </table>
       </section>
+      )}
+
+      {/* NOTHING SELECTED IS A STATE, not a blank page. */}
+      {on.size === 0 && (
+        <p className="text-sm p-8 text-center" style={{ color: MUTED }}>
+          Nothing is switched on. Use <strong>What prints</strong> above to choose the
+          sections you want.
+        </p>
+      )}
       </>
       )}
     </div>
