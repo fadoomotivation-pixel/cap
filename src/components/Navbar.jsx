@@ -91,6 +91,7 @@ export default function Navbar() {
 
   return (
     <header
+      data-print-hide
       className={`fixed w-full top-0 z-50 transition-colors duration-300 ${
         transparent
           ? 'bg-transparent border-b border-white/10'

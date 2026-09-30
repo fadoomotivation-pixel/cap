@@ -33,6 +33,7 @@ export default function AdminNav({ className = '' }) {
 
   return (
     <nav
+      data-print-hide
       aria-label="Admin consoles"
       className={`flex flex-wrap gap-2 ${className}`}
     >

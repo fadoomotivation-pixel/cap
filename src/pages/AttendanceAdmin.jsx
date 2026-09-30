@@ -556,10 +556,10 @@ export default function AttendanceAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[100px] pb-20 font-outfit">
+    <div className="cb-print-plain min-h-screen bg-gray-50 pt-[100px] pb-20 font-outfit">
       <div className="max-w-7xl mx-auto px-4">
 
-        <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
+        <div className="cb-no-print flex flex-wrap gap-4 justify-between items-center mb-6">
           <div className="flex items-center gap-3 min-w-0">
             <img src="/logo-capital-brix.png" alt="Capital Brix" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain shrink-0" />
             <div className="min-w-0">
@@ -1192,7 +1192,7 @@ export default function AttendanceAdmin() {
 
         {/* ── MONTHLY ── */}
         {tab === 'monthly' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="cb-print-flush bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="cb-no-print flex flex-wrap gap-3 justify-between items-center mb-5">
               <h2 className="text-xl font-semibold text-[#10243E] flex items-center gap-2">
                 <BarChart3 size={20} className="text-[#f26522]" /> Monthly Report

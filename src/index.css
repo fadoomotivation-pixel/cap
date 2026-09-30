@@ -33,3 +33,52 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PRINTING AN ADMIN CONSOLE PRINTS THE DOCUMENT, NOT THE WEBSITE.
+
+   Every route renders inside <Navbar> and <Footer> (see App.jsx), and neither
+   was hidden on print. So the monthly attendance register came off the
+   printer with the site's navigation bar on top of page one and the entire
+   marketing footer - About Dholera SIR, Quick Links, Our Current Projects -
+   filling the sheets after it. All of the per-section print work upstream was
+   invisible against that, because the waste was never inside the report.
+
+   This is global rather than per-page: the interview Day Sheet, the expense
+   console and anything printable written later are wrapped by exactly the
+   same chrome, and each would otherwise have to rediscover this.
+
+   `data-print-hide` marks the site chrome itself (Navbar, Footer, AdminNav).
+   `.cb-no-print` marks controls inside a page - toolbars, tab strips, a
+   Logout button - and is the class the monthly report already uses.
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+  [data-print-hide],
+  .cb-no-print {
+    display: none !important;
+  }
+
+  /* The page reserves 100px at the top to clear the FIXED navbar. With the
+     navbar gone that is a blank strip at the head of every printed job, and
+     the grey page background wastes ink on a document that is black on
+     white. */
+  .cb-print-plain {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    background: #fff !important;
+    min-height: 0 !important;
+  }
+}
+
+/* The console wraps each tab in a white card. On screen that is the page;
+   on paper the border, the shadow and 24px of padding on all four sides are
+   millimetres the register needs - it is already sized to the exact width of
+   A4 landscape. */
+@media print {
+  .cb-print-flush {
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}

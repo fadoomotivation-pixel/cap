@@ -1432,6 +1432,31 @@ and understand — who is late, how often, and whether it is a pattern.
   is the one component both render, because a second copy of eight hundred
   cells is a second copy that drifts. Preset: **Numbers + register**.
 
+- **Printing an admin console prints the document, not the website — and that
+  fix is global, in `src/index.css`.** Every route renders inside `<Navbar>`
+  and `<Footer>` (`App.jsx`), and neither was hidden on print. So the register
+  came off the printer with the site navigation across the top of page one and
+  the **entire marketing footer** — About Dholera SIR, Quick Links, Our Current
+  Projects — filling the sheets after it. Every per-section print control
+  upstream of this was invisible against it, because the waste was never inside
+  the report.
+
+  `data-print-hide` marks the chrome itself (Navbar, Footer, AdminNav);
+  `.cb-no-print` marks controls inside a page and is what the report already
+  used. **`.cb-no-print` had only ever been declared inside the report
+  component's own `<style>` block**, so it existed only while that component was
+  mounted — it is now declared once, globally, where every console can rely on
+  it.
+
+  `.cb-print-plain` on the page zeroes the 100px top padding that exists to
+  clear the **fixed** navbar (a blank strip at the head of every job once the
+  navbar is gone) and drops the grey background; `.cb-print-flush` on the tab's
+  white card drops its border, shadow and 24px of padding, which are
+  millimetres the register needs — it is sized to the exact width of A4
+  landscape. **Global rather than per-page**, because the interview Day Sheet,
+  the expense console and anything printable written later sit inside the same
+  chrome and would each have to rediscover this.
+
 - **Every block carries "Print only this", and it changes nothing.** The
   section switches answer *what is this report*, which is the right control for
   that and the wrong one for *print me the register, just the register, now* —
