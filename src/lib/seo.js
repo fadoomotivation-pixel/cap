@@ -35,10 +35,13 @@ export const pageSeo = {
     path: '/projects',
   },
   dholera: {
-    title: 'Dholera SIR Guide 2026 | Smart City Investment, Airport & Expressway',
+    title: 'Dholera Smart City 2026: SIR Guide, Map, Airport & Plots',
     description:
-      'Everything about Dholera Special Investment Region — India\'s first greenfield smart city. Tata semiconductor fab, Dholera International Airport, the Ahmedabad–Dholera Expressway, master plan, land prices and investment outlook.',
+      'Dholera SIR, Gujarat: a 920 sq km greenfield smart city on the DMIC. Expressway open, airport near-ready, Tata fab rising. Verified facts, map & NA plots.',
     path: '/dholera',
+    ogTitle: 'Dholera Smart City 2026: The Verified Guide',
+    ogDescription:
+      '920 sq km SIR on the DMIC. Expressway open, airport near-ready, Tata fab rising. Map, master plan, industries and NA plots.',
   },
   contact: {
     title: 'Contact Capital Brix | Book a Free Dholera Site Visit',
