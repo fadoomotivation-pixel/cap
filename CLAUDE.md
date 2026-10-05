@@ -1046,9 +1046,37 @@ also call it with their JWT to send early, re-send (`force`), or preview
   was missed, or they are still in the office."* — naming both possibilities
   is shorter than being wrong, and it hands the founder a question rather
   than a false conclusion.
+- **The register is sent at 11:36 IST, not 11:30, and the six minutes are a
+  bug fix — do not "tidy" them back to a round number.** The cron fired at
+  exactly 11:30:00 and the message went out at **11:30:08**. On 5 October
+  Kamal Mishra punched at **11:30:55** — forty-seven seconds too late to be
+  in a message that had already left — so the register named him **Absent**
+  to the whole company while he was standing in the office. He said so, and
+  he was right.
+
+  **It was not a one-off, which is the part that matters.** Across the
+  previous thirty days, **twenty** first-punches of the day landed in the
+  five minutes after the cut-off, thirty-four within ten. That is roughly
+  once per working day that somebody present was published as absent and
+  only corrected at 13:00.
+
+  So `cb-daily-attendance-whatsapp` is now `6 6 * * *` (11:36 IST). The
+  windows are unchanged, and the existing **`After 11:30`** safety-net block
+  is what catches these arrivals and prints them as present — it was written
+  for exactly this and had never been the thing standing between a colleague
+  and a false accusation until now.
+
+  **The deeper fact this exposes is worth keeping:** at the moment the
+  register closes, "did not come" and "has not punched yet" are the same row.
+  The grace period shrinks that window; it does not abolish it. Somebody
+  walking in at 12:30 is still Absent at 11:36 and corrected at 13:00, and
+  that sequence is intended. If the Absent heading is ever softened to
+  "Not punched in yet", that is the founder's call — he asked for the absent
+  list by name.
+
 - **Five messages a day, one function.** `kind` selects which:
-  `morning` at **10:30 IST** (05:00 UTC); `attendance` at **11:30 IST**
-  (06:00 UTC) — arrivals by window, plus absent
+  `morning` at **10:30 IST** (05:00 UTC); `attendance` at **11:36 IST**
+  (06:06 UTC — see the grace-period note above) — arrivals by window, plus absent
   and on leave; `absent` at **11:31 IST** (06:01 UTC); `reminder` at
   **18:45 IST** (13:15 UTC); `checkout` at
   **19:01 IST** (13:31 UTC) — who logged out and
@@ -1254,6 +1282,25 @@ team's attendance to go there.
   **Inactive teams are listed.** Switching one off used to make it vanish from
   the only page that could switch it back on. They are filtered out of a
   message card's "Lands in:", because an inactive team routes nobody.
+
+- **"Team Heads" is the second team, and the one `include_seniors` was built
+  for.** Created 5 October 2026 after the founder asked in that group why the
+  team heads' attendance was not arriving there. Every group message is
+  juniors only, so a group of directors would have been messaged about
+  nobody — `include_seniors = true` is the whole reason it can work at all.
+
+  The four roster seniors (Kalpana Kulshrestha, Manish Verma, Neeraj
+  Kulshrestha, Subrat) are on it. **It is deliberately inert until somebody
+  picks its WhatsApp group** on `/admin/whatsapp`: `include_seniors` is only
+  joined for a team that has a group of its own, so with the group blank
+  these four keep falling back to the main group, where the junior-only rule
+  still hides them. Nothing about today's messages changed when the team was
+  created — verified against `cb_daily_attendance_report()` before and after.
+
+  **The group cannot be picked until the sending number is a member of it.**
+  WhatsApp only lets an account post to groups it is in, and a JID is shown
+  nowhere inside WhatsApp — which is why the list on `/admin/whatsapp` is the
+  only honest way to set one.
 
 - **`cb_teams.name` is unique case-insensitively** (`cb_teams_name_key_ci`).
   "Backend" and "backend" both existed for a few hours on 29 September, one

@@ -226,6 +226,49 @@ const juniors = (rows: Row[]) => rows.filter((r) => !r.is_senior);
 const REGISTER_CLOSES = 11 * 60 + 30;
 
 /**
+ * 11:36 IST — the minute the register is actually PUBLISHED, and the only
+ * honest boundary for "recorded after the register closed".
+ *
+ * THIS MUST MATCH THE `cb-daily-attendance-whatsapp` CRON (`6 6 * * *` UTC).
+ * They are two copies of one number and nothing checks them against each
+ * other, so changing one without the other reopens the hole below.
+ *
+ * WHY IT IS NOT 11:30. The cron used to fire at 11:30:00 and the message left
+ * at 11:30:08. Kamal Mishra punched at 11:30:55 on 5 October: too late for a
+ * message that had already gone, so the register called him Absent — and then
+ * `istMinutes` truncated his 11:30:55 to 11:30, which is not `> 11:30`, so the
+ * 13:00 correction skipped him too. Named absent, never corrected, while
+ * standing in the office.
+ *
+ * Twenty first-punches landed in the five minutes after the cut-off in the
+ * preceding thirty days, so this was close to a daily event.
+ */
+const REGISTER_PUBLISHED = 11 * 60 + 36;
+
+/** HH:MM for a minutes-since-midnight constant, so a printed cut-off can
+ *  never drift from the one actually used to filter. */
+const fmtMins = (m: number) =>
+  `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+/**
+ * Seconds since midnight IST. `istMinutes` discards seconds, which is right
+ * for sorting people into arrival windows and WRONG on a boundary comparison:
+ * it turns the cut-off into a sixty-second trapdoor that a person can fall
+ * through and never be corrected. Boundaries use this.
+ */
+const istSeconds = (ts: string | null): number => {
+  if (!ts) return -1;
+  const [h, m, s] = new Intl.DateTimeFormat("en-GB", {
+    timeZone: IST,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date(ts)).split(":");
+  return Number(h) * 3600 + Number(m) * 60 + Number(s);
+};
+
+/**
  * Arrival windows, in the shape HR already sends by hand.
  *
  * `until` is minutes since midnight IST; the last window has none and takes
@@ -567,9 +610,26 @@ function buildPresentSummary(rows: Row[], dateStr: string): string | null {
  * one people stop opening.
  */
 function buildLateSummary(rows: Row[], dateStr: string): string | null {
+  // Measured in SECONDS against the minute the register was published, not in
+  // truncated minutes against the minute it closed. Both halves of that matter:
+  //
+  //   - seconds, because `istMinutes` rounds 11:30:55 down to 11:30 and
+  //     `> 11:30` is then false. That is the trapdoor Kamal fell through.
+  //   - published, not closed, because the register now goes out at 11:36 and
+  //     already names 11:30-11:36 arrivals under "After 11:30". Filtering on
+  //     11:30 here would list them a second time under a line claiming the
+  //     register had closed before they punched, which is not true of them.
+  //
+  // `>=` rather than `>` biases toward naming somebody twice over naming them
+  // never. The register takes a few seconds to build, so an arrival inside
+  // that sliver may appear in both messages — harmless. The opposite error
+  // leaves a present colleague published as absent with no correction, which
+  // is the bug this whole boundary exists to prevent.
   const late = juniors(rows)
-    .filter((r) => r.check_in_at && istMinutes(r.check_in_at) > REGISTER_CLOSES)
-    .sort((a, b) => istMinutes(a.check_in_at) - istMinutes(b.check_in_at));
+    .filter((r) =>
+      r.check_in_at && istSeconds(r.check_in_at) >= REGISTER_PUBLISHED * 60
+    )
+    .sort((a, b) => istSeconds(a.check_in_at) - istSeconds(b.check_in_at));
   if (!late.length) return null;
 
   const L: string[] = [];
@@ -585,7 +645,7 @@ function buildLateSummary(rows: Row[], dateStr: string): string | null {
   L.push("*CAPITAL BRIX \u2014 Register Update*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`*Recorded after 11:30 (${late.length})*`);
+  L.push(`*Recorded after ${fmtMins(REGISTER_PUBLISHED)} (${late.length})*`);
   late.forEach((r) =>
     L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`)
   );
@@ -599,8 +659,11 @@ function buildLateSummary(rows: Row[], dateStr: string): string | null {
   // they had been listed absent, which is not true of somebody HR had marked
   // on leave who then came in - that person appeared under On leave, and this
   // message would have called them absent to fifty colleagues.
-  L.push("The 11:30 register had already closed when these check-ins were");
-  L.push("recorded. Their attendance for today now stands as present.");
+  L.push(
+    `The ${fmtMins(REGISTER_CLOSES)} register had already been published when these`,
+  );
+  L.push("check-ins were recorded. Their attendance for today now stands as");
+  L.push("present.");
   L.push("");
   L.push("\u2014 Capital Brix AI HR");
   return L.join("\n");
@@ -1065,7 +1128,7 @@ Deno.serve(async (req) => {
         : kind === "absent"
         ? "nobody was absent"
         : kind === "late"
-        ? "nobody was recorded after 11:30"
+        ? `nobody was recorded after ${fmtMins(REGISTER_PUBLISHED)}`
         : kind === "welcome"
         ? "nobody new started"
         : "every attendance was complete";
