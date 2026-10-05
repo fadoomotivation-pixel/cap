@@ -123,7 +123,7 @@ const fmtTime = (ts: string | null) =>
         minute: "2-digit",
         hour12: false,
       }).format(new Date(ts))
-    : "\u2014";
+    : "—";
 
 /** Minutes since midnight IST, for sorting people into arrival windows. */
 const istMinutes = (ts: string | null): number => {
@@ -292,7 +292,7 @@ const WINDOWS: {
   // figure in the headline. A block that silently vanished would leave a
   // message whose own arithmetic does not add up.
   { label: "Till 10:30", until: 10 * 60 + 30, countOnly: true },
-  { label: "10:30 \u2013 11:00", until: 11 * 60 },
+  { label: "10:30 – 11:00", until: 11 * 60 },
   // 11:00 - 11:30, NOT 11:00 - 12:00, and nothing after it.
   //
   // This message is sent at 11:30 and announces that the register is closed.
@@ -300,7 +300,7 @@ const WINDOWS: {
   // yet - the same mistake the 18:45 departure windows had, which is why
   // they were dropped there too. Anyone arriving after this goes out in the
   // 13:00 register update, which exists for exactly that.
-  { label: "11:00 \u2013 11:30", until: REGISTER_CLOSES },
+  { label: "11:00 – 11:30", until: REGISTER_CLOSES },
   // A safety net, not a window anybody should see. At 11:30 it is empty by
   // definition. It exists because the message can also be sent by hand from
   // /admin/whatsapp, or by a cron that fired late - and then somebody who
@@ -341,7 +341,7 @@ function buildSummary(rows: Row[], dateStr: string) {
   // crosses against colleagues' names reads as a scoreboard, and the counts
   // already say everything the icons did.
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Daily Attendance*");
+  L.push("*CAPITAL BRIX — Daily Attendance*");
   L.push(fmtDate(dateStr));
   L.push("");
   // HEADCOUNT IS NOT PUBLISHED. An explicit "Strength 30" in a group this
@@ -353,12 +353,12 @@ function buildSummary(rows: Row[], dateStr: string) {
     `Absent ${absent.length}`,
   ];
   if (onLeave.length) head.push(`On leave ${onLeave.length}`);
-  L.push(head.join("  \u00B7  "));
+  L.push(head.join("  ·  "));
   if (siteVisits.length || wfh.length) {
     const extra: string[] = [];
     if (siteVisits.length) extra.push(`Site visits ${siteVisits.length}`);
     if (wfh.length) extra.push(`Work from home ${wfh.length}`);
-    L.push(extra.join("  \u00B7  "));
+    L.push(extra.join("  ·  "));
   }
 
   // Every present person lands in exactly one window, so the windows always
@@ -382,7 +382,7 @@ function buildSummary(rows: Row[], dateStr: string) {
       L.push("_Named in the 10:30 update._");
       continue;
     }
-    inWindow.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`));
+    inWindow.forEach((r) => L.push(`• ${r.full_name.trim()} — ${fmtTime(r.check_in_at)}`));
   }
 
   // Absent is juniors only, because the report function has already dropped
@@ -391,27 +391,27 @@ function buildSummary(rows: Row[], dateStr: string) {
   if (absent.length) {
     L.push("");
     L.push(`*Absent (${absent.length})*`);
-    absent.forEach((r) => L.push(`\u2022 ${r.full_name.trim()}`));
+    absent.forEach((r) => L.push(`• ${r.full_name.trim()}`));
   }
 
   if (onLeave.length) {
     L.push("");
     L.push(`*On leave (${onLeave.length})*`);
-    onLeave.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${r.hr_status}`));
+    onLeave.forEach((r) => L.push(`• ${r.full_name.trim()} — ${r.hr_status}`));
   }
 
   if (flagged.length) {
     L.push("");
     L.push("*Punched away from the office*");
     flagged.forEach((r) =>
-      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${Math.round(r.distance_from_office ?? 0)} m away`)
+      L.push(`• ${r.full_name.trim()} — ${Math.round(r.distance_from_office ?? 0)} m away`)
     );
   }
 
   L.push("");
   L.push("The register is now closed for today.");
   // Carried over from the 11:32 message this absorbed. Not "you can still
-  // punch" \u2014 the 10:30 message said the register closes at 11:30 and this is
+  // punch" — the 10:30 message said the register closes at 11:30 and this is
   // that closure. A route to a person is honest recourse; reopening a
   // register you have just announced as closed is not. Only printed when
   // there is a name that could be wrong.
@@ -420,7 +420,7 @@ function buildSummary(rows: Row[], dateStr: string) {
   }
 
   L.push("");
-  L.push("\u2014 Capital Brix AI HR");
+  L.push("— Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -432,7 +432,7 @@ function buildSummary(rows: Row[], dateStr: string) {
  */
 const OUT_WINDOWS: { label: string; until: number | null }[] = [
   { label: "Before 18:00", until: 18 * 60 },
-  { label: "18:00 \u2013 19:00", until: 19 * 60 },
+  { label: "18:00 – 19:00", until: 19 * 60 },
   { label: "19:00 onwards", until: null },
 ];
 
@@ -457,16 +457,16 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
   const stillIn = present.filter((r) => !r.check_out_at);
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Daily Logout*");
+  L.push("*CAPITAL BRIX — Daily Logout*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`Logged out ${out.length}  \u00B7  No check-out ${stillIn.length}`);
+  L.push(`Logged out ${out.length}  ·  No check-out ${stillIn.length}`);
 
   if (!present.length) {
     L.push("");
     L.push("_No attendance was recorded today._");
     L.push("");
-    L.push("\u2014 Capital Brix AI HR");
+    L.push("— Capital Brix AI HR");
     return L.join("\n");
   }
 
@@ -486,7 +486,7 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
     L.push(`*${w.label}* (${inWindow.length})`);
     inWindow.forEach((r) =>
       L.push(
-        `\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}, out ${
+        `• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}, out ${
           fmtTime(r.check_out_at)
         }`,
       )
@@ -504,12 +504,12 @@ function buildCheckoutSummary(rows: Row[], dateStr: string) {
     L.push(`*No check-out recorded (${stillIn.length})*`);
     L.push("_Either the exit punch was missed, or they are still in the office._");
     stillIn.forEach((r) =>
-      L.push(`\u2022 ${r.full_name.trim()} \u2014 in ${fmtTime(r.check_in_at)}`)
+      L.push(`• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}`)
     );
   }
 
   L.push("");
-  L.push("\u2014 Capital Brix AI HR");
+  L.push("— Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -536,26 +536,26 @@ function buildMorningSummary(rows: Row[], dateStr: string): string | null {
   if (!present.length) return null;
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Attendance Update*");
+  L.push("*CAPITAL BRIX — Attendance Update*");
   L.push(fmtDate(dateStr));
   L.push("");
   L.push(`*Punched in so far (${present.length})*`);
   [...present]
     .sort((a, b) => istMinutes(a.check_in_at) - istMinutes(b.check_in_at))
     .forEach((r) =>
-      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`)
+      L.push(`• ${r.full_name.trim()} — ${fmtTime(r.check_in_at)}`)
     );
 
   L.push("");
   L.push("If you are in the office and your name is not on this list, please");
   L.push("punch on the machine now. The register is finalised at 11:30.");
   L.push("");
-  L.push("\u2014 Capital Brix AI HR");
+  L.push("— Capital Brix AI HR");
   return L.join("\n");
 }
 
 /**
- * The final present list, at 11:30 \u2014 the register as it closes.
+ * The final present list, at 11:30 — the register as it closes.
  *
  * The 10:30 list and this one were merged once, on the reasoning that a
  * message repeating itself is how people stop reading the first one. The
@@ -574,20 +574,20 @@ function buildPresentSummary(rows: Row[], dateStr: string): string | null {
   if (!present.length) return null;
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Attendance*");
+  L.push("*CAPITAL BRIX — Attendance*");
   L.push(fmtDate(dateStr));
   L.push("");
   L.push(`*Present (${present.length})*`);
   [...present]
     .sort((a, b) => istMinutes(a.check_in_at) - istMinutes(b.check_in_at))
     .forEach((r) =>
-      L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`)
+      L.push(`• ${r.full_name.trim()} — ${fmtTime(r.check_in_at)}`)
     );
 
   L.push("");
   L.push("The register is now closed for today.");
   L.push("");
-  L.push("\u2014 Capital Brix AI HR");
+  L.push("— Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -606,7 +606,7 @@ function buildPresentSummary(rows: Row[], dateStr: string): string | null {
  *
  * 13:00 and not the end of the day because a late arrival is worth raising
  * while the day can still be asked about. Returns null when nobody was late,
- * which on a good day is most days \u2014 and a message that is usually empty is
+ * which on a good day is most days — and a message that is usually empty is
  * one people stop opening.
  */
 function buildLateSummary(
@@ -656,12 +656,12 @@ function buildLateSummary(
   // scoreboard this module keeps being told not to become. The facts are
   // identical either way - a name and a time - so the heading is free to be
   // the accurate one, which is that the register changed after publication.
-  L.push("*CAPITAL BRIX \u2014 Register Update*");
+  L.push("*CAPITAL BRIX — Register Update*");
   L.push(fmtDate(dateStr));
   L.push("");
   L.push(`*Recorded after ${fmtMins(Math.floor(cutoffSec / 60))} (${late.length})*`);
   late.forEach((r) =>
-    L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`)
+    L.push(`• ${r.full_name.trim()} — ${fmtTime(r.check_in_at)}`)
   );
 
   L.push("");
@@ -679,7 +679,7 @@ function buildLateSummary(
   L.push("check-ins were recorded. Their attendance for today now stands as");
   L.push("present.");
   L.push("");
-  L.push("\u2014 Capital Brix AI HR");
+  L.push("— Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -690,12 +690,12 @@ function buildLateSummary(
  * up for the first time, the group should say so.
  *
  * It is the one message here that is not about compliance, and it is written
- * that way \u2014 no times, no counts, no register. A first day is the day a new
+ * that way — no times, no counts, no register. A first day is the day a new
  * colleague is most aware of being watched, and a feed that can publish an
  * absent list should be able to publish a welcome.
  *
  * WHO COUNTS AS NEW is decided in cb_new_joiners(), not here: active, junior,
- * in the daily report, never welcomed, and with at least one attendance row \u2014
+ * in the daily report, never welcomed, and with at least one attendance row —
  * because somebody on the roster who has not turned up yet is expected rather
  * than new, and welcoming them would announce a person who is not there.
  *
@@ -707,7 +707,7 @@ function buildWelcomeSummary(rows: NewJoiner[], dateStr: string): string | null 
   if (!rows.length) return null;
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Welcome Aboard*");
+  L.push("*CAPITAL BRIX — Welcome Aboard*");
   L.push(fmtDate(dateStr));
   L.push("");
   L.push(
@@ -719,21 +719,21 @@ function buildWelcomeSummary(rows: NewJoiner[], dateStr: string): string | null 
   rows.forEach((r) => {
     // Role and department only when the roster actually holds them. A bare
     // dash after somebody's name on their first day reads as a gap in their
-    // own record. And they are not both printed when they are the same word \u2014
+    // own record. And they are not both printed when they are the same word —
     // half this roster has role_title and department both set to "Sales".
     const role = (r.role_title ?? "").trim();
     const dept = (r.department ?? "").trim();
     const tail = role && dept && role.toLowerCase() !== dept.toLowerCase()
       ? `${role}, ${dept}`
       : role || dept;
-    L.push(`\u2022 ${r.full_name.trim()}${tail ? ` \u2014 ${tail}` : ""}`);
+    L.push(`• ${r.full_name.trim()}${tail ? ` — ${tail}` : ""}`);
   });
 
   L.push("");
   L.push("We are delighted to have you on board. Wishing you a strong start");
   L.push("and a long, successful innings with Capital Brix.");
   L.push("");
-  L.push("\u2014 Capital Brix AI HR");
+  L.push("— Capital Brix AI HR");
   return L.join("\n");
 }
 
@@ -762,16 +762,16 @@ function buildAbsentSummary(rows: Row[], dateStr: string): string | null {
   if (!absent.length) return null;
 
   const L: string[] = [];
-  L.push("*CAPITAL BRIX \u2014 Attendance*");
+  L.push("*CAPITAL BRIX — Attendance*");
   L.push(fmtDate(dateStr));
   L.push("");
   L.push(`*Absent (${absent.length})*`);
-  absent.forEach((r) => L.push(`\u2022 ${r.full_name.trim()}`));
+  absent.forEach((r) => L.push(`• ${r.full_name.trim()}`));
 
   if (onLeave.length) {
     L.push("");
     L.push(`*On leave (${onLeave.length})*`);
-    onLeave.forEach((r) => L.push(`\u2022 ${r.full_name.trim()} \u2014 ${r.hr_status}`));
+    onLeave.forEach((r) => L.push(`• ${r.full_name.trim()} — ${r.hr_status}`));
   }
 
   L.push("");
@@ -780,12 +780,12 @@ function buildAbsentSummary(rows: Row[], dateStr: string): string | null {
   // recourse; an invitation to reopen a closed register is not.
   L.push("If any name here is wrong, please speak to HR.");
   L.push("");
-  L.push("\u2014 Capital Brix AI HR");
+  L.push("— Capital Brix AI HR");
   return L.join("\n");
 }
 
 /**
- * The day's close, at 19:02 \u2014 the 18:45 reminder and the 19:01 logout record
+ * The day's close, at 19:02 — the 18:45 reminder and the 19:01 logout record
  * merged into one.
  *
  * WHAT THE MERGE GAVE UP: 18:45 sat BEFORE the shift ended precisely so
@@ -796,7 +796,7 @@ function buildAbsentSummary(rows: Row[], dateStr: string): string | null {
  *
  * Two lists, and nothing else:
  *   logged out        who left, and when, by departure window
- *   no check-out      in, with no tap on the way out \u2014 which the machine
+ *   no check-out      in, with no tap on the way out — which the machine
  *                     cannot tell from somebody still at their desk, so the
  *                     message names both possibilities rather than choosing
  *
@@ -1055,6 +1055,7 @@ Deno.serve(async (req) => {
     // The founder's copy of the 11:30 register stays the whole company across
     // every team - that is what makes it the record rather than a roll-call of
     // one group. He directed on 23 September that the register go to both.
+
     // WHEN THE REGISTER ACTUALLY WENT OUT, read rather than assumed.
     //
     // The 13:00 correction names people the register did not already carry,
@@ -1104,17 +1105,17 @@ Deno.serve(async (req) => {
           to,
           label: "founder",
           text: [
-            "*CAPITAL BRIX \u2014 Daily Attendance*",
+            "*CAPITAL BRIX — Daily Attendance*",
             fmtDate(reportDate),
             "",
             "No attendance records were received for today, so the register is not",
             "being published. This is either a non-working day, or the biometric",
             "system has stopped sending to the office computer.",
             "",
-            "_HR: please check eTimeTrackLite \u2192 Utilities \u2192 Device Management \u2192",
+            "_HR: please check eTimeTrackLite → Utilities → Device Management →",
             "Start Download._",
             "",
-            "\u2014 Capital Brix AI HR",
+            "— Capital Brix AI HR",
           ].join("\n"),
         });
       }
@@ -1175,7 +1176,7 @@ Deno.serve(async (req) => {
         sent_at: new Date().toISOString(),
         target: "",
         ok: true,
-        detail: `nothing to post \u2014 ${why}`,
+        detail: `nothing to post — ${why}`,
       });
       return json({ sent: false, reason: why, kind });
     }
@@ -1186,7 +1187,7 @@ Deno.serve(async (req) => {
     // to read.
     const text = deliveries.length === 1
       ? deliveries[0].text
-      : deliveries.map((d) => `[\u2192 ${d.label}]\n${d.text}`).join("\n\n\u2014\u2014\u2014\n\n");
+      : deliveries.map((d) => `[→ ${d.label}]\n${d.text}`).join("\n\n———\n\n");
 
     if (dry_run && viaAdmin) {
       return json({ sent: false, dry_run: true, kind, target: targets.join(", "), text });
