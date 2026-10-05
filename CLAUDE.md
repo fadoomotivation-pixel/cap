@@ -1192,6 +1192,33 @@ also call it with their JWT to send early, re-send (`force`), or preview
   is deploying from the repo with the Supabase CLI rather than pasting a
   payload; until that exists, **after changing a message, read back what
   actually went out** — `cb_report_log`, or Preview on `/admin/whatsapp`.
+
+  **Drift is now CHECKABLE rather than a matter of trust, and the check takes
+  one command.** Fetch the deployed source, and diff it against the repo file
+  after normalising `\uXXXX` escapes — in a TS string literal `"—"` and
+  `"—"` are the same value, so a difference that survives normalisation is a
+  real one and anything else is notation:
+
+  ```python
+  norm = lambda s: re.sub(r'\\u([0-9a-fA-F]{4})',
+                          lambda m: chr(int(m.group(1), 16)), s)
+  assert norm(deployed) == norm(repo)
+  ```
+
+  On 5 October 2026 the function was deployed through the Supabase API with
+  the file content inline, and **the deploy itself rewrote 62 escapes as
+  literal characters.** Harmless at runtime, and it would have made every
+  later diff show 62 phantom changes — which is how a real change gets lost
+  in the noise. The repo was normalised to match, so the two now hash
+  identically (`f813b3bd…`). **Keep them that way**: if a future deploy
+  reintroduces the difference, normalise rather than chasing it.
+
+  **The safe smoke test after deploying is the "already sent" guard.** Call
+  `cb_send_attendance_report('attendance')` once the day's register is already
+  logged: it exercises module load, cron auth, the settings read and the
+  report-log read, returns `{"sent":false,"reason":"already sent"}`, and
+  **sends nothing to anybody**. A syntax error cannot survive it, and no
+  colleague gets a stray message out of a test.
 - The register summary is duplicated in `src/lib/attendanceReport.js`
   (console) and the function (cron). **Change both or the two disagree** —
   the "register is now closed" and "speak to HR" lines added on 23 September
