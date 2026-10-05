@@ -609,7 +609,23 @@ function buildPresentSummary(rows: Row[], dateStr: string): string | null {
  * which on a good day is most days \u2014 and a message that is usually empty is
  * one people stop opening.
  */
-function buildLateSummary(rows: Row[], dateStr: string): string | null {
+function buildLateSummary(
+  rows: Row[],
+  dateStr: string,
+  /**
+   * Seconds-since-midnight IST after which a check-in counts as "recorded
+   * after the register". Defaults to the scheduled publish minute, but the
+   * CALLER PASSES THE REGISTER'S REAL `sent_at` when it has one.
+   *
+   * That difference is not academic. On 5 October the register went out at
+   * 11:30:08 under the old schedule; a constant of 11:36 would have excluded
+   * Kamal's 11:30:55 all over again, on the very day it was being fixed. A
+   * cut-off read from what actually happened cannot drift from the cron, be
+   * wrong on a day the register was sent by hand, or be wrong on a day the
+   * job fired late.
+   */
+  cutoffSec: number = REGISTER_PUBLISHED * 60,
+): string | null {
   // Measured in SECONDS against the minute the register was published, not in
   // truncated minutes against the minute it closed. Both halves of that matter:
   //
@@ -626,9 +642,7 @@ function buildLateSummary(rows: Row[], dateStr: string): string | null {
   // leaves a present colleague published as absent with no correction, which
   // is the bug this whole boundary exists to prevent.
   const late = juniors(rows)
-    .filter((r) =>
-      r.check_in_at && istSeconds(r.check_in_at) >= REGISTER_PUBLISHED * 60
-    )
+    .filter((r) => r.check_in_at && istSeconds(r.check_in_at) >= cutoffSec)
     .sort((a, b) => istSeconds(a.check_in_at) - istSeconds(b.check_in_at));
   if (!late.length) return null;
 
@@ -645,7 +659,7 @@ function buildLateSummary(rows: Row[], dateStr: string): string | null {
   L.push("*CAPITAL BRIX \u2014 Register Update*");
   L.push(fmtDate(dateStr));
   L.push("");
-  L.push(`*Recorded after ${fmtMins(REGISTER_PUBLISHED)} (${late.length})*`);
+  L.push(`*Recorded after ${fmtMins(Math.floor(cutoffSec / 60))} (${late.length})*`);
   late.forEach((r) =>
     L.push(`\u2022 ${r.full_name.trim()} \u2014 ${fmtTime(r.check_in_at)}`)
   );
@@ -1041,6 +1055,27 @@ Deno.serve(async (req) => {
     // The founder's copy of the 11:30 register stays the whole company across
     // every team - that is what makes it the record rather than a roll-call of
     // one group. He directed on 23 September that the register go to both.
+    // WHEN THE REGISTER ACTUALLY WENT OUT, read rather than assumed.
+    //
+    // The 13:00 correction names people the register did not already carry,
+    // so its boundary is the register's real `sent_at` — not the minute the
+    // cron is configured for. Those two differ whenever the job fires late,
+    // whenever HR sends by hand, and on any day the schedule is changed, which
+    // is precisely the day somebody is most likely to fall through.
+    //
+    // Falls back to the scheduled minute when there is no row, which is the
+    // only honest guess available then.
+    let lateCutoffSec = REGISTER_PUBLISHED * 60;
+    if (kind === "late") {
+      const { data: reg } = await admin
+        .from("cb_report_log")
+        .select("sent_at, ok")
+        .eq("report_date", reportDate)
+        .eq("kind", "attendance")
+        .maybeSingle();
+      if (reg?.ok && reg.sent_at) lateCutoffSec = istSeconds(reg.sent_at);
+    }
+
     const deliveries: Delivery[] = [];
     let builder: ((rows: Row[], d: string) => string | null) | null = null;
     switch (kind) {
@@ -1050,7 +1085,9 @@ Deno.serve(async (req) => {
       case "morning": builder = buildMorningSummary; break;
       case "present": builder = buildPresentSummary; break;
       case "absent": builder = buildAbsentSummary; break;
-      case "late": builder = buildLateSummary; break;
+      case "late":
+        builder = (r, d) => buildLateSummary(r, d, lateCutoffSec);
+        break;
       default: builder = buildSummary;
     }
 
