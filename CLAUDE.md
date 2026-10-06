@@ -2016,7 +2016,7 @@ number. That single gap explains three separate symptoms:
 - "On Request" reads as "we will quote you depending on how you sound", which
   is the opposite of the title-clear, nothing-hidden position everywhere else.
 
-Set `priceFrom: 7250` (rupees per sq yd, a plain number) and optionally
+Set `priceFrom` (rupees per sq yd, a plain number) and optionally
 `priceFromUnit`, and the visible price block, the meta description and the
 schema all pick it up with no code change. It is marked up as a
 `UnitPriceSpecification` because the number is per square yard — marking a
@@ -2024,12 +2024,12 @@ per-yard rate as the price of a plot would publish a figure nobody can buy
 anything for. Only put a number there that we will actually honour: a stale
 rate is a misleading price claim of the same shape as the invented ₹2,500.
 
-**Open contradiction for the owner, not for a tool to guess at:** the homepage
-title leads with "from ₹7,250/sq yd" and the FAQ in `site.js` attributes that
-rate to **Mayur Greenz II** — which is listed `Sold Out`. Either the rate needs
-reattributing to a project someone can actually buy into, or the homepage title
-needs a different lead. Do not simply copy ₹7,250 onto other projects to make
-the schema validate.
+**Owner confirmed 6 October 2026:** plots marketed by Capital Brix run from
+**₹9,250 to about ₹14,950 per sq yd**, depending on the project and the plot
+(Mirrikh deck). The homepage and FAQs say "from ₹9,250/sq yd". Do not copy
+₹9,250 onto every project's `priceFrom` — the top of the band is not the
+floor, and a project that is sold out should not grow a live offer. Do not
+describe this as the developer's own undiscounted rate.
 
 ### Every project page links to six siblings
 

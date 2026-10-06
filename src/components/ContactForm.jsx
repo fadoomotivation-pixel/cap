@@ -33,7 +33,7 @@ export default function ContactForm() {
           </h2>
           <div className="w-16 h-1 bg-[#D4AF37] mx-auto"></div>
           <p className="text-gray-600 mt-6 max-w-2xl mx-auto">
-            Ready to invest in India's first greenfield smart city? Our experts are here to help you secure the best plots in Dholera SIR.
+            Name, phone and what you want to look at. We call back about a plot, a site visit, or the seminar.
           </p>
         </div>
 

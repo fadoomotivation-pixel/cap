@@ -1,18 +1,19 @@
 import React from 'react';
 import ContactForm from '../components/ContactForm';
 import Seo from '../components/Seo';
+import PageIntro from '../components/PageIntro';
 import { pageSeo } from '../lib/seo';
 
 export default function Contact() {
   return (
-    <main className="pt-24 bg-brand-gray min-h-screen">
+    <main className="bg-[#f5f5f7] min-h-screen">
     <Seo {...pageSeo.contact} />
-      <div className="bg-brand-blue py-16 text-center text-white">
-        <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4 text-white">Contact Us</h1>
-        <p className="text-white/80 max-w-2xl mx-auto text-lg">
-          Reach out to the Capital Brix team for inquiries and bookings.
-        </p>
-      </div>
+      <PageIntro
+        eyebrow="Noida office"
+        title="Talk to Capital Brix"
+        lede="Call, WhatsApp, or leave a name and a phone number. We use it to book a site visit or answer a plot question."
+        crumbs={[{ label: 'Home', to: '/' }, { label: 'Contact' }]}
+      />
       <ContactForm />
     </main>
   );

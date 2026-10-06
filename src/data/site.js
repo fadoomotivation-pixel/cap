@@ -39,6 +39,22 @@ export const site = {
     'Hi Capital Brix! I am interested in Mirrikh Infratech projects in Dholera Smart City. Please share current prices and plot availability.',
 };
 
+// Owner confirmed 6 Oct 2026, from the Mirrikh deck. This is the rate band
+// Capital Brix sells at. It is not a claim about the developer's margin,
+// and it is not a forecast of what the land will be worth later.
+// Do not copy `from` onto every project's priceFrom — the rate depends on
+// the project and the plot, up to `to`.
+export const plotRates = {
+  from: 9250,
+  to: 14950,
+  unit: 'sq yd',
+  verified: '6 October 2026',
+  fromLabel: 'from ₹9,250/sq yd',
+  rangeLabel: '₹9,250 to ₹14,950 per sq yd',
+  sentence:
+    'Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot.',
+};
+
 export const stats = [
   { value: '₹91,000 Cr', label: 'Tata Semiconductor Fab in Dholera' },
   { value: '8+', label: 'Projects Delivered in Dholera by Mirrikh Infratech' },
@@ -92,7 +108,7 @@ export const whyDholera = [
   {
     icon: 'Plane',
     title: 'International Airport',
-    text: 'Dholera International Airport (Navagam) is in advanced construction, designed for both cargo and passenger operations — a direct catalyst for land appreciation around the SIR.',
+    text: 'Dholera International Airport at Navagam is in advanced construction, designed for both cargo and passenger operations. Phase 1 was approved in 2022, after clearance in 2014–15.',
   },
   {
     icon: 'Route',
@@ -101,8 +117,8 @@ export const whyDholera = [
   },
   {
     icon: 'TrendingUp',
-    title: 'Early-Growth Pricing',
-    text: 'Plot rates in Dholera are still in the early phase — roughly ₹6,000–₹10,000 per sq yd against mature Ahmedabad markets, giving investors a rare ground-floor entry.',
+    title: 'Current plot rates',
+    text: 'Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. Verified 6 October 2026. That is a price, not a forecast.',
   },
   {
     icon: 'ShieldCheck',
@@ -130,7 +146,7 @@ export const projectFilters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 // priceFrom — THE SINGLE HIGHEST-VALUE FIELD ON THIS PAGE, and the one that is
 // empty on all 22 projects.
 //
-//   priceFrom: 7250,              // rupees per sq yd, a plain number
+//   priceFrom: 9250,              // rupees per sq yd, only if this project actually starts there
 //   priceFromUnit: 'sq yd',       // optional, defaults to 'sq yd'
 //
 // Three things switch on the moment a project has one:
@@ -179,14 +195,14 @@ export const projects = [
     category: 'Ongoing',
     location: 'Near Dholera International Airport',
     price: 'On Request',
-    priceUnit: 'Pre-Launch Pricing',
+    priceUnit: 'On request',
     size: 'Multiple plot sizes',
     status: 'Pre-Launch',
     highlights: [
       'Closest project to Dholera Airport',
-      'High appreciation potential',
+      'Rate quoted for the plot you choose',
       'NA · NOC · Title Clear',
-      'Registered sale deed guaranteed',
+      'Registered sale deed in the buyer’s name',
     ],
     accent: '#3b82f6',
   },
@@ -507,7 +523,7 @@ export const testimonials = [
   {
     name: 'Priya Patel',
     city: 'Ahmedabad',
-    text: 'The team explained the SIR zones and activation area better than anyone. My Mayur Greenz II plot near the expressway has already appreciated since booking.',
+    text: 'The team explained the SIR zones and activation area better than anyone. I booked a Mayur Greenz II plot near the expressway after the site visit.',
   },
   {
     name: 'Amitabh Verma',
@@ -519,7 +535,7 @@ export const testimonials = [
 export const faqs = [
   {
     q: 'Why is Dholera Smart City a good investment in 2026?',
-    a: "Dholera SIR is India's first greenfield smart city — backed by the Government of Gujarat and the Delhi–Mumbai Industrial Corridor. With the ₹91,000 crore Tata semiconductor fab, the international airport nearing completion and the Ahmedabad–Dholera Expressway, land prices are still at an early-growth stage (₹6,000–₹10,000/sq yd), giving strong long-term appreciation potential.",
+    a: "Dholera SIR is India's first greenfield smart city, backed by the Government of Gujarat and the Delhi–Mumbai Industrial Corridor. The ₹91,000 crore Tata semiconductor fab, Dholera International Airport and the Ahmedabad–Dholera Expressway are the infrastructure a buyer can check in 2026. Plots marketed by Capital Brix start from ₹9,250 per sq yd. That is a current rate, not a forecast of returns.",
   },
   {
     q: 'What is Capital Brix\u2019s relationship with Mirrikh Infratech?',
@@ -531,7 +547,7 @@ export const faqs = [
   },
   {
     q: 'What is the minimum investment to buy a plot in Dholera?',
-    a: 'Residential plots start from ₹7,250 per sq yd in Mayur Greenz II. A typical 150 sq yd plot starts around ₹11–12 lakh depending on project and location. Flexible payment plans are available.',
+    a: 'Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. A 150 sq yd plot at the starting rate is ₹13.88 lakh on land value, before stamp duty, registration and development charges.',
   },
   {
     q: 'Where is Dholera and how do I reach it?',

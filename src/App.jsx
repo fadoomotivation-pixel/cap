@@ -5,6 +5,7 @@ import Seo from './components/Seo';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppFloat from './components/WhatsAppFloat';
+import StickyCta from './components/StickyCta';
 import ScrollToTop from './components/ScrollToTop';
 
 import Home from './pages/Home';
@@ -84,6 +85,7 @@ export function AppContent() {
         <Route path="/book/confirm/:bookingId" element={<PrivateRoute title="Interview Confirmed | Capital Brix"><InterviewConfirmation /></PrivateRoute>} />
       </Routes>
       <Footer />
+      <StickyCta />
       <WhatsAppFloat />
     </>
   );

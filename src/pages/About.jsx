@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, FileCheck2, MapPin, Phone, Award, Handshake } from 'lucide-react';
 import Seo from '../components/Seo';
+import PageIntro from '../components/PageIntro';
 import { pageSeo } from '../lib/seo';
 import { site } from '../data/site';
 
@@ -48,31 +49,14 @@ const whatWeDo = [
 
 export default function About() {
   return (
-    <main className="pt-[72px] bg-[#F0F5FA] min-h-screen font-outfit">
+    <main className="bg-[#f5f5f7] min-h-screen font-outfit">
       <Seo {...pageSeo.about} />
-
-      {/* ── Banner ─────────────────────────────────────────── */}
-      <div className="bg-[#10243E] py-16 md:py-20 text-center text-white relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage:
-              "url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1280px-World_map_-_low_resolution.svg.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-        <div className="relative z-10 max-w-3xl mx-auto px-6">
-          <p className="text-[#D4AF37] font-bold uppercase tracking-[0.25em] text-xs sm:text-sm mb-3">
-            Capital Brix LLP · Noida
-          </p>
-          <h1 className="text-4xl md:text-5xl font-black mb-4 text-white">Who We Are</h1>
-          <p className="text-white/70 text-base sm:text-lg max-w-xl mx-auto">
-            A Dholera plot sales and advisory firm, and an authorised sales channel partner
-            for Mirrikh Infratech Pvt. Ltd.
-          </p>
-        </div>
-      </div>
+      <PageIntro
+        eyebrow="Capital Brix LLP · Noida"
+        title="Who we are"
+        lede="A Dholera plot sales firm, and an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd."
+        crumbs={[{ label: 'Home', to: '/' }, { label: 'About' }]}
+      />
 
       <div className="max-w-6xl mx-auto px-6 lg:px-12 py-14 md:py-20">
 

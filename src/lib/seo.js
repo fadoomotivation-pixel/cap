@@ -17,9 +17,9 @@ export const absoluteUrl = (path = '/') => `${SITE_URL}${path.startsWith('/') ? 
 // pages don't compete with each other for the same query.
 export const pageSeo = {
   home: {
-    title: 'Dholera Smart City Plots from ₹7,250/sq yd | Capital Brix',
+    title: 'Dholera Plots from ₹9,250/sq yd | Capital Brix',
     description:
-      'NA-approved, title-clear plots in Dholera SIR from ₹7,250/sq yd, in projects developed by Mirrikh Infratech. Capital Brix is an authorised sales channel partner. Near Dholera International Airport & the Ahmedabad–Dholera Expressway. Free site visit.',
+      'NA-approved, title-clear Dholera SIR plots from ₹9,250/sq yd. Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.',
     path: '/',
   },
   about: {

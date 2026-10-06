@@ -8,8 +8,32 @@
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold text-brand-blue;
+    @apply font-heading font-semibold tracking-tight text-[#10243E];
   }
+}
+
+/* Desktop WhatsApp button. The mobile bar (StickyCta) covers phones,
+   so this stays off small screens and does not pulse. */
+.wa-float {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .wa-float {
+    display: flex;
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 40;
+    width: 52px;
+    height: 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #0A1016;
+    color: #f5f5f7;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  }
+  .wa-float__pulse { display: none; }
 }
 
 @layer components {
