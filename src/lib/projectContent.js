@@ -139,7 +139,7 @@ export const projectFaqs = (p) => {
     p.price === 'On Request'
       ? {
           q: `What is the price of a plot in ${p.name}?`,
-          a: `Pricing for ${p.name} is quoted on request at ${p.priceUnit.toLowerCase()}, because the rate depends on the plot you choose within the layout. Dholera residential plots generally run ₹6,000–₹10,000 per sq yd, with Capital Brix inventory starting at ₹7,250. Ask us and we will send the current rate for this project plus a single all-in figure including stamp duty and registration.`,
+          a: `Pricing for ${p.name} is quoted on request at ${p.priceUnit.toLowerCase()}, because the rate depends on the plot you choose within the layout. Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. Ask us and we will send the current rate for this project plus a single all-in figure including stamp duty and registration.`,
         }
       : {
           q: `What is the price of a plot in ${p.name}?`,

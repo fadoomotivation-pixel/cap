@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Phone, MessageCircle, MapPin } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Seo from '../components/Seo';
 import Prose from '../components/Prose';
 import DholeraTimeline, { timelineItemList } from '../components/DholeraTimeline';
 import DholeraInfrastructure from '../components/DholeraInfrastructure';
 import VirtualTourViewer from '../components/VirtualTourViewer';
 import { pageSeo, absoluteUrl, SITE_URL, SITE_NAME } from '../lib/seo';
-import { faqsFromMarkdown, whatsappHref, setWhatsappPhone } from '../lib/prose';
+import { faqsFromMarkdown, setWhatsappPhone } from '../lib/prose';
 import { site } from '../data/site';
 import pillarMarkdown from '../content/dholera-pillar.md?raw';
 
@@ -87,18 +87,11 @@ const faqLd = {
   })),
 };
 
-function track(id) {
-  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-    window.gtag('event', 'cta_click', { cta_id: id });
-  }
-}
-
 export default function Dholera() {
   setWhatsappPhone(site.phone);
-  const wa = whatsappHref();
 
   return (
-    <main className="bg-white font-outfit min-h-screen pb-20 lg:pb-0">
+    <main className="bg-white font-outfit min-h-screen">
       <Seo
         title={pageSeo.dholera.title}
         description={pageSeo.dholera.description}
@@ -153,17 +146,6 @@ export default function Dholera() {
         />
       </article>
 
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-3 bg-[#0A1016] text-white border-t border-white/10">
-        <a href={`tel:+${site.phone}`} data-cta="bar-call" onClick={() => track('bar-call')} className="flex items-center justify-center gap-1.5 py-3 text-xs font-semibold">
-          <Phone size={14} /> Call
-        </a>
-        <a href={wa} target="_blank" rel="noreferrer" data-cta="bar-whatsapp" onClick={() => track('bar-whatsapp')} className="flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-[#D4AF37]">
-          <MessageCircle size={14} /> WhatsApp
-        </a>
-        <Link to="/contact" data-cta="bar-visit" onClick={() => track('bar-visit')} className="flex items-center justify-center gap-1.5 py-3 text-xs font-semibold">
-          <MapPin size={14} /> Visit
-        </Link>
-      </div>
     </main>
   );
 }

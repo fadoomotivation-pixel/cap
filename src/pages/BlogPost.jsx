@@ -3,6 +3,7 @@ import { Link, useParams, Navigate } from 'react-router-dom';
 import { ChevronRight, Clock, CalendarDays, ArrowLeft, ArrowRight, Plus, Minus, ShieldCheck, MapPin, BadgeCheck } from 'lucide-react';
 import Seo from '../components/Seo';
 import LeadForm from '../components/LeadForm';
+import ChecklistLead from '../components/ChecklistLead';
 import BlogArt from '../components/BlogArt';
 import ArticleBody from '../components/ArticleBody';
 import Prose from '../components/Prose';
@@ -152,7 +153,7 @@ export default function BlogPost() {
                 {[
                   [ShieldCheck, 'NA-approved, NOC-cleared, title-clear and plan-passed plots only'],
                   [BadgeCheck, 'Authorised sales channel partner for Mirrikh Infratech — a developer with 8+ projects delivered since 2012'],
-                  [MapPin, 'NA-approved, title-clear plots from ₹7,250 / sq yd, registered in your name'],
+                  [MapPin, 'Plots from ₹9,250/sq yd, up to about ₹14,950, registered in your name'],
                 ].map(([Icon, text]) => (
                   <li key={text} className="flex gap-3">
                     <Icon size={16} className="text-[#D4AF37] shrink-0 mt-0.5" />
@@ -181,6 +182,10 @@ export default function BlogPost() {
             )}
           </aside>
         </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-6 pb-4">
+        <ChecklistLead source="blog-checklist" />
       </div>
 
       {/* ── Closing conversion block ─────────────────────────── */}

@@ -78,4 +78,11 @@ Disallow: /employee-kyc
 Disallow: /admin/
 Disallow: /book/
 
+# Google Search, and the index AI Overviews draw from.
+User-agent: Googlebot
+Allow: /
+Disallow: /employee-kyc
+Disallow: /admin/
+Disallow: /book/
+
 Sitemap: https://www.capitalbrix.co.in/sitemap.xml

@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { site } from '../data/site';
+import { site, plotRates } from '../data/site';
+import { track } from '../lib/track';
 
 const wa = `https://wa.me/${site.phone}?text=${encodeURIComponent(site.whatsappMessage)}`;
 
@@ -130,27 +131,32 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
             className="text-gray-300 text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mb-10 font-light"
           >
-            NA-approved, title-clear plots in Dholera Smart City from ₹7,250 / sq yd, in projects
-            developed by Mirrikh Infratech. Full documentation support from our Noida office.
+            NA-approved, title-clear plots in Dholera Smart City {plotRates.fromLabel}, in projects
+            developed by Mirrikh Infratech Pvt. Ltd. Rates run up to about ₹14,950 per sq yd
+            depending on the project and the plot. Verified {plotRates.verified}.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
             className="flex flex-col sm:flex-row gap-4"
           >
+            <Link
+              to="/contact"
+              data-cta="hero-visit"
+              onClick={() => track('cta_click', { cta_id: 'hero-visit' })}
+              className="group inline-flex items-center justify-center gap-3 bg-[#C9A962] hover:bg-[#b8964e] text-[#0A1016] px-8 py-4 rounded-sm font-medium transition-colors duration-300"
+            >
+              Book a site visit
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
             <a
               href={wa} target="_blank" rel="noreferrer"
-              className="group inline-flex items-center justify-center gap-3 bg-[#D4AF37] hover:bg-[#B8860B] text-[#0A1016] px-8 py-4 rounded-sm font-semibold transition-colors duration-300"
-            >
-              Book a Site Visit
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </a>
-            <Link
-              to="/projects"
+              data-cta="hero-whatsapp"
+              onClick={() => track('cta_click', { cta_id: 'hero-whatsapp' })}
               className="inline-flex items-center justify-center gap-3 border border-white/30 hover:border-white/60 text-white px-8 py-4 rounded-sm font-medium transition-colors duration-300"
             >
-              View Projects
-            </Link>
+              WhatsApp the plot list
+            </a>
           </motion.div>
         </div>
       </div>

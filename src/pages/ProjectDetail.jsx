@@ -102,7 +102,7 @@ export default function ProjectDetail() {
   // Offer costs the price snippet; an invalid Offer costs the whole item.
   //
   // It is a UnitPriceSpecification because the number is per square yard, not
-  // the price of the plot. Marking ₹7,250 as the price of a 150 sq yd plot
+  // the price of the plot. Marking a per-yard rate as the price of a 150 sq yd plot
   // would put a figure in Google's results that nobody can buy anything for.
   //
   // Only ever marked up because the same number is rendered on the page below —

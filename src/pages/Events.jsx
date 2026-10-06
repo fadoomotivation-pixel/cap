@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { CalendarDays, MapPin, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { getEvent } from '../data/eventDetails';
 import Seo from '../components/Seo';
+import PageIntro from '../components/PageIntro';
 import { pageSeo } from '../lib/seo';
 
 function getEventMeta(event) {
@@ -89,20 +90,14 @@ export default function Events() {
   }, [ordered, selectedYear]);
 
   return (
-    <div className="pt-24 pb-16 min-h-screen bg-gray-50 font-outfit">
+    <div className="pb-16 min-h-screen bg-[#f5f5f7] font-outfit">
       <Seo {...pageSeo.events} />
-
-      {/* Header */}
-      <div className="bg-[#10243E] text-white py-16 mb-12">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Events</h1>
-          <p className="text-xl text-gray-300 max-w-2xl">
-            Success celebrations, awareness programmes and exhibitions hosted by
-            Mirrikh Infratech Pvt. Ltd., the developer whose Dholera projects Capital Brix
-            markets as an authorised sales channel partner.
-          </p>
-        </div>
-      </div>
+      <PageIntro
+        eyebrow="Seminars and site briefings"
+        title="Events"
+        lede="Awareness programmes and exhibitions. Where an event is hosted with Mirrikh Infratech Pvt. Ltd., the two companies are named separately. Capital Brix markets their Dholera projects as an authorised sales channel partner."
+        crumbs={[{ label: 'Home', to: '/' }, { label: 'Events' }]}
+      />
 
       <div className="max-w-6xl mx-auto px-4 md:px-8">
         {/* The one event currently taking registrations sits above the archive

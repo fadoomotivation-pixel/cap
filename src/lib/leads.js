@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { track } from './track';
 
 /**
  * Every website enquiry goes through here. Until this existed the contact
@@ -25,5 +26,6 @@ export async function submitLead({ full_name, phone, email, message, source = 'w
   }]);
 
   if (error) return { error: 'Could not send that just now. Please WhatsApp or call us instead.' };
+  track('generate_lead', { lead_source: source, cta_id: 'lead-form' });
   return { ok: true };
 }
