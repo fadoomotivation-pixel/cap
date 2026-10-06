@@ -5,6 +5,7 @@ import Seo from '../components/Seo';
 import LeadForm from '../components/LeadForm';
 import BlogArt from '../components/BlogArt';
 import ArticleBody from '../components/ArticleBody';
+import Prose from '../components/Prose';
 import { blogs, blogBySlug } from '../data/blogs';
 import { blogPostSeo, blogPostJsonLd } from '../lib/seo';
 import { site } from '../data/site';
@@ -75,12 +76,16 @@ export default function BlogPost() {
         <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-12 lg:gap-16">
 
           <div className="min-w-0">
-            {/* The query gets answered above the fold, then expanded. */}
-            <p className="text-lg lg:text-xl text-[#10243E] leading-relaxed font-light border-l-2 border-[#D4AF37] pl-6 mb-12">
-              {post.intro}
-            </p>
-
-            <ArticleBody sections={post.sections} />
+            {post.markdown ? (
+              <Prose markdown={post.markdown} contained />
+            ) : (
+              <>
+                <p className="text-lg lg:text-xl text-[#10243E] leading-relaxed font-light border-l-2 border-[#D4AF37] pl-6 mb-12">
+                  {post.intro}
+                </p>
+                <ArticleBody sections={post.sections} />
+              </>
+            )}
 
             {/* Mid-article CTA — a reader who is convinced here should not have
                 to scroll to the end to act. */}
@@ -107,7 +112,7 @@ export default function BlogPost() {
             </div>
 
             {/* FAQ — rendered, because the FAQPage schema must match what is visible */}
-            {post.faqs?.length > 0 && (
+            {!post.markdown && post.faqs?.length > 0 && (
               <section className="mb-4">
                 <h2 className="text-2xl lg:text-3xl font-heading text-[#10243E] mb-6">Frequently asked</h2>
                 <div className="border-t border-gray-200">

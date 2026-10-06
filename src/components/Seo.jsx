@@ -7,9 +7,23 @@ import { SITE_NAME, DEFAULT_OG_IMAGE, absoluteUrl } from '../lib/seo';
  * title/description/path. Set `noIndex` on private pages (portal, admin,
  * booking links) so they never show up in search results.
  */
-export default function Seo({ title, description, path = '/', image, noIndex = false, jsonLd, children }) {
+export default function Seo({
+  title,
+  description,
+  path = '/',
+  image,
+  imageAlt,
+  noIndex = false,
+  jsonLd,
+  ogTitle,
+  ogDescription,
+  ogType = 'website',
+  twitterDescription,
+  children,
+}) {
   const canonical = absoluteUrl(path);
   const ogImage = image || DEFAULT_OG_IMAGE;
+  const graphs = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   // index.html carries a set of fallback SEO tags for crawlers that never run
   // JS. On React 19, react-helmet-async renders its tags and lets React hoist
@@ -32,20 +46,25 @@ export default function Seo({ title, description, path = '/', image, noIndex = f
         <meta name="robots" content="index, follow, max-image-preview:large" />
       )}
 
-      <meta property="og:type" content="website" />
+      <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={SITE_NAME} />
-      <meta property="og:title" content={title} />
-      {description && <meta property="og:description" content={description} />}
+      <meta property="og:title" content={ogTitle || title} />
+      {(ogDescription || description) && <meta property="og:description" content={ogDescription || description} />}
       <meta property="og:url" content={canonical} />
       <meta property="og:image" content={ogImage} />
+      {imageAlt && <meta property="og:image:alt" content={imageAlt} />}
       <meta property="og:locale" content="en_IN" />
 
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      {description && <meta name="twitter:description" content={description} />}
+      <meta name="twitter:title" content={ogTitle || title} />
+      {(twitterDescription || ogDescription || description) && (
+        <meta name="twitter:description" content={twitterDescription || ogDescription || description} />
+      )}
       <meta name="twitter:image" content={ogImage} />
 
-      {jsonLd && <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>}
+      {graphs.map((obj, i) => (
+        <script key={i} type="application/ld+json">{JSON.stringify(obj)}</script>
+      ))}
       {children}
     </Helmet>
   );

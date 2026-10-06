@@ -127,9 +127,9 @@ export default function DholeraInfrastructure() {
           <p className="text-[#D4AF37] font-bold uppercase tracking-[0.2em] text-xs mb-3">
             Built, not proposed
           </p>
-          <h2 id="infra-heading" className="font-heading text-2xl sm:text-3xl lg:text-4xl leading-tight mb-4">
+          <h3 id="infra-heading" className="font-heading text-white text-2xl sm:text-3xl lg:text-4xl leading-tight mb-4">
             The infrastructure already standing in the Activation Area
-          </h2>
+          </h3>
           <p className="text-gray-400 leading-relaxed">
             Dholera is easy to sell on renderings. These are the pieces that exist on the
             ground today, with the capacities published by the development authority.

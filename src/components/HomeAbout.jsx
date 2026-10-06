@@ -41,6 +41,11 @@ export default function HomeAbout() {
             <p>
               As an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., Capital Brix markets plots in the developer’s Dholera projects and handles the sale end to end — availability, site visits, documentation and registration.
             </p>
+            <p>
+              Dholera is a planned industrial smart city in Ahmedabad district, Gujarat — the Dholera Special Investment Region. It covers 920 sq km, larger than Singapore, and is the largest city being built under the Delhi–Mumbai Industrial Corridor. The first 22.5 sq km activation area already has roads, water, power and drainage. In 2026 the Ahmedabad–Dholera Expressway opened, the Tata–PSMC semiconductor site was notified as an SEZ, a semi-high-speed rail line was approved, and the first aircraft landed at Dholera International Airport. Most individual buyers take part by purchasing NA residential or commercial plots from private developers around the SIR. Read the verified{' '}
+              <Link to="/dholera" className="text-[#9C7C1C] font-medium hover:underline">Dholera Smart City guide</Link>
+              {' '}for the map, the master plan, the companies and the plot checks.
+            </p>
           </div>
 
           <div className="mt-8">

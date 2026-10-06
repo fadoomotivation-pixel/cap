@@ -1,5 +1,11 @@
 # Brief for Antigravity — project images, without undoing the SEO work
 
+**6 Oct 2026:** `/dholera` is no longer a hub of pillar cards. It is the verified
+guide (`src/content/dholera-pillar.md`) with the black 2006–2026 timeline
+(`DholeraTimeline.jsx`). Four research posts live as markdown under
+`src/content/blog/`. Do not put wafer-2028, rail-2030 or maturity-2040 copy
+back, and do not restore "Strategy Partner" wording.
+
 Read this fully before touching anything. The last two days were spent fixing
 the reasons this site could not rank, and several of those fixes look like
 things worth "cleaning up" if you don't know why they're there.

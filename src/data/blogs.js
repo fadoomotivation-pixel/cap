@@ -15,9 +15,65 @@
 // 800+ words of real substance, 3+ FAQs, and add the URL to public/sitemap.xml.
 // ─────────────────────────────────────────────────────────────
 
+import ecosystemMd from '../content/blog/dholera-industrial-ecosystem-companies.md?raw';
+import dubaiMd from '../content/blog/dholera-vs-dubai-why-infrastructure-comes-first.md?raw';
+import tataMd from '../content/blog/tata-semiconductor-plant-dholera.md?raw';
+import dmicMd from '../content/blog/delhi-mumbai-industrial-corridor-dholera.md?raw';
+import { faqsFromMarkdown } from '../lib/prose';
+
+const researchPost = (partial, markdown) => {
+  const words = markdown.split(/\s+/).filter(Boolean).length;
+  return {
+    sections: [],
+    ...partial,
+    markdown,
+    faqs: faqsFromMarkdown(markdown),
+    readMinutes: Math.max(6, Math.round(words / 220)),
+    date: partial.date || '2026-10-06',
+    updated: '2026-10-06',
+  };
+};
+
 export const blogCategories = ['All', 'Investment', 'Infrastructure', 'Legal & Process', 'NRI'];
 
 export const blogs = [
+  researchPost({
+    slug: 'dholera-industrial-ecosystem-companies',
+    category: 'Infrastructure',
+    keyword: 'dholera industries',
+    tone: 'teal',
+    title: 'Dholera Industrial Ecosystem 2026: Every Company, ₹ Commitment & Status',
+    h1: 'Companies Investing in Dholera SIR: The Complete Industrial Ecosystem (2026)',
+    seoTitle: 'Dholera Industrial Ecosystem 2026: Every Company, ₹ Commitment & Status',
+    excerpt:
+      'Tata fab, data centres, solar, gases, aviation: the full list of companies committed to Dholera SIR, with ₹ figures and verified status as of Oct 2026.',
+    related: ['tata-semiconductor-plant-dholera', 'delhi-mumbai-industrial-corridor-dholera', 'dholera-international-airport', 'how-to-verify-a-dholera-plot'],
+  }, ecosystemMd),
+  researchPost({
+    slug: 'dholera-vs-dubai-why-infrastructure-comes-first',
+    category: 'Investment',
+    keyword: 'dholera like dubai',
+    tone: 'gold',
+    title: 'Dholera vs Dubai: Why Infrastructure Comes First (and Where the Analogy Breaks)',
+    h1: 'Dholera and Dubai: What a 30-Year Infrastructure Story Can (and Can\'t) Teach Investors',
+    seoTitle: 'Dholera vs Dubai: Why Infrastructure Comes First (and Where the Analogy Breaks)',
+    excerpt:
+      'Dubai\'s Sheikh Zayed Road went from desert highway to skyline in about 30 years. What Dholera has really built so far, and the limits of the Dubai comparison.',
+    related: ['delhi-mumbai-industrial-corridor-dholera', 'is-dholera-a-good-investment', 'ahmedabad-dholera-expressway'],
+  }, dubaiMd),
+  researchPost({
+    slug: 'delhi-mumbai-industrial-corridor-dholera',
+    category: 'Infrastructure',
+    keyword: 'DMIC dholera',
+    tone: 'navy',
+    title: 'Delhi–Mumbai Industrial Corridor (DMIC) & Dholera: The Complete 2026 Guide',
+    h1: 'Delhi–Mumbai Industrial Corridor (DMIC) Explained, and Why Dholera Is Its Flagship City',
+    seoTitle: 'Delhi–Mumbai Industrial Corridor (DMIC) & Dholera: The Complete 2026 Guide',
+    excerpt:
+      'How DMIC works: India–Japan origins, funding, the 1,506 km freight corridor, expressway status, 24 planned nodes, and why Dholera is its biggest city.',
+    related: ['dholera-vs-dubai-why-infrastructure-comes-first', 'ahmedabad-dholera-expressway', 'dholera-international-airport', 'dholera-industrial-ecosystem-companies'],
+  }, dmicMd),
+
   // ══════════════════════════════════════════════════════════════
   // Sourced from DICDL's own quarterly newsletter (SPOTLIGHT, Jan–Apr 2026).
   // Facts are the development authority's; every sentence here is written from
@@ -566,94 +622,22 @@ export const blogs = [
   },
 
   // ══════════════════════════════════════════════════════════════
-  {
+  researchPost({
     slug: 'tata-semiconductor-plant-dholera',
     category: 'Infrastructure',
-    keyword: 'Tata semiconductor plant Dholera',
+    keyword: 'tata semiconductor plant dholera',
     date: '2026-06-24',
-    updated: '2026-09-01',
-    readMinutes: 8,
     tone: 'violet',
     image: '/blog/tata-semiconductor-plant-dholera.webp',
     imageAlt: 'Abstract circular silicon wafer micro-architecture lattice and gold circuit traces on dark navy',
-    title: 'The Tata Semiconductor Fab in Dholera: Why It Matters',
-    h1: 'The Tata semiconductor fab in Dholera: why one factory changes a region',
-    seoTitle: 'Tata Semiconductor Plant Dholera: Impact on the Region',
+    title: 'Tata Chip Fab Dholera: ₹91,000 Cr, 50k Wafers/Month & the Supplier Ecosystem',
+    h1: 'Tata Semiconductor Plant Dholera: Facts, Timeline & the Ecosystem Around It (2026 Update)',
+    seoTitle: 'Tata Chip Fab Dholera: ₹91,000 Cr, 50k Wafers/Month & the Supplier Ecosystem',
     excerpt:
-      'A roughly ₹91,000 crore fabrication plant is the largest single commitment in Dholera. Fabs do not arrive alone — here is what an ecosystem like this brings, and what it realistically means for land in the region.',
-    intro:
-      'Of everything happening in Dholera, the Tata semiconductor fabrication plant — a commitment of roughly ₹91,000 crore — is the item that most changes the region\'s economic profile. Not because of the factory itself, but because of what a fab requires around it. This explains the ecosystem effect in practical terms, and what it does and does not mean for someone considering land.',
-    sections: [
-      {
-        h2: 'Why a fab is different from a factory',
-        p: [
-          'A conventional plant employs people and buys inputs. A semiconductor fabrication facility does that and also forces an entire supply chain into physical proximity, because the process demands it.',
-          'Fabs need ultra-pure water and uninterrupted power at industrial scale. They need specialty gases and chemicals delivered reliably. They need assembly, testing, marking and packaging operations nearby. They need cleanroom construction and maintenance contractors, precision logistics, and a workforce spanning PhD-level process engineers to skilled technicians.',
-          'Each of those is a business that locates near the fab. That is the ecosystem effect, and it is why a single fab announcement reshapes a region in a way that a single factory does not.',
-        ],
-      },
-      {
-        h2: 'What that means on the ground',
-        list: {
-          items: [
-            '**Employment across skill levels**, not just at the top. Fabs are famously capital-intensive per job, but their supplier ecosystems are not.',
-            '**Sustained housing demand from people who live where they work.** This is qualitatively different from demand created by investors selling to other investors.',
-            '**Commercial and retail activity** following a resident population with disposable income.',
-            '**Industrial land absorption** by suppliers who need to be close, which tightens availability of the good parcels first.',
-            '**Infrastructure prioritisation.** A project of this scale concentrates official attention on power, water and road delivery in its vicinity.',
-          ],
-        },
-      },
-      {
-        h2: 'The realistic reading',
-        p: [
-          'Two things are true at once, and a serious buyer holds both.',
-          'The first: this is the most substantive industrial commitment Dholera has, and it is the kind that creates durable local demand rather than speculative churn. Semiconductor manufacturing is a strategic national priority, which makes sustained policy support more likely than for an ordinary industrial park.',
-          'The second: fabs take years to move from commitment to volume production, and the ecosystem builds out over a longer period still. Anyone presenting this as a short-term catalyst is misrepresenting how the industry works.',
-        ],
-        callout: {
-          tone: 'tip',
-          title: 'The useful mental model',
-          text: 'Treat the fab as raising the floor under long-term demand for well-located, legally clean land in the region — not as a timer counting down to a price event. Buy accordingly: on a long horizon, at a price that does not already assume the ecosystem is built.',
-        },
-      },
-      {
-        h2: 'How this interacts with the rest of Dholera',
-        p: [
-          'The fab is one of three anchors. Dholera International Airport is under construction at Navagam. The 109 km Ahmedabad–Dholera Expressway compresses the Ahmedabad drive to about 45 minutes. Beneath all of it sits a planned 920 sq km region with trunk infrastructure designed before occupancy — which is the reason a project of this scale could site here at all.',
-          'That sequencing is the actual story. Dholera did not attract a fab because the fab wanted a village; it attracted one because the land, power, water and connectivity were planned to industrial specification in advance.',
-        ],
-      },
-      {
-        h2: 'What to do with this information',
-        p: [
-          'If you are considering land in Dholera, the fab should inform your time horizon rather than your urgency. It supports a five-to-ten-year view. It does not justify overpaying today, skipping documentation, or buying a plot whose only merit is a claimed distance from the plant.',
-          'The plot you buy still has to be NA-converted, NOC-cleared, plan-passed and title-clear, in a layout with real road access, at a price that reflects today rather than an assumed tomorrow. The fab changes the backdrop. It does not change the checklist.',
-        ],
-      },
-    ],
-    faqs: [
-      {
-        q: 'How big is the Tata semiconductor plant in Dholera?',
-        a: 'The project represents a commitment of roughly ₹91,000 crore, making it the largest single industrial investment associated with Dholera SIR.',
-      },
-      {
-        q: 'Will the fab increase land prices in Dholera?',
-        a: 'It strengthens the structural case for long-term demand, because a fab brings a supplier ecosystem and resident employment rather than speculative interest alone. Nobody can responsibly promise a price outcome, and you should be cautious of anyone who does.',
-      },
-      {
-        q: 'How long before the ecosystem is actually built out?',
-        a: 'Semiconductor facilities move from commitment to volume production over a period of years, and the surrounding supplier ecosystem develops over a longer period still. This is a long-horizon factor, not a short-term catalyst.',
-      },
-      {
-        q: 'Should I buy industrial or residential land because of the fab?',
-        a: 'That depends on your capital, horizon and intent rather than on the fab. Industrial plots serve buyers planning an operation or targeting supplier demand; residential plots serve buyers positioning for housing demand from the workforce. Both exist in the Mirrikh Infratech portfolio, and the right answer is the one that matches your situation.',
-      },
-    ],
-    related: ['dholera-international-airport', 'ahmedabad-dholera-expressway', 'is-dholera-a-good-investment'],
-  },
+      'Tata Electronics–PSMC fab at Dholera: approval, SEZ, 28–110nm nodes, suppliers (TEL, INOX, Linde) and what it means for land nearby. Verified Oct 2026.',
+    related: ['dholera-industrial-ecosystem-companies', 'dholera-international-airport', 'ahmedabad-dholera-expressway', 'how-to-verify-a-dholera-plot'],
+  }, tataMd),
 
-  // ══════════════════════════════════════════════════════════════
   {
     slug: 'ahmedabad-dholera-expressway',
     category: 'Infrastructure',
@@ -936,6 +920,7 @@ export const blogBySlug = (slug) => blogs.find((b) => b.slug === slug);
 /** Word count of a post's prose — used for the reading estimate and as a
  *  guard against thin content creeping back in. */
 export const wordCount = (post) => {
+  if (post.markdown) return post.markdown.split(/\s+/).filter(Boolean).length;
   const parts = [post.intro];
   post.sections.forEach((s) => {
     if (s.h2) parts.push(s.h2);

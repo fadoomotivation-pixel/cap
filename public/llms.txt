@@ -22,14 +22,17 @@ sources in the text.
 - [How to verify a Dholera plot](https://www.capitalbrix.co.in/blog/how-to-verify-a-dholera-plot): The NA, NOC, title-clear and unit-plan-pass checks, in the order to do them.
 - [Dholera International Airport](https://www.capitalbrix.co.in/blog/dholera-international-airport): Status, phasing and what it means for land around it.
 - [Ahmedabad–Dholera Expressway](https://www.capitalbrix.co.in/blog/ahmedabad-dholera-expressway): The 109 km route and the ~45 minute travel time that changes the region's economics.
-- [Tata semiconductor plant, Dholera](https://www.capitalbrix.co.in/blog/tata-semiconductor-plant-dholera): The ₹91,000 crore fab and its employment effect.
+- [Tata semiconductor plant, Dholera](https://www.capitalbrix.co.in/blog/tata-semiconductor-plant-dholera): The ₹91,000 crore fab, the April 2026 SEZ, and the supplier ecosystem. Verified through 2026.
+- [Dholera industrial ecosystem](https://www.capitalbrix.co.in/blog/dholera-industrial-ecosystem-companies): Companies committed to Dholera SIR, with figures and status as of October 2026.
+- [Dholera and Dubai](https://www.capitalbrix.co.in/blog/dholera-vs-dubai-why-infrastructure-comes-first): Why infrastructure comes first, and where the Dubai comparison stops.
+- [DMIC and Dholera](https://www.capitalbrix.co.in/blog/delhi-mumbai-industrial-corridor-dholera): The Delhi–Mumbai Industrial Corridor, and why Dholera is its largest city.
 - [Dholera SIR progress in 2026](https://www.capitalbrix.co.in/blog/dholera-sir-progress-2026): What is actually complete on the ground.
 - [NRI guide to buying land in Dholera](https://www.capitalbrix.co.in/blog/nri-guide-buying-land-in-dholera): FEMA position, documentation and repatriation.
 - [Dholera land vs FD, gold and apartments](https://www.capitalbrix.co.in/blog/dholera-land-vs-fd-gold-apartment): A like-for-like comparison of the alternatives.
 
 ## Region
 
-- [Dholera SIR overview](https://www.capitalbrix.co.in/dholera): India's first greenfield smart city — master plan, phases and infrastructure.
+- [Dholera Smart City guide](https://www.capitalbrix.co.in/dholera): 920 sq km SIR on the DMIC. Expressway, airport, Tata fab, map and NA plots. Verified 6 October 2026.
 
 ## Projects
 
