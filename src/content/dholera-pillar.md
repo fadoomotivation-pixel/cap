@@ -246,7 +246,7 @@ The **Tata Electronics–PSMC semiconductor fab** is Dholera's best-known anchor
 
 **Price guide (verified 6 October 2026):** plots marketed by Capital Brix start **from ₹9,250 per sq yd** and run up to about **₹14,950 per sq yd**, depending on the project and the plot. Rates vary with location, road frontage and distance to the expressway, airport and activation area. Typical extra costs on current Mirrikh projects include development charges (₹850/sq yd + GST), registration (about 5.9% of the consideration amount) and a sale-deed legal fee. Each project's cost sheet lists them in full. [See current projects →](/projects) · [Dholera plot price 2026 explained →](/blog/dholera-plot-price-2026)
 
-**Every plot we offer comes with its document file.** ★ This includes the NA order, title search, 7/12 extract and approved layout, followed by sale-deed registration in your name. Review it yourself or with your lawyer before you pay a booking amount.
+**Every plot we offer comes with its document file.** This includes the NA order, a title search and the 7/12 extract, followed by sale-deed registration in your name. Review it yourself or with your lawyer before you pay a booking amount.
 
 ### Five checks before you buy any Dholera plot
 1. **NA status:** a non-agricultural conversion order for the exact survey number
@@ -323,7 +323,7 @@ Prices depend on location, road frontage and distance to the expressway, airport
 Yes. Under FEMA rules, NRIs and OCIs can buy residential and commercial non-agricultural plots in India. They cannot buy agricultural land, farmhouses or plantation property. Payment must come through normal banking channels, such as NRE, NRO or FCNR accounts.
 
 ### What documents should I check before buying a Dholera plot?
-Check the NA order for the survey number, a title search with no encumbrances, the 7/12 extract, the approved layout and zoning, and make sure the purchase is completed by a registered sale deed.
+Check the NA order for the survey number, a title search with no encumbrances and the 7/12 extract, and make sure the purchase is completed by a registered sale deed.
 
 ### Is investing in Dholera guaranteed to give returns?
 No. Infrastructure progress in Dholera is real and verifiable, but land prices depend on location, market cycles and project execution. No investment is guaranteed. Verify each plot's documents and choose a holding period that suits your goals.
