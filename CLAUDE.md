@@ -605,6 +605,18 @@ answered "no" until 23 September 2026. It now answers, narrowly.
   returns `unconfirmed_names`, the count of names we set from the console that
   the terminal has not yet said back.
 
+- **A new enrolment's name arrives within a minute, not the next morning**
+  (`supabase/sql/cb_device_users_autorefresh.sql`). On 7 October three people
+  were enrolled with names typed at the keypad (103 Keshav, 105 Aniket, 106
+  Ananya) and the console read "Code 103" / "Nobody". The terminal had sent
+  OPERLOG uploads during the enrolment, but **this firmware reports an
+  enrolment as an operation, not as a `USER` line**, so essl-adms logged
+  "accepted, not attendance" and the only re-read was the 09:30 cron. Now an
+  OPERLOG with no USER lines, or a punch from a code we have no name for,
+  queues one `query_users` — never while one is outstanding, never more than
+  one per five minutes. Both triggers swallow their own errors: the punch
+  trigger runs inside the punch insert, and a refresh must never cost a punch.
+
 - **"Still enrolled, long gone" — the comparison nobody had made.** We ask
   *who is missing from the machine* constantly and had **never** asked *who is
   still on it who should not be*. On 30 September 2026 that was **32
