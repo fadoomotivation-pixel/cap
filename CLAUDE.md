@@ -641,6 +641,16 @@ answered "no" until 23 September 2026. It now answers, narrowly.
   the roster does not know is badged, not alarmed about: the pantry and the
   founder's own IDs are deliberately off it.
 
+  **A badged row carries "Add to roster"** (7 October 2026, the founder's
+  ask): name prefilled from the machine, an optional team (e.g. Backend), one
+  call to `cb_adopt_device_code(code, name, senior, team)`. It lands **out of
+  the WhatsApp report** like every adoption, and only a **current** holder
+  blocks a code — one released by a leaver is accepted and the handover date
+  is stamped, so the new person cannot inherit the old one's punches (the
+  code-11 shape: Pranav carrying 223 of Sandeep's days because
+  `device_code_since` was never set). The result prints on the row, not at
+  the top of the page.
+
 - **A "buddy punching" detector was investigated and deliberately NOT built.**
   Two different codes punching within three seconds of each other looks like a
   shared finger, and there are 96 such pairs across 27 code-pairs in 30 days —

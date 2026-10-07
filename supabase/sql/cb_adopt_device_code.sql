@@ -55,10 +55,20 @@ $$;
 grant execute on function cb_unmapped_device_codes(date) to authenticated;
 
 -- ── Give the code a name ───────────────────────────────────────────────
+-- Called from two places: the Monthly Report's "On the machine, not on the
+-- roster" list, and the machine console's "Seen today" panel, where somebody
+-- the roster does not know is first noticed — the moment they walk in.
+--
+-- p_team puts them on a team in the same transaction (e.g. Backend). It is
+-- optional and does NOT switch on in_daily_report: a team decides which group
+-- names somebody, and nobody is named until HR says so.
+drop function if exists cb_adopt_device_code(text, text, boolean);
+
 create or replace function cb_adopt_device_code(
   p_code text,
   p_name text,
-  p_senior boolean default false
+  p_senior boolean default false,
+  p_team uuid default null
 )
 returns jsonb
 language plpgsql
@@ -68,6 +78,7 @@ as $$
 declare
   new_id uuid;
   fold jsonb;
+  holder text;
 begin
   -- SECURITY DEFINER runs as the owner, so the caller must be re-checked here.
   if not cb_is_admin() then
@@ -78,11 +89,18 @@ begin
     raise exception 'a name is required';
   end if;
 
-  -- Two people on one code silently merge into one attendance record, and the
-  -- only evidence is a history nobody can explain. A partial unique index on
-  -- cb_employees.device_code makes this true at the database as well.
-  if exists (select 1 from cb_employees e where e.device_code = p_code) then
-    raise exception 'code % already belongs to somebody on the roster', p_code;
+  -- Only a CURRENT holder blocks it. A code released by somebody who left is
+  -- exactly what gets re-issued, and cb_set_device_code stamps the handover
+  -- date so the new person cannot inherit the previous one's punches — the
+  -- code-11 mistake (Pranav carrying 223 of Sandeep's days) in reverse.
+  select btrim(e.full_name) into holder
+  from cb_employees e where e.device_code = p_code and e.left_on is null;
+  if found then
+    raise exception 'code % already belongs to %', p_code, holder;
+  end if;
+
+  if p_team is not null and not exists (select 1 from cb_teams where id = p_team) then
+    raise exception 'no such team';
   end if;
 
   -- in_daily_report = false is the safety. Adopting a code must never quietly
@@ -93,17 +111,21 @@ begin
   -- have no login, so the address is deliberately unusable and obviously not
   -- real to anybody reading it — the same shape the event console uses for a
   -- seat taken by phone.
-  insert into cb_employees (full_name, email, is_active, in_daily_report, is_senior)
+  insert into cb_employees (full_name, email, is_active, in_daily_report, is_senior, team_id)
   values (btrim(p_name),
           'machine-' || p_code || '@capitalbrix.invalid',
-          true, false, coalesce(p_senior, false))
+          true, false, coalesce(p_senior, false), p_team)
   returning id into new_id;
 
-  -- cb_set_device_code validates the code AND re-folds from its first punch.
-  -- Without the fold the new name shows a blank month, because the punches are
-  -- already stored and merely unattributed — which reads as somebody who never
-  -- comes in, the exact opposite of the truth.
+  -- cb_set_device_code validates the code AND re-folds — from the handover
+  -- date if the code was released by a leaver, else from its first punch.
   select cb_set_device_code(new_id, p_code) into fold;
+
+  -- It answers {ok:false} rather than raising. Raise here, so the insert above
+  -- rolls back instead of leaving a roster row with no code behind it.
+  if coalesce((fold ->> 'ok')::boolean, false) is not true then
+    raise exception '%', coalesce(fold ->> 'message', 'could not set the code');
+  end if;
 
   -- It is no longer unknown, so the bridge's "unknown device codes" warning
   -- must stop naming it. A warning that is always there is one nobody reads.
@@ -113,4 +135,4 @@ begin
 end;
 $$;
 
-grant execute on function cb_adopt_device_code(text, text, boolean) to authenticated;
+grant execute on function cb_adopt_device_code(text, text, boolean, uuid) to authenticated;

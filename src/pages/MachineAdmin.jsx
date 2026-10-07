@@ -123,6 +123,12 @@ export default function MachineAdmin() {
   const [inOffice, setInOffice] = useState([]);
   const [stale, setStale] = useState([]);
   const [quietDays, setQuietDays] = useState(60);
+  // "Add to roster" on a Seen-today row: { code, name, team } while the form
+  // is open; teams to choose from; and the outcome per code, shown on the row
+  // itself — a result at the top of the page is five screens from the button.
+  const [adding, setAdding] = useState(null);
+  const [teams, setTeams] = useState([]);
+  const [added, setAdded] = useState({});
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -157,13 +163,56 @@ export default function MachineAdmin() {
     setMismatches(mism.data || []);
     setUsersAsOf(asOf.data || null);
 
-    const [live, old] = await Promise.all([
+    const [live, old, tm] = await Promise.all([
       supabase.rpc('cb_in_office_now'),
       supabase.rpc('cb_device_stale_enrolments', { p_quiet_days: quietDays }),
+      supabase.from('cb_teams').select('id, name').eq('is_active', true).order('sort'),
     ]);
     setInOffice(live.data || []);
     setStale(old.data || []);
+    setTeams(tm.data || []);
   }, [isAdmin, quietDays]);
+
+  /*
+    Put somebody the machine knows onto the roster, from the row where they
+    were first noticed.
+
+    cb_adopt_device_code does the whole thing in one transaction: the roster
+    row, the code (refusing one a current colleague holds, stamping the
+    handover date on one released by a leaver), and a re-fold, so their
+    punches — today's and every earlier one — attach to them at once.
+
+    They land OUT of the daily WhatsApp report on purpose. Being added here
+    must never quietly start naming somebody to fifty colleagues; that is a
+    separate switch on the Attendance console.
+  */
+  const addToRoster = async () => {
+    const name = (adding?.name || '').trim();
+    if (!name) return setAdded((a) => ({ ...a, [adding.code]: { error: 'Type a name first.' } }));
+    setBusy(`add-${adding.code}`);
+    // p_team only when chosen, so the call also works against the older
+    // three-argument version of the function.
+    const args = { p_code: adding.code, p_name: name, p_senior: false };
+    if (adding.team) args.p_team = adding.team;
+    const { data: r, error: err } = await supabase.rpc('cb_adopt_device_code', args);
+    setBusy('');
+    if (err) {
+      setAdded((a) => ({ ...a, [adding.code]: { error: friendlyError(err) } }));
+      return;
+    }
+    const team = teams.find((t) => t.id === adding.team)?.name;
+    const days = r?.fold?.attendance_rows;
+    setAdded((a) => ({
+      ...a,
+      [adding.code]: {
+        ok: `${name} is on the roster${team ? ` in ${team}` : ''}`
+          + (days != null ? ` — ${days} day${days === 1 ? '' : 's'} of attendance attached.` : '.')
+          + ' Not in the WhatsApp report until you switch it on in Attendance → Employees.',
+      },
+    }));
+    setAdding(null);
+    await refresh();
+  };
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -430,6 +479,65 @@ export default function MachineAdmin() {
                     <span className="text-xs text-gray-500 tabular-nums">
                       last seen {new Date(r.last_punch).toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}
                     </span>
+                  )}
+                  {!r.on_roster && !added[r.device_code]?.ok && adding?.code !== r.device_code && (
+                    <button
+                      type="button"
+                      onClick={() => setAdding({ code: r.device_code, name: r.who || '', team: '' })}
+                      className="text-xs px-2 py-1 rounded border border-[#10243E] text-[#10243E] hover:bg-[#10243E] hover:text-white"
+                    >
+                      Add to roster
+                    </button>
+                  )}
+
+                  {adding?.code === r.device_code && (
+                    <div className="basis-full mt-2 p-3 bg-gray-50 rounded-lg flex flex-wrap items-end gap-2">
+                      <label className="text-xs text-gray-600 flex-1 min-w-[160px]">
+                        Name
+                        <input
+                          value={adding.name}
+                          onChange={(e) => setAdding({ ...adding, name: e.target.value })}
+                          className="mt-1 w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-[#10243E]"
+                        />
+                      </label>
+                      <label className="text-xs text-gray-600 min-w-[140px]">
+                        Team
+                        <select
+                          value={adding.team}
+                          onChange={(e) => setAdding({ ...adding, team: e.target.value })}
+                          className="mt-1 w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-[#10243E] bg-white"
+                        >
+                          <option value="">No team (main group)</option>
+                          {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addToRoster}
+                        disabled={busy === `add-${r.device_code}`}
+                        className="text-sm px-3 py-1.5 rounded bg-[#10243E] text-white disabled:opacity-50"
+                      >
+                        {busy === `add-${r.device_code}` ? 'Adding…' : `Add on #${r.device_code}`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdding(null)}
+                        className="text-sm px-3 py-1.5 rounded text-gray-500"
+                      >
+                        Cancel
+                      </button>
+                      <p className="basis-full text-xs text-gray-500">
+                        Their punches on #{r.device_code} — today&apos;s and every earlier one — attach to
+                        them straight away. They stay out of the WhatsApp messages until you switch
+                        them on in Attendance → Employees, where you can also give them a login.
+                      </p>
+                    </div>
+                  )}
+
+                  {added[r.device_code] && (
+                    <p className={`basis-full text-xs mt-1 ${added[r.device_code].ok ? 'text-green-700' : 'text-red-600'}`}>
+                      {added[r.device_code].ok || added[r.device_code].error}
+                    </p>
                   )}
                 </li>
               ))}
