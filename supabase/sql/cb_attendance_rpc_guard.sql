@@ -80,3 +80,10 @@ grant execute on function cb_daily_attendance(date)   to authenticated, service_
 grant execute on function cb_monthly_attendance(date) to authenticated, service_role;
 revoke all on function reschedule_interview_booking(uuid, uuid) from public, anon;
 grant execute on function reschedule_interview_booking(uuid, uuid) to authenticated;
+
+-- cb_daily_attendance_report() has no guard of its own and is documented as
+-- "service role alone" — but it was executable by anon and authenticated. The
+-- guard above already blocks it (it calls cb_daily_attendance underneath);
+-- this makes the documented state the real one.
+revoke all on function cb_daily_attendance_report(date) from public, anon, authenticated;
+grant execute on function cb_daily_attendance_report(date) to service_role;
