@@ -391,7 +391,7 @@ export const blogs = [
       {
         h2: 'Where Capital Brix sits in this',
         p: [
-          'We sell plots, so treat this section with appropriate scepticism and check what follows against documents. Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., a Dholera developer with 8+ completed projects since 2012 — we market their projects, we do not build them. That matters for one narrow reason: a developer with delivered projects has a track record you can go and physically look at, which is not true of an entity formed last year.',
+          'We sell plots, so treat this section with appropriate scepticism and check what follows against documents. Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., a Dholera developer that has worked there since 2012 and launched 30+ projects — we market their projects, we do not build them. That matters for one narrow reason: a developer with completed projects has a track record you can go and physically look at, which is not true of an entity formed last year.',
           'What we will not do is quote you a return figure. What we will do is put the approvals, the title chain and the all-in cost in front of you before you commit, and take you to the site so you can stand on the plot you are buying.',
         ],
       },

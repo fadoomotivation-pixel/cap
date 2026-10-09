@@ -117,7 +117,7 @@ Yes. It is in the developed Phase-1 zone of Dholera SIR, which has trunk roads a
 - **Site visit:** drive past the fab perimeter, the ABCD building and the expressway in one morning from Ahmedabad → [Book a site visit]({{SITE_VISIT_URL}}) [cta: end-visit]
 
 ### Footnotes: seminar-deck figures vs official
-- **"Operational by 2027"** (deck) → MeitY has since revised that guidance. We keep post-2026 production years out of public copy.
+- **A post-2026 "operational by" year** (deck) → MeitY has since revised that guidance. We keep post-2026 production years out of public copy.
 - **"26,000 direct + 1 lakh indirect jobs"** (deck) → PIB's SEZ notification says **21,000**. PIB's Feb 2024 release gives **20,000 direct + ~60,000 indirect jobs for all three approved units combined** (Tata fab, Tata Assam ATMP and CG Power ATMP), not for the fab alone.
 - **"300 crore chips per year"** (deck) → no official source found. Chip counts depend on die size and product mix, so treat this as **illustrative**.
 - **"India's first semiconductor chip fab"** → this matches PIB wording ("India's first chip fabrication plant") for commercial fabs. India has had smaller government and research fabs before (e.g., SCL Mohali).

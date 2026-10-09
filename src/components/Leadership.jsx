@@ -32,6 +32,8 @@ export default function Leadership() {
               <img
                 src="/founder.jpg"
                 alt="Jasvinder Singh, Founder and CEO of Capital Brix"
+                width="576"
+                height="1024"
                 className="w-full h-full object-cover"
                 loading="lazy"
                 onError={(e) => { e.target.src = '/award-jasvinder-singh-jagran-achievers-2026.jpg'; }}
@@ -51,6 +53,8 @@ export default function Leadership() {
               <img
                 src="/award-jasvinder-singh-jagran-achievers-2026.jpg"
                 alt="Jasvinder Singh receiving the Jagran Achievers Award 2026 at Almaty"
+                width="899"
+                height="1189"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />

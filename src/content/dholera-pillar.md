@@ -183,6 +183,8 @@ More detail: [Dholera city highlights](/dholera/city-highlights) · [ReNew and s
 
 The **Tata Electronics–PSMC semiconductor fab** is Dholera's best-known anchor. Around it, gas suppliers, equipment partners, solar manufacturers and data-centre developers have made commitments. These range from operating plants to early-stage MoUs, and we label each one honestly.
 
+{{PHOTOS}}
+
 **Status key:** 🟢 Operational · 🟡 Under construction / land allotted · 🔵 MoU / LoI / announced
 
 | Company | Sector | Key figure (official / verified) | Status |

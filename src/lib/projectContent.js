@@ -28,8 +28,8 @@ const isDelivered = (p) => p.status === 'Delivered' || p.category === 'Sold Out'
 
 /** The opening paragraph — answers "what is this" before anything else. */
 export const projectIntro = (p) => {
-  const what = isIndustrial(p) ? 'industrial plots' : 'residential plots';
-  const where = p.location.replace(/,\s*Dholera Smart City$/i, '');
+  const what = p.offering || (isIndustrial(p) ? 'industrial plots' : 'residential plots');
+  const where = p.location.replace(/,\s*(near\s+)?Dholera Smart City$/i, '');
   const inDholera = /dholera/i.test(p.location) ? p.location : `${p.location}, Dholera Smart City`;
 
   if (isDelivered(p)) {
@@ -46,8 +46,9 @@ export const projectIntro = (p) => {
       : 'an ongoing project';
 
   return `${p.name} is ${stage} offering ${what} at ${inDholera}, developed by Mirrikh Infratech and sold through ` +
-    `Capital Brix LLP as an authorised sales channel partner. ${p.size ? `The project covers ${p.size.toLowerCase()}. ` : ''}` +
-    `Like every plot we sell, it is NA-converted, NOC-cleared, title-clear and plan-passed, and completes through a ` +
+    `Capital Brix LLP as an authorised sales channel partner. ${p.units ? `The project has ${p.units.toLowerCase()}. ` : p.size ? `The project covers ${p.size.toLowerCase()}. ` : ''}` +
+    `${p.startingPrice ? `Prices start at ${p.price.replace('Lakh', 'lakh')}. ` : ''}` +
+    `${p.verified ? 'The developer lists it as NA, NOC, Title Clear & Unit Plan Pass' : 'Like every plot we sell, it is NA-converted, NOC-cleared, title-clear and plan-passed'}, and the purchase completes through a ` +
     `registered sale deed in your own name.`;
 };
 
@@ -57,12 +58,14 @@ export const projectSpecs = (p) => ({
   rows: [
     ['Project type', p.type],
     ['Location', p.location],
-    ['Plot sizes', p.size || 'Multiple sizes — ask us for the current layout'],
+    ...(p.units ? [['Project size', p.units]] : []),
+    ['Plot sizes', p.size || 'Ask us for the current layout with available sizes'],
     ['Stage', p.status],
-    ['Pricing', p.price === 'On Request' ? `${p.priceUnit} — quoted on request` : `${p.price} (${p.priceUnit})`],
-    ['Approvals', 'NA converted · NOC cleared · title clear · plan passed'],
+    ['Pricing', p.startingPrice
+      ? `Starting at ${p.price}`
+      : p.price === 'On Request' ? `${p.priceUnit} — quoted on request` : `${p.price} (${p.priceUnit})`],
+    ['Approvals', p.verified ? 'NA, NOC, Title Clear & Unit Plan Pass' : 'NA converted · NOC cleared · title clear · plan passed'],
     ['Ownership', 'Registered sale deed in the buyer’s name'],
-    ['Developer', 'Mirrikh Infratech Pvt. Ltd.'],
     ['Developed by', 'Mirrikh Infratech Pvt. Ltd.'],
     ['Marketed by', 'Capital Brix LLP — authorised sales channel partner'],
   ],
@@ -71,7 +74,7 @@ export const projectSpecs = (p) => ({
 /** Sections rendered by ArticleBody. Shapes vary by project stage and type,
  *  so two pages do not read as the same paragraph with the nouns swapped. */
 export const projectSections = (p) => {
-  const where = p.location.replace(/,\s*Dholera Smart City$/i, '');
+  const where = p.location.replace(/,\s*(near\s+)?Dholera Smart City$/i, '');
   const sections = [];
 
   sections.push({
@@ -136,7 +139,17 @@ export const projectFaqs = (p) => {
   ];
 
   faqs.push(
-    p.price === 'On Request'
+    p.startingPrice
+      ? {
+          q: `What is the price of ${p.name}?`,
+          a: `${p.name} starts at ${p.price}, as listed by the developer. The final figure depends on the unit you choose; ask us for the current price list and a single all-in figure that adds stamp duty, registration and legal costs.`,
+        }
+    : p.priceUnit === 'Price on request'
+      ? {
+          q: `What is the price of ${p.name}?`,
+          a: `${p.name} is priced on request. Ask us and we will send the current price and availability, plus a single all-in figure including stamp duty and registration.`,
+        }
+    : p.price === 'On Request'
       ? {
           q: `What is the price of a plot in ${p.name}?`,
           a: `Pricing for ${p.name} is quoted on request at ${p.priceUnit.toLowerCase()}, because the rate depends on the plot you choose within the layout. Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. Ask us and we will send the current rate for this project plus a single all-in figure including stamp duty and registration.`,
@@ -147,7 +160,12 @@ export const projectFaqs = (p) => {
         }
   );
 
-  if (p.size && !/multiple/i.test(p.size)) {
+  if (p.units && !p.size) {
+    faqs.push({
+      q: `How big is ${p.name}?`,
+      a: `${p.name} has ${p.units.toLowerCase()}. Unit sizes vary across the layout — ask us for the current layout with the available units marked.`,
+    });
+  } else if (p.size && !/multiple/i.test(p.size)) {
     faqs.push({
       q: `What plot sizes are available in ${p.name}?`,
       a: `${p.size}. Availability changes as plots sell, so ask us for the current layout with the unsold plots marked before you plan around a particular size.`,

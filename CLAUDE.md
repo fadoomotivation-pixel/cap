@@ -9,7 +9,22 @@ Vite + React 19 + Tailwind + Framer Motion, deployed on Vercel, backed by Supaba
   Pvt. Ltd.** See "The Mirrikh relationship" below before writing any copy that
   mentions Mirrikh. **"Official Strategy Partner" / "Strategy Partner" is
   forbidden** — it was removed under a legal notice, not for style.
-- Mirrikh Infratech is a Dholera developer with 8+ completed projects since 2012.
+- Mirrikh Infratech is a Dholera developer: in Dholera since 2012 (14+ years),
+  30+ projects **launched** (not "delivered") over 25 lakh+ sq yd, 7.5K+ plot
+  holders, 12,000+ investors, 15+ countries. These are Mirrikh's figures (their
+  own collateral, checked 6 Oct 2026) and must always be credited to Mirrikh,
+  never shown as Capital Brix numbers. Awards: Gujarat Icon 2021, Pride of
+  Gujarat 2022, Most Preferred Brand in Smart City Projects 2023 (with The
+  Economic Times), Navratna 2024, Pride of Gujarat 2025 (presented by CM
+  Bhupendra Patel). Data lives in `developer` in `src/data/site.js`.
+- Current projects (verified from Mirrikh's standees/leaflets): Mayur Prime
+  (Fedra, 503 plots, from ₹20 L), Mayur Swastik II (Kamiyala, 433 plots, from
+  ₹12.75 L), Mayur Industrial Landmark (Moti Boru, 436 units, from ₹26.5 L),
+  Mayur Business Park (Haripura/Dhandhuka, 277 units, from ₹31 L), Mayur Greenz
+  Courtyard (Rojka, 3BHK villas, price on request). Say "near Dholera Smart
+  City", never "inside the SIR". Never publish the collateral's "1% Business
+  Promotion Commission", "12% per annum", "assured ₹45,000 rental", "maximum
+  appreciation", "Monthly Promotion Incentives" or the fab's post-2026 date.
 - Founder & CEO: **Jasvinder Singh** — recipient of the **Jagran Achievers Award 2026**
   (Almaty, Kazakhstan), awarded for vision, leadership and achievement.
 - Office: A-118, 6th Floor, The Diamond, Sector 136, Noida 201304.

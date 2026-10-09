@@ -5,7 +5,8 @@ import Seo from '../components/Seo';
 import LeadForm from '../components/LeadForm';
 import ArticleBody from '../components/ArticleBody';
 import { projectIntro, projectSections, projectFaqs } from '../lib/projectContent';
-import { SITE_URL } from '../lib/seo';
+import { SITE_URL, absoluteUrl } from '../lib/seo';
+import { ProjectCtas } from '../components/Projects';
 
 // Feature icons inline SVG
 const LegalIcon = () => (
@@ -80,7 +81,9 @@ export default function ProjectDetail() {
   // Per-project SEO: each plot project targets its own long-tail query
   // ("mayur greenz ii dholera price") instead of all of them competing
   // for the same generic "Dholera plots" term.
-  const seoTitle = `${project.name} Dholera | ${project.type} in ${project.location} — Capital Brix`;
+  const seoTitle = project.verified
+    ? `${project.name} near Dholera Smart City | ${project.type}${project.startingPrice ? ` from ${project.price}` : ''}`
+    : `${project.name} Dholera | ${project.type} in ${project.location} — Capital Brix`;
   // A number in the description is the difference between a result that gets
   // clicked on a price query and one that does not, so the rate leads when we
   // have it.
@@ -88,7 +91,9 @@ export default function ProjectDetail() {
     ? `From ₹${project.priceFrom.toLocaleString('en-IN')} per ${project.priceFromUnit || 'sq yd'}`
     : project.price === 'On Request' ? 'Pricing on request' : `Starting ${project.price}`;
 
-  const seoDescription = `${project.name} — ${project.type} at ${project.location}. ${project.size}. ${priceLine}. NA/NOC approved, title-clear plots. Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.`;
+  const seoDescription = project.verified
+    ? `${project.name}: ${project.units} at ${project.location}. ${priceLine}. NA, NOC, Title Clear & Unit Plan Pass. Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.`
+    : `${project.name} — ${project.type} at ${project.location}. ${project.size}. ${priceLine}. NA/NOC approved, title-clear plots. Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.`;
 
   const faqs = projectFaqs(project);
   const sections = projectSections(project);
@@ -116,7 +121,21 @@ export default function ProjectDetail() {
     name: `${project.name}, Dholera Smart City`,
     description: seoDescription,
     category: project.type,
+    url: `${SITE_URL}/projects/${slugify(project.name)}`,
+    ...(project.image ? { image: [project.image, ...(project.gallery || []).map((g) => g.src)].map((src) => absoluteUrl(src)) } : {}),
     brand: { '@type': 'Brand', name: 'Mirrikh Infratech' },
+    // A lump-sum "starting at" figure from the developer's collateral, shown
+    // on the page as "Starting at ₹…". AggregateOffer.lowPrice is the honest
+    // shape for "from": it does not claim every unit costs that.
+    ...(!rate && project.startingPrice ? {
+      offers: {
+        '@type': 'AggregateOffer',
+        lowPrice: project.startingPrice,
+        priceCurrency: 'INR',
+        availability: 'https://schema.org/InStock',
+        seller: { '@type': 'Organization', name: 'Capital Brix LLP', url: SITE_URL },
+      },
+    } : {}),
     ...(rate ? {
       offers: {
         '@type': 'Offer',
@@ -246,24 +265,9 @@ export default function ProjectDetail() {
               ))}
             </div>
 
-            {/* CTAs */}
-            <div className="flex flex-wrap gap-4 mt-10">
-              <a
-                href={wa}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-[#D4AF37] text-[#0A1016] px-8 py-3.5 rounded-sm font-bold hover:bg-[#B8860B] transition-colors text-sm uppercase tracking-wide"
-              >
-                Request Price & Layout
-              </a>
-              <a
-                href={wa}
-                target="_blank"
-                rel="noreferrer"
-                className="border-2 border-[#10243E] text-[#10243E] px-8 py-3.5 rounded-sm font-bold hover:bg-[#10243E] hover:text-white transition-colors text-sm uppercase tracking-wide"
-              >
-                Download Brochure
-              </a>
+            {/* CTAs — call, WhatsApp, site visit */}
+            <div className="mt-10">
+              <ProjectCtas p={project} />
             </div>
           </div>
 
@@ -299,6 +303,46 @@ export default function ProjectDetail() {
           </div>
         </div>
       </div>
+
+      {/* ── RENDERS — developer images, labelled as renders ── */}
+      {project.image && (
+        <section className="max-w-[1500px] mx-auto px-6 lg:px-12 pt-16" aria-label={`${project.name} images`}>
+          <div className="flex items-center justify-between gap-6 mb-6">
+            <h2 className="text-3xl font-black text-[#10243E]">{project.name} in pictures</h2>
+            {project.logo && (
+              <img
+                src={project.logo}
+                alt={`${project.name} logo`}
+                width="486"
+                height="342"
+                loading="lazy"
+                decoding="async"
+                className="h-14 w-auto mix-blend-multiply"
+              />
+            )}
+          </div>
+          <div className={`grid gap-4 ${project.gallery?.length ? 'md:grid-cols-2' : ''}`}>
+            {[{ src: project.image, w: project.imageW || 1200, h: project.imageH || 900, alt: project.imageAlt || `${project.name}, developed by Mirrikh Infratech` }, ...(project.gallery || [])].map((g) => (
+              <figure key={g.src}>
+                <img
+                  src={g.src}
+                  alt={g.alt}
+                  width={g.w}
+                  height={g.h}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full aspect-[4/3] object-cover rounded-sm bg-gray-100"
+                />
+              </figure>
+            ))}
+          </div>
+          {project.verified && (
+            <p className="mt-3 text-xs text-gray-500">
+              Images are the developer’s renders. Visit the site to see the project as it stands today.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* ── HIGHLIGHTS SECTION ── */}
       <div className="max-w-[1500px] mx-auto px-6 lg:px-12 py-16">

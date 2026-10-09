@@ -57,9 +57,11 @@ export const plotRates = {
 
 export const stats = [
   { value: '₹91,000 Cr', label: 'Tata Semiconductor Fab in Dholera' },
-  { value: '8+', label: 'Projects Delivered in Dholera by Mirrikh Infratech' },
+  // Mirrikh's own figure is "30+ projects launched" (not "delivered") over
+  // 25 lakh+ sq yd — keep the verb and the attribution.
+  { value: '30+', label: 'Projects launched in Dholera by Mirrikh Infratech since 2012' },
   { value: '920 km²', label: "India's Largest Planned Smart City" },
-  { value: '2026', label: 'International Airport Operational' },
+  { value: '2026', label: 'First aircraft landed at Dholera International Airport' },
 ];
 
 export const partnership = {
@@ -69,13 +71,13 @@ export const partnership = {
   points: [
     {
       icon: 'Award',
-      title: 'Forbes-Featured Leadership',
-      text: 'Mirrikh Infratech — featured in Forbes India (March 2025) — has a track record in Dholera real estate since 2012.',
+      title: 'An award-recognised developer',
+      text: 'Mirrikh Infratech has worked in Dholera since 2012 and was named Pride of Gujarat in 2022 and 2025, Navratna in 2024, and Most Preferred Brand in Smart City Projects in 2023 (with The Economic Times).',
     },
     {
       icon: 'Building2',
-      title: '8+ Projects Delivered',
-      text: 'A solid portfolio of completed residential, commercial and industrial projects across Dholera, with new phases under development.',
+      title: '30+ Projects Launched',
+      text: 'Mirrikh Infratech has launched 30+ residential, industrial and villa projects in and around Dholera Smart City, covering 25 lakh+ sq yd of land.',
     },
     {
       icon: 'FileCheck',
@@ -92,6 +94,64 @@ export const partnership = {
       text: 'Current availability and rates confirmed with the developer before you book, documentation checked, and the paperwork run through to registration.',
     },
   ],
+};
+
+// ─── THE DEVELOPER — Mirrikh Infratech Pvt. Ltd. ─────────────────────────
+// Every figure here is Mirrikh's, from their own current collateral (the
+// "Promotional Materials" folder, checked 6 Oct 2026), and must be rendered
+// with that attribution — never as Capital Brix's numbers.
+// The founder of Mirrikh is deliberately NOT named here: CLAUDE.md "Content
+// rules" says credibility claims reference the company, not an individual.
+// Award photographs show the awards being received; captions name the award,
+// the year and the presenter, nothing more.
+export const developer = {
+  name: 'Mirrikh Infratech Pvt. Ltd.',
+  brand: 'Mirrikh Group',
+  since: 2012,
+  logo: '/media/mirrikh/mirrikh-group-logo-white.webp',
+  source: 'Mirrikh Infratech project and company collateral, checked 6 October 2026',
+  stats: [
+    { value: '14+', label: 'Years in Dholera, since 2012' },
+    { value: '30+', label: 'Projects launched, over 25 lakh+ sq yd' },
+    { value: '7.5K+', label: 'Plot holders' },
+    { value: '12,000+', label: 'Investors' },
+    { value: '15+', label: 'Countries buyers come from' },
+  ],
+  awards: [
+    { year: 2025, title: 'Pride of Gujarat Award', note: 'Leading Land Developer in Dholera Smart City. Presented by Gujarat Chief Minister Shri Bhupendra Patel (Divya Bhaskar).', image: '/media/mirrikh/award-2025-pride-of-gujarat.webp', w: 800, h: 622 },
+    { year: 2024, title: 'Navratna Award', note: '“Bharat ke Navratna Gujarat Se”, presented by Divya Bhaskar.', image: '/media/mirrikh/award-2024-navratna.webp', w: 800, h: 528 },
+    { year: 2023, title: 'Most Preferred Brand in Smart City Projects in India', note: 'In association with The Economic Times.', image: '/media/mirrikh/award-2023-most-preferred-brand.webp', w: 800, h: 528 },
+    { year: 2022, title: 'Pride of Gujarat', note: 'Excellence in Real Estate Projects at Dholera Smart City.', image: '/media/mirrikh/award-2022-pride-of-gujarat.webp', w: 800, h: 529 },
+    { year: 2021, title: 'Gujarat Icon Award', note: 'Excellence in Real Estate Projects at Dholera Smart City.' },
+  ],
+  event: {
+    name: 'SPARK Celebrations 2025',
+    when: '28 December 2025',
+    where: 'New Delhi',
+    text: 'Mirrikh’s annual celebration for its investors, partners and team, held in New Delhi on 28 December 2025.',
+    photos: [
+      { src: '/media/mirrikh/spark-2025-stage.webp', w: 960, h: 540, alt: 'The stage at SPARK Celebrations 2025, Mirrikh’s annual event in New Delhi' },
+      { src: '/media/mirrikh/spark-2025-audience.webp', w: 960, h: 540, alt: 'Investors and partners in the audience at SPARK Celebrations 2025, New Delhi' },
+      { src: '/media/mirrikh/spark-2025-team.webp', w: 960, h: 540, alt: 'The Mirrikh team on stage at SPARK Celebrations 2025, New Delhi' },
+    ],
+  },
+};
+
+// Real photographs from Dholera (frames from site footage), not renders and
+// not stock. Anything illustrative stays out of this list.
+export const groundPhotos = [
+  { src: '/media/dholera/tata-semiconductor-site-gate.webp', w: 720, h: 1063, alt: 'Gate of the Tata Electronics semiconductor fab site in Dholera', caption: 'Tata Electronics semiconductor site gate' },
+  { src: '/media/dholera/tata-fab-construction.webp', w: 720, h: 871, alt: 'Cranes over the Tata semiconductor fab construction site in Dholera', caption: 'Fab construction, Activation Area' },
+  { src: '/media/dholera/renew-factory.webp', w: 720, h: 1063, alt: 'ReNew solar manufacturing factory building in Dholera', caption: 'ReNew solar cell & module factory' },
+  { src: '/media/dholera/abcd-building.webp', w: 900, h: 704, alt: 'The ABCD (Administrative and Business Centre for Dholera) building', caption: 'ABCD building — single-window office' },
+];
+
+export const projectsMap = {
+  src: '/media/dholera/mirrikh-project-locations-map.webp',
+  w: 1400,
+  h: 860,
+  alt: 'Dholera SIR master plan detail showing Mirrikh project villages around the SIR boundary, the expressway and the airport',
+  credit: 'Base map: DSIRDA development plan. Project pins: Mirrikh Infratech.',
 };
 
 export const whyDholera = [
@@ -170,12 +230,170 @@ export const projectFilters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 // WE sell at; never describe it as the developer's own rate, and never claim a
 // discount (see CLAUDE.md, "Never describe Mirrikh's commercial policy").
 export const projects = [
+  // ─── CURRENT SALES FOCUS — verified against Mirrikh's own collateral ──────
+  // Source: the Mirrikh "Promotional Materials" folder the owner shared on
+  // 6 Oct 2026 (project standees + A4 leaflets). Unit counts, villages and
+  // the "starting at" figures below are printed there. Nothing else is:
+  //   • no plot sizes, no per-sq-yd rate per project, no RERA numbers.
+  //     Do not add any of those until Mirrikh confirms them in writing.
+  //   • location wording is "near Dholera Smart City" (Mirrikh's own words).
+  //     These projects sit around the SIR boundary, NOT inside the SIR.
+  //   • the leaflets also print a monthly "Business Promotion Commission",
+  //     "12% per annum" and an "assured" villa rental. Those are return
+  //     promises and stay OFF this site — see CLAUDE.md, "Content rules".
+  // `startingPrice` is the lump-sum "starting at" figure in rupees. It drives
+  // the visible price and an AggregateOffer (lowPrice) in the Product schema.
+  {
+    name: 'Mayur Prime',
+    verified: true,
+    image: '/projects/mayur-prime.webp',
+    imageW: 1200,
+    imageH: 900,
+    imageAlt: 'Mayur Prime entrance road with fountain roundabout — developer render, Fedra near Dholera Smart City',
+    logo: '/projects/mayur-prime-logo.webp',
+    gallery: [
+      { src: '/projects/mayur-prime-garden.webp', w: 989, h: 667, alt: 'Mayur Prime landscaped garden, aerial view — developer render' },
+    ],
+    type: 'Residential Plots',
+    offering: 'premium residential plots',
+    category: 'Ongoing',
+    location: 'Fedra, near Dholera Smart City',
+    price: '₹20 Lakh',
+    priceUnit: 'Starting price',
+    startingPrice: 2000000,
+    units: '503 premium residential plots',
+    status: 'Now Selling',
+    highlights: [
+      'NA, NOC, Title Clear & Unit Plan Pass',
+      '503 premium residential plots at Fedra',
+      'Gated entry, club house, boundary wall & security cabin',
+      'Inside roads, water supply, electricity & tree plantation',
+    ],
+    about:
+      'Mayur Prime is a premium residential plotting project at Fedra, near Dholera Smart City, with 503 plots. The layout is planned around a gated entrance, a club house and landscaped open space, with inside roads, water and electricity supply, a boundary wall and a security cabin listed by the developer. Plots start at ₹20 lakh.',
+    accent: '#D4AF37',
+  },
+  {
+    name: 'Mayur Swastik II',
+    verified: true,
+    image: '/projects/mayur-swastik-ii.webp',
+    imageW: 1200,
+    imageH: 897,
+    imageAlt: 'Mayur Swastik II, Kamiyala near Dholera Smart City — developer render of homes on the layout',
+    logo: '/projects/mayur-swastik-ii-logo.webp',
+    type: 'Residential Plots',
+    offering: 'residential plots',
+    category: 'Ongoing',
+    location: 'Kamiyala, near Dholera Smart City',
+    price: '₹12.75 Lakh',
+    priceUnit: 'Starting price',
+    startingPrice: 1275000,
+    units: '433 residential plots',
+    status: 'Now Selling',
+    highlights: [
+      'NA, NOC, Title Clear & Unit Plan Pass',
+      '433 residential plots at Kamiyala',
+      'Club house, gated entry, boundary wall & security cabin',
+      'Inside roads, plot demarcation, water & power supply',
+    ],
+    about:
+      'Mayur Swastik II is the second phase of the Mayur Swastik residential project at Kamiyala, near Dholera Smart City, with 433 plots. The developer lists a club house, gated entry, boundary wall, inside roads, plot demarcation, tree plantation, a security cabin and water and power supply. It has the lowest entry price of the current projects, starting at ₹12.75 lakh.',
+    accent: '#c9a35c',
+  },
+  {
+    name: 'Mayur Industrial Landmark',
+    verified: true,
+    image: '/projects/mayur-industrial-landmark.webp',
+    imageW: 885,
+    imageH: 613,
+    imageAlt: 'Mayur Industrial Landmark industrial sheds along an internal road — developer render, Moti Boru near Dholera Smart City',
+    logo: '/projects/mayur-industrial-landmark-logo.webp',
+    gallery: [
+      { src: '/projects/mayur-industrial-landmark-units.webp', w: 886, h: 615, alt: 'Mayur Industrial Landmark warehouse units — developer render' },
+    ],
+    type: 'Industrial Plots',
+    offering: 'industrial plots for warehouse, workshop and MSME use',
+    category: 'Industrial',
+    location: 'Moti Boru, near Dholera Smart City',
+    price: '₹26.5 Lakh',
+    priceUnit: 'Starting price',
+    startingPrice: 2650000,
+    units: '436 units · warehouse / workshop / MSME',
+    status: 'Now Selling',
+    highlights: [
+      'NA, NOC, Title Clear & Unit Plan Pass',
+      '436 units for warehouse, workshop & MSME use',
+      'Gated entry, boundary wall, street lights & security cabin',
+      'Internal roads, plot demarcation, power & water supply',
+    ],
+    about:
+      'Mayur Industrial Landmark is an industrial project at Moti Boru, near Dholera Smart City, with 436 units planned for warehouse, workshop and MSME use. The developer lists gated entry, a boundary wall, street lights, internal roads, plot demarcation, a garden area, tree plantation, a security cabin and power and water supply. Units start at ₹26.5 lakh.',
+    accent: '#f59e0b',
+  },
+  {
+    name: 'Mayur Business Park',
+    verified: true,
+    image: '/projects/mayur-business-park.webp',
+    imageW: 1200,
+    imageH: 900,
+    imageAlt: 'Mayur Business Park entrance gate — developer render, Haripura (Dhandhuka) near Dholera Smart City',
+    logo: '/projects/mayur-business-park-logo.webp',
+    type: 'Industrial Plots',
+    offering: 'industrial units',
+    category: 'Industrial',
+    location: 'Haripura, Dhandhuka, near Dholera Smart City',
+    price: '₹31 Lakh',
+    priceUnit: 'Starting price',
+    startingPrice: 3100000,
+    units: '277 industrial units',
+    status: 'Now Selling',
+    highlights: [
+      'NA, NOC, Title Clear & Unit Plan Pass',
+      '277 industrial units at Haripura, Dhandhuka',
+      'Gated entry, boundary wall, street lights & security cabin',
+      'Internal roads, plot demarcation, garden, water & power supply',
+    ],
+    about:
+      'Mayur Business Park is an industrial project at Haripura in Dhandhuka taluka, near Dholera Smart City, with 277 units. The developer lists gated entry, a boundary wall, street lights, internal roads, plot demarcation, a garden area, a temple, tree plantation, a security cabin and water and power supply. Units start at ₹31 lakh.',
+    accent: '#7fc8e8',
+  },
+  {
+    name: 'Mayur Greenz Courtyard',
+    verified: true,
+    image: '/projects/mayur-greenz-courtyard.webp',
+    imageW: 1200,
+    imageH: 900,
+    imageAlt: 'Mayur Greenz Courtyard 3BHK luxury villas at dusk — developer render, Rojka near Dholera Smart City',
+    logo: '/projects/mayur-greenz-courtyard-logo.webp',
+    gallery: [
+      { src: '/projects/mayur-greenz-courtyard-clubhouse.webp', w: 1200, h: 755, alt: 'Mayur Greenz Courtyard club house — developer render' },
+    ],
+    type: '3BHK Luxury Villas',
+    offering: '3BHK luxury villas',
+    category: 'Ongoing',
+    location: 'Rojka, near Dholera Smart City',
+    price: 'On Request',
+    priceUnit: 'Price on request',
+    units: '3BHK luxury villas',
+    status: 'Now Selling',
+    highlights: [
+      'NA, NOC, Title Clear & Unit Plan Pass',
+      '3BHK luxury villa community at Rojka',
+      'Club house, swimming pool, indoor games & event lawn',
+      'Jogging track, sports, children’s play area & senior citizen park',
+    ],
+    about:
+      'Mayur Greenz Courtyard is a 3BHK luxury villa project at Rojka, near Dholera Smart City. The developer lists a club house, swimming pool, indoor games, event lawn, jogging track, outdoor sports, a children’s play area and a senior citizen park, with gated entry, inside roads, a boundary wall, a security cabin and water and electricity supply. Price on request — ask us for the current villa price and availability.',
+    accent: '#84cc16',
+  },
+
+  // ─── OTHER ONGOING PROJECTS ───────────────────────────────────────────────
   {
     name: 'Mayur NOVA',
     image: '/projects/mayur-nova.webp',
     type: 'Residential Plots',
     category: 'Ongoing',
-    location: 'Ratanpur, Dholera Smart City',
+    location: 'Ratanpur, near Dholera Smart City',
     price: 'On Request',
     priceUnit: 'New Launch',
     size: '90 plots · 132–655 sq yd',
@@ -245,24 +463,6 @@ export const projects = [
     accent: '#22c55e',
   },
   {
-    name: 'Mayur Greenz Courtyard',
-    image: '/projects/mayur-greenz-courtyard.webp',
-    type: 'Residential Plots',
-    category: 'Ongoing',
-    location: 'Dholera Smart City',
-    price: 'On Request',
-    priceUnit: 'Ongoing',
-    size: 'Multiple plot sizes',
-    status: 'Ongoing',
-    highlights: [
-      'Courtyard-style community layout',
-      'Clubhouse & open green spaces',
-      'Near Dholera SIR boundary',
-      'NA · NOC · Title Clear',
-    ],
-    accent: '#84cc16',
-  },
-  {
     name: 'Mayur Ananta II',
     image: '/projects/mayur-ananta-ii.webp',
     type: 'Residential Plots',
@@ -279,24 +479,6 @@ export const projects = [
       'NA · NOC · Title Clear',
     ],
     accent: '#a855f7',
-  },
-  {
-    name: 'Mayur Industrial Landmark',
-    image: '/projects/mayur-industrial-landmark.webp',
-    type: 'Industrial Plots',
-    category: 'Industrial',
-    location: 'Dholera Smart City Industrial Zone',
-    price: 'On Request',
-    priceUnit: 'Large-format plots',
-    size: '1,000 sq yd onwards',
-    status: 'Ongoing',
-    highlights: [
-      'Warehousing, logistics & manufacturing',
-      'Unit plan passed industrial zoning',
-      'Near semiconductor & industrial belt',
-      'Heavy-vehicle friendly access roads',
-    ],
-    accent: '#f59e0b',
   },
 
   // ─── SOLD OUT PROJECTS (from mirrikh.com dropdown — exact order) ──────────
@@ -539,7 +721,7 @@ export const faqs = [
   },
   {
     q: 'What is Capital Brix\u2019s relationship with Mirrikh Infratech?',
-    a: 'Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd. We market and sell plots in Mirrikh Infratech projects; we are not the developer, owner, promoter or a group company of Mirrikh Infratech, and we are not part of its management. The projects are developed by Mirrikh Infratech, which has completed 8+ projects in Dholera since 2012. Capital Brix handles the sales process: availability, site visits, documentation and support through to registration.',
+    a: 'Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd. We market and sell plots in Mirrikh Infratech projects; we are not the developer, owner, promoter or a group company of Mirrikh Infratech, and we are not part of its management. The projects are developed by Mirrikh Infratech, which has worked in Dholera since 2012 and has launched 30+ residential, industrial and villa projects there. Capital Brix handles the sales process: availability, site visits, documentation and support through to registration.',
   },
   {
     q: 'Are the plots legal and title clear?',

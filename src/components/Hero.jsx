@@ -83,6 +83,9 @@ export default function Hero() {
         <div className="relative w-full h-[42svh] sm:h-[52svh] lg:h-[64svh] overflow-hidden bg-[#141c26]">
           <img
             src="/media/dholera-film-poster.jpg"
+            width="1280"
+            height="720"
+            fetchPriority="high"
             alt="Aerial view of completed roads and utility infrastructure in the Dholera SIR Activation Area"
             className="absolute inset-0 w-full h-full object-cover"
           />

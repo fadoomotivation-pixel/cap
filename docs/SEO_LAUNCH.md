@@ -85,7 +85,7 @@ Create it at <https://business.google.com>. Everything below is ready to paste.
 
 ```
 Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech
-Pvt. Ltd., a Dholera developer with 8+ completed projects since 2012. We market
+Pvt. Ltd., a Dholera developer in Dholera since 2012 with 30+ projects launched. We market
 NA-approved, NOC-cleared, title-clear and plan-passed residential and
 industrial plots in Dholera SIR (Dholera Smart City), Gujarat. Plots we sell
 start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending

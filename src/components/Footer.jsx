@@ -14,13 +14,13 @@ const ICON = { YouTube: <YTIcon />, Instagram: <IGIcon />, LinkedIn: <LIIcon />,
 const socials = site.socials.map((s) => ({ ...s, icon: ICON[s.name], label: s.name }));
 
 const currentProjects = [
-  { name: 'Mayur NOVA', path: '/projects/mayur-nova' },
-  { name: 'Mayur Aerocity II', path: '/projects/mayur-aerocity-ii' },
-  { name: 'Mayur Park 3', path: '/projects/mayur-park-iii' },
-  { name: 'Mayur Forest Villa', path: '/projects/mayur-forest-villa' },
-  { name: 'Mayur Greenz Courtyard', path: '/projects/mayur-greenz-courtyard' },
-  { name: 'Mayur Ananta 2', path: '/projects/mayur-ananta-ii' },
+  { name: 'Mayur Prime', path: '/projects/mayur-prime' },
+  { name: 'Mayur Swastik II', path: '/projects/mayur-swastik-ii' },
   { name: 'Mayur Industrial Landmark', path: '/projects/mayur-industrial-landmark' },
+  { name: 'Mayur Business Park', path: '/projects/mayur-business-park' },
+  { name: 'Mayur Greenz Courtyard', path: '/projects/mayur-greenz-courtyard' },
+  { name: 'Mayur NOVA', path: '/projects/mayur-nova' },
+  { name: 'All Mirrikh projects', path: '/projects' },
 ];
 
 export default function Footer() {
@@ -33,7 +33,7 @@ export default function Footer() {
           {/* Col 1: Brand */}
           <div className="lg:col-span-1">
             <div className="mb-6 flex items-center gap-3">
-              <img src="/logo-capital-brix.png" alt="Capital Brix" width="56" height="56" className="w-14 h-14 rounded-xl object-contain" />
+              <img src="/logo-capital-brix.png" alt="Capital Brix" width="56" height="56" loading="lazy" className="w-14 h-14 rounded-xl object-contain" />
               <span className="flex flex-col leading-none">
                 <span className="font-extrabold text-[24px] text-white tracking-tight">Capital Brix</span>
                 <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-1">Sales Channel Partner</span>
@@ -117,7 +117,7 @@ export default function Footer() {
           {/* Col 5: Current Projects */}
           <div>
             <h4 className="text-white font-semibold text-xl mb-6">
-              Our Current Projects
+              Mirrikh Infratech Projects
             </h4>
             <ul className="space-y-3 text-sm">
               {currentProjects.map((p) => (

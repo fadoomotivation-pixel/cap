@@ -5,6 +5,8 @@ import HomeAbout from '../components/HomeAbout';
 import WhatSetsUsApart from '../components/WhatSetsUsApart';
 import Projects from '../components/Projects';
 import Partnership from '../components/Partnership';
+import DeveloperTrust from '../components/DeveloperTrust';
+import GroundPhotos from '../components/GroundPhotos';
 import Leadership from '../components/Leadership';
 import HomeArticles from '../components/HomeArticles';
 import FAQ from '../components/FAQ';
@@ -34,6 +36,12 @@ export default function Home() {
       <HomeAbout />
       <WhatSetsUsApart />
       <Projects />
+      <GroundPhotos
+        className="py-16 lg:py-24 border-t border-gray-100"
+        heading="Dholera, on the ground"
+        lede="Not renders: the Tata semiconductor site, the fab under construction, the ReNew factory and the ABCD building, photographed in Dholera."
+      />
+      <DeveloperTrust compact />
       <Partnership />
       <Leadership />
       <HomeArticles />

@@ -120,7 +120,7 @@ Industrial land is allotted by DICDL, mainly to companies. Individual investors 
 ---
 
 ### Footnotes & variances
-1. **Tata fab timeline:** The deck says "operational by 2027". MeitY has since revised that guidance (Semicon India 2026; Hindustan Times, Moneycontrol). We do not put a post-2026 production year in public copy. **Jobs:** the deck says 26,000 direct + 1 lakh indirect. PIB's SEZ notification says 21,000, and Tata (Mar 2024) said 20,000+ direct and indirect. We use the official figures.
+1. **Tata fab timeline:** The deck gives a post-2026 operational year. MeitY has since revised that guidance (Semicon India 2026; Hindustan Times, Moneycontrol). We do not put a post-2026 production year in public copy. **Jobs:** the deck says 26,000 direct + 1 lakh indirect. PIB's SEZ notification says 21,000, and Tata (Mar 2024) said 20,000+ direct and indirect. We use the official figures.
 2. **INOX land:** the deck says 40 acres. INOXAP's release says "significant land parcel" without giving the acreage.
 3. **Nextgen:** MoU value reported at ~₹10,000 Cr (BusinessLine, Mar 2025). The deck and later trade reports use ₹8,800 Cr.
 4. **Adani ₹3 lakh Cr:** from media reports citing state officials (Vibes of India, Feb 2026). Treat it as indicative.

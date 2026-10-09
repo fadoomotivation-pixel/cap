@@ -152,7 +152,7 @@ export default function BlogPost() {
               <ul className="space-y-3 text-sm text-gray-600">
                 {[
                   [ShieldCheck, 'NA-approved, NOC-cleared, title-clear and plan-passed plots only'],
-                  [BadgeCheck, 'Authorised sales channel partner for Mirrikh Infratech — a developer with 8+ projects delivered since 2012'],
+                  [BadgeCheck, 'Authorised sales channel partner for Mirrikh Infratech — in Dholera since 2012, 30+ projects launched'],
                   [MapPin, 'Plots from ₹9,250/sq yd, up to about ₹14,950, registered in your name'],
                 ].map(([Icon, text]) => (
                   <li key={text} className="flex gap-3">
