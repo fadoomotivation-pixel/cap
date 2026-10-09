@@ -195,6 +195,12 @@ export default function MachineAdmin() {
     const args = { p_code: adding.code, p_name: name, p_senior: false };
     if (adding.team) args.p_team = adding.team;
     const { data: r, error: err } = await supabase.rpc('cb_adopt_device_code', args);
+    // The adoption itself always lands OUT of the messages; the checkbox is how
+    // that is overruled on purpose. Without it, Ananya was put on Backend on
+    // 7 October and Backend's group never saw her name.
+    if (!err && adding.named && r?.employee_id) {
+      await supabase.from('cb_employees').update({ in_daily_report: true }).eq('id', r.employee_id);
+    }
     setBusy('');
     if (err) {
       setAdded((a) => ({ ...a, [adding.code]: { error: friendlyError(err) } }));
@@ -207,7 +213,9 @@ export default function MachineAdmin() {
       [adding.code]: {
         ok: `${name} is on the roster${team ? ` in ${team}` : ''}`
           + (days != null ? ` — ${days} day${days === 1 ? '' : 's'} of attendance attached.` : '.')
-          + ' Not in the WhatsApp report until you switch it on in Attendance → Employees.',
+          + (adding.named
+            ? ` Named in ${team || 'the main group'}'s messages from the next send.`
+            : ' Not in the WhatsApp messages — tick "In messages" in the Control Room to add them.'),
       },
     }));
     setAdding(null);
@@ -483,7 +491,7 @@ export default function MachineAdmin() {
                   {!r.on_roster && !added[r.device_code]?.ok && adding?.code !== r.device_code && (
                     <button
                       type="button"
-                      onClick={() => setAdding({ code: r.device_code, name: r.who || '', team: '' })}
+                      onClick={() => setAdding({ code: r.device_code, name: r.who || '', team: '', named: false })}
                       className="text-xs px-2 py-1 rounded border border-[#10243E] text-[#10243E] hover:bg-[#10243E] hover:text-white"
                     >
                       Add to roster
@@ -511,6 +519,14 @@ export default function MachineAdmin() {
                           {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                       </label>
+                      <label className="text-xs text-gray-700 flex items-center gap-1.5 pb-2">
+                        <input
+                          type="checkbox"
+                          checked={!!adding.named}
+                          onChange={(e) => setAdding({ ...adding, named: e.target.checked })}
+                        />
+                        Name them in the WhatsApp messages
+                      </label>
                       <button
                         type="button"
                         onClick={addToRoster}
@@ -528,8 +544,8 @@ export default function MachineAdmin() {
                       </button>
                       <p className="basis-full text-xs text-gray-500">
                         Their punches on #{r.device_code} — today&apos;s and every earlier one — attach to
-                        them straight away. They stay out of the WhatsApp messages until you switch
-                        them on in Attendance → Employees, where you can also give them a login.
+                        them straight away. Picking a team decides which group names them; tick the
+                        box as well, or no message names them at all.
                       </p>
                     </div>
                   )}
