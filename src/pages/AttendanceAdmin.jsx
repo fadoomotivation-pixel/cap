@@ -489,14 +489,16 @@ export default function AttendanceAdmin() {
     return {
       strength: day.length,
       present: present.length,
-      absent: day.filter((r) => !r.check_in_at && !r.hr_status).length,
+      // Somebody on their weekly off who did not come in is not absent.
+      absent: day.filter((r) => !r.check_in_at && !r.hr_status && !r.weekly_off).length,
+      weeklyOff: day.filter((r) => r.weekly_off).length,
       late: present.filter((r) => r.is_late).length,
       siteVisits: present.filter((r) => r.work_mode === 'site-visit').length,
       flagged: present.filter((r) => r.outside_geofence).length,
     };
   }, [day]);
 
-  const notPunched = useMemo(() => day.filter((r) => !r.check_in_at && !r.hr_status), [day]);
+  const notPunched = useMemo(() => day.filter((r) => !r.check_in_at && !r.hr_status && !r.weekly_off), [day]);
 
   const summaryText = useMemo(() => buildDailyWhatsAppSummary(day, date), [day, date]);
 
@@ -504,7 +506,7 @@ export default function AttendanceAdmin() {
     const header = ['Employee', 'Code', 'Department', 'Date', 'Mode', 'HR Status', 'In', 'Out', 'Hours', 'Late', 'Late Min', 'Distance (m)', 'Outside Geofence', 'Location', 'Note'];
     const body = filteredDay.map((r) => [
       r.full_name, r.employee_code || '', r.department || '', date,
-      r.check_in_at ? r.work_mode : (r.hr_status || 'absent'), r.hr_status || '',
+      r.check_in_at ? r.work_mode : (r.hr_status || (r.weekly_off ? 'weekly-off' : 'absent')), r.hr_status || '',
       fmtTime(r.check_in_at), fmtTime(r.check_out_at), r.hours ?? '',
       r.is_late ? 'Yes' : '', r.late_minutes ?? '',
       r.distance_from_office ?? '', r.outside_geofence ? 'Yes' : '',
@@ -640,6 +642,11 @@ export default function AttendanceAdmin() {
               <Stat icon={<Clock size={20} />} label="Late" value={stats.late} />
               <Stat icon={<Navigation size={20} />} label="Site Visits" value={stats.siteVisits} />
             </div>
+            {stats.weeklyOff > 0 && (
+              <p className="-mt-3 mb-6 text-sm text-gray-500">
+                {stats.weeklyOff} on their weekly off today — not counted as absent, and not named in any message.
+              </p>
+            )}
 
             {/* Founder daily report */}
             <div className="bg-[#10243E] text-white rounded-xl p-6 mb-6">
@@ -728,6 +735,8 @@ export default function AttendanceAdmin() {
                               <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded border ${meta.cls}`}>{meta.label}</span>
                             ) : r.hr_status ? (
                               <span className="text-[10px] font-bold uppercase px-2 py-1 rounded border bg-gray-100 text-gray-600 border-gray-200">{r.hr_status}</span>
+                            ) : r.weekly_off ? (
+                              <span className="text-[10px] font-bold uppercase px-2 py-1 rounded border bg-gray-50 text-gray-500 border-gray-200">Weekly off</span>
                             ) : (
                               <span className="text-[10px] font-bold uppercase px-2 py-1 rounded border bg-red-50 text-red-600 border-red-200">Absent</span>
                             )}

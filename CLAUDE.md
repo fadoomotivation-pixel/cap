@@ -996,6 +996,24 @@ also call it with their JWT to send early, re-send (`force`), or preview
   11:30 the register closing with everything in it, 13:00 who arrived after,
   19:02 how the day ended.
 
+- **The weekly off — Tuesday for juniors (`cb_employees.weekly_off`).**
+  On the founder's word of 9 October 2026, and the data agreed unprompted:
+  over eight Tuesdays an average of 3.5 juniors and 0 seniors punched, against
+  ~20 juniors every other weekday. Until then the register published twenty
+  colleagues as Absent on their own day off, every week.
+
+  `weekly_off smallint[]` is **per person** (ISO weekday, 1 = Mon … 7 = Sun),
+  defaulting to `{2}` because nearly everybody added is a junior; seniors were
+  set to none once. It changes **only the would-be-Absent row** — a punch or an
+  `hr_status` always wins, so somebody who comes in on their day off appears
+  exactly as on any other day:
+  `cb_daily_attendance()` returns `weekly_off = true` (the console shows
+  "Weekly off"); `cb_daily_attendance_report()` drops the row, so no message
+  names them, not under Absent and not under On leave; `cb_monthly_matrix()`
+  reads the day as `off`, out of the denominator. The console's own summary in
+  `attendanceReport.js` filters the same rows — change one and change both.
+  Defined in `supabase/sql/cb_weekly_off.sql`.
+
 - **`cb_employees.is_senior` keeps a name out of the Absent list, and
   nothing else.** Senior staff account for their own movements straight to
   the founder, so the register printing their name under Absent is not

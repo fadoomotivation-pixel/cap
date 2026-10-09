@@ -63,8 +63,12 @@ const WINDOWS = [
  * Headline numbers, then arrivals by window, then only the rows that need a
  * decision — never a dump of everyone.
  */
-export function buildDailyWhatsAppSummary(rows, dateStr) {
+export function buildDailyWhatsAppSummary(allRows, dateStr) {
   const date = format(parseISO(dateStr), 'EEE, d MMM yyyy');
+  // Somebody on their weekly off who did not come in is not named at all —
+  // the same rule cb_daily_attendance_report() applies for the cron, so the
+  // console's copy of this message and the one the group gets cannot differ.
+  const rows = allRows.filter((r) => !r.weekly_off);
 
   const present = rows.filter((r) => r.check_in_at);
   const onLeave = rows.filter((r) => !r.check_in_at && r.hr_status);
