@@ -182,7 +182,7 @@ the token columns (`confirmation_token`, `recovery_token`, `email_change_token_n
 Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/:slug`,
 `/blog`, `/events`, `/contact`.
 Public: also `/blog/:slug` (8 original guides — see below).
-Private (must stay `noindex`): `/employee-kyc`, `/admin/interviews`,
+Private (must stay `noindex`): `/employee-kyc`, `/admin/control`, `/admin/interviews`,
 `/admin/attendance`, `/admin/expenses`, `/admin/leads`, `/admin/cards`,
 `/admin/events`, `/admin/whatsapp`,
 `/book/:token`, `/book/confirm/:bookingId`.
@@ -1694,11 +1694,48 @@ all four.
 - **Each card names the groups it lands in.** "Group" stopped being one
   address the day teams arrived, and a card that still said "Group" could not
   tell you whether Backend gets its own copy.
-- **The schedule is deliberately not editable here.** A schedule two screens
-  can change is one nobody can trust; the times live in pg_cron. The page also
-  no longer carries a second copy of the schedule list — it used to, and it
-  went on claiming "12:10 arrivals, 19:01 logouts" for a day after the server
-  had stopped running that.
+- **The schedule is not editable here — it is editable in the Control Room,
+  and only there.** A schedule two screens can change is one nobody can trust,
+  so `/admin/whatsapp` still shows no times. This page used to carry a second
+  copy of the schedule list and went on claiming "12:10 arrivals, 19:01
+  logouts" for a day after the server had stopped running that.
+
+## The Control Room — `/admin/control`
+
+One screen for the everyday work, built 9 October 2026 when the founder asked
+for the machine to be run "entirely from the dashboard": whose name to change,
+which group each person's attendance goes to, and what time each message is
+sent. `src/pages/ControlRoom.jsx` + `supabase/sql/cb_control_room.sql`. The
+detailed consoles stay for deep work; nothing here is a second copy.
+
+- **It leads with "Needs your attention"**, because the bug that prompted it was
+  invisible: Ananya was put on Backend on 7 October and Backend's group never
+  saw her, since *on a team* and *named in the messages* (`in_daily_report`)
+  are separate switches and adoption deliberately lands the second one off.
+  The page flags anybody on a team but out of the messages, anybody in the
+  messages with no machine code (they read Absent forever), unowned codes,
+  name mismatches, all messages off, and a machine silent for 30 minutes. The
+  machine page's "Add to roster" form now carries the checkbox too.
+- **Message times are editable, through `cb_set_message_time()` alone**, which
+  reads and writes the live `cron.job` row (`cb_message_schedule()` reads it
+  back) — so the page can never show a time that is not the one that runs.
+  **Each kind has a window, and the windows are not style.** The messages
+  carry times in their own words ("the register closed at 11:30", the
+  "11:00 – 11:30" and "18:00 – 19:00" windows), so: morning 09:00–11:25 and
+  before the register; register 11:31–12:30; register update 12:00–17:00 and
+  ≥15 min after the register; evening 19:00–22:00. The rule is printed under
+  each box. Moving a time **outside** those means changing the message text in
+  `attendance-whatsapp` as well — and `REGISTER_PUBLISHED` there is only the
+  fallback cut-off for the 13:00 list when the register was not logged.
+- **"Office closed" is a list of dates (`cb_message_pauses`), never a switch.**
+  `cb_send_attendance_report()` — the cron entry point — returns without
+  calling the function on a paused IST date. A switch somebody turns off for
+  Diwali is a switch still off a week later. "Send now" on `/admin/whatsapp`
+  does not pass through it, so a person can still override a closed day.
+- **"Who each group names"** is computed the same way
+  `cb_daily_attendance_report()` routes: a team routes only when active and
+  with a group; a senior is named in a group only on an `include_seniors`
+  team. Change one and change the other.
 
 ### Call Pro AI is a different company's product. It is not ours.
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Users, Clock, Wallet, Inbox, IdCard, LayoutGrid, CalendarDays, MessageCircle, Handshake, Cpu } from 'lucide-react';
+import { Users, Clock, Wallet, Inbox, IdCard, LayoutGrid, CalendarDays, MessageCircle, Handshake, Cpu, SlidersHorizontal } from 'lucide-react';
 
 /**
  * One nav for every admin console.
@@ -17,6 +17,7 @@ import { Users, Clock, Wallet, Inbox, IdCard, LayoutGrid, CalendarDays, MessageC
  */
 export const ADMIN_LINKS = [
   { to: '/employee-kyc',     label: 'Command Center', Icon: LayoutGrid },
+  { to: '/admin/control',    label: 'Control Room',   Icon: SlidersHorizontal },
   { to: '/admin/attendance', label: 'Attendance',     Icon: Users },
   { to: '/admin/machine',    label: 'Machine',        Icon: Cpu },
   { to: '/admin/leads',      label: 'Leads',          Icon: Inbox },
