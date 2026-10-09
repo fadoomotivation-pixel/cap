@@ -168,6 +168,18 @@ enforced in Postgres RLS policies (`auth.jwt() ->> 'email' in (...)`) on
 `employee_kyc`, `interview_slots`, `interview_links`, `interview_bookings` — so
 adding an admin means updating **both** `src/lib/admin.js` and those policies.
 
+**Never write an admin check as `(auth.jwt() ->> 'email') not in (...)`.** For a
+caller with no login the email is NULL, `NULL not in (…)` is NULL, and the
+`if` never fires. That exact guard sat on `cb_daily_attendance`,
+`cb_monthly_attendance` and `reschedule_interview_booking`, all executable by
+`anon` — the key in the public site's JavaScript — so anybody could read the
+whole register (phones, GPS, selfies) or move a candidate's interview. Found
+and closed 9 October 2026 (`supabase/sql/cb_attendance_rpc_guard.sql`). Use
+`cb_is_admin()`, which cannot be NULL, and revoke `anon` on anything private.
+`cb_daily_attendance` also allows the **service role** explicitly, because the
+WhatsApp cron calls it through `cb_daily_attendance_report()` — it used to pass
+only *because* of the bug.
+
 The petty-cash tables instead call the `cb_is_admin()` SQL function, which holds
 the list once. New admin-only objects should use it; the older inline policies
 above are still the reason an admin change means editing more than one place.
