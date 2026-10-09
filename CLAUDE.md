@@ -158,31 +158,51 @@ repo only covers the website.
   (single-use links are burned by setting `is_active = false` after one booking).
 - Storage bucket `employee-photos` (public read; authenticated insert).
 
-### Admin emails — single source of truth
+### Admins — the `cb_admins` table, managed from the Command Center
 
-`src/lib/admin.js` exports `ADMIN_EMAILS` / `isAdminEmail`. Currently:
-`admin@capitalbrix.co.in`, `ujjwal@capitalbrix.co.in`, `disha@capitalbrix.com`.
+**Who is an admin is data, not code** (`supabase/sql/cb_admins.sql`, 10 October
+2026). Until then the list was written into **fourteen places** — `src/lib/admin.js`,
+`cb_is_admin()`, eight RLS policies and four Edge Functions — so "Disha has left,
+Ananya is the new HR" was a developer job, and the one copy nobody changed would
+have kept a leaver's access to every employee's data.
 
-**Never hardcode a second copy of this list in a component.** The same list is also
-enforced in Postgres RLS policies (`auth.jwt() ->> 'email' in (...)`) on
-`employee_kyc`, `interview_slots`, `interview_links`, `interview_bookings` — so
-adding an admin means updating **both** `src/lib/admin.js` and those policies.
+- **One check, `cb_is_admin()`, reads `cb_admins`.** The eight policies on
+  `employee_kyc`, `interview_*`, `cb_employees`, `cb_attendance`,
+  `cb_hr_settings`, `cb_scheduler_settings` now call it; Edge Functions ask
+  `cb_is_admin_email()` with the service role; the website asks
+  `rpc('cb_is_admin')` through `resolveAdmin` / `checkAdmin` in
+  `src/lib/admin.js`. `BOOTSTRAP_ADMINS` there is only a first-paint guess and
+  never grants anything.
+- **Managed from the Command Center** (`/employee-kyc` → Admin access), through
+  `cb_admin_add` / `cb_admin_remove`. Two guards that are the whole point:
+  **you cannot remove yourself**, and **you cannot remove the last admin who can
+  actually sign in**.
+- **Why that second guard exists:** on 10 October only `disha@capitalbrix.com`
+  of the three listed admins had ever been an account — `admin@` and `ujjwal@`
+  were names with no login behind them. The whole company's admin access ran
+  through the login of somebody who had left. The panel now says, per admin,
+  whether a login exists at all.
+- **The Edge Functions keep a fallback list** used only when the database cannot
+  be asked. `event-confirmation` still checks its own list — it only gates
+  re-sending confirmations for the 13 September seminar, which is over; switch it
+  to `cb_is_admin_email` if it is ever used again.
+- `create-employee-login` was **deployed for weeks without being in the repo**;
+  it is committed now and does create / reset password / `set_email` /
+  `disable` / `enable`. Its lock-out guard was narrowed to what it protected:
+  it refuses **your own** account, not every admin's — resetting a departed
+  admin's login used to be impossible.
 
-**Never write an admin check as `(auth.jwt() ->> 'email') not in (...)`.** For a
-caller with no login the email is NULL, `NULL not in (…)` is NULL, and the
-`if` never fires. That exact guard sat on `cb_daily_attendance`,
-`cb_monthly_attendance` and `reschedule_interview_booking`, all executable by
-`anon` — the key in the public site's JavaScript — so anybody could read the
-whole register (phones, GPS, selfies) or move a candidate's interview. Found
-and closed 9 October 2026 (`supabase/sql/cb_attendance_rpc_guard.sql`). Use
-`cb_is_admin()`, which cannot be NULL, and revoke `anon` on anything private.
-`cb_daily_attendance` also allows the **service role** explicitly, because the
-WhatsApp cron calls it through `cb_daily_attendance_report()` — it used to pass
-only *because* of the bug.
+### The Command Center manages people, not just lists them
 
-The petty-cash tables instead call the `cb_is_admin()` SQL function, which holds
-the list once. New admin-only objects should use it; the older inline policies
-above are still the reason an admin change means editing more than one place.
+`src/components/CommandCenterPeople.jsx`. Each directory row has **Manage**:
+name (the machine is renamed by the existing trigger), phone, email (login and
+roster together), photo (`cb_employees.photo_url`, which wins over the KYC
+photo — 19 people with KYC pending had nowhere to put one), **Create login /
+Reset password** (shown once on screen with Copy and Send on WhatsApp, never
+stored), **Disable login**, **Make admin**, and **Has left the company** —
+which marks them left, stops their login and removes admin in one action,
+reporting each step. Each row shows the login state: no login, never logged
+in, last login N days ago, disabled.
 
 Auth note: Supabase "Confirm email" is OFF. Users created manually via SQL must have
 the token columns (`confirmation_token`, `recovery_token`, `email_change_token_new`,

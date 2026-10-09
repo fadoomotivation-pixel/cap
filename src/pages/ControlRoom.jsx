@@ -5,7 +5,7 @@ import PasswordInput from '../components/PasswordInput';
 import AdminNav from '../components/AdminNav';
 import AttendanceHealth from '../components/AttendanceHealth';
 import Seo from '../components/Seo';
-import { ADMIN_EMAILS } from '../lib/admin';
+import { resolveAdmin } from '../lib/admin';
 import { friendlyError } from '../lib/errors';
 import {
   SlidersHorizontal, RefreshCw, AlertTriangle, CheckCircle2, Clock, Users,
@@ -86,12 +86,12 @@ export default function ControlRoom() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
-      setIsAdmin(!!s && ADMIN_EMAILS.includes(s.user.email?.toLowerCase()));
+      resolveAdmin(s, setIsAdmin);
       setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
-      setIsAdmin(!!s && ADMIN_EMAILS.includes(s.user.email?.toLowerCase()));
+      resolveAdmin(s, setIsAdmin);
     });
     return () => sub.subscription.unsubscribe();
   }, []);

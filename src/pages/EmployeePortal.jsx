@@ -6,12 +6,13 @@ import EmployeeKYCForm from '../components/EmployeeKYCForm';
 import AttendancePunch from '../components/AttendancePunch';
 import MyPartnerTargets from '../components/MyPartnerTargets';
 import { motion, AnimatePresence } from 'framer-motion';
-import { isAdminEmail } from '../lib/admin';
+import { resolveAdmin } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
 import CardRequestForm from '../components/CardRequestForm';
 import OrphanKycResolver from '../components/OrphanKycResolver';
 import { friendlyError } from '../lib/errors';
 import { downloadPhoto, downloadPhotos } from '../lib/downloadPhoto';
+import { AdminAccessPanel, ManagePerson, LoginBadge, useEmployeeLogins } from '../components/CommandCenterPeople';
 
 export default function EmployeePortal() {
   const [session, setSession] = useState(null);
@@ -26,7 +27,7 @@ export default function EmployeePortal() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      checkIfAdmin(session?.user?.email);
+      resolveAdmin(session, setIsAdmin);
       setLoading(false);
     });
 
@@ -34,15 +35,11 @@ export default function EmployeePortal() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      checkIfAdmin(session?.user?.email);
+      resolveAdmin(session, setIsAdmin);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const checkIfAdmin = (email) => {
-    setIsAdmin(isAdminEmail(email));
-  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -532,6 +529,8 @@ function AdminDashboard({ session, onLogout }) {
   const [resolving, setResolving] = useState(null);
   const [photoMsg, setPhotoMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const [logins, reloadLogins] = useEmployeeLogins();
+  const [managing, setManaging] = useState(null);
 
   // The directory used to read employee_kyc alone, so it listed only the people
   // who had submitted KYC — 11 of 23 — and silently omitted everyone else. HR
@@ -578,6 +577,11 @@ function AdminDashboard({ session, onLogout }) {
           role_title: emp.role_title || k?.role_title,
           department: emp.department || k?.department,
           date_of_joining: emp.date_of_joining || k?.date_of_joining,
+          // An HR-set photo wins over the KYC one: 19 people have no KYC and so
+          // had nowhere to put a photo at all.
+          photo_url: emp.photo_url || k?.photo_url,
+          device_code: emp.device_code,
+          left_on: emp.left_on,
         };
       });
 
@@ -714,12 +718,15 @@ function AdminDashboard({ session, onLogout }) {
           </div>
         )}
 
+        <AdminAccessPanel session={session} />
+
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-[#10243E]">Employee Directory</h2>
               <p className="text-xs text-gray-500 mt-0.5">
                 Everyone on the HR roster. KYC is attached where the employee has submitted it.
+                Tap <strong>Manage</strong> to change a name, phone, email, photo or password.
               </p>
             </div>
             {!loading && (
@@ -760,7 +767,8 @@ function AdminDashboard({ session, onLogout }) {
                   <tr><td colSpan="6" className="p-8 text-center text-gray-400">No employees on the roster yet — add them in Attendance → Employees.</td></tr>
                 ) : (
                   employees.map((emp) => (
-                    <tr key={emp.id} className="hover:bg-gray-50/50 transition">
+                    <React.Fragment key={emp.id}>
+                    <tr className="hover:bg-gray-50/50 transition">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           {emp.photo_url ? (
@@ -779,7 +787,14 @@ function AdminDashboard({ session, onLogout }) {
                             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"><User size={20} /></div>
                           )}
                           <div>
-                            <p className="font-semibold text-[#10243E]">{emp.full_name}</p>
+                            <p className="font-semibold text-[#10243E] flex flex-wrap items-center gap-2">
+                              {emp.full_name}
+                              <button onClick={() => setManaging(managing === emp.id ? null : emp.id)}
+                                className="text-[11px] font-medium px-2 py-0.5 rounded border border-[#10243E]/30 text-[#10243E] hover:bg-[#10243E] hover:text-white">
+                                Manage
+                              </button>
+                            </p>
+                            <LoginBadge login={logins[emp.id]} />
                             {emp.hasKyc ? (
                               <p className="text-xs text-gray-500">
                                 DOB: {emp.date_of_birth || '—'}
@@ -830,6 +845,20 @@ function AdminDashboard({ session, onLogout }) {
                         )}
                       </td>
                     </tr>
+                    {managing === emp.id && (
+                      <tr>
+                        <td colSpan="6" className="p-4 bg-gray-50/60">
+                          <ManagePerson
+                            emp={emp}
+                            login={logins[emp.id]}
+                            session={session}
+                            onClose={() => setManaging(null)}
+                            onChanged={() => { fetchEmployees(); reloadLogins(); }}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   ))
                 )}
               </tbody>

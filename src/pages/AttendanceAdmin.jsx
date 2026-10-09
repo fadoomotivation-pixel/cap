@@ -8,7 +8,7 @@ import MonthlyAttendanceReport, {
 } from '../components/MonthlyAttendanceReport';
 import { buildMonthly, monthlyCsv } from '../lib/monthlyAttendance';
 import { friendlyError } from '../lib/errors';
-import { ADMIN_EMAILS } from '../lib/admin';
+import { resolveAdmin } from '../lib/admin';
 import { buildDailyWhatsAppSummary, whatsappLink, buildNudgeMessage } from '../lib/attendanceReport';
 import {
   Users, UserPlus, MapPin, Download, Search, LogOut, RefreshCw, CheckCircle, Clock,
@@ -106,12 +106,12 @@ export default function AttendanceAdmin() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setIsAdmin(!!session && ADMIN_EMAILS.includes(session.user.email?.toLowerCase()));
+      resolveAdmin(session, setIsAdmin);
       setLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
-      setIsAdmin(!!s && ADMIN_EMAILS.includes(s.user.email?.toLowerCase()));
+      resolveAdmin(s, setIsAdmin);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -1034,11 +1034,12 @@ export default function AttendanceAdmin() {
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-3">
-                          {ADMIN_EMAILS.includes(e.email?.toLowerCase()) ? (
-                            // Never offer to reset an HR account from the roster —
-                            // one misclick locks HR out of this console.
-                            <span className="text-xs text-gray-400 flex items-center gap-1" title="HR admin account — manage its password in Supabase">
-                              <KeyRound size={14} /> HR account
+                          {e.email?.toLowerCase() === session?.user?.email?.toLowerCase() ? (
+                            // Never offer to reset YOUR OWN login from the roster —
+                            // one misclick locks you out of this console. Another
+                            // admin's login may be reset (Disha's, after she left).
+                            <span className="text-xs text-gray-400 flex items-center gap-1" title="This is your own login — change it from your account, not from the roster">
+                              <KeyRound size={14} /> Your login
                             </span>
                           ) : (
                             <button onClick={() => confirmCreateLogin(e)} disabled={creatingFor === e.id}
