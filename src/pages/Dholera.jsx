@@ -6,6 +6,7 @@ import Prose from '../components/Prose';
 import DholeraTimeline, { timelineItemList } from '../components/DholeraTimeline';
 import DholeraInfrastructure from '../components/DholeraInfrastructure';
 import VirtualTourViewer from '../components/VirtualTourViewer';
+import GroundPhotos from '../components/GroundPhotos';
 import { pageSeo, absoluteUrl, SITE_URL, SITE_NAME } from '../lib/seo';
 import { faqsFromMarkdown, setWhatsappPhone } from '../lib/prose';
 import { site } from '../data/site';
@@ -142,6 +143,13 @@ export default function Dholera() {
               </div>
             ),
             infra: <DholeraInfrastructure />,
+            photos: (
+              <GroundPhotos
+                className="my-10"
+                heading="On the ground in Dholera"
+                lede="Photographed on site: the Tata Electronics semiconductor site gate, fab construction cranes, the ReNew solar factory and the ABCD building."
+              />
+            ),
           }}
         />
       </article>

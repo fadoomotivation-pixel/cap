@@ -25,13 +25,13 @@ export const pageSeo = {
   about: {
     title: 'About Capital Brix LLP | Dholera Plot Sales from Noida',
     description:
-      'Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., a Dholera developer with 8+ completed projects since 2012. Led by Jasvinder Singh, Founder & CEO of Capital Brix LLP, working from Sector 136, Noida.',
+      'Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech Pvt. Ltd., in Dholera since 2012 with 30+ projects launched. Led by Jasvinder Singh, Founder & CEO, from Noida.',
     path: '/about',
   },
   projects: {
-    title: 'Dholera Plot Projects | Mayur Greenz II, Evana, Enclave 5 & Signature',
+    title: 'Mirrikh Projects near Dholera | Mayur Prime, Swastik II & More',
     description:
-      'Compare residential and industrial plot projects in Dholera Smart City — Mayur Greenz II, Mayur Evana, Mayur Enclave 5, Mayur Signature and Mayur Industrial Park. Current pricing, sizes, approvals and payment plans.',
+      'Mayur Prime from ₹20 L, Mayur Swastik II from ₹12.75 L, Mayur Industrial Landmark, Mayur Business Park and Greenz Courtyard villas — near Dholera Smart City. NA, NOC, title clear.',
     path: '/projects',
   },
   dholera: {

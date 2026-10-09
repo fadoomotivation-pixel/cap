@@ -21,7 +21,7 @@ export default function Partnership() {
             The Partnership
           </p>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-heading text-white leading-tight mb-6">
-            Why buying through us costs you less.
+            Why buy through Capital Brix.
           </h2>
           <p className="text-gray-400 font-light text-lg lg:text-xl leading-relaxed">
             {partnership.intro}

@@ -84,7 +84,7 @@ function Table({ head, rows }) {
 
 /**
  * Renders the research markdown with the site's article typography.
- * `slots` swaps {{TIMELINE}}, {{TOUR}} and {{INFRA}} for React nodes.
+ * `slots` swaps {{TIMELINE}}, {{TOUR}}, {{INFRA}} and {{PHOTOS}} for React nodes.
  */
 export default function Prose({ markdown, slots = {}, contained = false }) {
   setWhatsappPhone(site.phone);
@@ -101,7 +101,7 @@ export default function Prose({ markdown, slots = {}, contained = false }) {
       {blocks.map((b, i) => {
         const inner = renderBlock(b, i, slots);
         if (!inner) return null;
-        if (contained || b.type === 'timeline' || b.type === 'tour' || b.type === 'infra') {
+        if (contained || b.type === 'timeline' || b.type === 'tour' || b.type === 'infra' || b.type === 'photos') {
           return <React.Fragment key={i}>{inner}</React.Fragment>;
         }
         const shell = b.type === 'table' ? 'max-w-5xl mx-auto px-6' : 'max-w-3xl mx-auto px-6';
@@ -115,7 +115,7 @@ function renderBlock(b, i, slots) {
         if (b.type === 'anchor') {
           return <span key={i} id={b.id} className="block scroll-mt-28" />;
         }
-        if (b.type === 'timeline' || b.type === 'tour' || b.type === 'infra') {
+        if (b.type === 'timeline' || b.type === 'tour' || b.type === 'infra' || b.type === 'photos') {
           return <React.Fragment key={i}>{slots[b.type] || null}</React.Fragment>;
         }
         if (b.type === 'hr') {

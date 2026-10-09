@@ -60,12 +60,12 @@ export default function HomeAbout() {
           
           <div className="mt-10 pt-10 border-t border-gray-200 grid grid-cols-2 sm:grid-cols-3 gap-6">
             <div>
-              <div className="text-4xl font-heading text-[#1A1A1A] mb-1">12+</div>
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Years Experience</div>
+              <div className="text-4xl font-heading text-[#1A1A1A] mb-1">14+</div>
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Years in Dholera · Mirrikh Infratech</div>
             </div>
             <div>
-              <div className="text-4xl font-heading text-[#1A1A1A] mb-1">12k+</div>
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Happy Investors</div>
+              <div className="text-4xl font-heading text-[#1A1A1A] mb-1">12,000+</div>
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Mirrikh Infratech investors</div>
             </div>
             <div className="col-span-2 sm:col-span-1">
               <div className="text-4xl font-heading text-[#D4AF37] mb-1">25+</div>

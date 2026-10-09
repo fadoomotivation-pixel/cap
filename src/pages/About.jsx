@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShieldCheck, FileCheck2, MapPin, Phone, Award, Handshake } from 'lucide-react';
 import Seo from '../components/Seo';
 import PageIntro from '../components/PageIntro';
-import { pageSeo } from '../lib/seo';
+import { pageSeo, SITE_URL, absoluteUrl } from '../lib/seo';
 import { site } from '../data/site';
 
 // ─────────────────────────────────────────────────────────────
@@ -47,10 +47,53 @@ const whatWeDo = [
   },
 ];
 
+// AboutPage + the organisation it describes. Capital Brix is described as a
+// sales channel partner; Mirrikh appears only as the developer it sells for.
+const aboutLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'AboutPage',
+      '@id': `${absoluteUrl('/about')}#page`,
+      url: absoluteUrl('/about'),
+      name: 'About Capital Brix LLP',
+      mainEntity: { '@id': `${SITE_URL}/#organization` },
+    },
+    {
+      '@type': 'RealEstateAgent',
+      '@id': `${SITE_URL}/#organization`,
+      name: 'Capital Brix LLP',
+      url: SITE_URL,
+      logo: absoluteUrl('/logo-capital-brix.png'),
+      telephone: `+${site.phone}`,
+      email: site.email,
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'A-118, 6th Floor, The Diamond, Sector 136',
+        addressLocality: 'Noida',
+        postalCode: '201304',
+        addressRegion: 'Uttar Pradesh',
+        addressCountry: 'IN',
+      },
+      founder: { '@type': 'Person', name: 'Jasvinder Singh', jobTitle: 'Founder & CEO, Capital Brix LLP' },
+      description: 'Authorised sales channel partner of Mirrikh Infratech Pvt. Ltd. for projects near Dholera Smart City, Gujarat.',
+      areaServed: 'Dholera Smart City, Gujarat, India',
+      sameAs: site.socials.map((s) => s.href),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'About', item: absoluteUrl('/about') },
+      ],
+    },
+  ],
+};
+
 export default function About() {
   return (
     <main className="bg-[#f5f5f7] min-h-screen font-outfit">
-      <Seo {...pageSeo.about} />
+      <Seo {...pageSeo.about} jsonLd={aboutLd} />
       <PageIntro
         eyebrow="Capital Brix LLP · Noida"
         title="Who we are"
@@ -119,6 +162,10 @@ export default function About() {
               <img
                 src="/founder.jpg"
                 alt="Jasvinder Singh, Founder and CEO of Capital Brix LLP"
+                width="112"
+                height="112"
+                loading="lazy"
+                decoding="async"
                 className="w-28 h-28 rounded-full object-cover mx-auto mb-5 border-4 border-[#D4AF37]"
                 onError={(e) => {
                   e.target.onerror = null;
@@ -146,13 +193,20 @@ export default function About() {
           <p className="text-[#D4AF37] font-bold uppercase tracking-[0.25em] text-xs mb-3">
             The Developer
           </p>
-          <h2 className="text-2xl md:text-3xl font-black mb-5">
+          <h2 className="text-white text-2xl md:text-3xl font-black mb-5">
             About Mirrikh Infratech Pvt. Ltd.
           </h2>
           <p className="text-white/80 leading-relaxed mb-4">
-            The projects marketed on this site are developed by Mirrikh Infratech Pvt. Ltd., a
-            Dholera developer with 8+ completed projects since 2012, featured in Forbes India in
-            March 2025.
+            The projects marketed on this site are developed by Mirrikh Infratech Pvt. Ltd., which
+            has worked in Dholera since 2012 and has launched 30+ residential, industrial and villa
+            projects there, over 25 lakh+ sq yd. Mirrikh Infratech was named Pride of Gujarat in 2025
+            (presented by Chief Minister Bhupendra Patel) and 2022, Navratna in 2024, Most Preferred
+            Brand in Smart City Projects in 2023 (with The Economic Times) and Gujarat Icon in 2021.
+          </p>
+          <p className="mb-4">
+            <Link to="/projects#developer" className="text-[#D4AF37] text-sm font-semibold hover:underline">
+              Mirrikh Infratech’s awards and current projects →
+            </Link>
           </p>
           <p className="text-white/60 text-sm leading-relaxed">
             Mirrikh Infratech Pvt. Ltd. and MAYUR are trademarks of their respective owner and

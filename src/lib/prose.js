@@ -162,7 +162,7 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
-    if (trimmed === '{{TIMELINE}}' || trimmed === '{{TOUR}}' || trimmed === '{{INFRA}}') {
+    if (trimmed === '{{TIMELINE}}' || trimmed === '{{TOUR}}' || trimmed === '{{INFRA}}' || trimmed === '{{PHOTOS}}') {
       push({ type: trimmed.slice(2, -2).toLowerCase() });
       i += 1;
       continue;
