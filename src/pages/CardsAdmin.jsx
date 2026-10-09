@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import PasswordInput from '../components/PasswordInput';
-import { ADMIN_EMAILS } from '../lib/admin';
+import { resolveAdmin } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
 import { friendlyError } from '../lib/errors';
 import { downloadCsv } from '../lib/expenses';
@@ -34,12 +34,12 @@ export default function CardsAdmin() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setIsAdmin(!!session && ADMIN_EMAILS.includes(session.user.email?.toLowerCase()));
+      resolveAdmin(session, setIsAdmin);
       setLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
-      setIsAdmin(!!s && ADMIN_EMAILS.includes(s.user.email?.toLowerCase()));
+      resolveAdmin(s, setIsAdmin);
     });
     return () => subscription.unsubscribe();
   }, []);

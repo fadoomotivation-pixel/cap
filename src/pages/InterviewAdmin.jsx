@@ -10,7 +10,7 @@ import {
   Inbox,
 } from 'lucide-react';
 import { format, addMinutes, addDays, parse, isBefore, isToday, isTomorrow, parseISO, isAfter } from 'date-fns';
-import { ADMIN_EMAILS } from '../lib/admin';
+import { checkAdmin } from '../lib/admin';
 
 const DURATIONS = [15, 20, 30, 45, 60];
 
@@ -81,19 +81,21 @@ export default function InterviewAdmin() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) checkIfAdmin(session.user.email);
+      if (session) checkIfAdmin(session);
       else setLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) checkIfAdmin(session.user.email);
+      if (session) checkIfAdmin(session);
       else { setIsAdmin(false); setLoading(false); }
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkIfAdmin = (email) => {
-    if (ADMIN_EMAILS.includes(email?.toLowerCase())) {
+  // Asks the database (cb_admins), not a list in the code: this page signs a
+  // non-admin out, so a stale list here would throw the new HR out of it.
+  const checkIfAdmin = async (sess) => {
+    if (await checkAdmin(sess)) {
       setIsAdmin(true);
       fetchData();
     } else {

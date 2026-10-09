@@ -85,6 +85,24 @@ const ADMIN_EMAILS = [
   "disha@capitalbrix.com",
 ];
 
+/**
+ * Is this email an admin? The DATABASE decides (cb_admins, through
+ * cb_is_admin_email). The list above is only a fallback for the moment the
+ * database cannot be asked, so a departed HR's access cannot survive in this
+ * file after she is removed from the Command Center.
+ */
+async function isAdminEmail(
+  // deno-lint-ignore no-explicit-any
+  client: any,
+  email: string | undefined | null,
+): Promise<boolean> {
+  const e = (email ?? "").toLowerCase();
+  if (!e) return false;
+  const { data, error } = await client.rpc("cb_is_admin_email", { p_email: e });
+  return error ? ADMIN_EMAILS.includes(e) : !!data;
+}
+
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -935,8 +953,7 @@ Deno.serve(async (req) => {
       const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
       if (jwt) {
         const { data: u } = await admin.auth.getUser(jwt);
-        viaAdmin = !!u?.user?.email &&
-          ADMIN_EMAILS.includes(u.user.email.toLowerCase());
+        viaAdmin = await isAdminEmail(admin, u?.user?.email);
       }
     }
     if (!viaCron && !viaAdmin) return json({ error: "not authorised" }, 403);
