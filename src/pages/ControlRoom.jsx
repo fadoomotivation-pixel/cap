@@ -47,6 +47,9 @@ const fmtIst = (mins) =>
 const todayIst = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
 
+// ISO weekday, as cb_employees.weekly_off stores it.
+const WEEKDAYS = [[1, 'Mon'], [2, 'Tue'], [3, 'Wed'], [4, 'Thu'], [5, 'Fri'], [6, 'Sat'], [7, 'Sun']];
+
 const minutesAgo = (ts) => (ts ? Math.round((Date.now() - new Date(ts).getTime()) / 60000) : null);
 
 export default function ControlRoom() {
@@ -97,7 +100,7 @@ export default function ControlRoom() {
     if (!isAdmin) return;
     const [emp, tb, dir, mism, sched, set, pz, mc] = await Promise.all([
       supabase.from('cb_employees')
-        .select('id, full_name, device_code, team_id, in_daily_report, is_senior, is_active, left_on')
+        .select('id, full_name, device_code, team_id, in_daily_report, is_senior, is_active, left_on, weekly_off')
         .eq('is_active', true).is('left_on', null).order('full_name'),
       supabase.rpc('cb_team_board'),
       supabase.rpc('cb_device_code_directory'),
@@ -589,6 +592,14 @@ export default function ControlRoom() {
                       onChange={(e) => updatePerson(p, { is_senior: e.target.checked })} />
                     Senior
                   </label>
+                  {/* One day, the way this office works. Somebody with no punch
+                      on it is "Weekly off" — never Absent, never named. */}
+                  <select value={p.weekly_off?.[0] ?? ''} title="Weekly off"
+                    onChange={(e) => updatePerson(p, { weekly_off: e.target.value ? [Number(e.target.value)] : [] })}
+                    className="border border-gray-200 rounded px-1.5 py-1 text-xs bg-white">
+                    <option value="">No day off</option>
+                    {WEEKDAYS.map(([n, d]) => <option key={n} value={n}>Off: {d}</option>)}
+                  </select>
                   <button onClick={() => markLeft(p)} className="text-xs text-gray-400 hover:text-red-700">Left…</button>
                   <p className="basis-full text-[11px] text-gray-500 -mt-1">
                     {r.named ? `Named in: ${r.group}` : r.why}
