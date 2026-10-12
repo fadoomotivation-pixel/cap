@@ -151,7 +151,8 @@ export default function ExpenseAdmin() {
   const loadAudit = useCallback(async () => {
     if (!isAdmin) return;
     const { data, error } = await supabase.from('cb_expense_audit')
-      .select('*').order('at', { ascending: false }).limit(200);
+      .select('*').in('table_name', ['cb_expenses', 'cb_expense_topups', 'cb_cash_counts'])
+      .order('at', { ascending: false }).limit(200);
     if (error) { setAuditErr('The change history switches on once the petty-cash SQL (cb_expense_audit.sql) has been run.'); setAudit([]); return; }
     setAuditErr(''); setAudit(data || []);
   }, [isAdmin]);

@@ -24,6 +24,7 @@ import AttendanceAdmin from './pages/AttendanceAdmin';
 import MachineAdmin from './pages/MachineAdmin';
 import ControlRoom from './pages/ControlRoom';
 import ExpenseAdmin from './pages/ExpenseAdmin';
+import SalaryAdmin from './pages/SalaryAdmin';
 import LeadsAdmin from './pages/LeadsAdmin';
 import CardsAdmin from './pages/CardsAdmin';
 import EventsAdmin from './pages/EventsAdmin';
@@ -78,6 +79,7 @@ export function AppContent() {
         <Route path="/admin/machine" element={<PrivateRoute title="Attendance machine | Capital Brix"><MachineAdmin /></PrivateRoute>} />
         <Route path="/admin/control" element={<PrivateRoute title="Control Room | Capital Brix"><ControlRoom /></PrivateRoute>} />
         <Route path="/admin/expenses" element={<PrivateRoute title="Petty Cash | Capital Brix"><ExpenseAdmin /></PrivateRoute>} />
+        <Route path="/admin/salary" element={<PrivateRoute title="Salary | Capital Brix"><SalaryAdmin /></PrivateRoute>} />
         <Route path="/admin/leads" element={<PrivateRoute title="Website Leads | Capital Brix"><LeadsAdmin /></PrivateRoute>} />
         <Route path="/admin/cards" element={<PrivateRoute title="Card Requests | Capital Brix"><CardsAdmin /></PrivateRoute>} />
         <Route path="/admin/events" element={<PrivateRoute title="Event Registrations | Capital Brix"><EventsAdmin /></PrivateRoute>} />
