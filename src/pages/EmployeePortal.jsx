@@ -583,6 +583,7 @@ function AdminDashboard({ session, onLogout }) {
           photo_url: emp.photo_url || k?.photo_url,
           device_code: emp.device_code,
           left_on: emp.left_on,
+          is_active: emp.is_active,
         };
       });
 
@@ -593,7 +594,14 @@ function AdminDashboard({ session, onLogout }) {
 
   useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
 
-  const upcomingBirthdays = getUpcomingBirthdays(employees);
+  // People who have left stay on file (their months of attendance are real)
+  // but not in the working directory, where they read as current staff.
+  const [showLeft, setShowLeft] = useState(false);
+  const current = employees.filter((e) => !e.left_on && e.is_active !== false);
+  const leavers = employees.filter((e) => e.left_on || e.is_active === false);
+  const listed = showLeft ? leavers : current;
+
+  const upcomingBirthdays = getUpcomingBirthdays(current);
 
   return (
     <div className="min-h-screen bg-[#F0F5FA] font-outfit pt-20">
@@ -738,16 +746,22 @@ function AdminDashboard({ session, onLogout }) {
             {!loading && (
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600">
-                  {employees.length} on roster
+                  {current.length} working here
                 </span>
-                {employees.filter((e) => !e.hasKyc).length > 0 && (
+                {leavers.length > 0 && (
+                  <button onClick={() => setShowLeft((v) => !v)}
+                    className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-gray-700 hover:bg-gray-50">
+                    {showLeft ? '← Back to current staff' : `Left the company (${leavers.length})`}
+                  </button>
+                )}
+                {current.filter((e) => !e.hasKyc).length > 0 && (
                   <span className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-amber-800 font-medium">
-                    {employees.filter((e) => !e.hasKyc).length} KYC pending
+                    {current.filter((e) => !e.hasKyc).length} KYC pending
                   </span>
                 )}
-                {employees.filter((e) => e.personalLogin).length > 0 && (
+                {current.filter((e) => e.personalLogin).length > 0 && (
                   <span className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-amber-800 font-medium">
-                    {employees.filter((e) => e.personalLogin).length} to resubmit from work login
+                    {current.filter((e) => e.personalLogin).length} to resubmit from work login
                   </span>
                 )}
               </div>
@@ -769,10 +783,10 @@ function AdminDashboard({ session, onLogout }) {
               <tbody className="divide-y divide-gray-100">
                 {loading ? (
                   <tr><td colSpan="6" className="p-8 text-center text-gray-400">Loading records...</td></tr>
-                ) : employees.length === 0 ? (
-                  <tr><td colSpan="6" className="p-8 text-center text-gray-400">No employees on the roster yet — add them in Attendance → Employees.</td></tr>
+                ) : listed.length === 0 ? (
+                  <tr><td colSpan="6" className="p-8 text-center text-gray-400">{showLeft ? 'Nobody has left.' : 'No employees on the roster yet — add them in Attendance → Employees.'}</td></tr>
                 ) : (
-                  employees.map((emp) => (
+                  listed.map((emp) => (
                     <React.Fragment key={emp.id}>
                     <tr className="hover:bg-gray-50/50 transition">
                       <td className="p-4">
@@ -795,6 +809,7 @@ function AdminDashboard({ session, onLogout }) {
                           <div>
                             <p className="font-semibold text-[#10243E] flex flex-wrap items-center gap-2">
                               {emp.full_name}
+                              {emp.left_on && <span className="text-[10px] uppercase tracking-wide bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">Left {emp.left_on}</span>}
                               <button onClick={() => setManaging(managing === emp.id ? null : emp.id)}
                                 className="text-[11px] font-medium px-2 py-0.5 rounded border border-[#10243E]/30 text-[#10243E] hover:bg-[#10243E] hover:text-white">
                                 Manage
