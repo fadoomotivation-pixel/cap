@@ -237,7 +237,7 @@ Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/:slug
 `/blog`, `/events`, `/contact`.
 Public: also `/blog/:slug` (8 original guides — see below).
 Private (must stay `noindex`): `/employee-kyc`, `/admin/control`, `/admin/interviews`,
-`/admin/attendance`, `/admin/expenses`, `/admin/leads`, `/admin/cards`,
+`/admin/attendance`, `/admin/expenses`, `/admin/salary`, `/admin/leads`, `/admin/cards`,
 `/admin/events`, `/admin/whatsapp`,
 `/book/:token`, `/book/confirm/:bookingId`.
 
@@ -2101,6 +2101,31 @@ deleted — past spends point at them.
 
 Employees have **no access at all** to these tables — RLS is admin-only on every
 one of them, including read.
+
+## Salary and advances — `/admin/salary`
+
+`src/pages/SalaryAdmin.jsx` + `supabase/sql/cb_salary.sql` (12 October 2026).
+The founder asked for a salary console, and above all for **every advance he
+gives somebody to be recorded with its date** — an advance remembered by one
+person is the argument on salary day.
+
+- `cb_salary_rates` — salary per person **from a date**. A raise is a new row,
+  never an edit, so an earlier month is always recomputed at the rate that
+  applied then.
+- `cb_salary_advances` — who, when, how much, given by (default Founder), cash
+  / UPI / bank, and optionally how much to recover per month.
+- `cb_salary_payments` — what was paid for a month, unique per person per
+  month, including `advance_recovered`.
+- `cb_payroll_month(month)` is the one place the payroll is computed — screen,
+  CSV and the WhatsApp summary read it. **Absent days from
+  `cb_monthly_matrix` are only a suggested deduction** (salary ÷ days in month
+  × absent days), never applied by themselves: a day the machine missed is not
+  a day somebody skipped. The advance balance subtracts only recoveries from
+  **earlier** months, so a month's suggestion is not shrunk by its own payment.
+- Admin-only RLS on all three, and every edit/delete goes through the petty
+  cash audit trigger into `cb_expense_audit`, restorable with
+  `cb_expense_restore()` (its table whitelist now includes the salary tables).
+  The petty-cash "Changes & deleted" tab filters to its own three tables.
 
 ## Interview slot autopilot
 

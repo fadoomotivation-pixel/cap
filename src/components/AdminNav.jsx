@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Users, Clock, Wallet, Inbox, IdCard, LayoutGrid, CalendarDays, MessageCircle, Handshake, Cpu, SlidersHorizontal } from 'lucide-react';
+import { Users, Clock, Wallet, Inbox, IdCard, LayoutGrid, CalendarDays, MessageCircle, Handshake, Cpu, SlidersHorizontal, IndianRupee } from 'lucide-react';
 
 /**
  * One nav for every admin console.
@@ -22,6 +22,7 @@ export const ADMIN_LINKS = [
   { to: '/admin/machine',    label: 'Machine',        Icon: Cpu },
   { to: '/admin/leads',      label: 'Leads',          Icon: Inbox },
   { to: '/admin/expenses',   label: 'Petty Cash',     Icon: Wallet },
+  { to: '/admin/salary',     label: 'Salary',         Icon: IndianRupee },
   { to: '/admin/cards',      label: 'Cards',          Icon: IdCard },
   { to: '/admin/events',     label: 'Events',         Icon: CalendarDays },
   { to: '/admin/interviews', label: 'Interviews',     Icon: Clock },
