@@ -14,7 +14,7 @@ import {
   Repeat, AlertTriangle, CheckCircle, Clock, Users, FileText, ArrowDownToLine,
   Milk, ShoppingCart, Coffee, Droplets, Sparkles, Printer, Package, Car, Wrench,
   Zap, Wifi, HeartHandshake,
-  Inbox,
+  Inbox, Pencil, History, Undo2, EyeOff, Eye,
 } from 'lucide-react';
 import { format, parseISO, startOfMonth } from 'date-fns';
 
@@ -52,7 +52,7 @@ export default function ExpenseAdmin() {
   const [ok, setOk] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const [tab, setTab] = useState('daily'); // daily | ledger | monthly | setup
+  const [tab, setTab] = useState('daily'); // daily | ledger | monthly | setup | history
 
   const [position, setPosition] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -68,6 +68,7 @@ export default function ExpenseAdmin() {
 
   const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [monthRows, setMonthRows] = useState([]);
+  const [prevMonthRows, setPrevMonthRows] = useState([]);
 
   const [topups, setTopups] = useState([]);
   const [counts, setCounts] = useState([]);
@@ -77,6 +78,9 @@ export default function ExpenseAdmin() {
   const [entry, setEntry] = useState(emptyEntry());
   const [billFile, setBillFile] = useState(null);
   const [settling, setSettling] = useState(null); // the row being marked paid
+  const [editing, setEditing] = useState(null);   // the expense being edited
+  const [audit, setAudit] = useState(null);
+  const [auditErr, setAuditErr] = useState('');
 
   // ── auth ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -137,7 +141,21 @@ export default function ExpenseAdmin() {
     if (!isAdmin || tab !== 'monthly') return;
     supabase.rpc('cb_expense_month', { p_month: `${month}-01` })
       .then(({ data, error }) => (error ? fail(error) : setMonthRows(data || [])));
+    // Last month beside this one: "₹4,200 on milk" means nothing alone; "up
+    // ₹1,100 on last month" is a question somebody can answer.
+    const prev = format(new Date(parseISO(`${month}-01`).getFullYear(), parseISO(`${month}-01`).getMonth() - 1, 1), 'yyyy-MM-dd');
+    supabase.rpc('cb_expense_month', { p_month: prev })
+      .then(({ data }) => setPrevMonthRows(data || []));
   }, [isAdmin, tab, month]);
+
+  const loadAudit = useCallback(async () => {
+    if (!isAdmin) return;
+    const { data, error } = await supabase.from('cb_expense_audit')
+      .select('*').order('at', { ascending: false }).limit(200);
+    if (error) { setAuditErr('The change history switches on once the petty-cash SQL (cb_expense_audit.sql) has been run.'); setAudit([]); return; }
+    setAuditErr(''); setAudit(data || []);
+  }, [isAdmin]);
+  useEffect(() => { if (tab === 'history') loadAudit(); }, [tab, loadAudit]);
 
   const loadSetup = useCallback(async () => {
     if (!isAdmin) return;
@@ -202,17 +220,91 @@ export default function ExpenseAdmin() {
     } catch (err) { fail(err); } finally { setBusy(false); }
   };
 
+  // Deleting no longer removes the bill photo: every delete is recorded in
+  // cb_expense_audit and can be restored, and a restored entry must come back
+  // with its bill.
   const deleteExpense = async (row) => {
     if (!window.confirm(
-      `Delete this ${inr(row.amount)} entry?\n\nThe cash balance will go back up by this amount. If the money was actually spent, correct the entry instead of deleting it.`
+      `Delete this ${inr(row.amount)} entry (${row.vendor || row.category?.name || 'expense'}, ${fmtDate(row.spend_date)})?\n\nThe cash balance goes back up by this amount. If the money was actually spent, use Edit instead.\n\nThe delete is recorded under "Changes & deleted" and can be undone there.`
     )) return;
     setBusy(true);
-    if (row.bill_url) await supabase.storage.from('expense-bills').remove([row.bill_url]);
     const { error } = await supabase.from('cb_expenses').delete().eq('id', row.id);
     setBusy(false);
     if (error) return fail(error);
-    flash('Entry deleted.');
+    flash('Entry deleted. Undo it from "Changes & deleted" if that was a mistake.');
     loadCore(); if (tab === 'ledger') loadLedger();
+  };
+
+  const saveEdit = async (row, patch, newBill) => {
+    setBusy(true);
+    try {
+      const p = { ...patch, amount: Number(patch.amount) };
+      if (!(p.amount > 0)) throw new Error('Enter an amount greater than zero.');
+      if (newBill) p.bill_url = await uploadBill(newBill);
+      // Changing away from credit makes it an ordinary paid spend.
+      if (p.payment_mode !== 'credit') { p.is_settled = false; p.settled_on = null; p.settled_mode = null; }
+      const { error } = await supabase.from('cb_expenses').update(p).eq('id', row.id);
+      if (error) throw error;
+      setEditing(null);
+      flash('Entry updated. The old version is kept under "Changes & deleted".');
+      loadCore(); if (tab === 'ledger') loadLedger();
+    } catch (err) { fail(err); } finally { setBusy(false); }
+  };
+
+  const deleteTopup = async (t) => {
+    if (!window.confirm(`Delete the ${inr(t.amount)} float from ${fmtDate(t.topup_date)}?\n\nCash in hand drops by this amount if it was cash. Recorded under "Changes & deleted".`)) return;
+    const { error } = await supabase.from('cb_expense_topups').delete().eq('id', t.id);
+    if (error) return fail(error);
+    flash('Float entry deleted.'); loadCore(); loadSetup();
+  };
+
+  const editTopup = async (t) => {
+    const v = window.prompt(`Correct the amount for the float on ${fmtDate(t.topup_date)}:`, String(Number(t.amount)));
+    if (v === null) return;
+    const amount = Number(v);
+    if (!(amount > 0)) return fail('Enter an amount greater than zero.');
+    const { error } = await supabase.from('cb_expense_topups').update({ amount }).eq('id', t.id);
+    if (error) return fail(error);
+    flash('Float corrected.'); loadCore(); loadSetup();
+  };
+
+  const deleteCount = async (c) => {
+    if (!window.confirm(`Delete the cash count of ${inr(c.counted_amount)} on ${fmtDate(c.count_date)}?`)) return;
+    const { error } = await supabase.from('cb_cash_counts').delete().eq('id', c.id);
+    if (error) return fail(error);
+    flash('Cash count deleted.'); loadCore(); loadSetup();
+  };
+
+  const renameCategory = async (cat) => {
+    const name = window.prompt('Rename category:', cat.name);
+    if (!name || !name.trim() || name.trim() === cat.name) return;
+    const { error } = await supabase.from('cb_expense_categories').update({ name: name.trim() }).eq('id', cat.id);
+    if (error) return fail(error);
+    setCategories((cs) => cs.map((c) => (c.id === cat.id ? { ...c, name: name.trim() } : c)));
+  };
+
+  // Hidden, never deleted: past spends point at it, and a category that
+  // vanished would leave old entries reading "—".
+  const toggleCategory = async (cat) => {
+    const { error } = await supabase.from('cb_expense_categories').update({ is_active: !cat.is_active }).eq('id', cat.id);
+    if (error) return fail(error);
+    setCategories((cs) => cs.map((c) => (c.id === cat.id ? { ...c, is_active: !cat.is_active } : c)));
+  };
+
+  const editRecurringAmount = async (r) => {
+    const v = window.prompt(`Usual amount for "${r.label}":`, String(Number(r.default_amount)));
+    if (v === null) return;
+    const amount = Number(v);
+    if (!(amount > 0)) return fail('Enter an amount greater than zero.');
+    const { error } = await supabase.from('cb_expense_recurring').update({ default_amount: amount }).eq('id', r.id);
+    if (error) return fail(error);
+    flash('Usual amount updated.'); loadCore(); loadSetup();
+  };
+
+  const restore = async (a) => {
+    const { error } = await supabase.rpc('cb_expense_restore', { p_audit_id: a.id });
+    if (error) return fail(error);
+    flash('Entry restored.'); loadAudit(); loadCore();
   };
 
   const settleDue = async (row, mode) => {
@@ -423,7 +515,7 @@ export default function ExpenseAdmin() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-          {[['daily', 'Daily Entry', Calendar], ['ledger', 'Ledger', ClipboardList], ['monthly', 'Monthly Report', BarChart3], ['setup', 'Cash & Setup', Settings]].map(([key, label, Icon]) => (
+          {[['daily', 'Daily Entry', Calendar], ['ledger', 'Ledger', ClipboardList], ['monthly', 'Monthly Report', BarChart3], ['setup', 'Cash & Setup', Settings], ['history', 'Changes & deleted', History]].map(([key, label, Icon]) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition ${
                 tab === key ? 'border-[#f26522] text-[#f26522]' : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -540,7 +632,7 @@ export default function ExpenseAdmin() {
                   <input type="date" max={today()} value={date} onChange={(e) => setDate(e.target.value)} className={inputCls + ' w-auto'} />
                 </div>
               </div>
-              <EntryTable rows={dayRows} onDelete={deleteExpense} onBill={openBill} onSettle={setSettling} />
+              <EntryTable rows={dayRows} onEdit={setEditing} onDelete={deleteExpense} onBill={openBill} onSettle={setSettling} />
             </div>
           </div>
         )}
@@ -599,7 +691,7 @@ export default function ExpenseAdmin() {
               </label>
             </div>
 
-            <EntryTable rows={filteredLedger} showDate onDelete={deleteExpense} onBill={openBill} onSettle={setSettling} />
+            <EntryTable rows={filteredLedger} showDate onEdit={setEditing} onDelete={deleteExpense} onBill={openBill} onSettle={setSettling} />
           </div>
         )}
 
@@ -662,6 +754,8 @@ export default function ExpenseAdmin() {
                   const budget = r.monthly_budget ? Number(r.monthly_budget) : null;
                   const pct = budget ? Math.min(100, (spent / budget) * 100) : null;
                   const over = budget && spent > budget;
+                  const prevRow = prevMonthRows.find((p) => p.category_id === r.category_id);
+                  const delta = prevRow ? spent - Number(prevRow.spent) : null;
                   return (
                     <div key={r.category_id}>
                       <div className="flex items-center justify-between gap-3 mb-1.5">
@@ -683,12 +777,22 @@ export default function ExpenseAdmin() {
                           Over budget by {inr(spent - budget)}.
                         </p>
                       )}
+                      {delta !== null && Math.abs(delta) >= 1 && Number(prevRow.spent) > 0 && (
+                        <p className={`text-xs mt-1 ${delta > 0 ? 'text-amber-700' : 'text-green-700'}`}>
+                          {delta > 0 ? '▲' : '▼'} {inr(Math.abs(delta))} {delta > 0 ? 'more' : 'less'} than last month ({inr(prevRow.spent)})
+                        </p>
+                      )}
                     </div>
                   );
                 })}
               </div>
             </div>
           </div>
+        )}
+
+        {/* ══ HISTORY ══ */}
+        {tab === 'history' && (
+          <AuditView rows={audit} err={auditErr} categories={categories} onRestore={restore} onReload={loadAudit} />
         )}
 
         {/* ══ SETUP ══ */}
@@ -726,7 +830,11 @@ export default function ExpenseAdmin() {
                 {topups.map((t) => (
                   <li key={t.id} className="flex justify-between gap-3 border-b border-gray-50 pb-2">
                     <span className="text-gray-600">{fmtDate(t.topup_date)} · {t.source}{t.given_by ? ` · ${t.given_by}` : ''}</span>
-                    <strong className="text-[#10243E] shrink-0">{inr(t.amount)}</strong>
+                    <span className="flex items-center gap-2 shrink-0">
+                      <strong className="text-[#10243E]">{inr(t.amount)}</strong>
+                      <button onClick={() => editTopup(t)} title="Correct amount" className="text-gray-400 hover:text-[#f26522]"><Pencil size={14} /></button>
+                      <button onClick={() => deleteTopup(t)} title="Delete" className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                    </span>
                   </li>
                 ))}
                 {!topups.length && <li className="text-gray-400 text-center py-4">No float recorded yet.</li>}
@@ -761,9 +869,12 @@ export default function ExpenseAdmin() {
                   return (
                     <li key={c.id} className="flex justify-between gap-3 border-b border-gray-50 pb-2">
                       <span className="text-gray-600">{fmtDate(c.count_date)} · counted {inr(c.counted_amount)}</span>
-                      <strong className={`shrink-0 ${v === 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {v === 0 ? 'Tallied' : v > 0 ? `+${inr(v)}` : `−${inr(Math.abs(v))}`}
-                      </strong>
+                      <span className="flex items-center gap-2 shrink-0">
+                        <strong className={v === 0 ? 'text-green-600' : 'text-red-600'}>
+                          {v === 0 ? 'Tallied' : v > 0 ? `+${inr(v)}` : `−${inr(Math.abs(v))}`}
+                        </strong>
+                        <button onClick={() => deleteCount(c)} title="Delete" className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                      </span>
                     </li>
                   );
                 })}
@@ -814,6 +925,7 @@ export default function ExpenseAdmin() {
                       {r.label} · {inr(r.default_amount)} · {r.frequency}
                     </span>
                     <span className="flex items-center gap-3 shrink-0">
+                      <button onClick={() => editRecurringAmount(r)} title="Change usual amount" className="text-gray-400 hover:text-[#f26522]"><Pencil size={14} /></button>
                       <button onClick={() => toggleRecurring(r)} className="text-xs text-gray-500 hover:text-[#f26522]">
                         {r.is_active ? 'Pause' : 'Resume'}
                       </button>
@@ -843,8 +955,12 @@ export default function ExpenseAdmin() {
               <ul className="space-y-2 max-h-80 overflow-y-auto text-sm">
                 {categories.map((c) => (
                   <li key={c.id} className="flex items-center justify-between gap-3">
-                    <span className="flex items-center gap-2 text-[#10243E]">
+                    <span className={`flex items-center gap-2 ${c.is_active ? 'text-[#10243E]' : 'text-gray-400 line-through'}`}>
                       <CatIcon name={c.icon} size={15} className="text-gray-400" /> {c.name}
+                      <button onClick={() => renameCategory(c)} title="Rename" className="text-gray-300 hover:text-[#f26522]"><Pencil size={13} /></button>
+                      <button onClick={() => toggleCategory(c)} title={c.is_active ? 'Hide from the entry form' : 'Show again'} className="text-gray-300 hover:text-[#f26522]">
+                        {c.is_active ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
                     </span>
                     <input type="number" min="0" step="1" placeholder="No budget"
                       defaultValue={c.monthly_budget ?? ''}
@@ -857,6 +973,11 @@ export default function ExpenseAdmin() {
           </div>
         )}
       </div>
+
+      {editing && (
+        <EditExpense row={editing} categories={categories} busy={busy}
+          onCancel={() => setEditing(null)} onSave={saveEdit} />
+      )}
 
       {/* Settle a credit due */}
       {settling && (
@@ -886,7 +1007,7 @@ export default function ExpenseAdmin() {
   );
 }
 
-function EntryTable({ rows, showDate, onDelete, onBill, onSettle }) {
+function EntryTable({ rows, showDate, onEdit, onDelete, onBill, onSettle }) {
   if (!rows.length) return <p className="text-gray-400 text-sm py-8 text-center">Nothing recorded here yet.</p>;
   return (
     <div className="overflow-x-auto -mx-6 px-6">
@@ -943,6 +1064,9 @@ function EntryTable({ rows, showDate, onDelete, onBill, onSettle }) {
                         <FileText size={15} />
                       </button>
                     )}
+                    <button onClick={() => onEdit(r)} title="Edit" className="text-gray-400 hover:text-[#f26522]">
+                      <Pencil size={15} />
+                    </button>
                     <button onClick={() => onDelete(r)} title="Delete" className="text-gray-400 hover:text-red-500">
                       <Trash2 size={15} />
                     </button>
@@ -965,6 +1089,140 @@ function Stat({ icon, label, value, accent, warn }) {
       }`}>{icon}</div>
       <p className={`text-2xl font-bold ${accent ? 'text-white' : warn ? 'text-amber-700' : 'text-[#10243E]'}`}>{value}</p>
       <p className={`text-sm ${accent ? 'text-white/70' : 'text-gray-500'}`}>{label}</p>
+    </div>
+  );
+}
+
+/** Correct an entry in place. The previous version is kept by the audit trigger. */
+function EditExpense({ row, categories, busy, onCancel, onSave }) {
+  const [f, setF] = useState({
+    spend_date: row.spend_date, category_id: row.category_id, amount: String(Number(row.amount)),
+    payment_mode: row.payment_mode, vendor: row.vendor || '', description: row.description || '',
+  });
+  const [bill, setBill] = useState(null);
+  const cls = 'w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#f26522]';
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onCancel}>
+      <div className="bg-white rounded-2xl p-6 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-bold text-[#10243E] mb-4">Edit entry</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <label><span className="block text-xs text-gray-500 mb-1">Date</span>
+            <input type="date" max={today()} value={f.spend_date} onChange={(e) => setF({ ...f, spend_date: e.target.value })} className={cls} /></label>
+          <label><span className="block text-xs text-gray-500 mb-1">Amount (₹)</span>
+            <input type="number" min="1" step="1" inputMode="numeric" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} className={cls} /></label>
+          <label><span className="block text-xs text-gray-500 mb-1">Category</span>
+            <select value={f.category_id} onChange={(e) => setF({ ...f, category_id: e.target.value })} className={cls}>
+              {categories.filter((c) => c.is_active || c.id === row.category_id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select></label>
+          <label><span className="block text-xs text-gray-500 mb-1">Paid by</span>
+            <select value={f.payment_mode} onChange={(e) => setF({ ...f, payment_mode: e.target.value })} className={cls}>
+              {PAYMENT_MODES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select></label>
+          <label className="col-span-2"><span className="block text-xs text-gray-500 mb-1">Vendor / shop</span>
+            <input value={f.vendor} onChange={(e) => setF({ ...f, vendor: e.target.value })} className={cls} /></label>
+          <label className="col-span-2"><span className="block text-xs text-gray-500 mb-1">What was it for</span>
+            <input value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} className={cls} /></label>
+          <label className="col-span-2"><span className="block text-xs text-gray-500 mb-1">{row.bill_url ? 'Replace bill photo (optional)' : 'Add bill photo (optional)'}</span>
+            <input type="file" accept="image/*,application/pdf" onChange={(e) => setBill(e.target.files?.[0] || null)} className="text-sm text-gray-600" /></label>
+        </div>
+        <p className="text-xs text-gray-400 mt-3">The previous version is kept under “Changes &amp; deleted”.</p>
+        <div className="flex gap-2 mt-4">
+          <button onClick={onCancel} className="flex-1 border border-gray-200 rounded-md py-2.5 text-sm text-gray-600">Cancel</button>
+          <button disabled={busy}
+            onClick={() => onSave(row, {
+              spend_date: f.spend_date, category_id: f.category_id, amount: f.amount, payment_mode: f.payment_mode,
+              vendor: f.vendor.trim() || null, description: f.description.trim() || null,
+            }, bill)}
+            className="flex-1 bg-[#f26522] text-white rounded-md py-2.5 text-sm font-semibold disabled:opacity-50">Save changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const AUDIT_TABLE = { cb_expenses: 'Expense', cb_expense_topups: 'Float', cb_cash_counts: 'Cash count' };
+const AUDIT_FIELDS = {
+  spend_date: 'date', topup_date: 'date', count_date: 'date', amount: 'amount', counted_amount: 'counted',
+  category_id: 'category', payment_mode: 'paid by', vendor: 'vendor', description: 'description',
+  is_settled: 'paid', settled_mode: 'paid via', source: 'received as', given_by: 'given by', note: 'note', bill_url: 'bill',
+};
+
+/**
+ * Every edit and delete in petty cash, newest first. Read-only: only the
+ * database trigger writes here, so nobody can tidy the trail. A deleted entry
+ * has Restore.
+ */
+function AuditView({ rows, err, categories, onRestore, onReload }) {
+  const catName = (id) => categories.find((c) => c.id === id)?.name || '—';
+  const show = (k, v) => {
+    if (v === null || v === undefined || v === '') return '—';
+    if (k === 'category_id') return catName(v);
+    if (k === 'amount' || k === 'counted_amount') return inr(v);
+    if (k === 'payment_mode' || k === 'settled_mode') return modeLabel(v);
+    if (k === 'bill_url') return 'photo';
+    if (typeof v === 'boolean') return v ? 'yes' : 'no';
+    return String(v);
+  };
+  const summary = (r) => {
+    const o = r.old_row || {};
+    const amt = o.amount ?? o.counted_amount;
+    const date = o.spend_date || o.topup_date || o.count_date;
+    return [amt !== undefined ? inr(amt) : null, o.category_id ? catName(o.category_id) : null, o.vendor || o.given_by || o.description || o.note, date ? fmtDate(date) : null]
+      .filter(Boolean).join(' · ');
+  };
+  const changes = (r) => Object.keys(AUDIT_FIELDS)
+    .filter((k) => r.new_row && JSON.stringify(r.old_row?.[k] ?? null) !== JSON.stringify(r.new_row?.[k] ?? null))
+    .map((k) => `${AUDIT_FIELDS[k]}: ${show(k, r.old_row?.[k])} → ${show(k, r.new_row?.[k])}`);
+
+  const deletedTotal = (rows || [])
+    .filter((r) => r.action === 'delete' && !r.restored_at && r.table_name === 'cb_expenses')
+    .reduce((s, r) => s + Number(r.old_row?.amount || 0), 0);
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+        <div>
+          <h2 className="text-xl font-semibold text-[#10243E] flex items-center gap-2"><History size={20} className="text-[#f26522]" /> Changes &amp; deleted</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Every correction and every delete, with who did it and when. Nothing here can be edited — a deleted entry can be put back with <strong>Restore</strong>.
+          </p>
+        </div>
+        <button onClick={onReload} className="flex items-center gap-2 border border-gray-200 px-3 py-1.5 rounded-md text-sm text-gray-600"><RefreshCw size={14} /> Refresh</button>
+      </div>
+      {err && <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3">{err}</p>}
+      {deletedTotal > 0 && (
+        <p className="text-sm text-[#10243E] bg-gray-50 border border-gray-200 rounded-md p-3 mb-4">
+          Spends deleted in this list: <strong>{inr(deletedTotal)}</strong>.
+        </p>
+      )}
+      {rows === null ? <p className="text-gray-400 text-sm">Loading…</p> : rows.length === 0 && !err ? (
+        <p className="text-gray-400 text-sm py-8 text-center">Nothing has been edited or deleted yet.</p>
+      ) : (
+        <ul className="divide-y divide-gray-100">
+          {rows.map((r) => (
+            <li key={r.id} className="py-3 flex flex-wrap items-start gap-3">
+              <span className={`text-[11px] uppercase tracking-wide px-2 py-0.5 rounded border shrink-0 ${r.action === 'delete'
+                ? (r.restored_at ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-red-50 text-red-700 border-red-200')
+                : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                {r.action === 'delete' ? (r.restored_at ? 'Restored' : 'Deleted') : 'Edited'}
+              </span>
+              <div className="flex-1 min-w-[220px]">
+                <p className="text-sm text-[#10243E]"><span className="text-gray-500">{AUDIT_TABLE[r.table_name] || r.table_name}:</span> {summary(r)}</p>
+                {r.action === 'update' && <p className="text-xs text-gray-600 mt-0.5">{changes(r).join(' · ') || 'no visible change'}</p>}
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  {format(new Date(r.at), 'd MMM yyyy, HH:mm')} · {r.by_email || 'unknown'}
+                  {r.restored_at && ` · restored ${format(new Date(r.restored_at), 'd MMM, HH:mm')} by ${r.restored_by || 'unknown'}`}
+                </p>
+              </div>
+              {r.action === 'delete' && !r.restored_at && (
+                <button onClick={() => onRestore(r)} className="text-xs px-2.5 py-1.5 rounded border border-[#10243E] text-[#10243E] flex items-center gap-1 shrink-0">
+                  <Undo2 size={13} /> Restore
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

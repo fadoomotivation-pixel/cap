@@ -2066,6 +2066,17 @@ every spend draws it down, and cash in hand must equal what is physically in the
 - An entry typed days after the spend is tagged "entered Nd later" in the table —
   not blocked, since late entry is legitimate, but visible.
 
+**HR may edit and delete anything here, and nothing is ever lost**
+(`supabase/sql/cb_expense_audit.sql`, 12 October 2026). Every UPDATE and
+DELETE on `cb_expenses`, `cb_expense_topups` and `cb_cash_counts` writes the
+old row to `cb_expense_audit` by trigger, with who did it. The table has a
+read policy and **no write policy** — only the trigger writes, so the trail
+cannot be tidied from the browser. The "Changes & deleted" tab lists it and
+`cb_expense_restore()` puts a deleted row back with its original id. Deleting
+therefore **no longer removes the bill photo** from storage: a restored entry
+must come back with its bill. Categories are hidden (`is_active`), never
+deleted — past spends point at them.
+
 Employees have **no access at all** to these tables — RLS is admin-only on every
 one of them, including read.
 
