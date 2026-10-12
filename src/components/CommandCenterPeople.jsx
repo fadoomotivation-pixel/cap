@@ -203,13 +203,20 @@ export function ManagePerson({ emp, rosterRow, login, session, onChanged, onClos
    */
   const offboard = () => run('left', async () => {
     const day = window.prompt(
-      `Last working day for ${emp.full_name.trim()} (YYYY-MM-DD)?\n\nThis will:\n• keep their past attendance\n• free their machine code\n• stop their login\n• remove admin access if they have it`,
+      `Last working day for ${emp.full_name.trim()} (YYYY-MM-DD)?\n\nThis will:\n• keep their past attendance\n• remove them from the attendance machine (their finger stops working)\n• free their machine code\n• stop their login\n• remove admin access if they have it`,
       todayIst(),
     );
     if (!day) return;
     const steps = [];
     const { error: leftErr } = await supabase.rpc('cb_mark_employee_left', { p_employee: emp.id, p_left_on: day });
     steps.push(leftErr ? `Marking left failed: ${friendlyError(leftErr)}` : `Marked as left on ${day}.`);
+    // Leaving used to stop at the roster: Adesh, Khushi and Aditya were marked
+    // left on 10–12 October and their fingers still worked on the terminal.
+    // Removing the enrolment never touches recorded punches.
+    if (!leftErr && emp.device_code) {
+      const { error } = await supabase.rpc('cb_queue_device_command', { p_kind: 'delete_user', p_args: { pin: String(emp.device_code) } });
+      steps.push(error ? `Not removed from the machine: ${friendlyError(error)}` : `Removed from the machine (ID ${emp.device_code}).`);
+    }
     if (login?.user_id && !login.disabled) {
       const r = await account({ action: 'disable', employee_id: emp.id });
       steps.push(r.success ? 'Login stopped.' : `Login not stopped: ${r.error}`);
