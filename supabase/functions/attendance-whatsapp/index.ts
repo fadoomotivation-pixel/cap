@@ -1178,9 +1178,15 @@ Deno.serve(async (req) => {
       if (liveArrivalFrom >= 0 && at("late") > liveArrivalFrom) liveArrivalFrom = at("late");
       liveLogoutFrom = at("evening");
     }
+    // An arrival is announced only while it is fresh (30 minutes — six runs,
+    // so a failed send is retried). "Arrived at 11:52" posted at 21:00 is not
+    // real time, it is noise. A late LOGOUT has no such limit: it corrects the
+    // 19:02 record, which stays wrong until it is said.
+    const freshSec = istSeconds(new Date().toISOString()) - 30 * 60;
     const liveArrivals = (rs: Row[]) =>
       liveArrivalFrom < 0 ? [] : juniors(rs).filter((r) =>
         r.check_in_at && istSeconds(r.check_in_at) >= liveArrivalFrom &&
+        istSeconds(r.check_in_at) >= freshSec &&
         !announced.arrival.has(r.employee_id)
       );
     const liveLogouts = (rs: Row[]) =>
