@@ -1234,6 +1234,27 @@ also call it with their JWT to send early, re-send (`force`), or preview
   "the job never ran". When a scheduled message does not arrive, check
   `select … from cron.job_run_details where status = 'failed'` **before**
   suspecting the WhatsApp session.
+- **Live register updates — `kind = 'live'`, every five minutes**
+  (`supabase/sql/cb_live_notices.sql`, 12 October 2026). Anybody who punches
+  in after the register actually went out, or punches out after the evening
+  record went out, is announced in **their own group** within five minutes.
+  Asked for the evening Jyoti wrote "Still I'm in office. Exit showing
+  06.23?": her punches were 13:17, **18:19** (a brief step out) and 20:03, so
+  the 19:02 message could only call 18:19 her exit, and nothing corrected it
+  in the group although the register had 20:05 within minutes.
+
+  At most **one message per group per run** (a queue at the machine is one
+  message, not five), each person **once per day per kind**
+  (`cb_live_notices`, written only after that group's send succeeded, so a
+  failed group is retried next run). The 13:00 `late` message **skips anybody
+  already announced live**, and live's arrival boundary moves past 13:00's
+  `sent_at`, so nobody is named twice. Measured from the real `sent_at` of
+  `attendance` / `evening` in `cb_report_log` — nothing happens before those
+  messages have gone. "Nothing new" is not logged (it would overwrite the last
+  real send every five minutes), and live is excluded from the zero-punch
+  "feed is broken" warning, which would otherwise repeat all day.
+  Four places now, not three: the whitelist, `KINDS`, `MESSAGES`, and the
+  `cb-live-whatsapp` cron (`*/5 6-17 * * *`).
 - **The 13:00 message is headed "Register Update", not "Late Arrivals"**, on
   the founder's instruction of 24 September: its job is the record — that
   these people came in — not the lateness. A headline reading "Late Arrivals"

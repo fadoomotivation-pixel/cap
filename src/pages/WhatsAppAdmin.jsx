@@ -71,6 +71,12 @@ const MESSAGES = [
     to: 'group',
     title: 'The day’s close',
     blurb: 'Who left and when, split by departure window, plus everyone with no check-out recorded. No absent list — the 11:30 register already named them to the same group, and at 7:02 nobody can act on it. The 6:45 reminder and the 7:01 record merged into one, so it reads as a record rather than a request. Sends nothing when the day is already complete.',
+  },  {
+    kind: 'live',
+    time: 'Every 5 min',
+    to: 'group',
+    title: 'Live register update',
+    blurb: 'Anybody who punches in after the register went out, or punches out after the 7:02 record, is announced in their own group within five minutes — so a wrong “absent” or a wrong exit time is corrected the same day. Each person once per day; the 1:00 PM update skips anybody already announced here. Sends nothing when nothing changed, which is most of the time.',
   },
 ];
 
