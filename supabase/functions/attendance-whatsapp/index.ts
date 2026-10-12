@@ -176,6 +176,7 @@ type NewJoiner = {
 };
 
 type Row = {
+  employee_id: string;
   full_name: string;
   department: string | null;
   work_mode: string | null;
@@ -702,6 +703,52 @@ function buildLateSummary(
 }
 
 /**
+ * LIVE: who arrived after the register, and who logged out after the evening
+ * record — sent within five minutes, to that person's own group.
+ *
+ * The founder asked on 12 October 2026 for anybody who punches after the
+ * register has been published to be announced in real time, in their own
+ * WhatsApp group, instead of waiting for 13:00 or the next morning. The
+ * register said "absent" or the evening record said "no check-out"; this is
+ * the correction, while it still matters.
+ *
+ * NOT one message per punch: the cron runs every five minutes and each run
+ * sends at most one message per group, so a queue of four people at 11:50 is
+ * one message, not four. Each person is announced ONCE per day per kind
+ * (cb_live_notices), and the 13:00 Register Update skips anybody already
+ * announced here, so nobody is named twice for the same thing.
+ *
+ * Returns null when there is nothing new — the usual case.
+ */
+function buildLiveSummary(arrived: Row[], left: Row[], dateStr: string): string | null {
+  if (!arrived.length && !left.length) return null;
+  const L: string[] = [];
+  L.push("*CAPITAL BRIX — Register Update*");
+  L.push(fmtDate(dateStr));
+  if (arrived.length) {
+    L.push("");
+    L.push(`*Arrived after the register (${arrived.length})*`);
+    [...arrived]
+      .sort((a, b) => istSeconds(a.check_in_at) - istSeconds(b.check_in_at))
+      .forEach((r) => L.push(`• ${r.full_name.trim()} — ${fmtTime(r.check_in_at)}`));
+  }
+  if (left.length) {
+    L.push("");
+    L.push(`*Logged out after the evening record (${left.length})*`);
+    [...left]
+      .sort((a, b) => istSeconds(a.check_out_at) - istSeconds(b.check_out_at))
+      .forEach((r) =>
+        L.push(`• ${r.full_name.trim()} — in ${fmtTime(r.check_in_at)}, out ${fmtTime(r.check_out_at)}`)
+      );
+  }
+  L.push("");
+  L.push("Today's attendance has been updated accordingly.");
+  L.push("");
+  L.push("— Capital Brix AI HR");
+  return L.join("\n");
+}
+
+/**
  * Welcome aboard, once per person, ever.
  *
  * The founder asked for this on 24 September: when somebody joins and turns
@@ -928,6 +975,8 @@ Deno.serve(async (req) => {
       "late", //       13:00 group — juniors who arrived after 11:30
       "welcome", //    13:05 group — anybody whose first day this is
       "evening", //    19:02 group — logout record and no check-out
+      "live", //       every 5 min — arrived after the register / logged out
+      //                after the evening record, to each person's own group
       // Kept so a manual send still works and an old cron cannot 500, but
       // nothing schedules these any more — all four fold into the two above:
       "present", //    superseded — the 11:30 register is a superset
@@ -1004,7 +1053,7 @@ Deno.serve(async (req) => {
 
     // Which kinds address a group at all. A team split only applies to these;
     // everything else is the founder's alone.
-    const toGroup = ["morning", "present", "absent", "late", "evening", "reminder", "welcome"];
+    const toGroup = ["morning", "present", "absent", "late", "evening", "reminder", "welcome", "live"];
 
     if (!group && !founder) {
       return json({ sent: false, reason: "no WhatsApp group or founder number configured" });
@@ -1013,7 +1062,9 @@ Deno.serve(async (req) => {
     // Already sent? cb_report_log is keyed on (report_date, kind), so the
     // cron firing twice, a retry after a timeout and HR tapping Send all
     // collapse to one message in the group.
-    if (!force) {
+    // "live" runs every five minutes and sends many times a day; its own
+    // once-only rule is per person, in cb_live_notices.
+    if (!force && kind !== "live") {
       const { data: prior } = await admin
         .from("cb_report_log")
         .select("sent_at, ok")
@@ -1094,6 +1145,59 @@ Deno.serve(async (req) => {
       if (reg?.ok && reg.sent_at) lateCutoffSec = istSeconds(reg.sent_at);
     }
 
+    // Who has already been announced live today, per kind. Read for "late"
+    // too, so the 13:00 Register Update does not name somebody twice.
+    const announced = { arrival: new Set<string>(), logout: new Set<string>() };
+    if (kind === "live" || kind === "late") {
+      const { data: notes } = await admin
+        .from("cb_live_notices")
+        .select("employee_id, kind")
+        .eq("work_date", reportDate);
+      for (const n of (notes ?? []) as { employee_id: string; kind: "arrival" | "logout" }[]) {
+        announced[n.kind]?.add(n.employee_id);
+      }
+    }
+
+    // The two moments a live notice is measured from: when the register and
+    // the evening record ACTUALLY went out today. Neither sent yet means there
+    // is nothing to correct — before 11:36 an arrival is simply an arrival.
+    let liveArrivalFrom = -1;
+    let liveLogoutFrom = -1;
+    if (kind === "live") {
+      const { data: logs } = await admin
+        .from("cb_report_log")
+        .select("kind, sent_at, ok")
+        .eq("report_date", reportDate)
+        .in("kind", ["attendance", "late", "evening"]);
+      const at = (k: string) => {
+        const r = (logs ?? []).find((x: { kind: string; ok: boolean; sent_at: string }) => x.kind === k && x.ok);
+        return r ? istSeconds(r.sent_at) : -1;
+      };
+      liveArrivalFrom = at("attendance");
+      // Anybody the 13:00 message already named is not news again.
+      if (liveArrivalFrom >= 0 && at("late") > liveArrivalFrom) liveArrivalFrom = at("late");
+      liveLogoutFrom = at("evening");
+    }
+    // An arrival is announced only while it is fresh (30 minutes — six runs,
+    // so a failed send is retried). "Arrived at 11:52" posted at 21:00 is not
+    // real time, it is noise. A late LOGOUT has no such limit: it corrects the
+    // 19:02 record, which stays wrong until it is said.
+    const freshSec = istSeconds(new Date().toISOString()) - 30 * 60;
+    const liveArrivals = (rs: Row[]) =>
+      liveArrivalFrom < 0 ? [] : juniors(rs).filter((r) =>
+        r.check_in_at && istSeconds(r.check_in_at) >= liveArrivalFrom &&
+        istSeconds(r.check_in_at) >= freshSec &&
+        !announced.arrival.has(r.employee_id)
+      );
+    const liveLogouts = (rs: Row[]) =>
+      liveLogoutFrom < 0 ? [] : juniors(rs).filter((r) =>
+        r.check_out_at && istSeconds(r.check_out_at) >= liveLogoutFrom &&
+        !announced.logout.has(r.employee_id)
+      );
+    // Who each delivery named, so only a delivery that went through records
+    // its people as announced.
+    const liveNamed = new Map<string, { arrival: string[]; logout: string[] }>();
+
     const deliveries: Delivery[] = [];
     let builder: ((rows: Row[], d: string) => string | null) | null = null;
     switch (kind) {
@@ -1104,14 +1208,18 @@ Deno.serve(async (req) => {
       case "present": builder = buildPresentSummary; break;
       case "absent": builder = buildAbsentSummary; break;
       case "late":
-        builder = (r, d) => buildLateSummary(r, d, lateCutoffSec);
+        builder = (r, d) =>
+          buildLateSummary(r.filter((x) => !announced.arrival.has(x.employee_id)), d, lateCutoffSec);
+        break;
+      case "live":
+        builder = (r, d) => buildLiveSummary(liveArrivals(r), liveLogouts(r), d);
         break;
       default: builder = buildSummary;
     }
 
     const all = (rows ?? []) as Row[];
 
-    if (punchCount === 0 && kind !== "welcome") {
+    if (punchCount === 0 && kind !== "welcome" && kind !== "live") {
       // The broken-feed warning is HR's problem, never any group's: it asks
       // for a click inside eTimeTrackLite that forty-nine of fifty people
       // cannot act on, and it would read as the company's attendance being
@@ -1164,7 +1272,15 @@ Deno.serve(async (req) => {
     } else if (toGroup.includes(kind)) {
       for (const part of splitByGroup(all, group || founder)) {
         const t = builder(part.rows, reportDate);
-        if (t) deliveries.push({ to: part.to, label: part.label, text: t });
+        if (t) {
+          deliveries.push({ to: part.to, label: part.label, text: t });
+          if (kind === "live") {
+            liveNamed.set(part.to, {
+              arrival: liveArrivals(part.rows).map((r) => r.employee_id),
+              logout: liveLogouts(part.rows).map((r) => r.employee_id),
+            });
+          }
+        }
       }
     } else {
       const to = founder || group;
@@ -1175,6 +1291,12 @@ Deno.serve(async (req) => {
     // Nothing to say is the good day, and it gets no message. Logged as ok so
     // the console shows the job ran and found nothing, rather than looking
     // like it never fired.
+    // Live finds nothing on almost every run; that is not worth a log row
+    // every five minutes, and it must not overwrite the last real send.
+    if (!deliveries.length && kind === "live") {
+      return json({ sent: false, reason: "nothing new since the last check", kind });
+    }
+
     if (!deliveries.length) {
       const why = kind === "morning"
         ? "nobody had punched in by 10:30"
@@ -1256,6 +1378,23 @@ Deno.serve(async (req) => {
 
     const results = [];
     for (const d of deliveries) results.push(await sendTo(d));
+
+    // Record who was announced — per delivery, and only where it went
+    // through, so a group whose send failed is tried again in five minutes.
+    if (kind === "live") {
+      const notes: { employee_id: string; work_date: string; kind: string }[] = [];
+      for (const r of results) {
+        if (!r.ok) continue;
+        const named = liveNamed.get(r.to);
+        named?.arrival.forEach((id) => notes.push({ employee_id: id, work_date: reportDate, kind: "arrival" }));
+        named?.logout.forEach((id) => notes.push({ employee_id: id, work_date: reportDate, kind: "logout" }));
+      }
+      if (notes.length) {
+        await admin.from("cb_live_notices")
+          .upsert(notes, { onConflict: "employee_id,work_date,kind", ignoreDuplicates: true })
+          .then(() => {}, () => {});
+      }
+    }
 
     // ok only when EVERY address took it. A partial success logged as success
     // is how "the report is working" and "half the company never sees it"
