@@ -5,6 +5,7 @@ import {
   ShieldCheck, KeyRound, Copy, MessageCircle, Ban, CheckCircle2, UserMinus,
   UserPlus, Camera, Save, X, AlertTriangle,
 } from 'lucide-react';
+import { WorkSettings } from './CommandCenterMachine';
 
 /**
  * Everything the Command Center can do to a PERSON and to their LOGIN.
@@ -107,7 +108,7 @@ export function useEmployeeLogins() {
 /**
  * The per-person panel: name, phone, email, photo, login, admin, leaving.
  */
-export function ManagePerson({ emp, login, session, onChanged, onClose }) {
+export function ManagePerson({ emp, rosterRow, login, session, onChanged, onClose }) {
   const [name, setName] = useState(emp.full_name || '');
   const [phone, setPhone] = useState(emp.phone || '');
   const [email, setEmail] = useState(emp.email || '');
@@ -314,6 +315,8 @@ export function ManagePerson({ emp, login, session, onChanged, onClose }) {
       </div>
 
       {msg && <p className={`mt-3 text-sm ${msg.ok ? 'text-green-700' : 'text-red-600'}`}>{msg.text}</p>}
+
+      <WorkSettings row={rosterRow} onChanged={onChanged} />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import OrphanKycResolver from '../components/OrphanKycResolver';
 import { friendlyError } from '../lib/errors';
 import { downloadPhoto, downloadPhotos } from '../lib/downloadPhoto';
 import { AdminAccessPanel, ManagePerson, LoginBadge, useEmployeeLogins } from '../components/CommandCenterPeople';
+import { MachineIdsPanel, FixAttendancePanel } from '../components/CommandCenterMachine';
 
 export default function EmployeePortal() {
   const [session, setSession] = useState(null);
@@ -720,6 +721,11 @@ function AdminDashboard({ session, onLogout }) {
 
         <AdminAccessPanel session={session} />
 
+        {/* The machine and the register, so HR never needs a developer to
+            match an ID, free one up, or correct a day. */}
+        <MachineIdsPanel roster={roster} onChanged={fetchEmployees} />
+        <FixAttendancePanel roster={roster} />
+
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -850,6 +856,7 @@ function AdminDashboard({ session, onLogout }) {
                         <td colSpan="6" className="p-4 bg-gray-50/60">
                           <ManagePerson
                             emp={emp}
+                            rosterRow={roster.find((r) => r.id === emp.id)}
                             login={logins[emp.id]}
                             session={session}
                             onClose={() => setManaging(null)}

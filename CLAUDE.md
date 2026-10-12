@@ -192,6 +192,28 @@ have kept a leaver's access to every employee's data.
   it refuses **your own** account, not every admin's — resetting a departed
   admin's login used to be impossible.
 
+### HR fixes attendance and machine IDs from the Command Center
+
+`src/components/CommandCenterMachine.jsx` + `supabase/sql/cb_hr_attendance_fix.sql`
+(12 October 2026). Three panels on `/employee-kyc`, plus an "Attendance
+settings" block inside every **Manage**:
+
+- **Attendance machine IDs** — every ID from `cb_device_code_directory()`,
+  the free IDs from `cb_free_device_codes()`, and per ID: **Match** to a
+  person (`cb_set_device_code`, which re-folds their history), **Unmatch**,
+  **New person** (`cb_adopt_device_code`), **Remove from machine**
+  (`delete_user` through the whitelist — punches are never deleted).
+  It opens with anybody **punching but out of the messages**: that is what
+  "Sneha and Deepak's attendance is not coming" actually was — 7 and 6 days
+  recorded, `in_daily_report = false`.
+- **Fix attendance** — `cb_person_attendance()` shows each day with the raw
+  machine punches beside the register; `cb_hr_fix_attendance()` sets in/out
+  (IST wall clock), status and a reason. **An HR-corrected day carries
+  `cb_attendance.hr_edited_at` and the fold leaves its times alone** —
+  otherwise `least()`/`greatest()` would put the machine's time back within
+  ten minutes and the correction would silently not hold. Undo
+  (`p_reset`) clears the flag and re-folds that one day.
+
 ### The Command Center manages people, not just lists them
 
 `src/components/CommandCenterPeople.jsx`. Each directory row has **Manage**:
