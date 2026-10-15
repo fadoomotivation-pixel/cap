@@ -1255,6 +1255,35 @@ also call it with their JWT to send early, re-send (`force`), or preview
   "feed is broken" warning, which would otherwise repeat all day.
   Four places now, not three: the whitelist, `KINDS`, `MESSAGES`, and the
   `cb-live-whatsapp` cron (`*/5 6-17 * * *`).
+- **A register is HELD while the machine is offline, and sent when it is back**
+  (`supabase/sql/cb_hold_reports_offline.sql`, 15 October 2026). The office
+  internet dropped 10:36 → 14:12; the terminal kept every punch in its own
+  memory, but the 11:36 register went out on data frozen at 10:36 and named
+  ten people Absent who were sitting in the office. The zero-punch guard could
+  not catch it — forty punches had arrived before the outage, and "some
+  punches" reads exactly like "all of them".
+
+  - `essl-adms` calls `cb_adms_heartbeat(sn)` on **every** contact (the
+    terminal polls every 10 s; `cb_adms_log` skips polls, so it could never
+    answer "is the machine there now"). `cb_adms_state.last_seen_at`,
+    `online_since`, `offline_from`.
+  - `cb_machine_status().ready` = talking to us now **and continuously for 3
+    minutes**, so the backlog it stored offline has uploaded (366 punches took
+    under a minute on the 15th).
+  - `cb_send_attendance_report()` holds `morning` / `attendance` / `late` /
+    `evening` when not ready → `cb_held_reports`, and tells the **founder
+    only** once per outage ("Attendance on hold"). No group is told anything
+    false meanwhile.
+  - `cb-release-held-reports` (every 2 min) sends held messages once ready,
+    **one per run, in the day's order**, so the 13:00 update reads the
+    register's real `sent_at`. Each carries a "Sent late — the machine was
+    offline from X to Y" line under the title. A held 10:30 list is skipped
+    after 11:25 (the register carries it); an earlier day's hold expires.
+  - **Fails open**: no heartbeat recorded at all → never holds. Holding every
+    message forever because a column is empty would be worse than this bug.
+- **The evening record is at 20:02 IST** (`32 14 * * *` UTC), on the founder's
+  instruction of 15 October 2026. Older notes below that say 19:02 describe
+  the earlier schedule; the message text itself names no send time.
 - **The 13:00 message is headed "Register Update", not "Late Arrivals"**, on
   the founder's instruction of 24 September: its job is the record — that
   these people came in — not the lateness. A headline reading "Late Arrivals"
