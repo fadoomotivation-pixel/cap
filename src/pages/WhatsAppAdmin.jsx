@@ -696,6 +696,7 @@ export default function WhatsAppAdmin() {
           mainGroup={(settings?.wa_group_id || '').trim()}
           teams={teams.filter((t) => t.is_active)}
           connected={connected}
+          me={session?.user?.email}
         />
 
         {/* ── WHO THE MESSAGES NAME ──────────────────────────────────────

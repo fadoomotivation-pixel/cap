@@ -1,46 +1,45 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-// The daily Dholera update for the sales team — 14:10 IST, every day.
+// The Dholera news desk for the sales team.
 //
 // The founder asked on 15 October 2026 for an agent that finds what is really
-// happening in Dholera each day — a big company's investment, a food court, a
-// minister's meeting — and posts it so the team can put it on their WhatsApp
-// story. A salesperson whose status says "DHL is building a semiconductor
-// logistics hub in Dholera" has a reason to be messaged back that a plot
-// brochure never gives them.
+// happening in Dholera — a big company's investment, a food court, a
+// minister's meeting — so the team can put it on their WhatsApp status. The
+// same evening he asked to be the editor: share two or three on a day with two
+// or three good stories, skip one he does not like, pick a different one.
 //
-//   Google News RSS, last 72 h, English + Hindi + Gujarati
-//   -> hard filter: crime, fraud, deaths, and anything naming a developer
-//   -> the project's LLM (Groq, as Call Pro AI's functions already use) picks
-//      ONE story and writes it up from the headlines alone
-//   -> every number it writes must appear in a source headline, or its text is
-//      discarded and the real headline is used instead
-//   -> cb_dholera_news, one row per IST day
-//   -> WhatsApp: the story, its source, and a link to /story/<date>, where a
-//      1080x1920 image is drawn for the status
+//   12:30 IST  mode=prepare  read the news, write up to 3 candidates, audit
+//                            them, and send the founder ONE private message
+//                            listing them with a link to the desk
+//   desk       /admin/whatsapp — Share / Skip / edit / Find more
+//   14:10 IST  mode=publish  every 'approved' story goes to the group in one
+//                            message; if he decided nothing, story no. 1 goes
+//   14:25 IST  mode=publish  a retry; a no-op once the day is posted
 //
-// THREE RULES THAT ARE NOT LEFT TO THE MODEL:
+// Sources: Google News RSS (English, Hindi, Gujarati) and Bing News RSS.
+// Google answers 503 to Edge Function IPs some of the time — one run saw 16
+// headlines and the next, a minute later, none — so neither is relied on alone.
 //
-// 1. Nothing negative reaches a sales team's status. On the 15th the feed
-//    carried a "Nexa Evergreen investment SCAM" about Dholera plots. A model
-//    would very probably skip it; "very probably" is not good enough for the
-//    one story that would do real damage, so it never sees it.
-// 2. Nothing naming a developer. Mirrikh's legal notice of 8 September governs
-//    every word published about them, and an advertorial about any developer is
-//    not news. Dropped before the model sees it.
-// 3. Nothing invented. Facts come from headlines only, numbers are checked
-//    against those headlines, and a day with no fresh clean story posts
-//    nothing — yesterday's news re-posted as today's is how the team loses
-//    credibility with a client.
+// THREE RULES THAT ARE CODE, NOT PROMPT:
+// 1. Nothing negative reaches a sales team's status. The feed on day one
+//    carried a "Nexa Evergreen investment SCAM" about Dholera plots; it is
+//    dropped before the model ever sees it.
+// 2. Nothing naming a developer, Mirrikh first. Their legal notice of
+//    8 September governs every word we publish about them.
+// 3. Nothing invented or overstated. Every number must be in a source
+//    headline, Hindi lines must be Hindi, a plan must not be written as done
+//    (the model wrote "निवेश किए" for "DHL *to* invest" twice), and no line
+//    may promise a return. One corrective retry, then the headline as published.
 //
-// Called by pg_cron through cb_send_dholera_news() (x-cron-secret), or by an
-// admin from /admin/whatsapp with their JWT: { dry_run, regenerate, force }.
+// Called by pg_cron through cb_send_dholera_news(mode) with x-cron-secret, or
+// by an admin with their JWT: { mode: prepare|more|publish, dry_run, force }.
 
 const ADMIN_FALLBACK = ["disha@capitalbrix.com"];
 const SITE = "https://www.capitalbrix.co.in";
 const IST = "Asia/Kolkata";
 const WINDOW_H = 72;
+const PER_RUN = 3;
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -57,16 +56,12 @@ const fmtDate = (d: string) =>
   new Intl.DateTimeFormat("en-IN", { timeZone: IST, day: "numeric", month: "short", year: "numeric" })
     .format(new Date(`${d}T12:00:00+05:30`));
 
-// ── The feed ────────────────────────────────────────────────────────────────
+// ── The feeds ───────────────────────────────────────────────────────────────
 
 const FEEDS = [
   "https://news.google.com/rss/search?q=Dholera+when:3d&hl=en-IN&gl=IN&ceid=IN:en",
   "https://news.google.com/rss/search?q=%E0%A4%A7%E0%A5%8B%E0%A4%B2%E0%A5%87%E0%A4%B0%E0%A4%BE+when:3d&hl=hi&gl=IN&ceid=IN:hi",
   "https://news.google.com/rss/search?q=%E0%AA%A7%E0%AB%8B%E0%AA%B2%E0%AB%87%E0%AA%B0%E0%AA%BE+when:3d&hl=gu&gl=IN&ceid=IN:gu",
-  // A second publisher's index, because Google refuses the odd request from
-  // Edge Function IPs: on the first day one dry run saw 16 headlines and the
-  // next, a minute later, saw none. One source is one bad afternoon away
-  // from a day with no post.
   "https://www.bing.com/news/search?q=Dholera&format=rss&setlang=en-IN",
   "https://www.bing.com/news/search?q=%E0%A4%A7%E0%A5%8B%E0%A4%B2%E0%A5%87%E0%A4%B0%E0%A4%BE&format=rss&setlang=hi",
 ];
@@ -91,7 +86,6 @@ function parseRss(xml: string): Item[] {
     // Google: <source>Outlet</source>. Bing: <News:Source>Outlet</News:Source>.
     const source = get("source") || get("news:source");
     let title = get("title");
-    // Google appends " - Source" to every title.
     if (source && title.endsWith(` - ${source}`)) title = title.slice(0, -(source.length + 3)).trim();
     const published = get("pubDate");
     if (title) out.push({ title, source, link: get("link"), published });
@@ -123,24 +117,24 @@ async function fetchFeed(url: string): Promise<FeedResult> {
   return { url, status, items: [] };
 }
 
-// Rule 1 and rule 2, as data. Matched against the title and the outlet.
+// Rules 1 and 2, as data. Matched against the title and the outlet.
 const BLOCK = new RegExp(
   [
-    // negative news, in English, Hindi and Gujarati
     "scam", "fraud", "ponzi", "cheat", "duped", "swindl", "arrest", "police", "\\bfir\\b", "probe",
-    // "court" alone would drop "food court", which is exactly the kind of
-    // story the founder asked for — so only the legal kinds.
+    // "court" alone would drop "food court" — exactly the kind of story asked for.
     "raid", "laundering", "assets? attached", "high court", "supreme court", "court case", "petition",
     "dispute", "protest", "death", "dead\\b", "died",
     "kill", "murder", "accident", "suicide", "crash", "rape", "flood", "fire\\b", "shortfall", "default",
     "घोटाल", "धोखा", "ठग", "गिरफ्तार", "हत्या", "मौत", "हादसा", "दुर्घटना", "आत्महत्या", "विरोध", "जांच",
     "કૌભાંડ", "છેતરપિંડી", "ધરપકડ", "મોત", "અકસ્માત", "હત્યા", "આત્મહત્યા", "વિરોધ",
-    // any developer, Mirrikh first — see rule 2
     "mirrikh", "मिर्रिख", "મિરિખ", "mayur", "nexa", "evergreen", "realty", "developers?\\b", "builder",
     "plots? (for|on) sale", "invest(or)? experience",
   ].join("|"),
   "i",
 );
+
+// Nothing a salesperson forwards may promise money back.
+const PROMISE = /(रिटर्न|मुनाफ|गारंटी|दोगुन|पक्का फायदा|\breturns?\b|profit|guarante|double your|appreciat)/i;
 
 const toAsciiDigits = (s: string) =>
   s.replace(/[०-९]/g, (d) => String("०१२३४५६७८९".indexOf(d)))
@@ -148,71 +142,71 @@ const toAsciiDigits = (s: string) =>
 const numbersIn = (s: string) =>
   new Set((toAsciiDigits(s).replace(/(\d),(?=\d)/g, "$1").match(/\d+(?:\.\d+)?/g) ?? []));
 
-// ── The pick ────────────────────────────────────────────────────────────────
+// The model likes U+2011 inside Hindi compounds; it renders as a stray dash.
+const tidy = (t?: string | null) => (t ? t.replace(/[‐‑]/g, " ").replace(/\s+/g, " ").trim() : null);
 
-type Pick = {
+// ── The editor ──────────────────────────────────────────────────────────────
+
+type Story = {
   pick: number;
   same_story?: number[];
+  category?: string;
   headline_hi?: string;
   headline_en?: string;
   points?: string[];
   why_it_matters?: string;
-  reason?: string;
+  sales_angle?: string;
 };
 
-async function choose(
-  items: Item[],
-  alreadyPosted: string[],
-  feedback = "",
-): Promise<{ pick: Pick | null; error?: string }> {
+const SYSTEM = [
+  "You are the news desk for a real-estate sales team that sells land near Dholera Smart City, Gujarat.",
+  "From the numbered REAL headlines (all from the last 3 days), choose up to N DIFFERENT events that a",
+  "salesperson would most want to share with clients today, best first. Value, in this order: a big",
+  "company's investment or plant progress; a government decision, approval, or a minister's/official's visit",
+  "or meeting about Dholera; infrastructure (airport, expressway, rail, metro, port, water, power,",
+  "semiconductor); jobs; new amenities (hospital, school, food court, hotel). Fewer is fine — never pad.",
+  "",
+  "Rules — break none of them:",
+  "- Use ONLY facts stated in the headlines. Never add a number, name, date, place or claim that is not there.",
+  "- Keep the tense. A plan or 'to build' stays a plan ('बनाएगा', 'की योजना'), never written as done.",
+  "  Example: 'DHL to build Rs 50 crore hub in Dholera' -> 'DHL धोलेरा में ₹50 करोड़ का हब बनाएगा' (never 'बनाया').",
+  "- headline_hi, every line of points, why_it_matters and sales_angle are Hindi (Devanagari). Write धोलेरा.",
+  "- Never mention any private real-estate developer, project, broker, plot or price.",
+  "- Never promise returns, profit, appreciation, doubling or 'best time to invest' — not even in sales_angle.",
+  "- Skip negative news, opinion, stock-market pieces, and anything matching ALREADY USED.",
+  "- Several headlines about one event: one story, all of them in same_story.",
+  "",
+  "sales_angle: one Hindi line (max 110 chars) telling the salesperson how to bring this up with a client —",
+  "what question it answers or what doubt it settles (e.g. 'जो क्लाइंट पूछते हैं धोलेरा में असली उद्योग है या नहीं, उन्हें यह दिखाएं').",
+  "category: one of investment | government | infrastructure | jobs | amenity | other.",
+  "",
+  "Return ONLY JSON: {\"stories\": [{\"pick\": <n>, \"same_story\": [<n>...], \"category\": \"...\",",
+  "\"headline_hi\": \"<max 70 chars>\", \"headline_en\": \"<max 90 chars>\", \"points\": [\"<2-3 lines, max 60 chars>\"],",
+  "\"why_it_matters\": \"<max 80 chars, no promises>\", \"sales_angle\": \"...\"}], \"reason\": \"<if none>\"}",
+].join("\n");
+
+async function askModel(items: Item[], used: string[], n: number, feedback: string): Promise<{ stories: Story[]; reason?: string; error?: string }> {
   const key = Deno.env.get("GROQ_API_KEY");
-  if (!key) return { pick: null, error: "GROQ_API_KEY is not set" };
+  if (!key) return { stories: [], error: "GROQ_API_KEY is not set" };
   const model = Deno.env.get("NEWS_MODEL") ?? Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
-
-  const sys = [
-    "You are the news desk for a real-estate sales team that sells land near Dholera Smart City, Gujarat.",
-    "From the numbered REAL headlines below (all from the last 3 days), pick the ONE story a salesperson",
-    "would most want to put on their WhatsApp status for clients today. Prefer, in this order: a big",
-    "company's investment or plant/factory progress; a government decision, approval, or a minister's or",
-    "official's visit/meeting about Dholera; infrastructure (airport, expressway, rail, metro, port, water,",
-    "power, semiconductor); jobs; new amenities (hospital, school, food court, hotel).",
-    "",
-    "Rules — break none of them:",
-    "- Use ONLY facts stated in the headlines. Never add a number, name, date, place or claim that is not there.",
-    "- Keep the tense of the headline. A plan, proposal or 'to build' stays a plan ('बनाएगा', 'की योजना');",
-    "  never write it as already done. Overstating a fact to a client is worse than understating it.",
-    "  Example: 'DHL to build Rs 50 crore hub in Dholera' -> 'DHL धोलेरा में ₹50 करोड़ का हब बनाएगा' (never 'बनाया' or 'निवेश किया').",
-    "- headline_hi, every line of points and why_it_matters must be in Hindi (Devanagari). Write धोलेरा, not Dholera.",
-    "- Never mention any private real-estate developer, project, broker, plot or price.",
-    "- Never promise returns, profit, appreciation or 'best time to invest'.",
-    "- Skip negative news, opinion, stock-market pieces, and anything matching ALREADY POSTED.",
-    "- Several headlines about the same event: list them all in same_story.",
-    "- If nothing qualifies, return {\"pick\": -1, \"reason\": \"...\"}.",
-    "",
-    "Return ONLY JSON:",
-    '{"pick": <n>, "same_story": [<n>...], "headline_hi": "<Hindi, Devanagari, max 70 chars>",',
-    '"headline_en": "<English, max 90 chars>", "points": ["<2-3 short Hindi lines, max 60 chars each, facts from the headlines only>"],',
-    '"why_it_matters": "<one Hindi line, max 80 chars: what this means for Dholera\'s development, no promises>"}',
-  ].join("\n");
-
   const user = [
+    `N = ${n}`,
+    "",
     "HEADLINES:",
     ...items.map((it, i) => `${i}. ${it.title} (${it.source})`),
     "",
-    "ALREADY POSTED (do not repeat these stories):",
-    ...(alreadyPosted.length ? alreadyPosted.map((t) => `- ${t}`) : ["- none"]),
+    "ALREADY USED (do not repeat these events):",
+    ...(used.length ? used.map((t) => `- ${t}`) : ["- none"]),
     ...(feedback ? ["", `YOUR PREVIOUS ANSWER WAS REJECTED: ${feedback}. Fix exactly that and answer again.`] : []),
   ].join("\n");
-
   const body: Record<string, unknown> = {
     model,
     temperature: 0.2,
-    max_tokens: 1800,
+    max_tokens: 3500,
     response_format: { type: "json_object" },
-    messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+    messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }],
   };
   if (model.startsWith("openai/gpt-oss")) body.reasoning_effort = "medium";
-
   try {
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -220,54 +214,181 @@ async function choose(
       body: JSON.stringify(body),
     });
     const j = await r.json();
-    if (!r.ok) return { pick: null, error: `LLM ${r.status}: ${JSON.stringify(j).slice(0, 200)}` };
-    const txt: string = j.choices?.[0]?.message?.content ?? "";
-    const m = txt.match(/\{[\s\S]*\}/);
-    if (!m) return { pick: null, error: "LLM returned no JSON" };
-    return { pick: JSON.parse(m[0]) as Pick };
+    if (!r.ok) return { stories: [], error: `LLM ${r.status}: ${JSON.stringify(j).slice(0, 200)}` };
+    const m = (j.choices?.[0]?.message?.content ?? "").match(/\{[\s\S]*\}/);
+    if (!m) return { stories: [], error: "LLM returned no JSON" };
+    const parsed = JSON.parse(m[0]);
+    return { stories: Array.isArray(parsed.stories) ? parsed.stories : [], reason: parsed.reason };
   } catch (e) {
-    return { pick: null, error: `LLM: ${String(e).slice(0, 200)}` };
+    return { stories: [], error: `LLM: ${String(e).slice(0, 200)}` };
   }
 }
 
-// ── The message ─────────────────────────────────────────────────────────────
+const cluster = (s: Story, items: Item[]) =>
+  [s.pick, ...(s.same_story ?? [])]
+    .filter((i) => Number.isInteger(i) && i >= 0 && i < items.length)
+    .map((i) => items[i]);
 
-type NewsRow = {
+/** What is wrong with one write-up, or "" when nothing is. */
+function audit(s: Story, items: Item[]): string {
+  const cl = cluster(s, items);
+  const allowed = new Set<string>();
+  cl.forEach((c) => numbersIn(c.title).forEach((n) => allowed.add(n)));
+  const written = [s.headline_hi, s.headline_en, ...(s.points ?? []), s.why_it_matters, s.sales_angle].filter(Boolean).join(" ");
+  const invented = [...numbersIn(written)].filter((n) => !allowed.has(n));
+  if (invented.length) return `it used numbers that are in no headline (${invented.join(", ")})`;
+  const planned = cl.every((c) => /\b(to|will|plans?|planned|proposed|set to|likely|soon|by 20\d\d)\b/i.test(c.title));
+  const hi = [s.headline_hi, ...(s.points ?? []), s.why_it_matters].filter(Boolean).join(" ");
+  if (planned && /(किया|किए|किये|बनाया|लगाया|शुरू हुआ|शुरू हो गया|स्थापित हुआ|खुल गया|चुका|चुकी|चुके)/.test(hi)) {
+    return "the headlines describe a PLAN but it was written as already done — use future tense (करेगा / बनाएगा / की योजना)";
+  }
+  if (PROMISE.test(written)) return "it promises returns or profit, which is not allowed anywhere";
+  if (!s.headline_hi || !/[ऀ-ॿ]/.test(s.headline_hi)) return "headline_hi must be Hindi in Devanagari";
+  if ((s.points ?? []).some((x) => !/[ऀ-ॿ]/.test(x))) return "every line in points must be Hindi";
+  if (s.sales_angle && !/[ऀ-ॿ]/.test(s.sales_angle)) return "sales_angle must be Hindi";
+  return "";
+}
+
+type Row = {
+  id?: string;
   news_date: string;
+  rank: number;
   status: string;
+  category: string | null;
   headline_hi: string | null;
   headline_en: string | null;
   points: string[];
   why_it_matters: string | null;
+  sales_angle: string | null;
   source_name: string | null;
   source_url: string | null;
   source_title: string | null;
   published_at: string | null;
   also_reported: string[] | null;
-  detail?: string | null;
+  detail: string | null;
+  decided_by?: string | null;
 };
 
-function buildMessage(n: NewsRow): string {
-  const L: string[] = [];
-  L.push("*DHOLERA UPDATE*");
-  L.push(fmtDate(n.news_date));
-  L.push("");
-  if (n.headline_hi) L.push(`*${n.headline_hi}*`);
-  if (n.headline_en) L.push(n.headline_hi ? `_${n.headline_en}_` : `*${n.headline_en}*`);
-  if (n.points?.length) {
-    L.push("");
-    n.points.forEach((p) => L.push(`• ${p}`));
+/** Read, filter, ask, audit. Returns rows ready to insert, or why there are none. */
+async function gather(
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+  today: string,
+  startRank: number,
+  excludeTitles: string[],
+  excludeUrls: string[],
+): Promise<{ rows: Row[]; note: string }> {
+  const feeds = await Promise.all(FEEDS.map(fetchFeed));
+  const all = feeds.flatMap((f) => f.items);
+  const feedNote = feeds.map((f) => `${new URL(f.url).hostname.replace("www.", "")}:${f.status}/${f.items.length}`).join(" ");
+  if (!all.length) return { rows: [], note: `news feeds unreachable (${feedNote})` };
+
+  // Stories posted in the last 30 days are not news again.
+  const { data: recent } = await admin
+    .from("cb_dholera_news")
+    .select("source_url, source_title, headline_en")
+    .eq("status", "posted")
+    .gte("news_date", new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10));
+  const usedUrls = new Set([...(recent ?? []).map((r: Row) => r.source_url), ...excludeUrls].filter(Boolean));
+  const used = [...(recent ?? []).map((r: Row) => r.headline_en || r.source_title), ...excludeTitles].filter(Boolean) as string[];
+
+  const since = Date.now() - WINDOW_H * 3600 * 1000;
+  const seen = new Set<string>();
+  const items = all.filter((it) => {
+    const t = Date.parse(it.published);
+    if (!Number.isFinite(t) || t < since) return false;
+    if (BLOCK.test(it.title) || BLOCK.test(it.source)) return false;
+    if (usedUrls.has(it.link)) return false;
+    const k = it.title.toLowerCase().replace(/\W+/g, " ").trim();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, 45);
+  if (!items.length) return { rows: [], note: `no fresh, clean Dholera news in the last 72 hours (${feedNote})` };
+
+  let res = await askModel(items, used, PER_RUN, "");
+  if (res.error) return { rows: [], note: res.error };
+
+  // Distinct events only: a story whose headlines overlap an earlier one is dropped.
+  const distinct = (list: Story[]) => {
+    const taken = new Set<number>();
+    return list.filter((s) => {
+      const ids = [s.pick, ...(s.same_story ?? [])].filter((i) => Number.isInteger(i) && i >= 0 && i < items.length);
+      if (!ids.length || ids.some((i) => taken.has(i))) return false;
+      ids.forEach((i) => taken.add(i));
+      return true;
+    }).slice(0, PER_RUN);
+  };
+  let stories = distinct(res.stories);
+  if (!stories.length) return { rows: [], note: `nothing worth posting: ${res.reason ?? "the model found no fit"}` };
+
+  // One corrective retry for the batch, naming each problem.
+  const problems = stories.map((s) => audit(s, items));
+  if (problems.some(Boolean)) {
+    const fb = problems.map((p, i) => (p ? `story ${i + 1}: ${p}` : "")).filter(Boolean).join("; ");
+    const again = await askModel(items, used, PER_RUN, fb);
+    if (!again.error && again.stories.length) {
+      res = again;
+      stories = distinct(again.stories);
+    }
   }
-  if (n.why_it_matters) {
+
+  const rows: Row[] = stories.map((s, i) => {
+    const problem = audit(s, items);
+    const cl = cluster(s, items);
+    const main = items[s.pick];
+    const ok = !problem;
+    return {
+      news_date: today,
+      rank: startRank + i,
+      status: "candidate",
+      category: s.category ?? null,
+      headline_hi: ok ? tidy(s.headline_hi) : null,
+      headline_en: ok ? (s.headline_en ?? main.title) : main.title,
+      points: ok ? (s.points ?? []).map((x) => tidy(x) as string).filter(Boolean).slice(0, 3) : [],
+      why_it_matters: ok ? tidy(s.why_it_matters) : null,
+      sales_angle: ok ? tidy(s.sales_angle) : null,
+      source_name: main.source || null,
+      source_url: main.link || null,
+      source_title: main.title,
+      published_at: new Date(Date.parse(main.published)).toISOString(),
+      also_reported: [...new Set(cl.map((c) => c.source).filter(Boolean))],
+      detail: ok ? `from ${items.length} headlines (${feedNote})` : `write-up rejected — ${problem}; headline used as published`,
+    };
+  });
+  return { rows, note: `${rows.length} stories from ${items.length} headlines (${feedNote})` };
+}
+
+// ── The messages ────────────────────────────────────────────────────────────
+
+function teamMessage(rows: Row[], date: string): string {
+  const L: string[] = ["*DHOLERA UPDATE*", fmtDate(date)];
+  rows.forEach((n, i) => {
     L.push("");
-    L.push(n.why_it_matters);
-  }
+    const num = rows.length > 1 ? `${i + 1}. ` : "";
+    if (n.headline_hi) L.push(`*${num}${n.headline_hi}*`);
+    if (n.headline_en) L.push(n.headline_hi ? `_${n.headline_en}_` : `*${num}${n.headline_en}*`);
+    (n.points ?? []).forEach((p) => L.push(`• ${p}`));
+    if (n.sales_angle) L.push(`👉 ${n.sales_angle}`);
+    const also = (n.also_reported ?? []).filter((s) => s && s !== n.source_name).slice(0, 2);
+    L.push(`Source: ${n.source_name ?? "news report"}${also.length ? ` (also ${also.join(", ")})` : ""}`);
+  });
   L.push("");
-  const also = (n.also_reported ?? []).filter((s) => s && s !== n.source_name).slice(0, 3);
-  L.push(`Source: ${n.source_name ?? "news report"}${also.length ? ` (also ${also.join(", ")})` : ""}`);
+  L.push(rows.length > 1 ? "Status lagane ke liye images:" : "Status lagane ke liye image:");
+  L.push(`${SITE}/story/${date}`);
   L.push("");
-  L.push("Status lagane ke liye image:");
-  L.push(`${SITE}/story/${n.news_date}`);
+  L.push("— Capital Brix AI");
+  return L.join("\n");
+}
+
+function founderMessage(rows: Row[], date: string, autoPick: boolean): string {
+  const L: string[] = ["*Dholera news desk — today's picks*", fmtDate(date), ""];
+  rows.forEach((n, i) => L.push(`${i + 1}. ${n.headline_hi || n.headline_en} (${n.source_name ?? "news"})`));
+  L.push("");
+  L.push(autoPick
+    ? "No. 1 goes to the team at 2:10 PM unless you choose otherwise. Share more, skip, or edit here:"
+    : "Nothing goes to the team until you choose. Pick here:");
+  L.push(`${SITE}/admin/whatsapp`);
   L.push("");
   L.push("— Capital Brix AI");
   return L.join("\n");
@@ -301,13 +422,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
     const body = await req.json().catch(() => ({}));
-    const { dry_run, regenerate, force } = body as { dry_run?: boolean; regenerate?: boolean; force?: boolean };
+    const { dry_run, force } = body as { dry_run?: boolean; force?: boolean };
+    const mode = ["prepare", "more", "publish"].includes(body?.mode) ? body.mode : "publish";
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const cronSecret = Deno.env.get("CRON_SECRET");
     const viaCron = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
     let viaAdmin = false;
+    let who = "agent";
     if (!viaCron) {
       const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
       if (jwt) {
@@ -316,147 +439,88 @@ Deno.serve(async (req) => {
         if (email) {
           const { data, error } = await admin.rpc("cb_is_admin_email", { p_email: email });
           viaAdmin = error ? ADMIN_FALLBACK.includes(email) : !!data;
+          who = email;
         }
       }
     }
     if (!viaCron && !viaAdmin) return json({ error: "not authorised" }, 403);
 
     const today = istToday();
-    const { data: settings } = await admin.from("cb_news_settings").select("enabled, targets").eq("id", 1).maybeSingle();
+    const { data: settings } = await admin.from("cb_news_settings").select("*").eq("id", 1).maybeSingle();
     if (!viaAdmin && settings && !settings.enabled) {
       return json({ sent: false, reason: "the Dholera update is switched off" });
     }
+    const autoPick = settings?.auto_pick ?? true;
 
-    const { data: existing } = await admin.from("cb_dholera_news").select("*").eq("news_date", today).maybeSingle();
-    if (existing?.status === "posted" && !force && !dry_run) {
-      return json({ sent: false, reason: "already sent", posted_at: existing.posted_at });
-    }
+    const logRun = (m: string, outcome: string) =>
+      admin.from("cb_dholera_news_runs").upsert({ news_date: today, mode: m, ran_at: new Date().toISOString(), outcome })
+        .then(() => {}, () => {});
 
-    // A draft from a Preview is what gets sent — what the founder looked at is
-    // what the team receives, unless he asked for a fresh pick.
-    let row: NewsRow | null =
-      existing && ["draft", "posted", "failed"].includes(existing.status) && existing.headline_en && !regenerate
-        ? (existing as NewsRow)
-        : null;
+    const todays = async (): Promise<Row[]> => {
+      const { data } = await admin.from("cb_dholera_news").select("*").eq("news_date", today).order("rank");
+      return (data ?? []) as Row[];
+    };
 
-    if (!row) {
-      const feeds = await Promise.all(FEEDS.map(fetchFeed));
-      const all = feeds.flatMap((f) => f.items);
-      const feedNote = feeds.map((f) => `${new URL(f.url).hostname.replace("www.", "")}:${f.status}/${f.items.length}`).join(" ");
-      const since = Date.now() - WINDOW_H * 3600 * 1000;
+    // ── prepare / more: write candidates ──
+    const prepare = async (more: boolean) => {
+      const existing = await todays();
+      if (existing.length && !more) return { rows: existing, note: "already prepared", fresh: false };
+      const start = existing.reduce((m, r) => Math.max(m, r.rank), 0) + 1;
+      const { rows, note } = await gather(
+        admin, today, start,
+        existing.map((r) => r.headline_en || r.source_title || "").filter(Boolean),
+        existing.map((r) => r.source_url || "").filter(Boolean),
+      );
+      if (rows.length) await admin.from("cb_dholera_news").insert(rows);
+      await logRun(more ? "more" : "prepare", note);
+      return { rows: await todays(), note, fresh: rows.length > 0 };
+    };
 
-      const { data: recent } = await admin
-        .from("cb_dholera_news")
-        .select("news_date, source_url, source_title, headline_en")
-        .eq("status", "posted")
-        .gte("news_date", new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10))
-        .neq("news_date", today);
-      const usedUrls = new Set((recent ?? []).map((r) => r.source_url).filter(Boolean));
-      const alreadyPosted = (recent ?? []).map((r) => r.headline_en || r.source_title).filter(Boolean) as string[];
-
-      const seen = new Set<string>();
-      const items = all.filter((it) => {
-        const t = Date.parse(it.published);
-        if (!Number.isFinite(t) || t < since) return false;
-        if (BLOCK.test(it.title) || BLOCK.test(it.source)) return false;
-        if (usedUrls.has(it.link)) return false;
-        const k = it.title.toLowerCase().replace(/\W+/g, " ").trim();
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      }).slice(0, 40);
-
-      const skip = async (detail: string) => {
-        await admin.from("cb_dholera_news").upsert({
-          news_date: today, status: "skipped", detail, updated_at: new Date().toISOString(),
-          headline_hi: null, headline_en: null, points: [], why_it_matters: null,
-          source_name: null, source_url: null, source_title: null, published_at: null, also_reported: null,
-        });
-        return json({ sent: false, reason: detail, candidates: items.length, feeds: feedNote });
-      };
-
-      // Unreachable is not the same as quiet. Say which, so a retry at 14:25
-      // is understood and a genuinely quiet day is not mistaken for an outage.
-      if (!all.length) return await skip(`news feeds unreachable (${feedNote})`);
-      if (!items.length) return await skip("no fresh, clean Dholera news in the last 72 hours");
-
-      // The model ignores instructions often enough that its answer is CHECKED,
-      // not trusted: once with a correction, then the headline as published.
-      // The tidy() pass is because it likes U+2011 (non-breaking hyphen) inside
-      // Hindi compounds, which renders as a stray dash on most phones.
-      const tidy = (t?: string | null) => (t ? t.replace(/[\u2010\u2011]/g, " ").replace(/\s+/g, " ").trim() : null);
-      const audit = (p: Pick) => {
-        const cl = [p.pick, ...(p.same_story ?? [])]
-          .filter((i) => Number.isInteger(i) && i >= 0 && i < items.length)
-          .map((i) => items[i]);
-        // Rule 3: every number written must be in a headline about this story.
-        const allowed = new Set<string>();
-        cl.forEach((c) => numbersIn(c.title).forEach((n) => allowed.add(n)));
-        const written = [p.headline_hi, p.headline_en, ...(p.points ?? []), p.why_it_matters].filter(Boolean).join(" ");
-        const invented = [...numbersIn(written)].filter((n) => !allowed.has(n));
-        if (invented.length) return { cluster: cl, problem: `it used numbers that are in no headline (${invented.join(", ")})` };
-        // A plan written as if it had happened is an overstatement to a client.
-        const planned = cl.every((c) => /\b(to|will|plans?|planned|proposed|set to|likely|soon|by 20\d\d)\b/i.test(c.title));
-        const hiText = [p.headline_hi, ...(p.points ?? []), p.why_it_matters].filter(Boolean).join(" ");
-        if (planned && /(किया|किए|किये|बनाया|लगाया|शुरू हुआ|शुरू हो गया|स्थापित हुआ|खुल गया|चुका|चुकी|चुके)/.test(hiText)) {
-          return { cluster: cl, problem: "the headlines describe a PLAN, but you wrote it in the past tense as if done — use future tense (करेगा / बनाएगा / की योजना)" };
-        }
-        if (!p.headline_hi || !/[\u0900-\u097F]/.test(p.headline_hi)) return { cluster: cl, problem: "headline_hi must be Hindi in Devanagari" };
-        const englishPoints = (p.points ?? []).filter((x) => !/[\u0900-\u097F]/.test(x));
-        if (englishPoints.length) return { cluster: cl, problem: "every line in points must be Hindi in Devanagari" };
-        return { cluster: cl, problem: "" };
-      };
-
-      let pick: Pick | null = null;
-      let check = { cluster: [] as Item[], problem: "" };
-      let feedback = "";
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const res = await choose(items, alreadyPosted, feedback);
-        if (!res.pick) return await skip(res.error ?? "no pick");
-        if (res.pick.pick < 0 || res.pick.pick >= items.length) {
-          return await skip(`nothing worth posting: ${res.pick.reason ?? ""}`);
-        }
-        pick = res.pick;
-        check = audit(pick);
-        if (!check.problem) break;
-        feedback = check.problem;
+    if (mode === "prepare" || mode === "more") {
+      const { rows, note, fresh } = await prepare(mode === "more");
+      // The founder hears once a day, privately, when the desk first fills.
+      if (mode === "prepare" && fresh && viaCron && (settings?.notify_founder ?? true)) {
+        const { data: hr } = await admin.from("cb_hr_settings").select("founder_whatsapp").limit(1).maybeSingle();
+        const founder = (hr?.founder_whatsapp ?? "").replace(/\D/g, "");
+        if (founder) await sendWhatsApp(founder, founderMessage(rows.filter((r) => r.status === "candidate"), today, autoPick));
       }
-      if (!pick) return await skip("no pick");
-      const trusted = !check.problem;
-      const cluster = check.cluster;
-      const main = items[pick.pick];
-
-      row = {
-        news_date: today,
-        status: "draft",
-        headline_hi: trusted ? tidy(pick.headline_hi) : null,
-        headline_en: trusted ? (pick.headline_en ?? main.title) : main.title,
-        // Hindi lines only — an English bullet on a Hindi card reads as unfinished.
-        points: trusted ? (pick.points ?? []).map((x) => tidy(x) as string).filter(Boolean).slice(0, 3) : [],
-        why_it_matters: trusted ? tidy(pick.why_it_matters) : null,
-        source_name: main.source || null,
-        source_url: main.link || null,
-        source_title: main.title,
-        published_at: new Date(Date.parse(main.published)).toISOString(),
-        also_reported: [...new Set(cluster.map((c) => c.source).filter(Boolean))],
-        detail: trusted
-          ? `picked from ${items.length} headlines${feedback ? " (corrected once)" : ""} (${feedNote})`
-          : `write-up rejected twice — ${check.problem}; used the headline as published (${feedNote})`,
-      };
-      await admin.from("cb_dholera_news").upsert({ ...row, updated_at: new Date().toISOString() });
+      return json({ ok: true, mode, note, stories: rows });
     }
 
-    const text = buildMessage(row);
+    // ── publish ──
+    let rows = await todays();
+    if (!rows.length) rows = (await prepare(false)).rows;
+    if (!rows.length) {
+      await logRun("publish", "nothing to publish");
+      return json({ sent: false, reason: "no stories today" });
+    }
+
+    // A send that failed (WhatsApp logged out) is retried by the 14:25 run.
+    let toSend = rows.filter((r) => r.status === "approved" || r.status === "failed");
+    const posted = rows.filter((r) => r.status === "posted");
+    const decided = rows.some((r) => r.decided_by);
+    if (!toSend.length && posted.length && !force) {
+      return json({ sent: false, reason: "already sent", posted: posted.length });
+    }
+    // Nobody decided anything: the best story goes, so a busy day still posts.
+    // Somebody did decide — even "skip all" — and that decision stands.
+    if (!toSend.length && !decided && (autoPick || viaAdmin)) {
+      toSend = rows.filter((r) => r.status === "candidate").slice(0, 1);
+    }
+    if (!toSend.length) {
+      await logRun("publish", "nothing approved");
+      return json({ sent: false, reason: "nothing was approved for today" });
+    }
+    toSend.sort((a, b) => a.rank - b.rank);
+
+    const text = teamMessage(toSend, today);
     const configured = ((settings?.targets ?? []) as string[]).map((t) => t.trim()).filter(Boolean);
     let targets = configured;
     if (!targets.length) {
       const { data: hr } = await admin.from("cb_hr_settings").select("wa_group_id").limit(1).maybeSingle();
       targets = hr?.wa_group_id ? [hr.wa_group_id.trim()] : [];
     }
-
-    if (dry_run) {
-      return json({ sent: false, dry_run: true, text, targets, story: `${SITE}/story/${today}`, row });
-    }
+    if (dry_run) return json({ sent: false, dry_run: true, text, targets, story: `${SITE}/story/${today}`, stories: toSend });
     if (!targets.length) return json({ sent: false, reason: "no WhatsApp group configured", text });
 
     const results = [];
@@ -468,9 +532,10 @@ Deno.serve(async (req) => {
       posted_at: ok ? new Date().toISOString() : null,
       detail,
       updated_at: new Date().toISOString(),
-    }).eq("news_date", today);
+    }).in("id", toSend.map((r) => r.id));
+    await logRun("publish", ok ? `posted ${toSend.length}` : `failed: ${detail}`);
 
-    return json({ sent: ok, targets, detail, story: `${SITE}/story/${today}` });
+    return json({ sent: ok, targets, detail, posted: toSend.length, story: `${SITE}/story/${today}` });
   } catch (e) {
     return json({ sent: false, reason: String(e).slice(0, 300) }, 500);
   }

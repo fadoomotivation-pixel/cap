@@ -1889,8 +1889,24 @@ posted to the team with an image they can put on their WhatsApp status.
 - **The LLM is Groq** (`GROQ_API_KEY`, already a project secret used by Call
   Pro AI's functions in this same Supabase project). `NEWS_MODEL` overrides
   the model.
-- **Preview saves a draft, and 14:10 sends that draft** — what the founder
-  looked at is what the team gets. "Pick again" regenerates.
+- **The founder is the editor** (`supabase/sql/cb_dholera_news_desk.sql`,
+  15 October 2026, the same evening it shipped). One automatic pick answered
+  "what is the news"; the question a sales head asks is "which of today's
+  news helps us sell". So `cb_dholera_news` holds **candidates, several per
+  day** (`id`, `rank`, `status` candidate → approved / skipped → posted):
+  - **12:30 `prepare`** writes up to three audited stories and sends the
+    founder **one private WhatsApp** listing them, with a link to the desk.
+  - **The desk** (`/admin/whatsapp`): Share, Skip, Undo, Edit headline,
+    Status image preview, Find more stories.
+  - **14:10 `publish`** posts every approved story in **one** team message,
+    with one link (`/story/<date>`, chips per story). **If nobody decided
+    anything, story no. 1 goes** (`auto_pick`) so a busy day still posts;
+    **once anything is decided — even "skip all" — the decision stands**,
+    or the Skip button would be a lie. A failed send is retried at 14:25.
+  - Each story carries a **`sales_angle`** — one Hindi line on how to use it
+    with a client. It goes in the **team** message (👉) and never on the
+    status image, which is the client's. Audited like the rest: no number
+    that is not in a headline, and no promise of returns anywhere.
 - **The status image is drawn in the browser** at `/story/<date>` (1080×1920,
   canvas, system fonts — same reasoning as the event pass) and shared through
   the phone's share sheet, which offers WhatsApp → My status. Each salesperson
