@@ -165,7 +165,11 @@ function drawStory(canvas, news, sig) {
 export default function DholeraStory() {
   const { date } = useParams();
   const canvasRef = useRef(null);
-  const [news, setNews] = useState(null);
+  // A day can carry two or three stories since the founder became the editor;
+  // each gets its own image, picked with the chips above the canvas.
+  const [list, setList] = useState([]);
+  const [idx, setIdx] = useState(0);
+  const news = list[idx] || null;
   const [state, setState] = useState('loading'); // loading | ready | missing
   const [sig, setSig] = useState({ name: '', phone: '' });
   const [busy, setBusy] = useState(false);
@@ -179,11 +183,27 @@ export default function DholeraStory() {
   }, []);
 
   useEffect(() => {
-    let q = supabase.from('cb_dholera_news').select('*');
-    q = date ? q.eq('news_date', date) : q.eq('status', 'posted').order('news_date', { ascending: false }).limit(1);
-    q.maybeSingle().then(({ data }) => {
-      if (data && data.headline_en) { setNews(data); setState('ready'); } else setState('missing');
-    });
+    (async () => {
+      let day = date;
+      if (!day) {
+        const { data } = await supabase.from('cb_dholera_news').select('news_date')
+          .eq('status', 'posted').order('news_date', { ascending: false }).limit(1).maybeSingle();
+        day = data?.news_date;
+      }
+      if (!day) { setState('missing'); return; }
+      // Anonymous visitors only ever receive posted rows (RLS). An admin also
+      // sees the day's candidates, which is how the desk previews an image
+      // before it is shared — badged on screen so it is never mistaken.
+      const { data } = await supabase.from('cb_dholera_news').select('*')
+        .eq('news_date', day).neq('status', 'skipped').order('rank');
+      const rows = (data || []).filter((r) => r.headline_en);
+      rows.sort((a, b) => (a.status === 'posted' ? 0 : 1) - (b.status === 'posted' ? 0 : 1) || a.rank - b.rank);
+      const want = Number(new URLSearchParams(window.location.search).get('s'));
+      const at = rows.findIndex((r) => r.rank === want);
+      setList(rows);
+      setIdx(at >= 0 ? at : 0);
+      setState(rows.length ? 'ready' : 'missing');
+    })();
   }, [date]);
 
   useEffect(() => {
@@ -206,7 +226,7 @@ export default function DholeraStory() {
     () => new Promise((res) => canvasRef.current.toBlob((b) => res(b), 'image/png')),
     [],
   );
-  const fileName = news ? `dholera-update-${news.news_date}.png` : 'dholera-update.png';
+  const fileName = news ? `dholera-update-${news.news_date}-${news.rank}.png` : 'dholera-update.png';
 
   const download = async () => {
     const b = await blob();
@@ -257,6 +277,21 @@ export default function DholeraStory() {
 
         {state === 'ready' && (
           <>
+            {list.length > 1 && (
+              <div className="flex gap-2 mb-3 overflow-x-auto">
+                {list.map((r, i) => (
+                  <button key={r.id} onClick={() => setIdx(i)}
+                    className={`shrink-0 text-sm font-semibold px-3.5 py-1.5 rounded-full border ${
+                      i === idx ? 'bg-[#D4AF37] text-[#0A1016] border-[#D4AF37]' : 'text-white/80 border-white/20'
+                    }`}>
+                    Story {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+            {news.status !== 'posted' && (
+              <p className="text-amber-300 text-xs mb-2">Preview — not shared with the team yet.</p>
+            )}
             <canvas
               ref={canvasRef}
               className="w-full rounded-2xl shadow-2xl border border-white/10"
