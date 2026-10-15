@@ -90,7 +90,7 @@ begin
     url := 'https://rqgkzamuohdvttnkluzn.supabase.co/functions/v1/dholera-news',
     headers := jsonb_build_object('Content-Type','application/json','x-cron-secret', v_secret),
     body := '{}'::jsonb,
-    timeout_milliseconds := 60000
+    timeout_milliseconds := 150000
   ) into v_id;
   return v_id;
 end;
