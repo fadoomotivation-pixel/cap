@@ -4,6 +4,7 @@ import PasswordInput from '../components/PasswordInput';
 import { resolveAdmin } from '../lib/admin';
 import AdminNav from '../components/AdminNav';
 import AttendanceHealth from '../components/AttendanceHealth';
+import DholeraNewsPanel from '../components/DholeraNewsPanel';
 import { friendlyError } from '../lib/errors';
 import {
   MessageCircle, RefreshCw, LogOut, X, QrCode, Send, CheckCircle2,
@@ -67,16 +68,16 @@ const MESSAGES = [
   },
   {
     kind: 'evening',
-    time: '7:02 PM',
+    time: '8:02 PM',
     to: 'group',
     title: 'The day’s close',
-    blurb: 'Who left and when, split by departure window, plus everyone with no check-out recorded. No absent list — the 11:30 register already named them to the same group, and at 7:02 nobody can act on it. The 6:45 reminder and the 7:01 record merged into one, so it reads as a record rather than a request. Sends nothing when the day is already complete.',
+    blurb: 'Who left and when, split by departure window, plus everyone with no check-out recorded. No absent list — the 11:30 register already named them to the same group, and at 8:02 nobody can act on it. The 6:45 reminder and the 7:01 record merged into one, so it reads as a record rather than a request. Sends nothing when the day is already complete.',
   },  {
     kind: 'live',
     time: 'Every 5 min',
     to: 'group',
     title: 'Live register update',
-    blurb: 'Anybody who punches in after the register went out, or punches out after the 7:02 record, is announced in their own group within five minutes — so a wrong “absent” or a wrong exit time is corrected the same day. Each person once per day; the 1:00 PM update skips anybody already announced here. Sends nothing when nothing changed, which is most of the time.',
+    blurb: 'Anybody who punches in after the register went out, or punches out after the 8:02 record, is announced in their own group within five minutes — so a wrong “absent” or a wrong exit time is corrected the same day. Each person once per day; the 1:00 PM update skips anybody already announced here. Sends nothing when nothing changed, which is most of the time.',
   },
 ];
 
@@ -690,6 +691,12 @@ export default function WhatsAppAdmin() {
             })}
           </div>
         </section>
+
+        <DholeraNewsPanel
+          mainGroup={(settings?.wa_group_id || '').trim()}
+          teams={teams.filter((t) => t.is_active)}
+          connected={connected}
+        />
 
         {/* ── WHO THE MESSAGES NAME ──────────────────────────────────────
             The question that kept coming back: who is senior, who is in the

@@ -30,6 +30,7 @@ import CardsAdmin from './pages/CardsAdmin';
 import EventsAdmin from './pages/EventsAdmin';
 import WhatsAppAdmin from './pages/WhatsAppAdmin';
 import PartnersAdmin from './pages/PartnersAdmin';
+import DholeraStory from './pages/DholeraStory';
 import InterviewBooking from './pages/InterviewBooking';
 import InterviewConfirmation from './pages/InterviewConfirmation';
 
@@ -71,6 +72,8 @@ export function AppContent() {
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:slug" element={<EventRegistration />} />
+        <Route path="/story" element={<DholeraStory />} />
+        <Route path="/story/:date" element={<DholeraStory />} />
         <Route path="/employee-kyc" element={<PrivateRoute title="Employee Portal | Capital Brix"><EmployeePortal /></PrivateRoute>} />
 
         {/* Interview Scheduler Routes */}
