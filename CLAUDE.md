@@ -235,7 +235,8 @@ the token columns (`confirmation_token`, `recovery_token`, `email_change_token_n
 
 Public: `/`, `/about`, `/projects`, `/projects/:id`, `/dholera`, `/dholera/:slug`,
 `/blog`, `/events`, `/contact`.
-Public: also `/blog/:slug` (8 original guides — see below).
+Public: also `/blog/:slug` (8 original guides — see below), and `/story`,
+`/story/:date` (the daily Dholera status image — public but `noindex`).
 Private (must stay `noindex`): `/employee-kyc`, `/admin/control`, `/admin/interviews`,
 `/admin/attendance`, `/admin/expenses`, `/admin/salary`, `/admin/leads`, `/admin/cards`,
 `/admin/events`, `/admin/whatsapp`,
@@ -1858,6 +1859,46 @@ detailed consoles stay for deep work; nothing here is a second copy.
   `cb_daily_attendance_report()` routes: a team routes only when active and
   with a group; a senior is named in a group only on an `include_seniors`
   team. Change one and change the other.
+
+### The daily Dholera update — `dholera-news`, 14:10 IST
+
+`supabase/functions/dholera-news` + `supabase/sql/cb_dholera_news.sql` +
+`/story/:date` (`src/pages/DholeraStory.jsx`) + the panel on `/admin/whatsapp`
+(`src/components/DholeraNewsPanel.jsx`). Asked for on 15 October 2026: one
+real Dholera story a day — an investment, a minister's visit, a food court —
+posted to the team with an image they can put on their WhatsApp status.
+
+- **Sources: Google News RSS (English, Hindi, Gujarati) AND Bing News RSS.**
+  Google answers `503` to Supabase's Edge IPs some of the time — on day one,
+  one run saw 16 headlines and the next, a minute later, none. Each feed is
+  tried three times, and `detail` records `host:status/items` for every feed,
+  so "the feed was down" and "a quiet news day" never look the same. The cron
+  runs at **14:10 and 14:25**; the second is a no-op once the day is posted.
+- **Three rules are code, not prompt.** (1) Negative news — scams, fraud,
+  crime, deaths — is dropped before the model sees it: on day one the feed
+  carried a Nexa Evergreen investment *scam* about Dholera plots. (2) Anything
+  naming a developer, **Mirrikh first**, is dropped the same way (see the
+  Mirrikh section above). (3) The write-up is audited: every number must
+  appear in a source headline, Hindi lines must be Devanagari, and **a plan
+  must not be written as done** — the model wrote "₹50 करोड़ निवेश किए" for
+  "DHL *to* invest" twice before this check existed. One corrective retry,
+  then the real headline is used as published.
+- **Nothing is invented and nothing is re-posted.** Only the last 72 hours;
+  stories posted in the last 30 days are excluded; no clean story → no post,
+  with the reason in `cb_dholera_news.detail`.
+- **The LLM is Groq** (`GROQ_API_KEY`, already a project secret used by Call
+  Pro AI's functions in this same Supabase project). `NEWS_MODEL` overrides
+  the model.
+- **Preview saves a draft, and 14:10 sends that draft** — what the founder
+  looked at is what the team gets. "Pick again" regenerates.
+- **The status image is drawn in the browser** at `/story/<date>` (1080×1920,
+  canvas, system fonts — same reasoning as the event pass) and shared through
+  the phone's share sheet, which offers WhatsApp → My status. Each salesperson
+  can put **their own name and number** on the footer (kept in localStorage):
+  their contacts see their status, so it should carry the number those
+  contacts will call. The page is public (only `status = 'posted'` rows are
+  readable by anon) and `noindex`.
+- Targets are `cb_news_settings.targets`; empty means the main group.
 
 ### Call Pro AI is a different company's product. It is not ours.
 
