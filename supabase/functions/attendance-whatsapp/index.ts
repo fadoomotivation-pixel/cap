@@ -11,7 +11,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 //                           leave, and the HR line     → group AND founder
 //   late        13:00 IST — recorded after the register closed        → group
 //   welcome     13:05 IST — anybody whose first day this is           → group
-//   evening     19:02 IST — the day's close: logged out by departure
+//   evening     20:02 IST — the day's close: logged out by departure
 //                           window, and who has no check-out          → group
 //
 // `present`, `absent`, `reminder` and `checkout` still work if called by
@@ -945,6 +945,48 @@ function buildEveningSummary(rows: Row[], dateStr: string): string | null {
   return L.join("\n");
 }
 
+/**
+ * One send, reported honestly.
+ *
+ * The 11:30 register goes to the founder and to every team's group, and
+ * each can fail independently — a team's JID can be wrong while the
+ * founder's number is fine. Recording a single ok for all of them would
+ * hide exactly that, which is the failure this module has had twice
+ * already in other forms.
+ *
+ * Default body is {"to": …, "text": …}. WA_PAYLOAD_TEMPLATE covers an
+ * endpoint that wants a different shape — JSON.stringify gives correctly
+ * escaped values, so a message containing a quote or a newline cannot
+ * break the template.
+ */
+async function sendPlain(to: string, text: string) {
+  const url = Deno.env.get("WA_WEBHOOK_URL");
+  if (!url) return { to, ok: false, detail: "WA_WEBHOOK_URL is not set" };
+  const template = Deno.env.get("WA_PAYLOAD_TEMPLATE");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = Deno.env.get("WA_WEBHOOK_TOKEN");
+  if (token) {
+    const name = Deno.env.get("WA_AUTH_HEADER") ?? "Authorization";
+    headers[name] = name.toLowerCase() === "authorization" ? `Bearer ${token}` : token;
+  }
+  const payload = template
+    ? template
+      .replaceAll("{{to}}", JSON.stringify(to).slice(1, -1))
+      .replaceAll("{{text}}", JSON.stringify(text).slice(1, -1))
+    : JSON.stringify({ to, text });
+  try {
+    const res = await fetch(url, { method: "POST", headers, body: payload });
+    const body = (await res.text()).slice(0, 200);
+    return { to, ok: res.ok, detail: res.ok ? body : `HTTP ${res.status}: ${body}` };
+  } catch (e) {
+    return { to, ok: false, detail: String(e).slice(0, 200) };
+  }
+}
+
+/** A Postgres timestamp as Date can read it: microseconds trimmed, "T" in place. */
+const isoish = (ts: string | null | undefined): string | null =>
+  ts ? ts.replace(" ", "T").replace(/(\.\d{3})\d+/, "$1") : null;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const json = (b: unknown, status = 200) =>
@@ -955,11 +997,16 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { date, force, dry_run, kind: rawKind } = body as {
+    const { date, force, dry_run, kind: rawKind, notice, delayed, machine } = body as {
       date?: string;
       force?: boolean;
       dry_run?: boolean;
       kind?: string;
+      // Set only by cb_send_attendance_report / cb_release_held_reports when
+      // the attendance machine is offline — see supabase/sql/cb_hold_reports_offline.sql.
+      notice?: "held";
+      delayed?: { offline_since?: string | null; back_at?: string | null; correction?: boolean };
+      machine?: { last_seen_at?: string | null; offline_from?: string | null; online?: boolean | null };
     };
 
     // Five scheduled messages off one function. cb_report_log is keyed on
@@ -974,7 +1021,7 @@ Deno.serve(async (req) => {
       "morning", //    10:30 group — juniors punched in so far
       "late", //       13:00 group — juniors who arrived after 11:30
       "welcome", //    13:05 group — anybody whose first day this is
-      "evening", //    19:02 group — logout record and no check-out
+      "evening", //    20:02 group — logout record and no check-out
       "live", //       every 5 min — arrived after the register / logged out
       //                after the evening record, to each person's own group
       // Kept so a manual send still works and an old cron cannot 500, but
@@ -1057,6 +1104,37 @@ Deno.serve(async (req) => {
 
     if (!group && !founder) {
       return json({ sent: false, reason: "no WhatsApp group or founder number configured" });
+    }
+
+    // HELD, NOT SENT. The attendance machine is not reaching us, so this
+    // message is being held until it does (cb_release_held_reports sends it
+    // then). On 15 October the internet dropped at 10:36 and the 11:36
+    // register went out anyway, naming everybody who arrived after 10:36 as
+    // Absent to the whole company. This tells the founder - and only him -
+    // why a message has not arrived, so the silence is not a mystery.
+    if (notice === "held") {
+      const to = founder || group;
+      const since = machine?.online ? machine?.offline_from : machine?.last_seen_at;
+      const what: Record<string, string> = {
+        morning: "10:30 check-in list",
+        attendance: "daily register",
+        late: "register update",
+        evening: "evening logout record",
+      };
+      const t = [
+        "*CAPITAL BRIX — Attendance on hold*",
+        fmtDate(reportDate),
+        "",
+        `The attendance machine has not reached the server${since ? ` since ${fmtTime(isoish(since))}` : ""} — most likely the office internet.`,
+        `The ${what[kind] ?? "attendance message"} has NOT been sent, so nobody is wrongly listed as absent.`,
+        "",
+        "It will go out automatically a few minutes after the machine is back online, with every punch it stored meanwhile.",
+        "",
+        "— Capital Brix AI HR",
+      ].join("\n");
+      if (!to) return json({ sent: false, reason: "no founder number" });
+      const res = await sendPlain(to, t);
+      return json({ sent: res.ok, kind, notice: "held", detail: res.detail });
     }
 
     // Already sent? cb_report_log is keyed on (report_date, kind), so the
@@ -1320,6 +1398,23 @@ Deno.serve(async (req) => {
       return json({ sent: false, reason: why, kind });
     }
 
+    // SENT LATE, AND SAYING SO. A register that reaches the group at 14:15
+    // instead of 11:36 needs one line explaining why, or the "After 11:30"
+    // block full of people who arrived at 10:50 reads as nonsense. Placed
+    // under the title and date, which every builder opens with.
+    if (delayed && deliveries.length) {
+      const from = fmtTime(isoish(delayed.offline_since ?? null));
+      const back = fmtTime(isoish(delayed.back_at ?? null));
+      const note = delayed.correction
+        ? `_Correction — the register sent earlier was incomplete. The attendance machine was offline (no internet) from ${from} to ${back}, so anybody who punched in that time was wrongly listed as absent. This is the full register, including every punch the machine stored meanwhile._`
+        : `_Sent late — the attendance machine was offline (no internet) from ${from} to ${back}. Its stored punches have now arrived, and this message includes them._`;
+      for (const d of deliveries) {
+        const lines = d.text.split("\n");
+        lines.splice(2, 0, "", note);
+        d.text = lines.join("\n");
+      }
+    }
+
     const targets = deliveries.map((d) => d.to);
     // Preview shows every message that would go out, separated, because a
     // page that previewed only the first would hide the one a team is about
@@ -1337,44 +1432,10 @@ Deno.serve(async (req) => {
       return json({ sent: false, reason: "WA_WEBHOOK_URL is not set", text });
     }
 
-    // Default body is {"to": …, "text": …}. WA_PAYLOAD_TEMPLATE covers an
-    // endpoint that wants a different shape — JSON.stringify gives correctly
-    // escaped values, so a message containing a quote or a newline cannot
-    // break the template.
-    const template = Deno.env.get("WA_PAYLOAD_TEMPLATE");
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    const token = Deno.env.get("WA_WEBHOOK_TOKEN");
-    if (token) {
-      const name = Deno.env.get("WA_AUTH_HEADER") ?? "Authorization";
-      headers[name] = name.toLowerCase() === "authorization" ? `Bearer ${token}` : token;
-    }
-
-    /**
-     * One send, reported honestly.
-     *
-     * The 11:30 register goes to the founder and to every team's group, and
-     * each can fail independently — a team's JID can be wrong while the
-     * founder's number is fine. Recording a single ok for all of them would
-     * hide exactly that, which is the failure this module has had twice
-     * already in other forms.
-     */
     // EACH DELIVERY CARRIES ITS OWN TEXT. It used to be one body sent to a
     // list of addresses, which is exactly wrong once teams exist: the backend
     // group would have received the whole company's register.
-    const sendTo = async (d: Delivery) => {
-      const payload = template
-        ? template
-          .replaceAll("{{to}}", JSON.stringify(d.to).slice(1, -1))
-          .replaceAll("{{text}}", JSON.stringify(d.text).slice(1, -1))
-        : JSON.stringify({ to: d.to, text: d.text });
-      try {
-        const res = await fetch(url, { method: "POST", headers, body: payload });
-        const body = (await res.text()).slice(0, 200);
-        return { to: d.to, ok: res.ok, detail: res.ok ? body : `HTTP ${res.status}: ${body}` };
-      } catch (e) {
-        return { to: d.to, ok: false, detail: String(e).slice(0, 200) };
-      }
-    };
+    const sendTo = (d: Delivery) => sendPlain(d.to, d.text);
 
     const results = [];
     for (const d of deliveries) results.push(await sendTo(d));

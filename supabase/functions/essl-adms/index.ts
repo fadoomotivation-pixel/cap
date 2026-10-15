@@ -225,6 +225,14 @@ Deno.serve(async (req) => {
     return text("Unauthorized", 401);
   }
 
+  // The heartbeat. On 15 October the office internet dropped from 10:36 to
+  // 14:12, the 11:36 register went out on punches frozen at 10:36, and
+  // everybody who arrived after that was published as Absent. The register
+  // holds itself while this says the machine is away (cb_machine_status), so
+  // it must be written on EVERY contact - cb_adms_log skips the polls, which
+  // is why it could not answer "is the machine there right now?".
+  await admin.rpc("cb_adms_heartbeat", { p_sn: sn }).then(() => {}, () => {});
+
   // "Any commands for me?" - asked every few seconds.
   //
   // One at a time, oldest first. A terminal handed a batch reports a single
