@@ -110,16 +110,26 @@ function drawStory(canvas, news, sig) {
   }
 
   // Points
-  const points = Array.isArray(news.points) ? news.points : [];
+  // Up to four points, from the full article. The font steps down until they
+  // fit above the footer — a status image that overflows its own footer is
+  // the one thing worse than a shorter one.
+  const points = (Array.isArray(news.points) ? news.points : []).slice(0, 4);
   if (points.length) {
     y += 50;
-    ctx.font = `600 46px ${FONT}`;
+    const room = H - 300 - 260 - y - (news.why_it_matters ? 200 : 0);
+    let ps = 46;
+    const height = (sz) => {
+      ctx.font = `600 ${sz}px ${FONT}`;
+      return points.reduce((h, p) => h + wrap(ctx, p, inner - 56).length * sz * 1.35 + 18, 0);
+    };
+    while (ps > 32 && height(ps) > room) ps -= 2;
+    ctx.font = `600 ${ps}px ${FONT}`;
     for (const p of points) {
       const pl = wrap(ctx, p, inner - 56);
       ctx.fillStyle = GOLD;
-      ctx.beginPath(); ctx.arc(PAD + 14, y - 15, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(PAD + 14, y - ps * 0.33, 9, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f2f2f2';
-      for (const l of pl) { ctx.fillText(l, PAD + 56, y); y += 62; }
+      for (const l of pl) { ctx.fillText(l, PAD + 56, y); y += ps * 1.35; }
       y += 18;
     }
   }
