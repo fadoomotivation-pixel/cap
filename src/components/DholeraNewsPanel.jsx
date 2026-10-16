@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import {
-  Newspaper, Eye, Send, Power, Plus, Check, X, Undo2, Pencil, ExternalLink, Loader2,
+  Newspaper, Eye, Send, Power, Plus, Check, X, Undo2, Pencil, ExternalLink, Loader2, FileText,
 } from 'lucide-react';
 
 /**
@@ -195,7 +195,14 @@ export default function DholeraNewsPanel({ mainGroup, teams = [], connected, me 
                   👉 {s.sales_angle}
                 </p>
               )}
-              <p className="text-[11px] text-gray-400 mt-2">
+              {/* Whether this card was written from the full article or only the
+                  headline — the founder asked for the whole story, so say which. */}
+              {!dim && s.detail && (
+                <p className={`text-[11px] mt-2 ${/^full story/.test(s.detail) ? 'text-green-700' : 'text-amber-700'}`}>
+                  {/^full story/.test(s.detail) ? '✓ Written from the full article' : `Headline only — ${s.detail.split(' · ')[0]}`}
+                </p>
+              )}
+              <p className="text-[11px] text-gray-400 mt-1">
                 Source: {s.source_url
                   ? <a href={s.source_url} target="_blank" rel="noopener noreferrer" className="underline">{s.source_name || 'report'}</a>
                   : (s.source_name || 'report')}
@@ -221,6 +228,13 @@ export default function DholeraNewsPanel({ mainGroup, teams = [], connected, me 
                     <button onClick={() => decide(s, 'candidate')}
                       className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-gray-200 text-gray-500">
                       <Undo2 size={14} /> Undo
+                    </button>
+                  )}
+                  {!dim && !/^full story/.test(s.detail || '') && (
+                    <button onClick={() => run({ mode: 'enrich', id: s.id }, `full-${s.id}`)} disabled={!!busy}
+                      className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-[#D4AF37] text-[#9C7C1C] hover:bg-amber-50 disabled:opacity-50">
+                      {busy === `full-${s.id}` ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                      {busy === `full-${s.id}` ? 'Reading the article…' : 'Get full story'}
                     </button>
                   )}
                   {!dim && (
@@ -267,6 +281,8 @@ export default function DholeraNewsPanel({ mainGroup, teams = [], connected, me 
             </pre>
           ) : result.label === 'more' ? (
             <p className="text-sm text-gray-600">{result.note || result.reason}</p>
+          ) : String(result.label).startsWith('full-') ? (
+            <p className="text-sm text-gray-600">{result.results?.[0]?.note || result.reason}</p>
           ) : (
             <p className="text-sm text-gray-600">
               {result.sent ? <>Sent {result.posted} {result.posted === 1 ? 'story' : 'stories'} to {result.targets?.length} group(s).</>

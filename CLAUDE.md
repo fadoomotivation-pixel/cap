@@ -1907,6 +1907,18 @@ posted to the team with an image they can put on their WhatsApp status.
     with a client. It goes in the **team** message (👉) and never on the
     status image, which is the client's. Audited like the rest: no number
     that is not in a headline, and no promise of returns anywhere.
+- **Every story is written from the full article, not the headline**
+  (16 October 2026). The founder liked "Ahmedabad Metro to run to Dholera
+  Airport, know when work will start" but the card could not say when — the
+  agent had only read the headline. `fullStory()` now resolves the real
+  article (Bing: the `url` param; Google: the `rss/articles` page's
+  `data-n-a-sg`/`data-n-a-ts` traded at `batchexecute` for the address),
+  reads it (JSON-LD `articleBody` → `<p>` text → og:description) and rewrites
+  4–5 Hindi fact points: what, where, how much, when, who, stage. The audit
+  is the same, against the **article** text now. If the article cannot be
+  read, the headline write-up stays and the card says "Headline only — why".
+  `{mode:'enrich', id?}` re-reads one story or all of today's; the desk has a
+  "Get full story" button per card.
 - **The status image is drawn in the browser** at `/story/<date>` (1080×1920,
   canvas, system fonts — same reasoning as the event pass) and shared through
   the phone's share sheet, which offers WhatsApp → My status. Each salesperson

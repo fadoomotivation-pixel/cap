@@ -356,7 +356,216 @@ async function gather(
       detail: ok ? `from ${items.length} headlines (${feedNote})` : `write-up rejected — ${problem}; headline used as published`,
     };
   });
+  // Read every picked story in full, in parallel. A story whose article
+  // cannot be read keeps its headline write-up and says why.
+  await Promise.all(rows.map(async (r) => {
+    const { patch, note } = await fullStory(r);
+    if (patch) Object.assign(r, patch);
+    r.detail = `${note} · ${r.detail ?? ""}`;
+  }));
   return { rows, note: `${rows.length} stories from ${items.length} headlines (${feedNote})` };
+}
+
+// ── The full story ──────────────────────────────────────────────────────────
+//
+// A headline is half the news. On 16 October the desk offered "Ahmedabad
+// Metro to run to Dholera Airport, know when work will start" — and the card
+// could not say when, because the agent had only ever read the headline. A
+// salesperson forwarding "work will start soon" has nothing to answer the
+// client's next question with. So every picked story is now opened, the
+// article itself is read, and the write-up is redone from it: what, where,
+// how much, when, who, and where things stand.
+//
+// The same rules hold, against the ARTICLE now rather than the headline:
+// every number written must appear in the article text; Hindi; no developer;
+// no promise of returns. If the article cannot be reached, the headline
+// write-up stays and the card says so — half a story honestly labelled beats
+// a full one invented.
+
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36";
+
+const unescapeJs = (s: string) =>
+  s.replace(/\\\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/\\\\\//g, "/");
+
+/** Google News and Bing both link through themselves; find the publisher's own URL. */
+async function realUrl(link: string): Promise<string | null> {
+  try {
+    const u = new URL(link);
+    if (u.hostname.endsWith("bing.com")) return u.searchParams.get("url");
+    if (!u.hostname.endsWith("news.google.com")) return link;
+    // Google: the article page carries a signature and timestamp, and one
+    // batchexecute call trades them for the real address.
+    const id = u.pathname.split("/").pop();
+    const page = await fetch(`https://news.google.com/rss/articles/${id}`, { headers: { "User-Agent": UA } });
+    if (!page.ok) return null;
+    const html = await page.text();
+    const sg = html.match(/data-n-a-sg="([^"]+)"/)?.[1];
+    const ts = html.match(/data-n-a-ts="([^"]+)"/)?.[1];
+    if (!sg || !ts) return null;
+    const inner = JSON.stringify([
+      "garturlreq",
+      [["X", "X", ["X", "X"], null, null, 1, 1, "US:en", null, 1, null, null, null, null, null, 0, 1], "X", "X", 1, [1, 1, 1], 1, 1, null, 0, 0, null, 0],
+      id, Number(ts), sg,
+    ]);
+    const req = JSON.stringify([[["Fbv4je", inner, null, "generic"]]]);
+    const r = await fetch("https://news.google.com/_/DotsSplashUi/data/batchexecute", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "User-Agent": UA },
+      body: "f.req=" + encodeURIComponent(req),
+    });
+    if (!r.ok) return null;
+    const out = await r.text();
+    const m = out.match(/garturlres\\",\\"(.*?)\\"/);
+    return m ? unescapeJs(m[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
+const stripTags = (h: string) =>
+  decode(h.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ").trim();
+
+/** The article's own words: JSON-LD articleBody first, else its paragraphs. */
+async function articleText(url: string): Promise<string> {
+  try {
+    const r = await fetch(url, { headers: { "User-Agent": UA, "Accept": "text/html" }, redirect: "follow" });
+    if (!r.ok) return "";
+    const html = (await r.text()).slice(0, 1_500_000);
+    let body = "";
+    for (const m of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+      try {
+        const walk = (o: unknown): void => {
+          if (!o || typeof o !== "object") return;
+          if (Array.isArray(o)) return o.forEach(walk);
+          const rec = o as Record<string, unknown>;
+          if (typeof rec.articleBody === "string" && rec.articleBody.length > body.length) body = rec.articleBody;
+          Object.values(rec).forEach(walk);
+        };
+        walk(JSON.parse(m[1].trim()));
+      } catch { /* malformed JSON-LD is common */ }
+    }
+    if (body.length < 300) {
+      const paras = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+        .map((m) => stripTags(m[1]))
+        .filter((t) => t.length > 40 && !/cookie|subscribe|newsletter|copyright|all rights reserved/i.test(t));
+      const joined = paras.join("\n");
+      if (joined.length > body.length) body = joined;
+    }
+    if (body.length < 200) {
+      const og = html.match(/<meta[^>]+(?:property|name)="(?:og:description|description)"[^>]+content="([^"]+)"/i)?.[1];
+      if (og && og.length > body.length) body = decode(og);
+    }
+    return stripTags(body).slice(0, 7000);
+  } catch {
+    return "";
+  }
+}
+
+const FULL_SYSTEM = [
+  "You write a news brief for a real-estate sales team that sells land near Dholera Smart City, Gujarat.",
+  "You get ONE news article. Give the salesperson the full picture in Hindi so they can answer a client's",
+  "follow-up questions: what is happening, exactly where, how much money, how long/big, by when (dates,",
+  "phases, deadlines), who is doing it, and what stage it is at now. Use what the article actually says.",
+  "",
+  "Rules — break none of them:",
+  "- Use ONLY facts stated in the ARTICLE. Never add a number, name, date or claim that is not in it.",
+  "  If the article does not say something (for example when work starts), do not guess — leave it out.",
+  "- Keep the tense the article uses: a plan stays a plan (करेगा / बनाएगा / की योजना), done stays done.",
+  "- Hindi (Devanagari) for headline_hi, points, why_it_matters and sales_angle. Write धोलेरा.",
+  "- Never mention any private real-estate developer, project, broker, plot or price.",
+  "- Never promise returns, profit, appreciation or doubling — not even in sales_angle.",
+  "",
+  "points: 4-5 lines, max 90 chars each, each carrying a concrete fact (number, place, date, body) where",
+  "the article has one. The first line answers the headline's own question if the article answers it.",
+  "sales_angle: one line (max 110 chars) on how a salesperson brings this up with a client.",
+  "",
+  "Return ONLY JSON: {\"headline_hi\": \"<max 75 chars>\", \"headline_en\": \"<max 95 chars>\",",
+  "\"points\": [\"...\"], \"why_it_matters\": \"<max 90 chars, no promises>\", \"sales_angle\": \"...\",",
+  "\"category\": \"investment|government|infrastructure|jobs|amenity|other\", \"usable\": true}",
+  "If the text is not a real article about this story (paywall, error page, unrelated), return {\"usable\": false}.",
+].join("\n");
+
+type Full = Story & { usable?: boolean };
+
+async function askFull(title: string, text: string, feedback: string): Promise<Full | null> {
+  const key = Deno.env.get("GROQ_API_KEY");
+  if (!key) return null;
+  const model = Deno.env.get("NEWS_MODEL") ?? Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
+  const body: Record<string, unknown> = {
+    model,
+    temperature: 0.2,
+    max_tokens: 3000,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: FULL_SYSTEM },
+      { role: "user", content: [`HEADLINE: ${title}`, "", "ARTICLE:", text,
+        ...(feedback ? ["", `YOUR PREVIOUS ANSWER WAS REJECTED: ${feedback}. Fix exactly that.`] : [])].join("\n") },
+    ],
+  };
+  if (model.startsWith("openai/gpt-oss")) body.reasoning_effort = "medium";
+  try {
+    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const m = (j.choices?.[0]?.message?.content ?? "").match(/\{[\s\S]*\}/);
+    return m ? (JSON.parse(m[0]) as Full) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The same checks as the headline audit, against the article's own text. */
+function auditFull(f: Full, sourceText: string, titles: string[]): string {
+  const allowed = numbersIn(sourceText + " " + titles.join(" "));
+  const written = [f.headline_hi, f.headline_en, ...(f.points ?? []), f.why_it_matters, f.sales_angle].filter(Boolean).join(" ");
+  const invented = [...numbersIn(written)].filter((n) => !allowed.has(n));
+  if (invented.length) return `it used numbers that are not in the article (${invented.join(", ")})`;
+  if (PROMISE.test(written)) return "it promises returns or profit, which is not allowed anywhere";
+  if (BLOCK.test(written)) return "it names a developer or carries negative news";
+  if (!f.headline_hi || !/[ऀ-ॿ]/.test(f.headline_hi)) return "headline_hi must be Hindi";
+  if (!(f.points ?? []).length || (f.points ?? []).some((x) => !/[ऀ-ॿ]/.test(x))) return "points must be Hindi lines";
+  return "";
+}
+
+/**
+ * Read the article behind one story and rewrite it from the full text.
+ * Returns the fields to update, or null with a reason when it could not.
+ */
+async function fullStory(row: Row): Promise<{ patch: Partial<Row> | null; note: string }> {
+  if (!row.source_url) return { patch: null, note: "no link to read" };
+  const url = await realUrl(row.source_url);
+  if (!url) return { patch: null, note: "could not find the article behind the news link" };
+  const text = await articleText(url);
+  if (text.length < 250) return { patch: { source_url: url }, note: "the article could not be read (paywall or blocked)" };
+  const titles = [row.source_title ?? "", row.headline_en ?? ""].filter(Boolean);
+  let f = await askFull(row.source_title ?? row.headline_en ?? "", text, "");
+  if (!f || f.usable === false) return { patch: { source_url: url }, note: "the page was not a usable article" };
+  let problem = auditFull(f, text, titles);
+  if (problem) {
+    const again = await askFull(row.source_title ?? row.headline_en ?? "", text, problem);
+    if (again && again.usable !== false) {
+      f = again;
+      problem = auditFull(f, text, titles);
+    }
+  }
+  if (problem) return { patch: { source_url: url }, note: `full write-up rejected — ${problem}` };
+  return {
+    patch: {
+      source_url: url,
+      headline_hi: tidy(f.headline_hi),
+      headline_en: f.headline_en ?? row.headline_en,
+      points: (f.points ?? []).map((x) => tidy(x) as string).filter(Boolean).slice(0, 5),
+      why_it_matters: tidy(f.why_it_matters),
+      sales_angle: tidy(f.sales_angle) ?? row.sales_angle,
+      category: f.category ?? row.category,
+    },
+    note: `full story from the article (${text.length} chars)`,
+  };
 }
 
 // ── The messages ────────────────────────────────────────────────────────────
@@ -423,7 +632,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const { dry_run, force } = body as { dry_run?: boolean; force?: boolean };
-    const mode = ["prepare", "more", "publish"].includes(body?.mode) ? body.mode : "publish";
+    const mode = ["prepare", "more", "publish", "enrich"].includes(body?.mode) ? body.mode : "publish";
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -475,6 +684,23 @@ Deno.serve(async (req) => {
       await logRun(more ? "more" : "prepare", note);
       return { rows: await todays(), note, fresh: rows.length > 0 };
     };
+
+    // ── enrich: read the article behind one story (id) or every unposted one today ──
+    if (mode === "enrich") {
+      let q = admin.from("cb_dholera_news").select("*");
+      q = body?.id ? q.eq("id", body.id) : q.eq("news_date", today).neq("status", "posted").neq("status", "skipped");
+      const { data: targets } = await q;
+      const results = await Promise.all(((targets ?? []) as Row[]).map(async (r) => {
+        const { patch, note } = await fullStory(r);
+        await admin.from("cb_dholera_news").update({
+          ...(patch ?? {}),
+          detail: `${note} · ${(r.detail ?? "").split(" · ").slice(-1)[0]}`,
+          updated_at: new Date().toISOString(),
+        }).eq("id", r.id);
+        return { rank: r.rank, note, full: !!patch?.headline_hi };
+      }));
+      return json({ ok: true, mode, results, stories: await todays() });
+    }
 
     if (mode === "prepare" || mode === "more") {
       const { rows, note, fresh } = await prepare(mode === "more");
