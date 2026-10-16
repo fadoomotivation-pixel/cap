@@ -28,9 +28,14 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // 2. Nothing naming a developer, Mirrikh first. Their legal notice of
 //    8 September governs every word we publish about them.
 // 3. Nothing invented or overstated. Every number must be in a source
-//    headline, Hindi lines must be Hindi, a plan must not be written as done
-//    (the model wrote "निवेश किए" for "DHL *to* invest" twice), and no line
-//    may promise a return. One corrective retry, then the headline as published.
+//    headline or the article, a plan must not be written as done (the model
+//    once wrote "invested" for "DHL *to* invest", twice), and no line may
+//    promise a return. One corrective retry, then the headline as published.
+//
+// LANGUAGE: professional English, in a national daily's news-desk register.
+// The first version wrote Hindi; on 16 October the founder reported clients
+// did not take to it. The checks enforce the register: no Indic script, no
+// exclamation marks or emoji. headline_hi is left null on every new story.
 //
 // Called by pg_cron through cb_send_dholera_news(mode) with x-cron-secret, or
 // by an admin with their JWT: { mode: prepare|more|publish, dry_run, force }.
@@ -133,6 +138,9 @@ const BLOCK = new RegExp(
   "i",
 );
 
+// What a written brief may never contain, whatever the article says.
+const WRITTEN_BLOCK = /mirrikh|\bmayur\b|\bnexa\b|evergreen|realty|\bdevelopers?\b|\bbuilders?\b|\bscam|fraud|ponzi/i;
+
 // Nothing a salesperson forwards may promise money back.
 const PROMISE = /(रिटर्न|मुनाफ|गारंटी|दोगुन|पक्का फायदा|\breturns?\b|profit|guarante|double your|appreciat)/i;
 
@@ -168,20 +176,22 @@ const SYSTEM = [
   "",
   "Rules — break none of them:",
   "- Use ONLY facts stated in the headlines. Never add a number, name, date, place or claim that is not there.",
-  "- Keep the tense. A plan or 'to build' stays a plan ('बनाएगा', 'की योजना'), never written as done.",
-  "  Example: 'DHL to build Rs 50 crore hub in Dholera' -> 'DHL धोलेरा में ₹50 करोड़ का हब बनाएगा' (never 'बनाया').",
-  "- headline_hi, every line of points, why_it_matters and sales_angle are Hindi (Devanagari). Write धोलेरा.",
+  "- Keep the tense. A plan or 'to build' stays a plan ('will build', 'plans to'), never written as done.",
+  "  Example: 'DHL to build Rs 50 crore hub in Dholera' -> 'DHL to set up Rs 50-crore hub in Dholera' (never 'has built').",
+  "- Write in English, in the register of a Times of India news desk: crisp, factual, third person, no hype,",
+  "  no exclamation marks, no emoji. Headlines in headline style ('Metro line to link Ahmedabad with Dholera airport').",
+  "  Amounts as 'Rs 50 crore'. No Hindi or Gujarati script anywhere.",
   "- Never mention any private real-estate developer, project, broker, plot or price.",
   "- Never promise returns, profit, appreciation, doubling or 'best time to invest' — not even in sales_angle.",
   "- Skip negative news, opinion, stock-market pieces, and anything matching ALREADY USED.",
   "- Several headlines about one event: one story, all of them in same_story.",
   "",
-  "sales_angle: one Hindi line (max 110 chars) telling the salesperson how to bring this up with a client —",
-  "what question it answers or what doubt it settles (e.g. 'जो क्लाइंट पूछते हैं धोलेरा में असली उद्योग है या नहीं, उन्हें यह दिखाएं').",
+  "sales_angle: one English line (max 110 chars) telling the salesperson how to bring this up with a client —",
+  "what question it answers or what doubt it settles (e.g. 'For clients who ask whether real industry is coming to Dholera').",
   "category: one of investment | government | infrastructure | jobs | amenity | other.",
   "",
   "Return ONLY JSON: {\"stories\": [{\"pick\": <n>, \"same_story\": [<n>...], \"category\": \"...\",",
-  "\"headline_hi\": \"<max 70 chars>\", \"headline_en\": \"<max 90 chars>\", \"points\": [\"<2-3 lines, max 60 chars>\"],",
+  "\"headline_en\": \"<max 95 chars>\", \"points\": [\"<2-3 lines, max 90 chars>\"],",
   "\"why_it_matters\": \"<max 80 chars, no promises>\", \"sales_angle\": \"...\"}], \"reason\": \"<if none>\"}",
 ].join("\n");
 
@@ -238,14 +248,25 @@ function audit(s: Story, items: Item[]): string {
   const invented = [...numbersIn(written)].filter((n) => !allowed.has(n));
   if (invented.length) return `it used numbers that are in no headline (${invented.join(", ")})`;
   const planned = cl.every((c) => /\b(to|will|plans?|planned|proposed|set to|likely|soon|by 20\d\d)\b/i.test(c.title));
-  const hi = [s.headline_hi, ...(s.points ?? []), s.why_it_matters].filter(Boolean).join(" ");
-  if (planned && /(किया|किए|किये|बनाया|लगाया|शुरू हुआ|शुरू हो गया|स्थापित हुआ|खुल गया|चुका|चुकी|चुके)/.test(hi)) {
-    return "the headlines describe a PLAN but it was written as already done — use future tense (करेगा / बनाएगा / की योजना)";
+  const body = [s.headline_en, ...(s.points ?? []), s.why_it_matters].filter(Boolean).join(" ");
+  if (planned && DONE.test(body)) {
+    return "the headlines describe a PLAN but it was written as already done — use 'will', 'to', 'plans to'";
   }
+  return styleProblem(s, written);
+}
+
+// The founder, 16 October 2026: clients did not take to the Hindi write-ups.
+// Everything is professional English now, in a national daily's news-desk
+// register. These checks hold the style the prompt asks for.
+const INDIC = /[ऀ-૿]/;
+const DONE = /\b(has|have|had)( been)? (built|invested|set up|completed|started|opened|launched|commissioned|begun)\b|\b(was|were) (built|completed|inaugurated|commissioned|opened|launched)\b/i;
+
+function styleProblem(s: Story, written: string): string {
   if (PROMISE.test(written)) return "it promises returns or profit, which is not allowed anywhere";
-  if (!s.headline_hi || !/[ऀ-ॿ]/.test(s.headline_hi)) return "headline_hi must be Hindi in Devanagari";
-  if ((s.points ?? []).some((x) => !/[ऀ-ॿ]/.test(x))) return "every line in points must be Hindi";
-  if (s.sales_angle && !/[ऀ-ॿ]/.test(s.sales_angle)) return "sales_angle must be Hindi";
+  if (!s.headline_en) return "headline_en is missing";
+  if (INDIC.test(written)) return "everything must be in English — no Hindi or Gujarati script";
+  if (/[!\u{1F300}-\u{1FAFF}☀-➿]/u.test(written)) return "no exclamation marks or emoji — this is a news desk";
+  if (!(s.points ?? []).length) return "points are missing";
   return "";
 }
 
@@ -343,8 +364,8 @@ async function gather(
       rank: startRank + i,
       status: "candidate",
       category: s.category ?? null,
-      headline_hi: ok ? tidy(s.headline_hi) : null,
-      headline_en: ok ? (s.headline_en ?? main.title) : main.title,
+      headline_hi: null,
+      headline_en: ok ? (tidy(s.headline_en) ?? main.title) : main.title,
       points: ok ? (s.points ?? []).map((x) => tidy(x) as string).filter(Boolean).slice(0, 3) : [],
       why_it_matters: ok ? tidy(s.why_it_matters) : null,
       sales_angle: ok ? tidy(s.sales_angle) : null,
@@ -356,13 +377,14 @@ async function gather(
       detail: ok ? `from ${items.length} headlines (${feedNote})` : `write-up rejected — ${problem}; headline used as published`,
     };
   });
-  // Read every picked story in full, in parallel. A story whose article
-  // cannot be read keeps its headline write-up and says why.
-  await Promise.all(rows.map(async (r) => {
+  // Read every picked story in full, one at a time: in parallel they hit the
+  // writer's rate limit (16 October). A story whose article cannot be read
+  // gets an English brief from its headline and says why.
+  for (const r of rows) {
     const { patch, note } = await fullStory(r);
     if (patch) Object.assign(r, patch);
     r.detail = `${note} · ${r.detail ?? ""}`;
-  }));
+  }
   return { rows, note: `${rows.length} stories from ${items.length} headlines (${feedNote})` };
 }
 
@@ -377,10 +399,10 @@ async function gather(
 // how much, when, who, and where things stand.
 //
 // The same rules hold, against the ARTICLE now rather than the headline:
-// every number written must appear in the article text; Hindi; no developer;
-// no promise of returns. If the article cannot be reached, the headline
-// write-up stays and the card says so — half a story honestly labelled beats
-// a full one invented.
+// every number written must appear in the article text; English; no
+// developer; no promise of returns. If the article cannot be reached, a short
+// English brief is written from the headlines and the card says so — half a
+// story honestly labelled beats a full one invented.
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36";
 
@@ -463,32 +485,42 @@ async function articleText(url: string): Promise<string> {
 }
 
 const FULL_SYSTEM = [
-  "You write a news brief for a real-estate sales team that sells land near Dholera Smart City, Gujarat.",
-  "You get ONE news article. Give the salesperson the full picture in Hindi so they can answer a client's",
-  "follow-up questions: what is happening, exactly where, how much money, how long/big, by when (dates,",
-  "phases, deadlines), who is doing it, and what stage it is at now. Use what the article actually says.",
+  "You are a senior reporter on the news desk of a leading Indian English daily (the register of The Times",
+  "of India), writing a short brief for a real-estate sales team that sells land near Dholera Smart City,",
+  "Gujarat. The salesperson forwards it to clients, so it must read like a newspaper, not a sales pitch.",
+  "You get ONE news article (it may be in English, Hindi or Gujarati). Give the full picture so the",
+  "salesperson can answer a client's follow-up questions: what is happening, exactly where, how much money,",
+  "how long/big, by when (dates, phases, deadlines), who is doing it, and what stage it is at now.",
   "",
   "Rules — break none of them:",
   "- Use ONLY facts stated in the ARTICLE. Never add a number, name, date or claim that is not in it.",
   "  If the article does not say something (for example when work starts), do not guess — leave it out.",
-  "- Keep the tense the article uses: a plan stays a plan (करेगा / बनाएगा / की योजना), done stays done.",
-  "- Hindi (Devanagari) for headline_hi, points, why_it_matters and sales_angle. Write धोलेरा.",
+  "- Keep the tense the article uses: a plan stays a plan ('will', 'is to', 'plans to'), done stays done.",
+  "- English only — no Hindi or Gujarati script. Crisp, factual, third person. No hype, no adjectives",
+  "  like 'massive' or 'game-changer', no exclamation marks, no emoji. Amounts as 'Rs 50 crore'.",
+  "- headline_en in newspaper headline style: present tense for news, 'to' for plans",
+  "  (e.g. 'Ahmedabad Metro Phase 3 to reach Dholera airport; Centre's nod awaited').",
   "- Never mention any private real-estate developer, project, broker, plot or price.",
   "- Never promise returns, profit, appreciation or doubling — not even in sales_angle.",
   "",
-  "points: 4-5 lines, max 90 chars each, each carrying a concrete fact (number, place, date, body) where",
-  "the article has one. The first line answers the headline's own question if the article answers it.",
-  "sales_angle: one line (max 110 chars) on how a salesperson brings this up with a client.",
+  "points: 4-5 full sentences, max 140 chars each, each carrying a concrete fact (number, place, date,",
+  "agency) where the article has one. The first answers the headline's own question if the article does.",
+  "why_it_matters: one sentence (max 120 chars), factual, no promises.",
+  "sales_angle: one line (max 110 chars) for the salesperson only, on when to bring this up with a client.",
   "",
-  "Return ONLY JSON: {\"headline_hi\": \"<max 75 chars>\", \"headline_en\": \"<max 95 chars>\",",
-  "\"points\": [\"...\"], \"why_it_matters\": \"<max 90 chars, no promises>\", \"sales_angle\": \"...\",",
+  "Return ONLY JSON: {\"headline_en\": \"<max 100 chars>\", \"points\": [\"...\"],",
+  "\"why_it_matters\": \"...\", \"sales_angle\": \"...\",",
   "\"category\": \"investment|government|infrastructure|jobs|amenity|other\", \"usable\": true}",
   "If the text is not a real article about this story (paywall, error page, unrelated), return {\"usable\": false}.",
 ].join("\n");
 
-type Full = Story & { usable?: boolean };
+// When the article cannot be read, the brief is written from the headlines
+// alone — still English, still audited, just shorter.
+const HEADLINE_ONLY = "NOTE: you only have the HEADLINE(S), not the article. Write 1-3 points, and only what they state. Set usable to true.";
 
-async function askFull(title: string, text: string, feedback: string): Promise<Full | null> {
+type Full = Story & { usable?: boolean; llmError?: string };
+
+async function askFull(title: string, text: string, feedback: string, headlineOnly = false): Promise<Full | null> {
   const key = Deno.env.get("GROQ_API_KEY");
   if (!key) return null;
   const model = Deno.env.get("NEWS_MODEL") ?? Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
@@ -498,8 +530,11 @@ async function askFull(title: string, text: string, feedback: string): Promise<F
     max_tokens: 3000,
     response_format: { type: "json_object" },
     messages: [
-      { role: "system", content: FULL_SYSTEM },
-      { role: "user", content: [`HEADLINE: ${title}`, "", "ARTICLE:", text,
+      // With headlines only there is no page to judge, so the "not a real
+      // article" escape is taken away; otherwise the model uses it and writes nothing.
+      { role: "system", content: headlineOnly ? FULL_SYSTEM.replace(/\nIf the text is not a real article[^\n]*/, "") : FULL_SYSTEM },
+      { role: "user", content: [`HEADLINE: ${title}`, "", headlineOnly ? "HEADLINES:" : "ARTICLE:", text,
+        ...(headlineOnly ? ["", HEADLINE_ONLY] : []),
         ...(feedback ? ["", `YOUR PREVIOUS ANSWER WAS REJECTED: ${feedback}. Fix exactly that.`] : [])].join("\n") },
     ],
   };
@@ -510,7 +545,8 @@ async function askFull(title: string, text: string, feedback: string): Promise<F
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!r.ok) return null;
+    // A rate limit must not read as "the article was unusable".
+    if (!r.ok) return { llmError: `HTTP ${r.status}` } as Full;
     const j = await r.json();
     const m = (j.choices?.[0]?.message?.content ?? "").match(/\{[\s\S]*\}/);
     return m ? (JSON.parse(m[0]) as Full) : null;
@@ -522,49 +558,72 @@ async function askFull(title: string, text: string, feedback: string): Promise<F
 /** The same checks as the headline audit, against the article's own text. */
 function auditFull(f: Full, sourceText: string, titles: string[]): string {
   const allowed = numbersIn(sourceText + " " + titles.join(" "));
-  const written = [f.headline_hi, f.headline_en, ...(f.points ?? []), f.why_it_matters, f.sales_angle].filter(Boolean).join(" ");
+  const written = [f.headline_en, ...(f.points ?? []), f.why_it_matters, f.sales_angle].filter(Boolean).join(" ");
   const invented = [...numbersIn(written)].filter((n) => !allowed.has(n));
   if (invented.length) return `it used numbers that are not in the article (${invented.join(", ")})`;
-  if (PROMISE.test(written)) return "it promises returns or profit, which is not allowed anywhere";
-  if (BLOCK.test(written)) return "it names a developer or carries negative news";
-  if (!f.headline_hi || !/[ऀ-ॿ]/.test(f.headline_hi)) return "headline_hi must be Hindi";
-  if (!(f.points ?? []).length || (f.points ?? []).some((x) => !/[ऀ-ॿ]/.test(x))) return "points must be Hindi lines";
-  return "";
+  // The negative-news filter already ran on the headline. A full article may
+  // legitimately say "accident" (an NHAI road-safety story did), so the
+  // written brief is checked only for developers and the words a sales team
+  // must never forward.
+  const blocked = written.match(WRITTEN_BLOCK)?.[0];
+  if (blocked) return `it uses the word "${blocked}", which is not allowed`;
+  return styleProblem(f, written);
 }
 
-/**
- * Read the article behind one story and rewrite it from the full text.
- * Returns the fields to update, or null with a reason when it could not.
- */
-async function fullStory(row: Row): Promise<{ patch: Partial<Row> | null; note: string }> {
-  if (!row.source_url) return { patch: null, note: "no link to read" };
-  const url = await realUrl(row.source_url);
-  if (!url) return { patch: null, note: "could not find the article behind the news link" };
-  const text = await articleText(url);
-  if (text.length < 250) return { patch: { source_url: url }, note: "the article could not be read (paywall or blocked)" };
-  const titles = [row.source_title ?? "", row.headline_en ?? ""].filter(Boolean);
-  let f = await askFull(row.source_title ?? row.headline_en ?? "", text, "");
-  if (!f || f.usable === false) return { patch: { source_url: url }, note: "the page was not a usable article" };
+/** Write, audit, retry once. Returns the brief or why it was rejected. */
+async function writeBrief(title: string, text: string, titles: string[], headlineOnly: boolean): Promise<{ f: Full | null; problem: string }> {
+  // "usable" judges an article page; with only headlines there is no page to judge.
+  let f = await askFull(title, text, "", headlineOnly);
+  if (f?.llmError) return { f: null, problem: `the writer did not answer (${f.llmError})` };
+  if (!f || (f.usable === false && !headlineOnly)) return { f: null, problem: "the page was not a usable article" };
   let problem = auditFull(f, text, titles);
   if (problem) {
-    const again = await askFull(row.source_title ?? row.headline_en ?? "", text, problem);
-    if (again && again.usable !== false) {
+    const again = await askFull(title, text, problem, headlineOnly);
+    if (again && !again.llmError && (again.usable !== false || headlineOnly)) {
       f = again;
       problem = auditFull(f, text, titles);
     }
   }
-  if (problem) return { patch: { source_url: url }, note: `full write-up rejected — ${problem}` };
+  return { f: problem ? null : f, problem };
+}
+
+/**
+ * Read the article behind one story and rewrite it from the full text.
+ * If the article cannot be read, write the English brief from the headlines
+ * and say so in the note (the desk labels it "Headline only").
+ */
+async function fullStory(row: Row): Promise<{ patch: Partial<Row> | null; note: string }> {
+  const titles = [row.source_title ?? "", row.headline_en ?? ""].filter(Boolean);
+  const title = row.source_title ?? row.headline_en ?? "";
+  const url = row.source_url ? await realUrl(row.source_url) : null;
+  const text = url ? await articleText(url) : "";
+  let reason = !row.source_url ? "no link to read"
+    : !url ? "could not find the article behind the news link"
+    : text.length < 250 ? "the article could not be read (paywall or blocked)" : "";
+
+  let f: Full | null = null;
+  if (!reason) {
+    const out = await writeBrief(title, text, titles, false);
+    f = out.f;
+    if (!f) reason = out.problem === "the page was not a usable article" ? out.problem : `full write-up rejected — ${out.problem}`;
+  }
+  const full = !!f;
+  if (!f) {
+    const out = await writeBrief(title, titles.join("\n"), titles, true);
+    f = out.f;
+    if (!f) return { patch: url ? { source_url: url } : null, note: `${reason}; English write-up rejected — ${out.problem}` };
+  }
   return {
     patch: {
-      source_url: url,
-      headline_hi: tidy(f.headline_hi),
-      headline_en: f.headline_en ?? row.headline_en,
+      ...(url ? { source_url: url } : {}),
+      headline_hi: null,
+      headline_en: tidy(f.headline_en) ?? row.headline_en,
       points: (f.points ?? []).map((x) => tidy(x) as string).filter(Boolean).slice(0, 5),
       why_it_matters: tidy(f.why_it_matters),
       sales_angle: tidy(f.sales_angle) ?? row.sales_angle,
       category: f.category ?? row.category,
     },
-    note: `full story from the article (${text.length} chars)`,
+    note: full ? `full story from the article (${text.length} chars)` : reason,
   };
 }
 
@@ -690,15 +749,17 @@ Deno.serve(async (req) => {
       let q = admin.from("cb_dholera_news").select("*");
       q = body?.id ? q.eq("id", body.id) : q.eq("news_date", today).neq("status", "posted").neq("status", "skipped");
       const { data: targets } = await q;
-      const results = await Promise.all(((targets ?? []) as Row[]).map(async (r) => {
+      // One at a time, for the same rate-limit reason as gather().
+      const results = [];
+      for (const r of (targets ?? []) as Row[]) {
         const { patch, note } = await fullStory(r);
         await admin.from("cb_dholera_news").update({
           ...(patch ?? {}),
           detail: `${note} · ${(r.detail ?? "").split(" · ").slice(-1)[0]}`,
           updated_at: new Date().toISOString(),
         }).eq("id", r.id);
-        return { rank: r.rank, note, full: !!patch?.headline_hi };
-      }));
+        results.push({ rank: r.rank, note, full: /^full story/.test(note) });
+      }
       return json({ ok: true, mode, results, stories: await todays() });
     }
 

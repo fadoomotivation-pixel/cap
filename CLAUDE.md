@@ -1919,6 +1919,16 @@ posted to the team with an image they can put on their WhatsApp status.
   read, the headline write-up stays and the card says "Headline only — why".
   `{mode:'enrich', id?}` re-reads one story or all of today's; the desk has a
   "Get full story" button per card.
+- **Written in professional English, not Hindi** (16 October 2026, the
+  founder: clients did not take to the Hindi). The register is a national
+  English daily's news desk — headline style, "Rs 50 crore", no hype, no
+  exclamation marks or emoji — and `styleProblem()` enforces it: any
+  Devanagari/Gujarati script, `!` or emoji fails the audit. New rows leave
+  `headline_hi` null; everything renders `headline_hi || headline_en`, so
+  older Hindi rows still display. Sources may be Hindi or Gujarati — the
+  brief is written in English from them. When an article cannot be read, an
+  English brief is written from the headlines alone (1–3 points, labelled
+  "Headline only" on the desk), so no Hindi write-up survives as a fallback.
 - **The status image is drawn in the browser** at `/story/<date>` (1080×1920,
   canvas, system fonts — same reasoning as the event pass) and shared through
   the phone's share sheet, which offers WhatsApp → My status. Each salesperson

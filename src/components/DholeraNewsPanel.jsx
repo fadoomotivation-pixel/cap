@@ -104,7 +104,9 @@ export default function DholeraNewsPanel({ mainGroup, teams = [], connected, me 
   const saveEdit = async () => {
     const text = editing.headline_hi.trim();
     if (!text) return;
-    await supabase.from('cb_dholera_news').update({ headline_hi: text, updated_at: new Date().toISOString() })
+    // Stories are written in English since 16 October; older ones in Hindi.
+    // Edit whichever headline the card and the image actually show.
+    await supabase.from('cb_dholera_news').update({ [editing.field]: text, updated_at: new Date().toISOString() })
       .eq('id', editing.id);
     setEditing(null);
     load();
@@ -172,7 +174,7 @@ export default function DholeraNewsPanel({ mainGroup, teams = [], connected, me 
               {editing?.id === s.id ? (
                 <div className="mb-2">
                   <textarea value={editing.headline_hi} rows={2}
-                    onChange={(e) => setEditing({ ...editing, headline_hi: e.target.value.slice(0, 90) })}
+                    onChange={(e) => setEditing({ ...editing, headline_hi: e.target.value.slice(0, 120) })}
                     className="w-full border border-gray-300 rounded-md p-2 text-sm" />
                   <div className="flex gap-2 mt-1">
                     <button onClick={saveEdit} className="text-xs px-3 py-1 rounded bg-[#10243E] text-white">Save</button>
@@ -238,7 +240,7 @@ export default function DholeraNewsPanel({ mainGroup, teams = [], connected, me 
                     </button>
                   )}
                   {!dim && (
-                    <button onClick={() => setEditing({ id: s.id, headline_hi: s.headline_hi || '' })}
+                    <button onClick={() => setEditing({ id: s.id, field: s.headline_hi ? 'headline_hi' : 'headline_en', headline_hi: s.headline_hi || s.headline_en || '' })}
                       className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-gray-200 text-gray-600">
                       <Pencil size={14} /> Edit headline
                     </button>

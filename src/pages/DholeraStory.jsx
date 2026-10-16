@@ -25,7 +25,7 @@ const W = 1080;
 const H = 1920;
 const GOLD = '#D4AF37';
 const INK = '#0A1016';
-const FONT = '"Noto Sans Devanagari", "Nirmala UI", Mangal, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "Noto Sans Devanagari", "Nirmala UI", Mangal, sans-serif';
 const COMPANY_PHONE = '+91 70489 17300';
 const KEY = 'cb-story-signature';
 
