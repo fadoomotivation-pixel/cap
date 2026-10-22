@@ -1929,6 +1929,27 @@ posted to the team with an image they can put on their WhatsApp status.
   brief is written in English from them. When an article cannot be read, an
   English brief is written from the headlines alone (1–3 points, labelled
   "Headline only" on the desk), so no Hindi write-up survives as a fallback.
+- **The writer never runs out (22 October 2026).** gpt-oss-120b hit Groq's
+  200,000 tokens/day cap and the 12:30 and 14:10 runs both died, so nothing
+  reached the team. `writer()` now walks a chain — gpt-oss-120b →
+  llama-3.3-70b → gpt-oss-20b → llama-4-maverick → qwen3-32b — moving on at
+  any 429/404 (Groq meters each model separately); `NEWS_MODELS` overrides
+  it. Reasoning is "low", articles are clipped to 5,000 characters, and
+  stories are read one at a time.
+- **Finding the article has two roads.** Google's redirect decode (page →
+  `batchexecute`) gets 503s from Edge IPs in bursts, so the page is retried
+  three times on two addresses, then Bing News is searched for the headline
+  (accepted only at ≥60% word overlap). A general web search was tried and
+  rejected: DuckDuckGo blocks the server and Bing web search returned junk
+  and adult sites for a Gujarati title. The desk note now says which step
+  failed ("google page 503; not on Bing News either").
+- **What goes to WhatsApp is a brief plus forwardable cards.** One TEAM
+  BRIEF (category, facts, why it matters, 👉 how to use it with clients,
+  source, status-image link), then one CLIENT CARD per story — facts, why it
+  matters, source and the publisher's own link, signed "Shared by Capital
+  Brix LLP", with **no sales line**, so a salesperson forwards it as is.
+  Only the brief decides `posted`: a card failing must not make the 14:25
+  retry send the brief twice.
 - **The status image is drawn in the browser** at `/story/<date>` (1080×1920,
   canvas, system fonts — same reasoning as the event pass) and shared through
   the phone's share sheet, which offers WhatsApp → My status. Each salesperson
