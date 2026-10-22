@@ -2,6 +2,7 @@ import React from 'react';
 import Projects, { projectSlug } from '../components/Projects';
 import DeveloperTrust from '../components/DeveloperTrust';
 import LeadForm from '../components/LeadForm';
+import RateCard from '../components/RateCard';
 import Seo from '../components/Seo';
 import PageIntro from '../components/PageIntro';
 import { pageSeo, SITE_URL, absoluteUrl } from '../lib/seo';
@@ -9,7 +10,7 @@ import { plotRates, projects, projectsMap, developer } from '../data/site';
 
 // ItemList of the projects rendered as cards on this page, each a Product with
 // the developer as brand and — only where a "starting at" figure is printed in
-// the developer's collateral and shown on the card — an AggregateOffer.
+// Mirrikh's 20 Oct 2026 rate circular and shown on the card — a per-sq-yd Offer.
 // Schema mirrors what is visible; nothing here is not on the page.
 const verified = projects.filter((p) => p.verified);
 
@@ -42,11 +43,12 @@ const projectsLd = {
           category: p.type,
           description: `${p.units} at ${p.location}. NA, NOC, Title Clear & Unit Plan Pass. Developed by Mirrikh Infratech Pvt. Ltd., marketed by Capital Brix LLP.`,
           brand: { '@type': 'Brand', name: 'Mirrikh Infratech' },
-          ...(p.startingPrice ? {
+          ...(typeof p.priceFrom === 'number' ? {
             offers: {
-              '@type': 'AggregateOffer',
-              lowPrice: p.startingPrice,
+              '@type': 'Offer',
+              price: p.priceFrom,
               priceCurrency: 'INR',
+              priceSpecification: { '@type': 'UnitPriceSpecification', price: p.priceFrom, priceCurrency: 'INR', unitText: 'sq yd' },
               availability: 'https://schema.org/InStock',
               seller: { '@type': 'Organization', name: 'Capital Brix LLP', url: SITE_URL },
             },
@@ -81,9 +83,11 @@ export default function ProjectsPage() {
       <PageIntro
         eyebrow="Developed by Mirrikh Infratech Pvt. Ltd."
         title="Mirrikh Infratech projects near Dholera Smart City"
-        lede={`Residential plots from ₹12.75 lakh, industrial units from ₹26.5 lakh and 3BHK villas — every project NA, NOC, Title Clear & Unit Plan Pass. Marketed by Capital Brix LLP as an authorised sales channel partner. ${plotRates.sentence}`}
+        lede={`Residential plots from ₹9,750/sq yd, industrial plots from ₹8,950/sq yd and 3BHK villas — every project NA, NOC, Title Clear & Unit Plan Pass. Marketed by Capital Brix LLP as an authorised sales channel partner. ${plotRates.sentence}`}
         crumbs={[{ label: 'Home', to: '/' }, { label: 'Projects' }]}
       />
+
+      <RateCard />
 
       <Projects variant="all" />
 

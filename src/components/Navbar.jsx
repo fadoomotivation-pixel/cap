@@ -236,8 +236,9 @@ export default function Navbar() {
 
         {/* ── Mobile Hamburger ── */}
         <button
-          aria-label="Menu"
-          className={`lg:hidden p-2 -mr-2 ${transparent ? 'text-white' : 'text-[#10243E]'}`}
+          aria-label={isOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isOpen}
+          className={`lg:hidden p-2 -mr-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center ${transparent ? 'text-white' : 'text-[#10243E]'}`}
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -246,7 +247,7 @@ export default function Navbar() {
 
       {/* ── Mobile Menu overlay ── */}
       {isOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-100 shadow-xl overflow-y-auto" style={{ maxHeight: 'calc(100vh - 60px)' }}>
+        <div className="lg:hidden bg-white border-t border-gray-100 shadow-xl overflow-y-auto" style={{ maxHeight: 'calc(100dvh - 60px)', overscrollBehavior: 'contain' }}>
 
           {/* Nav links */}
           {navLinks.map((link) => (
@@ -284,7 +285,7 @@ export default function Navbar() {
                           key={item.name}
                           to={item.path}
                           onClick={closeAll}
-                          className="block px-8 py-2.5 text-sm text-[#10243E] hover:text-[#9C7C1C] border-b border-gray-100 transition-colors"
+                          className="block px-8 py-3 text-base text-[#10243E] hover:text-[#9C7C1C] border-b border-gray-100 transition-colors"
                         >
                           {item.name}
                         </Link>

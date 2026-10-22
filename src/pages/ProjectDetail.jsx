@@ -82,7 +82,7 @@ export default function ProjectDetail() {
   // ("mayur greenz ii dholera price") instead of all of them competing
   // for the same generic "Dholera plots" term.
   const seoTitle = project.verified
-    ? `${project.name} near Dholera Smart City | ${project.type}${project.startingPrice ? ` from ${project.price}` : ''}`
+    ? `${project.name} near Dholera Smart City | ${project.type}${typeof project.priceFrom === 'number' ? ` ₹${project.priceFrom.toLocaleString('en-IN')}/sq yd` : ''}`
     : `${project.name} Dholera | ${project.type} in ${project.location} — Capital Brix`;
   // A number in the description is the difference between a result that gets
   // clicked on a price query and one that does not, so the rate leads when we
@@ -233,7 +233,7 @@ export default function ProjectDetail() {
             {/* Price & Location */}
             <div className="flex flex-wrap gap-6 mb-10">
               <div>
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Starting Price</p>
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">{rate ? 'Rate per sq yd' : 'Starting Price'}</p>
                 <p className="text-3xl font-black text-[#9C7C1C]">
                   {rate ? `₹${rate.toLocaleString('en-IN')}` : project.price}
                 </p>

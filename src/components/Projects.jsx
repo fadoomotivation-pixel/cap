@@ -139,10 +139,10 @@ function ProjectCard({ p, i }) {
             </div>
             <div className="ml-auto text-right">
               <dt className="text-[10px] uppercase tracking-wider text-gray-400">
-                {hasPrice ? 'Starting at' : 'Pricing'}
+                {hasPrice ? (p.priceFrom ? 'Rate / sq yd' : 'Starting at') : 'Pricing'}
               </dt>
               <dd className={`text-sm font-semibold ${hasPrice ? 'text-[#9C7C1C]' : 'text-[#10243E]'}`}>
-                {hasPrice ? p.price : (p.priceUnit === 'Price on request' ? 'Price on request' : 'On request')}
+                {hasPrice ? (p.priceFrom ? `₹${p.priceFrom.toLocaleString('en-IN')}` :p.price) : (p.priceUnit === 'Price on request' ? 'Price on request' : 'On request')}
               </dd>
             </div>
           </dl>
@@ -241,7 +241,7 @@ export default function Projects({ variant = 'home' }) {
         {!all && (
           <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-gray-100 pt-8">
             <p className="text-sm text-gray-500">
-              Residential plots start at ₹12.75 lakh. Plot rates run from ₹9,250 to about ₹14,950 per sq yd, depending on the project and the plot.
+              Rates w.e.f. 20 Oct 2026 (Mirrikh circular): residential from ₹9,750/sq yd, industrial from ₹8,950/sq yd, up to ₹15,000/sq yd.
             </p>
             <Link
               to="/projects"

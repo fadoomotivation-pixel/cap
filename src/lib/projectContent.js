@@ -47,7 +47,7 @@ export const projectIntro = (p) => {
 
   return `${p.name} is ${stage} offering ${what} at ${inDholera}, developed by Mirrikh Infratech and sold through ` +
     `Capital Brix LLP as an authorised sales channel partner. ${p.units ? `The project has ${p.units.toLowerCase()}. ` : p.size ? `The project covers ${p.size.toLowerCase()}. ` : ''}` +
-    `${p.startingPrice ? `Prices start at ${p.price.replace('Lakh', 'lakh')}. ` : ''}` +
+    `${typeof p.priceFrom === 'number' ? `The rate is ₹${p.priceFrom.toLocaleString('en-IN')} per sq yd of super built-up area, as per Mirrikh’s rate circular of 20 Oct 2026. ` : ''}` +
     `${p.verified ? 'The developer lists it as NA, NOC, Title Clear & Unit Plan Pass' : 'Like every plot we sell, it is NA-converted, NOC-cleared, title-clear and plan-passed'}, and the purchase completes through a ` +
     `registered sale deed in your own name.`;
 };
@@ -61,8 +61,8 @@ export const projectSpecs = (p) => ({
     ...(p.units ? [['Project size', p.units]] : []),
     ['Plot sizes', p.size || 'Ask us for the current layout with available sizes'],
     ['Stage', p.status],
-    ['Pricing', p.startingPrice
-      ? `Starting at ${p.price}`
+    ['Pricing', typeof p.priceFrom === 'number'
+      ? `₹${p.priceFrom.toLocaleString('en-IN')} per sq yd (w.e.f. 20 Oct 2026, Mirrikh circular)`
       : p.price === 'On Request' ? `${p.priceUnit} — quoted on request` : `${p.price} (${p.priceUnit})`],
     ['Approvals', p.verified ? 'NA, NOC, Title Clear & Unit Plan Pass' : 'NA converted · NOC cleared · title clear · plan passed'],
     ['Ownership', 'Registered sale deed in the buyer’s name'],
@@ -139,10 +139,10 @@ export const projectFaqs = (p) => {
   ];
 
   faqs.push(
-    p.startingPrice
+    typeof p.priceFrom === 'number'
       ? {
           q: `What is the price of ${p.name}?`,
-          a: `${p.name} starts at ${p.price}, as listed by the developer. The final figure depends on the unit you choose; ask us for the current price list and a single all-in figure that adds stamp duty, registration and legal costs.`,
+          a: `As per Mirrikh’s rate circular of 20 Oct 2026, ${p.name} is ₹${p.priceFrom.toLocaleString('en-IN')} per sq yd of super built-up plot area, for new bookings from 20 Oct 2026. The final figure depends on the plot size you choose; ask us for the current price list and a single all-in figure that adds stamp duty, registration and legal costs.`,
         }
     : p.priceUnit === 'Price on request'
       ? {
@@ -152,7 +152,7 @@ export const projectFaqs = (p) => {
     : p.price === 'On Request'
       ? {
           q: `What is the price of a plot in ${p.name}?`,
-          a: `Pricing for ${p.name} is quoted on request at ${p.priceUnit.toLowerCase()}, because the rate depends on the plot you choose within the layout. Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. Ask us and we will send the current rate for this project plus a single all-in figure including stamp duty and registration.`,
+          a: `Pricing for ${p.name} is quoted on request at ${p.priceUnit.toLowerCase()}, because the rate depends on the plot you choose within the layout. Under Mirrikh’s rate circular of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950 per sq yd, with rates up to ₹15,000 per sq yd depending on the project. Ask us and we will send the current rate for this project plus a single all-in figure including stamp duty and registration.`,
         }
       : {
           q: `What is the price of a plot in ${p.name}?`,

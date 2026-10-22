@@ -15,15 +15,15 @@ export default function StickyCta() {
     <nav
       data-print-hide
       aria-label="Call, WhatsApp or book a visit"
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-3 bg-[#0A1016] text-white border-t border-white/10"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-3 bg-[#0A1016] text-white border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
     >
       <a
         href={`tel:+${site.phone}`}
         data-cta="bar-call"
         onClick={() => track('cta_click', { cta_id: 'bar-call' })}
-        className="flex items-center justify-center gap-1.5 py-3.5 text-xs font-medium"
+        className="flex items-center justify-center gap-1.5 min-h-[52px] py-3 text-sm font-medium"
       >
-        <Phone size={14} /> Call
+        <Phone size={16} /> Call
       </a>
       <a
         href={wa}
@@ -31,17 +31,17 @@ export default function StickyCta() {
         rel="noreferrer"
         data-cta="bar-whatsapp"
         onClick={() => track('cta_click', { cta_id: 'bar-whatsapp' })}
-        className="flex items-center justify-center gap-1.5 py-3.5 text-xs font-medium text-[#C9A962]"
+        className="flex items-center justify-center gap-1.5 min-h-[52px] py-3 text-sm font-medium text-[#C9A962]"
       >
-        <MessageCircle size={14} /> WhatsApp
+        <MessageCircle size={16} /> WhatsApp
       </a>
       <Link
         to="/contact"
         data-cta="bar-visit"
         onClick={() => track('cta_click', { cta_id: 'bar-visit' })}
-        className="flex items-center justify-center gap-1.5 py-3.5 text-xs font-medium"
+        className="flex items-center justify-center gap-1.5 min-h-[52px] py-3 text-sm font-medium"
       >
-        <MapPin size={14} /> Visit
+        <MapPin size={16} /> Visit
       </Link>
     </nav>
   );

@@ -80,7 +80,7 @@ export default function Hero() {
           measures; the clip is attached at idle, after the page is
           interactive, so 1.2 MB never sits in front of first render. */}
       <div className="pt-[68px] lg:pt-[76px]">
-        <div className="relative w-full h-[42svh] sm:h-[52svh] lg:h-[64svh] overflow-hidden bg-[#141c26]">
+        <div className="relative w-full h-[24svh] min-h-[160px] sm:h-[52svh] lg:h-[64svh] overflow-hidden bg-[#141c26]">
           <img
             src="/media/dholera-film-poster.jpg"
             width="1280"
@@ -103,20 +103,20 @@ export default function Hero() {
 
         {/* Credit sits under the frame rather than on it, for the same reason. */}
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <p className="text-[10px] text-white/40 tracking-wide text-right pt-2">
+          <p className="text-[10px] text-white/60 tracking-wide text-right pt-2">
             Footage: official Dholera SIR film · Government of Gujarat / DICDL
           </p>
         </div>
       </div>
 
       {/* ── The words, on their own ground ───────────────── */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 pt-6 pb-16 lg:pt-10 lg:pb-24">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 pt-4 pb-12 sm:pt-6 sm:pb-16 lg:pt-10 lg:pb-24">
         <div className="max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="mb-7"
+            className="mb-4 sm:mb-7"
           >
-            <p className="text-[#D4AF37] text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] mb-5">
+            <p className="text-[#D4AF37] text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] mb-3 sm:mb-5">
               Authorised Sales Channel Partner • Mirrikh Infratech
             </p>
             {/* No forced <br>: at 4rem the first clause did not fit the column
@@ -132,22 +132,22 @@ export default function Hero() {
 
           <motion.p
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
-            className="text-gray-300 text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mb-10 font-light"
+            className="text-gray-300 text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mb-6 sm:mb-10 font-light"
           >
-            NA-approved, title-clear plots in Dholera Smart City {plotRates.fromLabel}, in projects
-            developed by Mirrikh Infratech Pvt. Ltd. Rates run up to about ₹14,950 per sq yd
-            depending on the project and the plot. Verified {plotRates.verified}.
+            NA-approved, title-clear plots near Dholera Smart City by Mirrikh Infratech Pvt. Ltd.
+            Residential {plotRates.fromLabel}, industrial from ₹8,950, up to ₹15,000 per sq yd
+            (Mirrikh rate circular, {plotRates.verified}).
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
-            className="flex flex-col sm:flex-row gap-4"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4"
           >
             <Link
               to="/contact"
               data-cta="hero-visit"
               onClick={() => track('cta_click', { cta_id: 'hero-visit' })}
-              className="group inline-flex items-center justify-center gap-3 bg-[#C9A962] hover:bg-[#b8964e] text-[#0A1016] px-8 py-4 rounded-sm font-medium transition-colors duration-300"
+              className="group inline-flex items-center justify-center gap-3 bg-[#C9A962] hover:bg-[#b8964e] text-[#0A1016] px-8 py-3.5 sm:py-4 rounded-sm font-medium transition-colors duration-300"
             >
               Book a site visit
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -156,7 +156,7 @@ export default function Hero() {
               href={wa} target="_blank" rel="noreferrer"
               data-cta="hero-whatsapp"
               onClick={() => track('cta_click', { cta_id: 'hero-whatsapp' })}
-              className="inline-flex items-center justify-center gap-3 border border-white/30 hover:border-white/60 text-white px-8 py-4 rounded-sm font-medium transition-colors duration-300"
+              className="inline-flex items-center justify-center gap-3 border border-white/30 hover:border-white/60 text-white px-8 py-3.5 sm:py-4 rounded-sm font-medium transition-colors duration-300"
             >
               WhatsApp the plot list
             </a>

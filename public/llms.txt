@@ -7,8 +7,10 @@
 > separate companies; Capital Brix is not the developer, promoter or owner of
 > Mirrikh Infratech.
 >
-> Plot rates verified 6 October 2026: from ₹9,250 per sq yd, up to about
-> ₹14,950 per sq yd, depending on the project and the plot. This is a current
+> Plot rates (Mirrikh Infratech rate circular dated 20 Oct 2026, per sq yd of
+> super built-up plot area, for new bookings from 20 Oct 2026): residential from
+> ₹9,750 per sq yd, industrial from ₹8,950 per sq yd, up to ₹15,000 per sq yd
+> depending on the project. This is a current
 > selling price, not a forecast of returns. Public pages stop at 2026.
 
 Office: A-118, 6th Floor, The Diamond, Sector 136, Noida 201304, India
@@ -41,10 +43,10 @@ sources in the text.
 ## Projects
 
 - [All projects](https://www.capitalbrix.co.in/projects): Residential, industrial and villa projects near Dholera Smart City, developed by Mirrikh Infratech Pvt. Ltd. and marketed by Capital Brix LLP. Every project: NA, NOC, Title Clear & Unit Plan Pass.
-- [Mayur Prime](https://www.capitalbrix.co.in/projects/mayur-prime): 503 premium residential plots at Fedra, near Dholera Smart City. Starting at ₹20 lakh.
-- [Mayur Swastik II](https://www.capitalbrix.co.in/projects/mayur-swastik-ii): 433 residential plots at Kamiyala, near Dholera Smart City. Starting at ₹12.75 lakh.
-- [Mayur Industrial Landmark](https://www.capitalbrix.co.in/projects/mayur-industrial-landmark): 436 warehouse / workshop / MSME units at Moti Boru, near Dholera Smart City. Starting at ₹26.5 lakh.
-- [Mayur Business Park](https://www.capitalbrix.co.in/projects/mayur-business-park): 277 industrial units at Haripura, Dhandhuka, near Dholera Smart City. Starting at ₹31 lakh.
+- [Mayur Prime](https://www.capitalbrix.co.in/projects/mayur-prime): 503 premium residential plots at Fedra, near Dholera Smart City. ₹14,990 per sq yd.
+- [Mayur Swastik II](https://www.capitalbrix.co.in/projects/mayur-swastik-ii): 433 residential plots at Kamiyala, near Dholera Smart City. ₹10,750 per sq yd.
+- [Mayur Industrial Landmark](https://www.capitalbrix.co.in/projects/mayur-industrial-landmark): 436 warehouse / workshop / MSME units at Moti Boru, near Dholera Smart City. ₹8,950 per sq yd.
+- [Mayur Business Park](https://www.capitalbrix.co.in/projects/mayur-business-park): 277 industrial units at Haripura, Dhandhuka, near Dholera Smart City. ₹9,750 per sq yd.
 - [Mayur Greenz Courtyard](https://www.capitalbrix.co.in/projects/mayur-greenz-courtyard): 3BHK luxury villas at Rojka, near Dholera Smart City. Price on request.
 
 ## Contact
