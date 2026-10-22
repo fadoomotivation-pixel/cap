@@ -150,8 +150,11 @@ const toAsciiDigits = (s: string) =>
 const numbersIn = (s: string) =>
   new Set((toAsciiDigits(s).replace(/(\d),(?=\d)/g, "$1").match(/\d+(?:\.\d+)?/g) ?? []));
 
-// The model likes U+2011 inside Hindi compounds; it renders as a stray dash.
-const tidy = (t?: string | null) => (t ? t.replace(/[‐‑]/g, " ").replace(/\s+/g, " ").trim() : null);
+// The model writes U+2010/2011 hyphens, which some phones render oddly. In
+// English they are real hyphens ("10-12 January", "Rs 50-crore"), so they
+// become a plain "-"; turning them into spaces (as the Hindi version did)
+// printed "10 12 January" on 22 October.
+const tidy = (t?: string | null) => (t ? t.replace(/[‐‑]/g, "-").replace(/\s+/g, " ").trim() : null);
 
 // ── The editor ──────────────────────────────────────────────────────────────
 
@@ -195,10 +198,69 @@ const SYSTEM = [
   "\"why_it_matters\": \"<max 80 chars, no promises>\", \"sales_angle\": \"...\"}], \"reason\": \"<if none>\"}",
 ].join("\n");
 
-async function askModel(items: Item[], used: string[], n: number, feedback: string): Promise<{ stories: Story[]; reason?: string; error?: string }> {
+// ── The writer (Groq), with a fallback chain ──────────────────────────────
+//
+// On 22 October the desk showed "LLM 429 … tokens per day (TPD): Limit
+// 200000, Used 199804" and nothing reached the team at 14:10: the one model
+// had used its daily allowance, and the 12:30 and 14:10 runs both died on it.
+// Groq meters each model separately, so a 429 (or a model that has been
+// retired, 404) moves on to the next one instead of ending the day. Reasoning
+// is "low" — the audit does the checking, and it costs a fraction of the
+// tokens. NEWS_MODELS (comma-separated) overrides the chain.
+const DEFAULT_MODELS = [
+  "openai/gpt-oss-120b",
+  "llama-3.3-70b-versatile",
+  "openai/gpt-oss-20b",
+  "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "qwen/qwen3-32b",
+];
+const MODELS = (Deno.env.get("NEWS_MODELS") ?? Deno.env.get("NEWS_MODEL") ?? "")
+  .split(",").map((m) => m.trim()).filter(Boolean);
+// Models that answered 429/404 during this request are not asked again.
+let spent = new Set<string>();
+
+type Msg = { role: "system" | "user"; content: string };
+
+async function writer(messages: Msg[], maxTokens: number): Promise<{ content?: string; model?: string; error?: string }> {
   const key = Deno.env.get("GROQ_API_KEY");
-  if (!key) return { stories: [], error: "GROQ_API_KEY is not set" };
-  const model = Deno.env.get("NEWS_MODEL") ?? Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
+  if (!key) return { error: "GROQ_API_KEY is not set" };
+  const chain = MODELS.length ? MODELS : DEFAULT_MODELS;
+  const tried: string[] = [];
+  for (const model of chain) {
+    if (spent.has(model)) continue;
+    const body: Record<string, unknown> = {
+      model, temperature: 0.2, max_tokens: maxTokens,
+      response_format: { type: "json_object" }, messages,
+    };
+    if (model.startsWith("openai/gpt-oss")) body.reasoning_effort = "low";
+    if (model.startsWith("qwen/")) body.reasoning_format = "hidden";
+    try {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) {
+        if (r.status === 429 || r.status === 404) spent.add(model);
+        tried.push(`${model.split("/").pop()} ${r.status}`);
+        continue;
+      }
+      const j = await r.json();
+      return { content: j.choices?.[0]?.message?.content ?? "", model };
+    } catch (e) {
+      tried.push(`${model.split("/").pop()} ${String(e).slice(0, 40)}`);
+    }
+  }
+  return { error: `every writer model is out of quota or unavailable (${tried.join(", ") || "all spent"})` };
+}
+
+const jsonIn = (content?: string) => {
+  const m = (content ?? "").replace(/<think>[\s\S]*?<\/think>/g, "").match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try { return JSON.parse(m[0]); } catch { return null; }
+};
+
+async function askModel(items: Item[], used: string[], n: number, feedback: string): Promise<{ stories: Story[]; reason?: string; error?: string }> {
   const user = [
     `N = ${n}`,
     "",
@@ -209,29 +271,11 @@ async function askModel(items: Item[], used: string[], n: number, feedback: stri
     ...(used.length ? used.map((t) => `- ${t}`) : ["- none"]),
     ...(feedback ? ["", `YOUR PREVIOUS ANSWER WAS REJECTED: ${feedback}. Fix exactly that and answer again.`] : []),
   ].join("\n");
-  const body: Record<string, unknown> = {
-    model,
-    temperature: 0.2,
-    max_tokens: 3500,
-    response_format: { type: "json_object" },
-    messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }],
-  };
-  if (model.startsWith("openai/gpt-oss")) body.reasoning_effort = "medium";
-  try {
-    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const j = await r.json();
-    if (!r.ok) return { stories: [], error: `LLM ${r.status}: ${JSON.stringify(j).slice(0, 200)}` };
-    const m = (j.choices?.[0]?.message?.content ?? "").match(/\{[\s\S]*\}/);
-    if (!m) return { stories: [], error: "LLM returned no JSON" };
-    const parsed = JSON.parse(m[0]);
-    return { stories: Array.isArray(parsed.stories) ? parsed.stories : [], reason: parsed.reason };
-  } catch (e) {
-    return { stories: [], error: `LLM: ${String(e).slice(0, 200)}` };
-  }
+  const out = await writer([{ role: "system", content: SYSTEM }, { role: "user", content: user }], 3000);
+  if (out.error) return { stories: [], error: out.error };
+  const parsed = jsonIn(out.content);
+  if (!parsed) return { stories: [], error: `the writer (${out.model}) returned no JSON` };
+  return { stories: Array.isArray(parsed.stories) ? parsed.stories : [], reason: parsed.reason };
 }
 
 const cluster = (s: Story, items: Item[]) =>
@@ -409,8 +453,14 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const unescapeJs = (s: string) =>
   s.replace(/\\\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/\\\\\//g, "/");
 
+// Why the last lookup failed, in words the desk can show. "Could not find
+// the article" on its own named no cause, and on 22 October that cost an
+// evening of guessing which of three steps had stopped working.
+let lookupWhy = "";
+
 /** Google News and Bing both link through themselves; find the publisher's own URL. */
 async function realUrl(link: string): Promise<string | null> {
+  lookupWhy = "";
   try {
     const u = new URL(link);
     if (u.hostname.endsWith("bing.com")) return u.searchParams.get("url");
@@ -418,30 +468,75 @@ async function realUrl(link: string): Promise<string | null> {
     // Google: the article page carries a signature and timestamp, and one
     // batchexecute call trades them for the real address.
     const id = u.pathname.split("/").pop();
-    const page = await fetch(`https://news.google.com/rss/articles/${id}`, { headers: { "User-Agent": UA } });
-    if (!page.ok) return null;
-    const html = await page.text();
+    // The page answers 503 to Edge IPs in bursts (22 October): three tries,
+    // alternating between the two addresses Google serves it on.
+    let html = "";
+    for (let attempt = 0; attempt < 3 && !html; attempt++) {
+      const at = attempt % 2 ? `https://news.google.com/articles/${id}?hl=en-IN&gl=IN&ceid=IN:en` : `https://news.google.com/rss/articles/${id}`;
+      const page = await fetch(at, { headers: { "User-Agent": UA, "Accept-Language": "en-IN,en;q=0.9" } });
+      if (page.ok) html = await page.text();
+      else { lookupWhy = `google page ${page.status}`; await sleep(1500 * (attempt + 1)); }
+    }
+    if (!html) return null;
     const sg = html.match(/data-n-a-sg="([^"]+)"/)?.[1];
     const ts = html.match(/data-n-a-ts="([^"]+)"/)?.[1];
-    if (!sg || !ts) return null;
+    if (!sg || !ts) { lookupWhy = "google page had no signature"; return null; }
     const inner = JSON.stringify([
       "garturlreq",
       [["X", "X", ["X", "X"], null, null, 1, 1, "US:en", null, 1, null, null, null, null, null, 0, 1], "X", "X", 1, [1, 1, 1], 1, 1, null, 0, 0, null, 0],
       id, Number(ts), sg,
     ]);
     const req = JSON.stringify([[["Fbv4je", inner, null, "generic"]]]);
-    const r = await fetch("https://news.google.com/_/DotsSplashUi/data/batchexecute", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "User-Agent": UA },
-      body: "f.req=" + encodeURIComponent(req),
-    });
-    if (!r.ok) return null;
-    const out = await r.text();
-    const m = out.match(/garturlres\\",\\"(.*?)\\"/);
-    return m ? unescapeJs(m[1]) : null;
-  } catch {
+    // Google refuses this call from Edge IPs some of the time; one more try.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const r = await fetch("https://news.google.com/_/DotsSplashUi/data/batchexecute", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "User-Agent": UA },
+        body: "f.req=" + encodeURIComponent(req),
+      });
+      if (r.ok) {
+        const out = await r.text();
+        const m = out.match(/garturlres\\",\\"(.*?)\\"/);
+        if (m) return unescapeJs(m[1]);
+        lookupWhy = `google lookup answered without an address (${out.slice(0, 60).replace(/\s+/g, " ")})`;
+      } else {
+        lookupWhy = `google lookup ${r.status}`;
+      }
+      await sleep(1500);
+    }
+    return null;
+  } catch (e) {
+    lookupWhy = `lookup error ${String(e).slice(0, 60)}`;
     return null;
   }
+}
+
+// The second road to the article. On 22 October Google's lookup failed for
+// both stories of the day and the desk could only offer headlines. The same
+// story is almost always on Bing News too, whose RSS carries the publisher's
+// address in plain sight — so search it for the headline and accept a result
+// only when most of its words match.
+const words = (t: string) => new Set(t.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 2));
+
+async function findByTitle(title: string): Promise<string | null> {
+  const want = words(title);
+  if (want.size < 3) return null;
+  for (const q of [`"${title}"`, title]) {
+    try {
+      const r = await fetch(`https://www.bing.com/news/search?q=${encodeURIComponent(q)}&format=rss`, {
+        headers: { "User-Agent": UA, "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8" },
+      });
+      if (!r.ok) continue;
+      for (const it of parseRss(await r.text())) {
+        const got = words(it.title);
+        const shared = [...want].filter((w) => got.has(w)).length;
+        if (shared / want.size < 0.6) continue;
+        const url = (() => { try { return new URL(it.link).searchParams.get("url"); } catch { return null; } })();
+        if (url) return url;
+      }
+    } catch { /* try the next query */ }
+  }
+  return null;
 }
 
 const stripTags = (h: string) =>
@@ -478,7 +573,7 @@ async function articleText(url: string): Promise<string> {
       const og = html.match(/<meta[^>]+(?:property|name)="(?:og:description|description)"[^>]+content="([^"]+)"/i)?.[1];
       if (og && og.length > body.length) body = decode(og);
     }
-    return stripTags(body).slice(0, 7000);
+    return stripTags(body).slice(0, 5000);
   } catch {
     return "";
   }
@@ -516,43 +611,22 @@ const FULL_SYSTEM = [
 
 // When the article cannot be read, the brief is written from the headlines
 // alone — still English, still audited, just shorter.
-const HEADLINE_ONLY = "NOTE: you only have the HEADLINE(S), not the article. Write 1-3 points, and only what they state. Set usable to true.";
+const HEADLINE_ONLY = "NOTE: you only have the HEADLINE(S), not the article. Write 1-2 points, and only what they state. Never split one fact into several near-identical lines. Set usable to true.";
 
 type Full = Story & { usable?: boolean; llmError?: string };
 
 async function askFull(title: string, text: string, feedback: string, headlineOnly = false): Promise<Full | null> {
-  const key = Deno.env.get("GROQ_API_KEY");
-  if (!key) return null;
-  const model = Deno.env.get("NEWS_MODEL") ?? Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
-  const body: Record<string, unknown> = {
-    model,
-    temperature: 0.2,
-    max_tokens: 3000,
-    response_format: { type: "json_object" },
-    messages: [
-      // With headlines only there is no page to judge, so the "not a real
-      // article" escape is taken away; otherwise the model uses it and writes nothing.
-      { role: "system", content: headlineOnly ? FULL_SYSTEM.replace(/\nIf the text is not a real article[^\n]*/, "") : FULL_SYSTEM },
-      { role: "user", content: [`HEADLINE: ${title}`, "", headlineOnly ? "HEADLINES:" : "ARTICLE:", text,
-        ...(headlineOnly ? ["", HEADLINE_ONLY] : []),
-        ...(feedback ? ["", `YOUR PREVIOUS ANSWER WAS REJECTED: ${feedback}. Fix exactly that.`] : [])].join("\n") },
-    ],
-  };
-  if (model.startsWith("openai/gpt-oss")) body.reasoning_effort = "medium";
-  try {
-    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    // A rate limit must not read as "the article was unusable".
-    if (!r.ok) return { llmError: `HTTP ${r.status}` } as Full;
-    const j = await r.json();
-    const m = (j.choices?.[0]?.message?.content ?? "").match(/\{[\s\S]*\}/);
-    return m ? (JSON.parse(m[0]) as Full) : null;
-  } catch {
-    return null;
-  }
+  const out = await writer([
+    // With headlines only there is no page to judge, so the "not a real
+    // article" escape is taken away; otherwise the model uses it and writes nothing.
+    { role: "system", content: headlineOnly ? FULL_SYSTEM.replace(/\nIf the text is not a real article[^\n]*/, "") : FULL_SYSTEM },
+    { role: "user", content: [`HEADLINE: ${title}`, "", headlineOnly ? "HEADLINES:" : "ARTICLE:", text,
+      ...(headlineOnly ? ["", HEADLINE_ONLY] : []),
+      ...(feedback ? ["", `YOUR PREVIOUS ANSWER WAS REJECTED: ${feedback}. Fix exactly that.`] : [])].join("\n") },
+  ], 2500);
+  // Out of quota must not read as "the article was unusable".
+  if (out.error) return { llmError: out.error } as Full;
+  return jsonIn(out.content) as Full | null;
 }
 
 /** The same checks as the headline audit, against the article's own text. */
@@ -574,7 +648,7 @@ function auditFull(f: Full, sourceText: string, titles: string[]): string {
 async function writeBrief(title: string, text: string, titles: string[], headlineOnly: boolean): Promise<{ f: Full | null; problem: string }> {
   // "usable" judges an article page; with only headlines there is no page to judge.
   let f = await askFull(title, text, "", headlineOnly);
-  if (f?.llmError) return { f: null, problem: `the writer did not answer (${f.llmError})` };
+  if (f?.llmError) return { f: null, problem: f.llmError };
   if (!f || (f.usable === false && !headlineOnly)) return { f: null, problem: "the page was not a usable article" };
   let problem = auditFull(f, text, titles);
   if (problem) {
@@ -595,10 +669,11 @@ async function writeBrief(title: string, text: string, titles: string[], headlin
 async function fullStory(row: Row): Promise<{ patch: Partial<Row> | null; note: string }> {
   const titles = [row.source_title ?? "", row.headline_en ?? ""].filter(Boolean);
   const title = row.source_title ?? row.headline_en ?? "";
-  const url = row.source_url ? await realUrl(row.source_url) : null;
+  let url = row.source_url ? await realUrl(row.source_url) : null;
+  if (!url && row.source_title) url = await findByTitle(row.source_title);
   const text = url ? await articleText(url) : "";
-  let reason = !row.source_url ? "no link to read"
-    : !url ? "could not find the article behind the news link"
+  let reason = !row.source_url && !url ? "no link to read"
+    : !url ? `could not find the article behind the news link${lookupWhy ? ` (${lookupWhy}; not on Bing News either)` : ""}`
     : text.length < 250 ? "the article could not be read (paywall or blocked)" : "";
 
   let f: Full | null = null;
@@ -629,23 +704,62 @@ async function fullStory(row: Row): Promise<{ patch: Partial<Row> | null; note: 
 
 // ── The messages ────────────────────────────────────────────────────────────
 
+// The founder, 22 October: "advance version" of what goes to WhatsApp. The
+// first version was one block a salesperson had to read, then retype for a
+// client. Now it is two kinds of message:
+//
+//   1. The TEAM BRIEF — every story with its category, the facts, why it
+//      matters, and the 👉 line on how to use it with a client. Internal.
+//   2. One CLIENT CARD per story, sent right after — the same facts, why it
+//      matters and the source, signed by Capital Brix and nothing internal in
+//      it, so a salesperson long-presses and forwards it as it stands.
+//
+// The sales line never appears on a card: a client reading "mention this when
+// clients ask…" is reading our playbook.
+
+const longDate = (d: string) =>
+  new Intl.DateTimeFormat("en-IN", { timeZone: IST, weekday: "long", day: "numeric", month: "short", year: "numeric" })
+    .format(new Date(`${d}T12:00:00+05:30`));
+
+/** The publisher's own address, if we have one — never a Google/Bing redirect. */
+const publicLink = (u: string | null) => {
+  if (!u) return null;
+  try {
+    const h = new URL(u).hostname;
+    return /(^|\.)(google|bing)\.com$/.test(h) ? null : u;
+  } catch { return null; }
+};
+
 function teamMessage(rows: Row[], date: string): string {
-  const L: string[] = ["*DHOLERA UPDATE*", fmtDate(date)];
+  const L: string[] = ["*DHOLERA DAILY BRIEF*", `_${longDate(date)} · ${rows.length} ${rows.length > 1 ? "stories" : "story"}_`];
   rows.forEach((n, i) => {
     L.push("");
-    const num = rows.length > 1 ? `${i + 1}. ` : "";
-    if (n.headline_hi) L.push(`*${num}${n.headline_hi}*`);
-    if (n.headline_en) L.push(n.headline_hi ? `_${n.headline_en}_` : `*${num}${n.headline_en}*`);
+    L.push(`*${i + 1} · ${(n.category ?? "update").toUpperCase()}*`);
+    L.push(`*${n.headline_hi || n.headline_en}*`);
     (n.points ?? []).forEach((p) => L.push(`• ${p}`));
-    if (n.sales_angle) L.push(`👉 ${n.sales_angle}`);
+    if (n.why_it_matters) L.push(`_Why it matters:_ ${n.why_it_matters}`);
+    if (n.sales_angle) L.push(`👉 *With clients:* ${n.sales_angle}`);
     const also = (n.also_reported ?? []).filter((s) => s && s !== n.source_name).slice(0, 2);
     L.push(`Source: ${n.source_name ?? "news report"}${also.length ? ` (also ${also.join(", ")})` : ""}`);
   });
   L.push("");
-  L.push(rows.length > 1 ? "Status lagane ke liye images:" : "Status lagane ke liye image:");
-  L.push(`${SITE}/story/${date}`);
+  L.push(`📲 *Status image${rows.length > 1 ? "s" : ""}:* ${SITE}/story/${date}`);
+  L.push(`⤵ The client-ready version of ${rows.length > 1 ? "each story follows" : "this story follows"} — long-press and forward it as it is.`);
   L.push("");
   L.push("— Capital Brix AI");
+  return L.join("\n");
+}
+
+function clientCard(n: Row, date: string): string {
+  const L: string[] = [`*${n.headline_hi || n.headline_en}*`, `_Dholera update · ${fmtDate(date)}_`, ""];
+  (n.points ?? []).forEach((p) => L.push(`• ${p}`));
+  if (n.why_it_matters) { L.push(""); L.push(`*Why it matters:* ${n.why_it_matters}`); }
+  L.push("");
+  L.push(`Source: ${n.source_name ?? "news report"}`);
+  const link = publicLink(n.source_url);
+  if (link) L.push(link);
+  L.push("");
+  L.push("_Shared by Capital Brix LLP_");
   return L.join("\n");
 }
 
@@ -689,6 +803,7 @@ async function sendWhatsApp(to: string, text: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
+    spent = new Set<string>();
     const body = await req.json().catch(() => ({}));
     const { dry_run, force } = body as { dry_run?: boolean; force?: boolean };
     const mode = ["prepare", "more", "publish", "enrich"].includes(body?.mode) ? body.mode : "publish";
@@ -800,7 +915,8 @@ Deno.serve(async (req) => {
     }
     toSend.sort((a, b) => a.rank - b.rank);
 
-    const text = teamMessage(toSend, today);
+    const messages = [teamMessage(toSend, today), ...toSend.map((r) => clientCard(r, today))];
+    const text = messages.join("\n\n─────── next message ───────\n\n");
     const configured = ((settings?.targets ?? []) as string[]).map((t) => t.trim()).filter(Boolean);
     let targets = configured;
     if (!targets.length) {
@@ -810,10 +926,26 @@ Deno.serve(async (req) => {
     if (dry_run) return json({ sent: false, dry_run: true, text, targets, story: `${SITE}/story/${today}`, stories: toSend });
     if (!targets.length) return json({ sent: false, reason: "no WhatsApp group configured", text });
 
+    // The brief first, then the cards in order. A card is not sent to a group
+    // whose brief failed — a forwardable card with no brief above it is noise.
+    // Only the briefs decide "posted": a story marked failed is re-sent at
+    // 14:25, and re-sending a brief that already arrived because one card
+    // did not would put the whole thing in the group twice.
     const results = [];
-    for (const to of targets) results.push(await sendWhatsApp(to, text));
-    const ok = results.every((r) => r.ok);
-    const detail = results.map((r) => `${r.to}: ${r.detail}`).join(" | ").slice(0, 400);
+    const briefs = [];
+    for (const to of targets) {
+      const brief = await sendWhatsApp(to, messages[0]);
+      results.push(brief);
+      briefs.push(brief);
+      if (!brief.ok) continue;
+      for (const card of messages.slice(1)) results.push(await sendWhatsApp(to, card));
+    }
+    const ok = briefs.every((r) => r.ok);
+    const detail = targets.map((t) => {
+      const mine = results.filter((r) => r.to === t);
+      const bad = mine.find((r) => !r.ok);
+      return `${t}: ${bad ? bad.detail : `ok (${mine.length} messages)`}`;
+    }).join(" | ").slice(0, 400);
     await admin.from("cb_dholera_news").update({
       status: ok ? "posted" : "failed",
       posted_at: ok ? new Date().toISOString() : null,
