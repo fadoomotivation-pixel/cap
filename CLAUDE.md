@@ -18,9 +18,9 @@ Vite + React 19 + Tailwind + Framer Motion, deployed on Vercel, backed by Supaba
   Economic Times), Navratna 2024, Pride of Gujarat 2025 (presented by CM
   Bhupendra Patel). Data lives in `developer` in `src/data/site.js`.
 - Current projects (verified from Mirrikh's standees/leaflets): Mayur Prime
-  (Fedra, 503 plots, from ₹20 L), Mayur Swastik II (Kamiyala, 433 plots, from
-  ₹12.75 L), Mayur Industrial Landmark (Moti Boru, 436 units, from ₹26.5 L),
-  Mayur Business Park (Haripura/Dhandhuka, 277 units, from ₹31 L), Mayur Greenz
+  (Fedra, 503 plots, ₹14,990/sq yd), Mayur Swastik II (Kamiyala, 433 plots, 
+  ₹10,750/sq yd), Mayur Industrial Landmark (Moti Boru, 436 units, ₹8,950/sq yd),
+  Mayur Business Park (Haripura/Dhandhuka, 277 units, ₹9,750/sq yd), Mayur Greenz
   Courtyard (Rojka, 3BHK villas, price on request). Say "near Dholera Smart
   City", never "inside the SIR". Never publish the collateral's "1% Business
   Promotion Commission", "12% per annum", "assured ₹45,000 rental", "maximum
@@ -2335,12 +2335,15 @@ per-yard rate as the price of a plot would publish a figure nobody can buy
 anything for. Only put a number there that we will actually honour: a stale
 rate is a misleading price claim of the same shape as the invented ₹2,500.
 
-**Owner confirmed 6 October 2026:** plots marketed by Capital Brix run from
-**₹9,250 to about ₹14,950 per sq yd**, depending on the project and the plot
-(Mirrikh deck). The homepage and FAQs say "from ₹9,250/sq yd". Do not copy
-₹9,250 onto every project's `priceFrom` — the top of the band is not the
-floor, and a project that is sold out should not grow a live offer. Do not
-describe this as the developer's own undiscounted rate.
+**Rates — Mirrikh rate circular dated 20 Oct 2026 (supersedes the 6 Oct
+₹9,250–14,950 band and the old lump-sum "starting at ₹20 L / 12.75 L / 26.5 L /
+31 L" figures, which must not come back):** per sq yd of super built-up plot
+area, for new bookings from 20 Oct 2026. Residential from ₹9,750, industrial
+from ₹8,950, up to ₹15,000. The full table lives in `rateCircular` in
+`src/data/site.js` and renders as the rate card on `/projects`; each listed
+current project carries its own circular rate in `priceFrom`. The circular
+says nothing about availability — never mark a project available or sold out
+because of it. Do not describe these as discounted rates.
 
 ### Every project page links to six siblings
 

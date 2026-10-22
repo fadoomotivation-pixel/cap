@@ -115,6 +115,7 @@ export default function CountUp({ value, duration = 1600, className = '', style 
       // The prerendered HTML and a crawler both need the real figure, not "0".
       // aria-label carries it, and the visible span is hidden from the
       // accessibility tree so a screen reader is not read a spinning number.
+      role="img"
       aria-label={String(value)}
       className={className}
       style={{ perspective: '600px', display: 'inline-block', ...style }}

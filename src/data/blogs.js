@@ -208,9 +208,9 @@ export const blogs = [
     h1: 'Dholera plot price in 2026: what land actually costs, and why',
     seoTitle: 'Dholera Plot Price 2026 | Rate Per Sq Yd & What Drives It',
     excerpt:
-      'Plots marketed by Capital Brix run from ₹9,250 to about ₹14,950 per sq yd in 2026, depending on the project and the plot. Here is what sets the rate, and what the sticker price leaves out.',
+      'Under Mirrikh’s 20 Oct 2026 rate circular, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950, up to ₹15,000 per sq yd. Here is what sets the rate, and what the sticker price leaves out.',
     intro:
-      'In 2026, plots marketed by Capital Brix in Mirrikh Infratech projects start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. The range is wide for a reason: two plots ten minutes apart can differ on rate. This guide breaks down what you are actually paying for, what the quoted price usually excludes, and the questions that separate a fair number from a padded one.',
+      'Under Mirrikh Infratech’s rate circular of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950 per sq yd, with rates up to ₹15,000 per sq yd depending on the project. The range is wide for a reason: two plots ten minutes apart can differ on rate. This guide breaks down what you are actually paying for, what the quoted price usually excludes, and the questions that separate a fair number from a padded one.',
     sections: [
       {
         h2: 'The price band, and why it is a band',
@@ -221,7 +221,7 @@ export const blogs = [
         table: {
           head: ['What you are buying', 'Rate (₹/sq yd)', 'What moves it'],
           rows: [
-            ['Mirrikh residential and commercial plots we market', '₹9,250 – ₹14,950', 'Project, road frontage, and distance to the expressway, airport and activation area'],
+            ['Mirrikh residential and commercial plots we market', '₹8,950 – ₹15,000 (residential from ₹9,750)', 'Project, road frontage, and distance to the expressway, airport and activation area'],
             ['Industrial plots we market', 'Inside the same band, quoted per plot', 'Zoning, plot size, road frontage'],
           ],
         },
@@ -286,7 +286,7 @@ export const blogs = [
       {
         h2: 'A worked example',
         p: [
-          'A 150 sq yd plot at the starting rate of ₹9,250 per sq yd is ₹13.88 lakh on land value. The same size at ₹14,950 per sq yd is ₹22.43 lakh on land value. Stamp duty, registration and development charges are extra — ask for that all-in figure before you pay a token. Payment plans are commonly structured across development milestones rather than demanded upfront.',
+          'A 150 sq yd residential plot at the ₹9,750 per sq yd starting rate is ₹14.63 lakh on land value. The same size at ₹15,000 per sq yd is ₹22.5 lakh on land value. Stamp duty, registration and development charges are extra — ask for that all-in figure before you pay a token. Payment plans are commonly structured across development milestones rather than demanded upfront.',
           'That is the honest arithmetic. Anyone showing you a much lower number is either quoting land value alone, or quoting land that is not yet NA converted.',
         ],
       },
@@ -294,7 +294,7 @@ export const blogs = [
     faqs: [
       {
         q: 'What is the minimum investment to buy a plot in Dholera?',
-        a: 'Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. A 150 sq yd plot at the starting rate is ₹13.88 lakh on land value, before stamp duty, registration and development charges.',
+        a: 'Under Mirrikh’s rate circular of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950 per sq yd, with rates up to ₹15,000 per sq yd depending on the project. A 150 sq yd residential plot at the ₹9,750 starting rate is ₹14.63 lakh on land value, before stamp duty, registration and development charges.',
       },
       {
         q: 'Will Dholera plot prices keep rising?',
@@ -342,7 +342,7 @@ export const blogs = [
             '**The anchor is industrial, not residential speculation.** The Tata semiconductor fabrication plant, around ₹91,000 crore, does not arrive alone. Fabs pull suppliers, testing, packaging, logistics and services. Employment of that kind creates housing demand that does not depend on the next investor buying from the last one.',
             '**Connectivity is under construction, not under discussion.** The 109 km Ahmedabad–Dholera Expressway brings Ahmedabad to about 45 minutes. Dholera International Airport is being built at Navagam.',
             '**State and corridor backing.** Dholera sits within the Delhi–Mumbai Industrial Corridor and carries Government of Gujarat commitment. That does not guarantee timelines, but it does change the probability distribution compared with a private township betting on a road that may never be funded.',
-            '**The rate we sell at is published.** Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. That is today’s price, not a prediction of what it will be.',
+            '**The rate we sell at is published.** Under Mirrikh’s rate circular of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950 per sq yd, with rates up to ₹15,000 per sq yd depending on the project. That is today’s price, not a prediction of what it will be.',
           ],
         },
       },

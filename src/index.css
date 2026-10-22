@@ -106,3 +106,30 @@
     border-radius: 0 !important;
   }
 }
+
+/* ── Mobile polish (Oct 2026) ─────────────────────────────────────────── */
+html, body { overflow-x: clip; }
+img, video, svg, iframe { max-width: 100%; }
+@media (max-width: 1023px) {
+  /* Room for the fixed Call / WhatsApp / Visit bar so it never covers the
+     footer, a form's submit button or the last line of copy. */
+  body { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  /* iOS zooms into any field under 16px; keep forms steady and tappable. */
+  input, select, textarea { font-size: 16px !important; min-height: 44px; }
+  button, [role="button"], input[type="submit"] { min-height: 44px; }
+  .prose table, article table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  h1, h2, h3 { overflow-wrap: anywhere; hyphens: auto; }
+}
+@media (max-width: 640px) {
+  /* Body copy reads at 16px on phones; captions and labels never below 13px. */
+  main p.text-sm, main li.text-sm, main dd.text-sm, main td.text-sm { font-size: 16px; line-height: 1.6; }
+  main p.text-xs, main li.text-xs, main p[class*="text-[10px]"], main p[class*="text-[11px]"],
+  main figcaption, footer p.text-xs, footer p[class*="text-[11px]"] { font-size: 13px; line-height: 1.5; }
+  nav[aria-label="Breadcrumb"] a { display: inline-block; padding: 12px 0; }
+}
+/* The sticky bar already carries WhatsApp on phones; the floating bubble
+   would sit on top of it and on top of form buttons. */
+@media (max-width: 1023px) { .wa-float { display: none !important; } }

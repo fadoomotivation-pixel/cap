@@ -87,9 +87,8 @@ Create it at <https://business.google.com>. Everything below is ready to paste.
 Capital Brix LLP is an authorised sales channel partner for Mirrikh Infratech
 Pvt. Ltd., a Dholera developer in Dholera since 2012 with 30+ projects launched. We market
 NA-approved, NOC-cleared, title-clear and plan-passed residential and
-industrial plots in Dholera SIR (Dholera Smart City), Gujarat. Plots we sell
-start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending
-on the project and the plot (verified 6 October 2026).
+industrial plots in Dholera SIR (Dholera Smart City), Gujarat. Under Mirrikh’s rate circular
+of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950 per sq yd, with rates up to ₹15,000 per sq yd depending on the project.
 
 Every purchase completes through a registered sale deed in the buyer's name,
 with the NA order, plan approval and title chain handed over as part of the
@@ -132,9 +131,8 @@ abandoned, and these answers show in search.
    → Yes. We sell only NA-converted, NOC-cleared, title-clear and plan-passed
    plots, completed through a registered sale deed in the buyer's name.
 2. *What is the starting price of a plot in Dholera?*
-   → Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to
-   about ₹14,950 per sq yd, depending on the project and the plot. A 150 sq yd
-   plot at the starting rate is ₹13.88 lakh on land value, before stamp duty,
+   → Under Mirrikh’s rate circular of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950 per sq yd, with rates up to ₹15,000 per sq yd depending on the project. A 150 sq yd
+   residential plot at ₹9,750 is ₹14.63 lakh on land value, before stamp duty,
    registration and development charges.
 3. *Can NRIs buy a plot in Dholera through Capital Brix?*
    → Yes. NRIs may acquire residential and commercial property in India, and

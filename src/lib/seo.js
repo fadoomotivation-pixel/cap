@@ -17,9 +17,9 @@ export const absoluteUrl = (path = '/') => `${SITE_URL}${path.startsWith('/') ? 
 // pages don't compete with each other for the same query.
 export const pageSeo = {
   home: {
-    title: 'Dholera Plots from ₹9,250/sq yd | Capital Brix',
+    title: 'Dholera Plots from ₹9,750/sq yd | Capital Brix',
     description:
-      'NA-approved, title-clear Dholera SIR plots from ₹9,250/sq yd. Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.',
+      'NA-approved, title-clear Dholera SIR plots from ₹9,750/sq yd (industrial from ₹8,950). Developed by Mirrikh Infratech, marketed by Capital Brix as an authorised sales channel partner.',
     path: '/',
   },
   about: {
@@ -31,7 +31,7 @@ export const pageSeo = {
   projects: {
     title: 'Mirrikh Projects near Dholera | Mayur Prime, Swastik II & More',
     description:
-      'Mayur Prime from ₹20 L, Mayur Swastik II from ₹12.75 L, Mayur Industrial Landmark, Mayur Business Park and Greenz Courtyard villas — near Dholera Smart City. NA, NOC, title clear.',
+      'Residential from ₹9,750/sq yd, industrial from ₹8,950/sq yd (Mirrikh circular, 20 Oct 2026): Mayur Prime, Mayur Swastik II, Mayur Industrial Landmark, Mayur Business Park and Greenz Courtyard villas — near Dholera Smart City. NA, NOC, title clear.',
     path: '/projects',
   },
   dholera: {

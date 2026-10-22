@@ -39,20 +39,52 @@ export const site = {
     'Hi Capital Brix! I am interested in Mirrikh Infratech projects in Dholera Smart City. Please share current prices and plot availability.',
 };
 
-// Owner confirmed 6 Oct 2026, from the Mirrikh deck. This is the rate band
-// Capital Brix sells at. It is not a claim about the developer's margin,
-// and it is not a forecast of what the land will be worth later.
-// Do not copy `from` onto every project's priceFrom — the rate depends on
-// the project and the plot, up to `to`.
+// Mirrikh Infratech official rate circular dated 20 Oct 2026 (owner shared it
+// on 22 Oct 2026). Rates are per sq yd, apply to the super built-up area of
+// the plot, and are effective for new plot bookings from 20 Oct 2026.
+// The circular lists rates only — it says nothing about availability, so the
+// rate card never marks a project available or sold out on its own.
+export const rateCircular = {
+  date: '20 Oct 2026',
+  label: 'Rates w.e.f. 20 Oct 2026, per sq yd, as per Mirrikh circular',
+  note: 'Rates are per sq yd of the super built-up area of the plot and apply to new plot bookings from 20 October 2026. Stamp duty, registration and development charges are extra.',
+  residential: [
+    ['Mayur Signature I & II', 12450],
+    ['Mayur Greenz I, II & III', 14950],
+    ['Mayur Paradise', 15000],
+    ['Mayur Ananta I & II', 10250],
+    ['Mayur Evana', 12450],
+    ['Mayur Vihar', 12450],
+    ['Mayur Kalp', 10250],
+    ['Mayur Iconic', 10250],
+    ['Mayur Enclave I–V', 12450],
+    ['Mayur Park I, II & III', 10990],
+    ['Mayur Aerocity I & II', 10750],
+    ['Mayur Nova', 9750],
+    ['Mayur Swastik I & II', 10750],
+    ['Mayur Forest Villa', 10950],
+    ['Mayur Prime', 14990],
+  ],
+  industrial: [
+    ['Mayur Business Park', 9750],
+    ['Mayur Industrial Landmark', 8950],
+    ['Mayur Industrial Hub', 15000],
+    ['Mayur Industrial Park I & II', 12500],
+  ],
+};
+
+// Summary band derived from the circular. Do not copy `from` onto every
+// project's priceFrom — each project carries its own circular rate.
 export const plotRates = {
-  from: 9250,
-  to: 14950,
+  from: 9750,
+  industrialFrom: 8950,
+  to: 15000,
   unit: 'sq yd',
-  verified: '6 October 2026',
-  fromLabel: 'from ₹9,250/sq yd',
-  rangeLabel: '₹9,250 to ₹14,950 per sq yd',
+  verified: '20 October 2026',
+  fromLabel: 'from ₹9,750/sq yd',
+  rangeLabel: 'residential from ₹9,750, industrial from ₹8,950, up to ₹15,000 per sq yd',
   sentence:
-    'Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot.',
+    'As per Mirrikh’s rate circular of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950 per sq yd, with rates up to ₹15,000 per sq yd depending on the project.',
 };
 
 export const stats = [
@@ -178,7 +210,7 @@ export const whyDholera = [
   {
     icon: 'TrendingUp',
     title: 'Current plot rates',
-    text: 'Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. Verified 6 October 2026. That is a price, not a forecast.',
+    text: 'Under Mirrikh’s rate circular of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950, up to ₹15,000 per sq yd. That is a price, not a forecast.',
   },
   {
     icon: 'ShieldCheck',
@@ -206,7 +238,7 @@ export const projectFilters = ['All', 'Ongoing', 'Industrial', 'Sold Out'];
 // priceFrom — THE SINGLE HIGHEST-VALUE FIELD ON THIS PAGE, and the one that is
 // empty on all 22 projects.
 //
-//   priceFrom: 9250,              // rupees per sq yd, only if this project actually starts there
+//   priceFrom: 9750,              // rupees per sq yd, only if this project actually starts there
 //   priceFromUnit: 'sq yd',       // optional, defaults to 'sq yd'
 //
 // Three things switch on the moment a project has one:
@@ -233,7 +265,8 @@ export const projects = [
   // ─── CURRENT SALES FOCUS — verified against Mirrikh's own collateral ──────
   // Source: the Mirrikh "Promotional Materials" folder the owner shared on
   // 6 Oct 2026 (project standees + A4 leaflets). Unit counts, villages and
-  // the "starting at" figures below are printed there. Nothing else is:
+  // the rates come from Mirrikh's 20 Oct 2026 rate circular. Nothing else is:
+  // (old lump-sum "starting at" figures are retired). Nothing else is:
   //   • no plot sizes, no per-sq-yd rate per project, no RERA numbers.
   //     Do not add any of those until Mirrikh confirms them in writing.
   //   • location wording is "near Dholera Smart City" (Mirrikh's own words).
@@ -241,8 +274,8 @@ export const projects = [
   //   • the leaflets also print a monthly "Business Promotion Commission",
   //     "12% per annum" and an "assured" villa rental. Those are return
   //     promises and stay OFF this site — see CLAUDE.md, "Content rules".
-  // `startingPrice` is the lump-sum "starting at" figure in rupees. It drives
-  // the visible price and an AggregateOffer (lowPrice) in the Product schema.
+  // `priceFrom` is the circular rate in rupees per sq yd. It drives the
+  // visible price and a UnitPriceSpecification Offer in the Product schema.
   {
     name: 'Mayur Prime',
     verified: true,
@@ -258,9 +291,9 @@ export const projects = [
     offering: 'premium residential plots',
     category: 'Ongoing',
     location: 'Fedra, near Dholera Smart City',
-    price: '₹20 Lakh',
-    priceUnit: 'Starting price',
-    startingPrice: 2000000,
+    price: '₹14,990/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 14990,
     units: '503 premium residential plots',
     status: 'Now Selling',
     highlights: [
@@ -270,7 +303,7 @@ export const projects = [
       'Inside roads, water supply, electricity & tree plantation',
     ],
     about:
-      'Mayur Prime is a premium residential plotting project at Fedra, near Dholera Smart City, with 503 plots. The layout is planned around a gated entrance, a club house and landscaped open space, with inside roads, water and electricity supply, a boundary wall and a security cabin listed by the developer. Plots start at ₹20 lakh.',
+      'Mayur Prime is a premium residential plotting project at Fedra, near Dholera Smart City, with 503 plots. The layout is planned around a gated entrance, a club house and landscaped open space, with inside roads, water and electricity supply, a boundary wall and a security cabin listed by the developer. Plots are ₹14,990 per sq yd under Mirrikh’s 20 Oct 2026 rate circular.',
     accent: '#D4AF37',
   },
   {
@@ -285,9 +318,9 @@ export const projects = [
     offering: 'residential plots',
     category: 'Ongoing',
     location: 'Kamiyala, near Dholera Smart City',
-    price: '₹12.75 Lakh',
-    priceUnit: 'Starting price',
-    startingPrice: 1275000,
+    price: '₹10,750/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 10750,
     units: '433 residential plots',
     status: 'Now Selling',
     highlights: [
@@ -297,7 +330,7 @@ export const projects = [
       'Inside roads, plot demarcation, water & power supply',
     ],
     about:
-      'Mayur Swastik II is the second phase of the Mayur Swastik residential project at Kamiyala, near Dholera Smart City, with 433 plots. The developer lists a club house, gated entry, boundary wall, inside roads, plot demarcation, tree plantation, a security cabin and water and power supply. It has the lowest entry price of the current projects, starting at ₹12.75 lakh.',
+      'Mayur Swastik II is the second phase of the Mayur Swastik residential project at Kamiyala, near Dholera Smart City, with 433 plots. The developer lists a club house, gated entry, boundary wall, inside roads, plot demarcation, tree plantation, a security cabin and water and power supply. Plots are ₹10,750 per sq yd under Mirrikh’s 20 Oct 2026 rate circular.',
     accent: '#c9a35c',
   },
   {
@@ -315,9 +348,9 @@ export const projects = [
     offering: 'industrial plots for warehouse, workshop and MSME use',
     category: 'Industrial',
     location: 'Moti Boru, near Dholera Smart City',
-    price: '₹26.5 Lakh',
-    priceUnit: 'Starting price',
-    startingPrice: 2650000,
+    price: '₹8,950/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 8950,
     units: '436 units · warehouse / workshop / MSME',
     status: 'Now Selling',
     highlights: [
@@ -327,7 +360,7 @@ export const projects = [
       'Internal roads, plot demarcation, power & water supply',
     ],
     about:
-      'Mayur Industrial Landmark is an industrial project at Moti Boru, near Dholera Smart City, with 436 units planned for warehouse, workshop and MSME use. The developer lists gated entry, a boundary wall, street lights, internal roads, plot demarcation, a garden area, tree plantation, a security cabin and power and water supply. Units start at ₹26.5 lakh.',
+      'Mayur Industrial Landmark is an industrial project at Moti Boru, near Dholera Smart City, with 436 units planned for warehouse, workshop and MSME use. The developer lists gated entry, a boundary wall, street lights, internal roads, plot demarcation, a garden area, tree plantation, a security cabin and power and water supply. Units are ₹8,950 per sq yd under Mirrikh’s 20 Oct 2026 rate circular — the lowest rate on the circular.',
     accent: '#f59e0b',
   },
   {
@@ -342,9 +375,9 @@ export const projects = [
     offering: 'industrial units',
     category: 'Industrial',
     location: 'Haripura, Dhandhuka, near Dholera Smart City',
-    price: '₹31 Lakh',
-    priceUnit: 'Starting price',
-    startingPrice: 3100000,
+    price: '₹9,750/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 9750,
     units: '277 industrial units',
     status: 'Now Selling',
     highlights: [
@@ -354,7 +387,7 @@ export const projects = [
       'Internal roads, plot demarcation, garden, water & power supply',
     ],
     about:
-      'Mayur Business Park is an industrial project at Haripura in Dhandhuka taluka, near Dholera Smart City, with 277 units. The developer lists gated entry, a boundary wall, street lights, internal roads, plot demarcation, a garden area, a temple, tree plantation, a security cabin and water and power supply. Units start at ₹31 lakh.',
+      'Mayur Business Park is an industrial project at Haripura in Dhandhuka taluka, near Dholera Smart City, with 277 units. The developer lists gated entry, a boundary wall, street lights, internal roads, plot demarcation, a garden area, a temple, tree plantation, a security cabin and water and power supply. Units are ₹9,750 per sq yd under Mirrikh’s 20 Oct 2026 rate circular.',
     accent: '#7fc8e8',
   },
   {
@@ -394,8 +427,9 @@ export const projects = [
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Ratanpur, near Dholera Smart City',
-    price: 'On Request',
-    priceUnit: 'New Launch',
+    price: '₹9,750/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 9750,
     size: '90 plots · 132–655 sq yd',
     status: 'New Launch',
     highlights: [
@@ -412,8 +446,9 @@ export const projects = [
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Near Dholera International Airport',
-    price: 'On Request',
-    priceUnit: 'On request',
+    price: '₹10,750/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 10750,
     size: 'Multiple plot sizes',
     status: 'Pre-Launch',
     highlights: [
@@ -432,8 +467,9 @@ export const projects = [
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
-    price: 'On Request',
-    priceUnit: 'Ongoing',
+    price: '₹10,990/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 10990,
     size: 'Multiple plot sizes',
     status: 'Ongoing',
     highlights: [
@@ -450,8 +486,9 @@ export const projects = [
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
-    price: 'On Request',
-    priceUnit: 'Ongoing',
+    price: '₹10,950/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 10950,
     size: 'Villa plots',
     status: 'Ongoing',
     highlights: [
@@ -468,8 +505,9 @@ export const projects = [
     type: 'Residential Plots',
     category: 'Ongoing',
     location: 'Dholera Smart City',
-    price: 'On Request',
-    priceUnit: 'Ongoing',
+    price: '₹10,250/sq yd',
+    priceUnit: 'Rate w.e.f. 20 Oct 2026',
+    priceFrom: 10250,
     size: 'Multiple plot sizes',
     status: 'Ongoing',
     highlights: [
@@ -717,7 +755,7 @@ export const testimonials = [
 export const faqs = [
   {
     q: 'Why is Dholera Smart City a good investment in 2026?',
-    a: "Dholera SIR is India's first greenfield smart city, backed by the Government of Gujarat and the Delhi–Mumbai Industrial Corridor. The ₹91,000 crore Tata semiconductor fab, Dholera International Airport and the Ahmedabad–Dholera Expressway are the infrastructure a buyer can check in 2026. Plots marketed by Capital Brix start from ₹9,250 per sq yd. That is a current rate, not a forecast of returns.",
+    a: "Dholera SIR is India's first greenfield smart city, backed by the Government of Gujarat and the Delhi–Mumbai Industrial Corridor. The ₹91,000 crore Tata semiconductor fab, Dholera International Airport and the Ahmedabad–Dholera Expressway are the infrastructure a buyer can check in 2026. Under Mirrikh’s 20 Oct 2026 rate circular, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950. That is a current rate, not a forecast of returns.",
   },
   {
     q: 'What is Capital Brix\u2019s relationship with Mirrikh Infratech?',
@@ -729,7 +767,7 @@ export const faqs = [
   },
   {
     q: 'What is the minimum investment to buy a plot in Dholera?',
-    a: 'Plots marketed by Capital Brix start from ₹9,250 per sq yd and run up to about ₹14,950 per sq yd, depending on the project and the plot. A 150 sq yd plot at the starting rate is ₹13.88 lakh on land value, before stamp duty, registration and development charges.',
+    a: 'Under Mirrikh’s rate circular of 20 Oct 2026, residential plots start from ₹9,750 per sq yd and industrial plots from ₹8,950 per sq yd, with rates up to ₹15,000 per sq yd depending on the project. A 150 sq yd residential plot at the ₹9,750 starting rate is ₹14.63 lakh on land value, before stamp duty, registration and development charges.',
   },
   {
     q: 'Where is Dholera and how do I reach it?',
